@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git remote:*)",
+      "Bash(curl:*)",
+      "Bash(git fetch:*)",
+      "Bash(netlify --version)",
+      "Bash(netlify:*)",
+      "Bash(ls:*)",
+      "Bash(for w:*)",
+      "Bash(do)",
+      "Bash(echo \"--- $w ---\")",
+      "Bash(done)",
+      "Bash(grep -l \"api.brevo.com\\\\|BREVO\" /Users/andrea/Desktop/Progetti/boogie/boogie-dashboard/netlify/functions/*.js)",
+      "Bash(xargs -I {} basename {})",
+      "Bash(grep -r \"schedule\\\\|cron\" /Users/andrea/Desktop/Progetti/boogie/boogie-dashboard/netlify/functions/*.js)",
+      "Bash(grep -r \"Cloud Scheduler\\\\|google-cloud\\\\|@google-cloud\" /Users/andrea/Desktop/Progetti/boogie/boogie-dashboard --include=*.js --include=*.ts --include=*.json)",
+      "Bash(grep -l \"cron-job\\\\|scheduled\\\\|schedule\\\\|every.*minuto\\\\|ogni\" /Users/andrea/Desktop/Progetti/boogie/boogie-dashboard/netlify/functions/*.js)",
+      "Bash(grep:*)",
+      "Bash(python3 -m json.tool)",
+      "Bash(python3 -c \":*)",
+      "Bash(node --check /Users/andrea/Desktop/Progetti/boogie/boogie-dashboard/netlify/functions/genera-analisi-background.js)",
+      "Bash(node --check /Users/andrea/Desktop/Progetti/boogie/boogie-dashboard/netlify/functions/genera-analisi.js)",
+      "Bash(node --check /Users/andrea/Desktop/Progetti/boogie/boogie-dashboard/netlify/functions/statistiche-settimanali.js)"
+    ]
+  }
+}

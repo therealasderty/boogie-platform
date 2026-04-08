@@ -1,0 +1,469 @@
+.panel { animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: var(--border-style);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.panelTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vistaToggle {
+  display: flex;
+  border: var(--border-style);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  height: 32px;
+}
+
+.vistaBtn {
+  background: none;
+  border: none;
+  color: var(--text2);
+  padding: 0 14px;
+  font-size: 0.82rem;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all 0.15s;
+  height: 100%;
+}
+
+.vistaBtnActive {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.periodoLabel {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.globaleNote {
+  font-size: 0.78rem;
+  color: var(--text3);
+  margin-bottom: 16px;
+}
+
+.globaleNote strong {
+  color: var(--text2);
+}
+
+.emptyChart {
+  font-size: 0.82rem;
+  color: var(--text3);
+  font-style: italic;
+  padding: 20px 0;
+}
+
+.weekSelect {
+  border: var(--border-style);
+  border-radius: var(--radius-sm);
+  background: var(--bg2);
+  color: var(--text);
+  padding: 0 10px;
+  height: 32px;
+  font-size: 0.82rem;
+  font-family: var(--font-body);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.weekSelect:focus { border-color: var(--accent); }
+
+
+.loading {
+  font-size: 0.85rem;
+  color: var(--text3);
+  font-style: italic;
+  padding: 32px 0;
+  text-align: center;
+}
+
+.empty {
+  font-size: 0.85rem;
+  color: var(--text3);
+  font-style: italic;
+  padding: 40px 0;
+  text-align: center;
+  max-width: 400px;
+  line-height: 1.5;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* KPI */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+}
+
+.kpiCard {
+  background: var(--bg2);
+  border: var(--border-style);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kpiValueRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.kpiValue {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.1;
+}
+
+.trendBadge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.trendUp {
+  background: color-mix(in srgb, #22c55e 15%, transparent);
+  color: #16a34a;
+}
+
+.trendDown {
+  background: color-mix(in srgb, #ef4444 15%, transparent);
+  color: #dc2626;
+}
+
+.kpiLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-top: 4px;
+}
+
+.kpiSub {
+  font-size: 0.72rem;
+  color: var(--text3);
+  margin-top: 2px;
+}
+
+/* Charts grid */
+.chartsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.card {
+  background: var(--bg2);
+  border: var(--border-style);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+}
+
+.cardTitle {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-bottom: 16px;
+}
+
+/* Bar chart */
+.barChart {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: 72px 1fr 32px;
+  align-items: center;
+  gap: 10px;
+}
+
+.barLabel {
+  font-size: 0.78rem;
+  color: var(--text2);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.barTrack {
+  background: var(--bg3);
+  border-radius: 2px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: var(--text2);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+  min-width: 2px;
+}
+.barAccent { background: var(--accent); }
+
+.barValue {
+  font-size: 0.78rem;
+  color: var(--text);
+  font-weight: 600;
+  text-align: right;
+}
+
+.barRowClosed .barLabel,
+.barRowClosed .barValue {
+  color: var(--text3);
+  font-weight: 400;
+}
+
+.barRowClosed .barTrack {
+  background: var(--bg3);
+  opacity: 0.4;
+}
+
+.cardFooter {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.pct {
+  font-size: 0.72rem;
+  color: var(--text3);
+}
+
+/* Pie chart */
+.pieWrap {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.pieSvg {
+  width: 140px;
+  height: 140px;
+  flex-shrink: 0;
+}
+
+.pieLegend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.pieLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pieDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pieLegendLabel {
+  font-size: 0.82rem;
+  color: var(--text2);
+  flex: 1;
+}
+
+.pieLegendPct {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Line chart */
+.cardFullWidth {
+  grid-column: 1 / -1;
+  margin-top: 0;
+}
+
+.lineSvg {
+  width: 100%;
+  display: block;
+  overflow: visible;
+}
+
+/* Insights */
+.insightsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.insightChip {
+  background: var(--bg3);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.insightLabel {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 3px;
+}
+
+.insightValue {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Analisi AI */
+.analisiAi {
+  border: var(--border-style);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  background: var(--bg2);
+}
+
+.analisiAiHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.analisiAiIcon {
+  color: var(--accent);
+  font-size: 0.9rem;
+}
+
+.analisiAiTitolo {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.analisiAiBoxes {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.analisiBox {
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  border-top: 3px solid;
+}
+
+.analisiBoxPro  { background: color-mix(in srgb, #22c55e 8%, var(--bg3)); border-color: #22c55e; }
+.analisiBoxCrit { background: color-mix(in srgb, #f97316 8%, var(--bg3)); border-color: #f97316; }
+.analisiBoxOpp  { background: color-mix(in srgb, var(--accent) 8%, var(--bg3)); border-color: var(--accent); }
+
+.analisiBoxTitle {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.analisiBoxPro  .analisiBoxTitle { color: #16a34a; }
+.analisiBoxCrit .analisiBoxTitle { color: #ea580c; }
+.analisiBoxOpp  .analisiBoxTitle { color: var(--accent); }
+
+.analisiBoxList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.analisiBoxList li {
+  font-size: 0.84rem;
+  color: var(--text2);
+  line-height: 1.5;
+  padding-left: 12px;
+  position: relative;
+}
+
+.analisiBoxList li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--text3);
+}
+
+.analisiBoxActions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.analisiBoxAction {
+  font-size: 0.84rem;
+  color: var(--text2);
+  line-height: 1.45;
+}
+
+.analisiBoxActionLabel {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+@media (max-width: 860px) {
+  .kpiGrid { grid-template-columns: repeat(3, 1fr); }
+  .chartsGrid { grid-template-columns: 1fr; }
+  .analisiAiBoxes { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 500px) {
+  .kpiGrid { grid-template-columns: repeat(2, 1fr); }
+  .barRow { grid-template-columns: 56px 1fr 28px; }
+}
