@@ -1,12 +1,19 @@
 [build]
+  # Specifichiamo che il sito da buildare è nella cartella website
+  base = "website"
   command = "npm run build"
-  publish = "dist"
-  functions = "netlify/functions"
+  publish = ".next"
+
+[functions]
+  # Usciamo da website per trovare le funzioni comuni
+  directory = "../netlify/functions"
 
 [dev]
+  # Next.js di solito usa la porta 3000
   command = "npm run dev"
-  targetPort = 5173
+  targetPort = 3000
   port = 8888
 
+# Mantieni le tue funzioni programmate così come sono
 [functions.pulizia-chiusure]
   schedule = "0 3 * * 1"
