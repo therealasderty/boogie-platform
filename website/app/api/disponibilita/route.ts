@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
       `&fields[]=Ricorrenza&fields[]=GiorniSettimana&fields[]=GiorniEsclusione&fields[]=FotoHero`,
       { headers: atHeaders }
     )
-    const eventiDelGiorno: { titolo: string; slug: string }[] = []
+    const eventiDelGiorno: { titolo: string; slug: string; foto: string }[] = []
     if (agendaRes.ok) {
       const agendaRecords: { fields: Record<string, unknown> }[] = ((await agendaRes.json()).records ?? [])
       for (const r of agendaRecords) {
