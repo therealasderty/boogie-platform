@@ -4,6 +4,9 @@
   command = "npm run build"
   publish = ".next"
 
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
 [functions]
   # Usciamo da website per trovare le funzioni comuni
   directory = "../netlify/functions"
