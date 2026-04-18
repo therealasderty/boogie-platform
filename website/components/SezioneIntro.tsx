@@ -150,8 +150,8 @@ export default function SezioneIntro({ immagini = [], label, titolo, testo, inve
     </div>
   )
 
-  const fadeLeft = { initial: { opacity: 0, x: -32 }, whileInView: { opacity: 1, x: 0 }, viewport: { once: true, margin: '-80px' }, transition: { duration: 0.7, ease: 'easeOut' } }
-  const fadeRight = { initial: { opacity: 0, x: 32 }, whileInView: { opacity: 1, x: 0 }, viewport: { once: true, margin: '-80px' }, transition: { duration: 0.7, ease: 'easeOut', delay: 0.1 } }
+  const fadeLeft = { initial: { opacity: 0, x: -32 }, whileInView: { opacity: 1, x: 0 }, viewport: { once: true, margin: '-80px' }, transition: { duration: 0.7, ease: [0.4, 0, 0.2, 1] as const } }
+  const fadeRight = { initial: { opacity: 0, x: 32 }, whileInView: { opacity: 1, x: 0 }, viewport: { once: true, margin: '-80px' }, transition: { duration: 0.7, ease: [0.4, 0, 0.2, 1] as const, delay: 0.1 } }
 
   const hasFoto = imgs.length > 0
 

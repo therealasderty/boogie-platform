@@ -107,7 +107,7 @@ function HamburgerIcon({ open }: { open: boolean }) {
   )
 }
 
-export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: { righe: string[]; avvisoSettimana: boolean }; eventi?: EventoAgenda[] }) {
+export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: { righe: string[]; avvisoSettimana: boolean; giorniChiusi?: number[] }; eventi?: EventoAgenda[] }) {
   const pathname = usePathname()
   const { eventoTitolo } = usePageContext()
   const isHome = pathname === '/'

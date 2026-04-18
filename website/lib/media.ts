@@ -53,11 +53,13 @@ export async function fetchMediaById(id: string): Promise<MediaItem | null> {
     if (!res.ok) return null
     const r = await res.json()
     return {
-      id:   r.id,
-      nome: r.fields['Nome'] || '',
-      url:  r.fields['URL']  || '',
-      alt:  r.fields['Alt text'] || '',
-      tag:  r.fields['Tag'] || [],
+      id:         r.id,
+      nome:       r.fields['Nome'] || '',
+      url:        r.fields['URL']  || '',
+      alt:        r.fields['Alt text'] || '',
+      tag:        r.fields['Tag'] || [],
+      ordine:     r.fields['Ordine'] || 0,
+      soloMobile: r.fields['Solo mobile'] || false,
     }
   } catch {
     return null
