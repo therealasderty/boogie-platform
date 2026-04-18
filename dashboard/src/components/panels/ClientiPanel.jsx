@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import { authFetch } from '../../lib/authFetch'
 import { IconClienti } from '../../icons/index.jsx'
 import styles from './ClientiPanel.module.css'
+import { API_BASE } from '../../lib/config'
 
-const NETLIFY_BASE = 'https://shimmering-sundae-54b044.netlify.app/.netlify/functions'
+const NETLIFY_BASE = API_BASE
 const LIMIT = 50
 
 export default function ClientiPanel() {

@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { authFetch } from '../lib/authFetch'
+import { API_BASE } from '../lib/config'
 
-const BASE_URL = 'https://shimmering-sundae-54b044.netlify.app/.netlify/functions/get-statistiche'
+const BASE_URL = API_BASE + '/get-statistiche'
 
 export function useAnalytics() {
   const [settimane, setSettimane] = useState([])

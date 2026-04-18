@@ -39,7 +39,7 @@ function InfoModal({ onClose }) {
   )
 }
 
-const FASCE = ['Pranzo', 'Aperitivo', 'Cena']
+const FASCE = ['Pranzo', 'Cena']
 const EMPTY_FORM = { descrizione: '', tipo: 'Data specifica', dataInizio: '', dataFine: '', fasce: [], tipoApertura: 'Chiusura' }
 
 function FormFields({ form, setForm, toggleFascia }) {

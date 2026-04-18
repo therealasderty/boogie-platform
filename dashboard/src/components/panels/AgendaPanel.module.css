@@ -154,31 +154,19 @@
 :global(.fc .fc-event) { border-radius: 3px !important; font-size: 0.75rem !important; padding: 1px 4px !important; }
 :global(.fc-festivita-label .fc-event-title) { font-size: 0.7rem !important; color: #A0722A !important; }
 
-/* ─── Modal appuntamento ─── */
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 16px;
-}
+/* ─── Editor evento inline ─── */
+@keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 
-.modal {
+.editorPanel {
   background: var(--bg);
   border: var(--border-style);
   border-top: 3px solid var(--accent);
   border-radius: var(--radius);
-  width: 100%;
-  max-width: 460px;
   box-shadow: var(--shadow-md);
   animation: slideUp 0.2s ease;
 }
-@keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 
-.modalHeader {
+.editorHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -186,17 +174,26 @@
   border-bottom: var(--border-style);
 }
 
-.modalTitolo {
+.editorTitolo {
   font-size: 1rem;
   font-weight: 700;
   color: var(--text);
 }
 
-.modalBody {
+.editorBody {
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.editorFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px 18px;
+  border-top: var(--border-style);
 }
 
 .field {
@@ -243,7 +240,7 @@
   font-size: 0.75rem;
   font-family: var(--font-body);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: border-color 0.15s, color 0.15s;
 }
 .giornoBtn:hover { border-color: var(--accent); color: var(--accent); }
 .giornoBtnActive { background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; }
@@ -257,19 +254,10 @@
   font-size: 0.82rem;
   font-family: var(--font-body);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: border-color 0.15s, color 0.15s;
 }
 .tipoBtn:hover { border-color: var(--accent); color: var(--accent); }
 .tipoBtnActive { color: #fff !important; }
-
-.modalFooter {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 14px 20px 18px;
-  border-top: var(--border-style);
-}
 
 .btnElimina {
   margin-right: auto;
@@ -283,4 +271,196 @@
   opacity: 0.7;
 }
 .btnElimina:hover { opacity: 1; text-decoration: underline; }
+
+.editorGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .editorGrid { grid-template-columns: 1fr; }
+}
+.editorCol {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ─── Sezioni collassabili ─── */
+.sezione {
+  border: var(--border-style);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.sezioneHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--bg2);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  transition: background 0.15s;
+}
+.sezioneHeader:hover { background: var(--bg3); }
+
+.sezioneTitolo {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.02em;
+  flex: 1;
+}
+
+.sezioneBadge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(196,145,58,0.12);
+  color: var(--accent);
+  border: 1px solid rgba(196,145,58,0.25);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.sezioneBadgeGray {
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bg3);
+  color: var(--text3);
+  border: var(--border-style);
+}
+
+.sezioneArrow {
+  font-size: 1rem;
+  color: var(--text3);
+  transform: rotate(0deg);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.sezioneArrowOpen { transform: rotate(90deg); }
+
+.sezioneBody {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-top: var(--border-style);
+  background: var(--bg);
+}
+
+/* ─── Checkbox label ─── */
+.checkLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: var(--text2);
+  cursor: pointer;
+  user-select: none;
+}
+.checkLabel input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ─── Elimina con conferma ─── */
+.btnEliminaNew {
+  margin-right: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid rgba(192,57,43,0.35);
+  border-radius: var(--radius-sm);
+  background: rgba(192,57,43,0.05);
+  color: #C0392B;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btnEliminaNew:hover {
+  background: rgba(192,57,43,0.12);
+  border-color: rgba(192,57,43,0.6);
+}
+
+.confirmDeleteWrap {
+  padding: 16px 20px 18px;
+  border-top: 2px solid rgba(192,57,43,0.25);
+  background: rgba(192,57,43,0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.confirmDeleteMsg {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text2);
+  line-height: 1.5;
+}
+.confirmDeleteMsg strong { color: #C0392B; }
+
+.confirmDeleteInput {
+  border: 1px solid rgba(192,57,43,0.4) !important;
+  border-radius: var(--radius-sm);
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  padding: 8px 10px;
+  font-size: 0.88rem;
+  font-family: var(--font-body);
+  outline: none;
+}
+.confirmDeleteInput:focus { border-color: #C0392B !important; }
+
+.confirmDeleteActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btnAnnullaDelete {
+  padding: 7px 14px;
+  border: var(--border-style);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text2);
+  font-size: 0.82rem;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+.btnAnnullaDelete:hover { border-color: var(--accent); color: var(--text); }
+
+.btnEliminaConfirm {
+  padding: 7px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: #C0392B;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btnEliminaConfirm:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.btnEliminaConfirm:not(:disabled):hover { opacity: 0.85; }
 

@@ -383,6 +383,24 @@
   color: var(--accent);
 }
 
+.analisiContesto {
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg3));
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.analisiContesto p {
+  font-size: 0.84rem;
+  color: var(--text2);
+  line-height: 1.5;
+  margin: 0;
+}
+
 .analisiAiBoxes {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { authFetch } from '../lib/authFetch'
-const BASE = 'https://shimmering-sundae-54b044.netlify.app/.netlify/functions'
+import { API_BASE } from '../lib/config'
+const BASE = API_BASE
 
 export function useOrari() {
   const [orari, setOrari] = useState([])

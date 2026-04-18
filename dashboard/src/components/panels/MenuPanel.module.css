@@ -1,0 +1,222 @@
+.panel { animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.panelHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; padding-bottom: 16px; border-bottom: var(--border-style);
+  flex-wrap: wrap; gap: 12px;
+}
+.panelTitle {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 1.15rem; font-weight: 700; color: var(--text);
+}
+.headerRight { display: flex; align-items: center; gap: 8px; }
+
+/* ─── Tabs ─── */
+.tabs {
+  display: flex; gap: 4px; margin-bottom: 4px; flex-wrap: wrap;
+}
+.tab {
+  padding: 7px 16px; border: var(--border-style); border-radius: var(--radius-sm);
+  background: none; color: var(--text2); font-size: 0.85rem;
+  font-family: var(--font-body); cursor: pointer; transition: all 0.15s;
+}
+.tab:hover { border-color: var(--accent); color: var(--accent); }
+.tabActive { background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; font-weight: 600; }
+
+.subTabs {
+  display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; padding-top: 8px;
+}
+.subTab {
+  padding: 5px 13px; border-radius: 20px; border: var(--border-style);
+  background: none; color: var(--text3); font-size: 0.78rem;
+  font-family: var(--font-body); cursor: pointer; transition: all 0.15s;
+}
+.subTab:hover { color: var(--text2); }
+.subTabActive { background: var(--bg3) !important; color: var(--text) !important; font-weight: 600; border-color: transparent !important; }
+
+/* ─── Lista ─── */
+.list { display: flex; flex-direction: column; gap: 4px; }
+
+.row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: var(--radius-sm);
+  border: var(--border-style); background: var(--bg2);
+  transition: background 0.15s;
+}
+.row:hover { background: var(--bg3); }
+.rowDisabled { opacity: 0.45; }
+
+.dragHandle {
+  cursor: grab; color: var(--text3); flex-shrink: 0;
+  display: flex; align-items: center; padding: 2px;
+}
+.dragHandle:active { cursor: grabbing; }
+
+.rowMain { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
+.rowNome { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+.badge {
+  font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 20px;
+  background: rgba(196,145,58,0.12); color: var(--accent); text-transform: uppercase; letter-spacing: 0.04em;
+}
+.rowDesc { font-size: 0.78rem; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+.rowNote { font-size: 0.72rem; color: var(--accent); opacity: 0.7; }
+
+.rowPrezzi { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
+.prezzo { font-size: 0.88rem; font-weight: 600; color: var(--text); white-space: nowrap; }
+.formato { font-size: 0.72rem; font-weight: 400; color: var(--text3); }
+
+.rowActions { display: flex; gap: 4px; flex-shrink: 0; }
+
+/* ─── Buttons ─── */
+.btnIcon {
+  background: none; border: none; cursor: pointer;
+  color: var(--text3); padding: 5px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; transition: color 0.15s, background 0.15s;
+}
+.btnIcon:hover { color: var(--text); background: var(--bg3); }
+.btnDelete:hover { color: #C0392B !important; }
+
+.btnRefresh {
+  background: none; border: var(--border-style); border-radius: var(--radius-sm);
+  cursor: pointer; color: var(--text3); padding: 7px 10px;
+  display: flex; align-items: center; transition: color 0.15s;
+}
+.btnRefresh:hover { color: var(--text2); }
+
+.btnPrimary {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; background: var(--accent); color: #fff;
+  border: none; border-radius: var(--radius-sm);
+  font-size: 0.85rem; font-weight: 600; font-family: var(--font-body);
+  cursor: pointer; transition: opacity 0.15s;
+}
+.btnPrimary:hover { opacity: 0.85; }
+.btnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btnAbilita {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; background: none; border: var(--border-style);
+  border-radius: var(--radius-sm); color: var(--text2);
+  font-size: 0.85rem; font-family: var(--font-body);
+  cursor: pointer; transition: all 0.15s;
+}
+.btnAbilita:hover { border-color: var(--accent); color: var(--accent); }
+
+.btnAbilitaOn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; background: rgba(196,145,58,0.1);
+  border: 1px solid var(--accent); border-radius: var(--radius-sm);
+  color: var(--accent); font-size: 0.85rem; font-weight: 600;
+  font-family: var(--font-body); cursor: pointer; transition: all 0.15s;
+}
+.btnAbilitaOn:hover { background: rgba(196,145,58,0.18); }
+
+.avviso {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; margin-bottom: 16px;
+  background: rgba(196,145,58,0.07); border: 1px solid rgba(196,145,58,0.25);
+  border-radius: var(--radius-sm); font-size: 0.8rem; color: var(--accent);
+}
+
+.btnSecondary {
+  padding: 8px 16px; background: none; border: var(--border-style);
+  border-radius: var(--radius-sm); color: var(--text2);
+  font-size: 0.85rem; font-family: var(--font-body);
+  cursor: pointer; transition: border-color 0.15s;
+}
+.btnSecondary:hover { border-color: var(--text2); }
+
+/* ─── Stati vuoti ─── */
+.nascostiWrap { margin-top: 8px; }
+
+.nascostiToggle {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 10px 12px; background: none; border: none;
+  border-top: var(--border-style); cursor: pointer;
+  font-size: 0.78rem; font-weight: 600; color: var(--text3);
+  font-family: var(--font-body); letter-spacing: 0.03em;
+  text-transform: uppercase; transition: color 0.15s;
+}
+.nascostiToggle:hover { color: var(--text2); }
+
+.nascostiArrow { transition: transform 0.2s; display: inline-block; }
+.nascostiArrowOpen { transform: rotate(180deg); }
+
+.loading, .empty {
+  text-align: center; padding: 48px; color: var(--text3); font-size: 0.9rem;
+}
+
+/* ─── Modal ─── */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 16px;
+}
+.modal {
+  background: var(--bg); border: var(--border-style);
+  border-top: 3px solid var(--accent); border-radius: var(--radius);
+  width: 100%; max-width: 520px; box-shadow: var(--shadow-md);
+  animation: slideUp 0.2s ease; max-height: 90vh; overflow-y: auto;
+}
+@keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+.modalHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 20px 14px; border-bottom: var(--border-style);
+  position: sticky; top: 0; background: var(--bg); z-index: 1;
+}
+.modalTitolo { font-size: 1rem; font-weight: 700; color: var(--text); }
+.modalBody { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.modalFooter {
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  padding: 14px 20px 18px; border-top: var(--border-style);
+  position: sticky; bottom: 0; background: var(--bg);
+}
+
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; color: var(--text2); }
+.field input, .field select {
+  border: var(--border-style); border-radius: var(--radius-sm);
+  background: var(--bg2); color: var(--text);
+  padding: 8px 10px; font-size: 0.88rem; font-family: var(--font-body);
+  outline: none; transition: border-color 0.2s;
+}
+.field input:focus, .field select:focus { border-color: var(--accent); }
+.field select { cursor: pointer; }
+
+.fieldRow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.fieldGroup { display: flex; flex-direction: column; gap: 8px; }
+.fieldGroupLabel { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; color: var(--text2); }
+
+.checkGroup { display: flex; gap: 20px; flex-wrap: wrap; }
+.dividerLine { border: none; border-top: var(--border-style); margin: 4px 0; }
+
+.toggleRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.toggleLabel { font-size: 0.82rem; color: var(--text3); margin-top: 2px; }
+
+.toggle {
+  position: relative; width: 44px; height: 24px; flex-shrink: 0;
+  background: var(--bg3); border: var(--border-style); border-radius: 999px;
+  cursor: pointer; transition: background 0.2s, border-color 0.2s;
+  padding: 0;
+}
+.toggleOn { background: var(--accent) !important; border-color: var(--accent) !important; }
+.toggleThumb {
+  position: absolute; top: 3px; left: 3px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--text3); transition: transform 0.2s, background 0.2s;
+}
+.toggleOn .toggleThumb { transform: translateX(20px); background: #fff; }
+
+.checkRow {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.85rem; color: var(--text2); cursor: pointer;
+}
+.checkRow input { cursor: pointer; accent-color: var(--accent); }
+
+@media (max-width: 600px) {
+  .fieldRow { grid-template-columns: 1fr; }
+  .rowDesc { max-width: 140px; }
+}

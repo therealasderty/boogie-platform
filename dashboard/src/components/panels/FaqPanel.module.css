@@ -1,0 +1,48 @@
+.panel { animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.panelHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; padding-bottom: 16px; border-bottom: var(--border-style); }
+.panelTitle { display: flex; align-items: center; gap: 8px; font-size: 1.15rem; font-weight: 700; color: var(--text); }
+
+.lista { display: flex; flex-direction: column; gap: 6px; }
+
+.item { background: var(--bg2); border: var(--border-style); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; align-items: center; gap: 10px; }
+.itemDragging { opacity: 0.5; box-shadow: 0 8px 24px rgba(0,0,0,0.18); }
+
+.dragHandle { display: flex; align-items: center; color: var(--text3); cursor: grab; flex-shrink: 0; padding: 2px; touch-action: none; }
+.dragHandle:active { cursor: grabbing; }
+
+.itemBody { flex: 1; min-width: 0; }
+.itemDomanda { font-size: 0.92rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.itemRisposta { font-size: 0.82rem; color: var(--text2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.itemActions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+
+.toggleBtn { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: var(--radius-sm); border: 1px solid transparent; cursor: pointer; transition: background 0.15s, color 0.15s; background: none; }
+.toggleOn  { color: #2E7D32; background: rgba(46,125,50,0.1); }
+.toggleOff { color: var(--text3); }
+.toggleOn:hover  { background: rgba(46,125,50,0.18); }
+.toggleOff:hover { background: var(--bg3); color: var(--text2); }
+
+.empty { font-size: 0.88rem; color: var(--text3); text-align: center; padding: 40px 20px; font-style: italic; }
+.msg { font-size: 0.85rem; padding: 9px 14px; border-radius: var(--radius-sm); margin-bottom: 16px; }
+.ok  { background: rgba(46,125,50,0.1); color: #2E7D32; border: 1px solid rgba(46,125,50,0.3); }
+.err { background: rgba(192,57,43,0.1); color: #C0392B; border: 1px solid rgba(192,57,43,0.3); }
+
+/* Modal */
+.modalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.15s ease; }
+.modal { background: var(--bg); border: var(--border-style); border-top: 3px solid var(--accent); border-radius: var(--radius); width: 100%; max-width: 560px; box-shadow: var(--shadow-md); animation: slideUp 0.2s ease; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+.modalHeader { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px; border-bottom: var(--border-style); }
+.modalTitolo { font-size: 1rem; font-weight: 700; color: var(--text); }
+.modalBody { padding: 22px 24px; display: flex; flex-direction: column; gap: 14px; }
+.modalActions { display: flex; gap: 10px; margin-top: 6px; align-items: center; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; color: var(--text2); }
+.field textarea { width: 100%; border: var(--border-style); color: var(--text); padding: 9px 12px; font-size: 0.9rem; outline: none; border-radius: var(--radius-sm); resize: vertical; min-height: 72px; background: var(--bg2); font-family: var(--font-body); line-height: 1.5; }
+.field textarea:focus { border-color: var(--accent); }
+
+@media (max-width: 600px) {
+  .modal { max-width: 100%; }
+}

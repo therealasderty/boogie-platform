@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { authFetch } from '../lib/authFetch'
+import { API_BASE } from '../lib/config'
 
-const API = 'https://shimmering-sundae-54b044.netlify.app/.netlify/functions/prenotazioni-giornaliere'
+const API = API_BASE + '/prenotazioni-giornaliere'
 
 export function usePrenotazioniGiornaliere() {
   const [giorni, setGiorni] = useState([])

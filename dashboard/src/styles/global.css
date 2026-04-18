@@ -95,9 +95,10 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="
   aspect-ratio: 1;
   background: none; color: var(--text2);
   border: var(--border-style); border-radius: var(--radius-sm);
-  transition: all 0.15s;
+  transition: color 0.15s, border-color 0.15s;
   cursor: pointer;
 }
+.btn-icon svg { pointer-events: none; }
 .btn-icon:hover { color: var(--text); border-color: var(--accent); }
 .btn-icon.danger:hover { color: var(--danger); border-color: var(--danger); }
 

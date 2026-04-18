@@ -1,65 +1,206 @@
-import Image from "next/image";
+import type { Metadata } from 'next'
+import Hero from '@/components/Hero'
 
-export default function Home() {
+export const metadata: Metadata = {
+  title: 'Boogie Bistrot | Ristorante con Giardino a Colle Brianza | Cucina e Pizza',
+  description: 'Boogie Bistrot a Colle Brianza: ristorante con giardino, cucina del territorio rivisitata, pizza tradizionale cotta nel forno a legna, birre locali ed eventi tutto l\'anno.',
+  openGraph: {
+    title: 'Boogie Bistrot | Ristorante con Giardino a Colle Brianza | Cucina e Pizza',
+    description: 'Boogie Bistrot a Colle Brianza: ristorante con giardino, cucina del territorio rivisitata, pizza tradizionale cotta nel forno a legna, birre locali ed eventi tutto l\'anno.',
+    locale: 'it_IT',
+    siteName: 'Boogie Bistrot',
+  },
+}
+import Calendario from '@/components/Calendario'
+import SezioneIntro from '@/components/SezioneIntro'
+import SezioneMenu from '@/components/SezioneMenu'
+import SezioneFAQ from '@/components/SezioneFAQ'
+import SezioneBlog from '@/components/SezioneBlog'
+import SezioneContatti from '@/components/SezioneContatti'
+import SezioneRecensioni from '@/components/SezioneRecensioni'
+import Footer from '@/components/Footer'
+import { fetchOrari, fetchChiusure, buildOrariLines } from '@/lib/orari'
+import { fetchMedia } from '@/lib/media'
+import { fetchEventi } from '@/lib/agenda'
+
+const GIORNI_ESTESI  = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato']
+const GIORNI_BREVI   = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab']
+const GIORNI_LABEL   = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
+const GIORNI_FULL    = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato']
+const MESI_FULL      = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre']
+const ORDINE_SETTIMANA = [1, 2, 3, 4, 5, 6, 0]
+
+function formatGiorniSettimana(giorniStr: string): string {
+  const nums = giorniStr.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n))
+  if (!nums.length) return ''
+  const sorted = ORDINE_SETTIMANA.filter(g => nums.includes(g))
+  const ranges: string[] = []
+  let i = 0
+  while (i < sorted.length) {
+    let j = i
+    while (j + 1 < sorted.length && ORDINE_SETTIMANA.indexOf(sorted[j + 1]) === ORDINE_SETTIMANA.indexOf(sorted[j]) + 1) j++
+    const chunk = sorted.slice(i, j + 1)
+    ranges.push(chunk.length === 1 ? GIORNI_LABEL[chunk[0]] : `${GIORNI_LABEL[chunk[0]]}–${GIORNI_LABEL[chunk[chunk.length - 1]]}`)
+    i = j + 1
+  }
+  return ranges.join(', ')
+}
+
+function formatLabelEvento(e: { data: string | null; ricorrente: boolean; ricorrenza: string; giornoSettimana: string; giorniEsclusione: string; dataFine: string | null }): string {
+  if (e.data && !e.ricorrente) {
+    const d = new Date(e.data + 'T00:00:00')
+    return `${GIORNI_ESTESI[d.getDay()]} ${d.getDate()} ${MESI_FULL[d.getMonth()]}`
+  }
+  if (e.ricorrenza === 'giornaliera') {
+    const esclusi = e.giorniEsclusione ? e.giorniEsclusione.split(',').map(Number).filter(n => !isNaN(n)) : []
+    if (esclusi.length === 0) return 'Tutti i giorni'
+    const nomiEsclusi = esclusi.map(n => GIORNI_BREVI[n]).filter(Boolean).join(', ')
+    return `Lun–Dom (escluso ${nomiEsclusi})`
+  }
+  if (e.ricorrenza === 'settimanale' && e.giornoSettimana) {
+    let label = formatGiorniSettimana(e.giornoSettimana) || ''
+    if (e.giorniEsclusione) {
+      const esclusi = e.giorniEsclusione.split(',').map(Number).filter(n => !isNaN(n) && GIORNI_BREVI[n])
+      if (esclusi.length > 0) label += ` (escluso ${esclusi.map(n => GIORNI_BREVI[n]).join(', ')})`
+    }
+    return label || 'Appuntamento fisso'
+  }
+  return 'Appuntamento fisso'
+}
+
+const HERO_FALLBACK = [
+  { src: '/images/hero/1.webp', alt: 'Boogie Bistrot' },
+  { src: '/images/hero/2.avif', alt: 'Il giardino del Boogie Bistrot' },
+]
+
+export default async function Home() {
+  const [orari, chiusure, mediaHero, mediaLocation, mediaChiSiamo, mediaChiSiamoIntro, eventi, mediaCarta, mediaPizza, mediaBirra, mediaVino, mediaCocktail] = await Promise.all([
+    fetchOrari(),
+    fetchChiusure(),
+    fetchMedia('hero'),
+    fetchMedia('location'),
+    fetchMedia('form-contatto'),
+    fetchMedia('chi-siamo'),
+    fetchEventi(),
+    fetchMedia('carta'),
+    fetchMedia('pizza'),
+    fetchMedia('birra'),
+    fetchMedia('vino'),
+    fetchMedia('cocktail'),
+  ])
+  const orariDisplay = buildOrariLines(orari, chiusure)
+  const heroImages = mediaHero.length > 0
+    ? mediaHero.map(m => ({ src: m.url, alt: m.alt || m.nome }))
+    : HERO_FALLBACK
+
+  const oggi = new Date().toISOString().split('T')[0]
+  const heroNews = eventi
+    .filter(e => e.fotoHero && e.descrizioneBreve && e.stato === 'attivo')
+    .sort((a, b) => {
+      const aF = !a.ricorrente && a.data && a.data >= oggi
+      const bF = !b.ricorrente && b.data && b.data >= oggi
+      if (aF && !bF) return -1
+      if (!aF && bF) return 1
+      return 0
+    })
+    .slice(0, 5)
+    .map(e => {
+      const giornoLabel = formatLabelEvento(e)
+      const oraLabel = e.orario ? (e.orarioFine ? `${e.orario}–${e.orarioFine}` : e.orario) : ''
+      const label = oraLabel ? `${giornoLabel}\n${oraLabel}` : giornoLabel
+      return {
+        label,
+        titolo: e.titolo,
+        descrizione: e.descrizioneBreve,
+        href: e.slug ? `/eventi-speciali/${e.slug}` : '/eventi-speciali',
+        ctaLabel: 'Scopri di più',
+        image: e.fotoHero,
+      }
+    })
+
+  const menuFallback = heroNews.length === 0 ? [
+    { label: 'I nostri menù', titolo: 'Specialità alla Carta', descrizione: 'Cucina del territorio rivisitata con creatività e ingredienti freschi selezionati.', href: '/menu/specialita', ctaLabel: 'Scopri', image: mediaCarta[0]?.url ?? '/images/hero/1.webp' },
+    { label: 'I nostri menù', titolo: 'La Pizza',              descrizione: 'Impasto a lunga lievitazione, cotto nel forno a legna.',                              href: '/menu/pizza',      ctaLabel: 'Scopri', image: mediaPizza[0]?.url  ?? '/images/hero/2.avif' },
+    { label: 'I nostri menù', titolo: 'Le Birre',              descrizione: 'Birre selezionate dalla Lombardia e oltre.',                                          href: '/menu/birre',      ctaLabel: 'Scopri', image: mediaBirra[0]?.url  ?? '/images/hero/1.webp' },
+    { label: 'I nostri menù', titolo: 'Carta dei Vini',        descrizione: 'Etichette italiane e locali selezionate con cura.',                                   href: '/menu/vini',       ctaLabel: 'Scopri', image: mediaVino[0]?.url   ?? '/images/hero/2.avif' },
+    { label: 'I nostri menù', titolo: 'Cocktails',             descrizione: 'Aperitivi, long drink e signature cocktail preparati al momento.',                    href: '/menu/cocktails',  ctaLabel: 'Scopri', image: mediaCocktail[0]?.url ?? '/images/hero/1.webp' },
+  ] : []
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Restaurant',
+    name: 'Boogie Bistrot',
+    url: 'https://boogiebistrot.com',
+    telephone: ['+390399260568', '+393465813309'],
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: 'Via Europa, 2',
+      addressLocality: 'Colle Brianza',
+      addressRegion: 'LC',
+      postalCode: '23886',
+      addressCountry: 'IT',
+    },
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: 45.7593,
+      longitude: 9.3620,
+    },
+    servesCuisine: ['Italiana', 'Brianzola', 'Pizza'],
+    priceRange: '€€',
+    hasMap: 'https://maps.google.com/?cid=6154073069839278986',
+    sameAs: [
+      'https://www.facebook.com/boogiebistrot',
+      'https://www.instagram.com/boogiebistrot',
+    ],
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+    <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <Hero orariDisplay={orariDisplay} heroImages={heroImages} newsItems={heroNews.length > 0 ? heroNews : menuFallback} />
+      <Calendario orari={orari} chiusure={chiusure} />
+      <SezioneIntro
+        fullWidth
+        immagini={
+          mediaChiSiamoIntro.length > 0
+            ? mediaChiSiamoIntro.map(m => ({ src: m.url, alt: m.alt || m.nome }))
+            : [
+                { src: '/images/hero/1.webp', alt: 'Boogie Bistrot' },
+                { src: '/images/hero/2.avif', alt: 'Il giardino' },
+              ]
+        }
+        label="Chi siamo"
+        titolo="L'essenza della cucina del territorio in una location storica con giardino"
+        testo="<p>Dal 2019, nel cuore verde di <strong>Colle Brianza</strong>, il Boogie Bistrot è un punto di riferimento gastronomico che unisce tradizione del territorio e innovazione culinaria. La nostra cucina, reinterpretata con creatività e passione, trova la sua casa in una <strong>location storica immersa nel verde della provincia di Lecco</strong>, dove ogni piatto racconta una storia di territorio e autenticità.</p><br/><p>L'esperienza si compone di tante sfaccettature: dai piatti della <strong>cucina del territorio</strong> preparati con ingredienti freschi selezionati dai produttori locali, alle <strong>pizze a lunga lievitazione cotte nel forno a legna</strong>, fino alle <a href='/eventi-speciali'>serate ed eventi speciali</a> che animano il locale durante tutto l'anno.</p><br/><p>Nella bella stagione il <strong>giardino</strong> diventa un'oasi di tranquillità dove gustare pranzi e cene all'aperto, circondati dal panorama collinare della Brianza. In inverno, le sale interne accolgono gli ospiti in un'atmosfera calda e conviviale, ideale per cene romantiche o serate in compagnia.</p>"
+      />
+      <SezioneIntro
+        fullWidth
+        inverti
+        immagini={
+          mediaLocation.length > 0
+            ? mediaLocation.map(m => ({ src: m.url, alt: m.alt || m.nome }))
+            : [
+                { src: '/images/hero/1.webp', alt: 'La location' },
+                { src: '/images/hero/2.avif', alt: 'Il giardino' },
+              ]
+        }
+        cta={{ label: 'Vai alla galleria fotografica', href: '/galleria' }}
+        label="La location"
+        titolo="Location storica con giardino a Colle Brianza | Un'oasi di freschezza"
+        testo="<p>La magia del Boogie Bistrot si svela attraverso i suoi <strong>spazi unici</strong>: dalle sale interne dal design contemporaneo che valorizza gli elementi architettonici storici, al nostro fiore all'occhiello, l'<strong>ampio giardino immerso nel verde della Brianza lecchese</strong>. Ogni angolo racconta una storia, ogni dettaglio è stato pensato per rendere indimenticabile la tua esperienza.</p><br/><p>La <strong>posizione privilegiata a Colle Brianza</strong> garantisce un clima fresco anche durante i mesi estivi, trasformando il giardino nel luogo ideale per pranzi e cene all'aperto — una cornice naturale che attira ospiti da Lecco, Monza e Milano.</p><br/><p>Il <strong>perfetto equilibrio tra tradizione e atmosfera informale</strong> rende il Boogie ideale per ogni occasione: dalle cene con amici alle celebrazioni speciali, dai momenti più intimi alle serate in compagnia.</p>"
+      />
+      <SezioneMenu />
+      <SezioneRecensioni />
+      <SezioneFAQ />
+      {/* <SezioneBlog /> — TODO: sezione blog da sviluppare */}
+      <SezioneContatti
+        fotoSrc={mediaChiSiamo[0]?.url ?? '/images/hero/2.avif'}
+        fotoAlt={mediaChiSiamo[0]?.alt || 'Boogie Bistrot'}
+      />
+      <Footer />
+    </main>
+  )
 }

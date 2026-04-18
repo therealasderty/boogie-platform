@@ -4,8 +4,9 @@ import { usePrenotazioni } from '../../hooks/usePrenotazioni'
 import { IconRefresh, IconClose, IconCheck } from '../../icons/index.jsx'
 import styles from './AttesaWidget.module.css'
 
+import { API_BASE } from '../../lib/config'
 const CONFERMA_BASE = 'https://www.boogiebistrot.com/conferma-prenotazione'
-const NETLIFY_BASE = 'https://shimmering-sundae-54b044.netlify.app/.netlify/functions'
+const NETLIFY_BASE = API_BASE
 
 const GIORNI_SHORT = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
 

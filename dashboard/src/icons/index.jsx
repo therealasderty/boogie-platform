@@ -29,6 +29,19 @@ import {
   Clock,
   Info,
   Tag,
+  ForkKnife,
+  Plus,
+  Trash,
+  DotsSixVertical,
+  Eye,
+  EyeSlash,
+  Images,
+  ArrowUp,
+  ArrowDown,
+  MusicNote,
+  Question,
+  Article,
+  MapPin,
 } from '@phosphor-icons/react'
 import GoogleIcon from './GoogleIcon.jsx'
 import TripAdvisorIcon from './TripAdvisorIcon.jsx'
@@ -80,3 +93,26 @@ export { CalendarDots as IconAgenda } from '@phosphor-icons/react'
 export const IconClock = icon(Clock)
 export const IconInfo  = icon(Info)
 export const IconTag   = icon(Tag)
+
+// — Menu
+export const IconForkKnife   = icon(ForkKnife)
+export const IconPlus        = icon(Plus)
+export const IconTrash       = icon(Trash)
+export const IconDrag        = icon(DotsSixVertical)
+export const IconEye         = icon(Eye)
+export const IconEyeSlash    = icon(EyeSlash)
+
+// — Media
+export const IconImages      = icon(Images)
+export const IconArrowUp     = icon(ArrowUp)
+export const IconArrowDown   = icon(ArrowDown)
+export const IconMusicNote   = icon(MusicNote)
+
+// — FAQ
+export const IconFaq         = icon(Question)
+
+// — Blog
+export const IconBlog        = icon(Article)
+
+// — Local SEO
+export const IconLocalSeo    = icon(MapPin)

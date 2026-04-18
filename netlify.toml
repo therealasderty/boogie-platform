@@ -17,3 +17,235 @@
 # Mantieni le tue funzioni programmate così come sono
 [functions.pulizia-chiusure]
   schedule = "0 3 * * 1"
+
+# ── Redirect 301 dal sito vecchio ─────────────────────────────────────────────
+
+# Menu
+[[redirects]]
+  from = "/menu-alla-carta"
+  to = "/menu/specialita"
+  status = 301
+
+[[redirects]]
+  from = "/la-nostra-pizza"
+  to = "/menu/pizza"
+  status = 301
+
+[[redirects]]
+  from = "/cocktails"
+  to = "/menu/cocktails"
+  status = 301
+
+[[redirects]]
+  from = "/carta-dei-vini"
+  to = "/menu/vini"
+  status = 301
+
+[[redirects]]
+  from = "/birre"
+  to = "/menu/birre"
+  status = 301
+
+[[redirects]]
+  from = "/hamburgers"
+  to = "/menu/specialita"
+  status = 301
+
+[[redirects]]
+  from = "/menu-lavoro"
+  to = "/menu"
+  status = 301
+
+# Galleria
+[[redirects]]
+  from = "/galleria-fotografica"
+  to = "/galleria"
+  status = 301
+
+# Pagine legali / account
+[[redirects]]
+  from = "/privacy-policy"
+  to = "/privacy"
+  status = 301
+
+[[redirects]]
+  from = "/fidelity-card"
+  to = "/fidelity"
+  status = 301
+
+[[redirects]]
+  from = "/feedback"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/buoni-regalo"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/eventi-aziendali"
+  to = "/"
+  status = 301
+
+# Pagine standalone eventi
+[[redirects]]
+  from = "/girorisotti"
+  to = "/eventi-speciali/girorisotti"
+  status = 301
+
+[[redirects]]
+  from = "/aperitivo-in-giardino-brianza"
+  to = "/eventi-speciali/aperitivo-in-giardino"
+  status = 301
+
+[[redirects]]
+  from = "/speciale-cassoeula"
+  to = "/eventi-speciali/speciale-cassoeula"
+  status = 301
+
+# Vecchio percorso /eventi/:slug → /eventi-speciali/:slug
+[[redirects]]
+  from = "/eventi/:slug"
+  to = "/eventi-speciali/:slug"
+  status = 301
+
+# ── Local SEO ─────────────────────────────────────────────────────────────────
+# Sotto-percorsi specifici (devono stare PRIMA del redirect base)
+
+[[redirects]]
+  from = "/ristorante-vicino-:city/speciale-girorisotti"
+  to = "/vicino-a/:city/girorisotti"
+  status = 301
+
+[[redirects]]
+  from = "/ristorante-vicino-:city/menu-lavoro"
+  to = "/vicino-a/:city/menu-lavoro"
+  status = 301
+
+# /eventi-aziendali per città: nessuna pagina equivalente nel nuovo sito
+[[redirects]]
+  from = "/ristorante-vicino-:city/eventi-aziendali"
+  to = "/"
+  status = 301
+
+# Pagine base città (senza servizio specifico)
+# ⚠️ Aggiorna la destinazione con lo slug servizio corretto se esiste in Airtable
+[[redirects]]
+  from = "/ristorante-vicino-:city"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/aperitivo-giardino-vicino-:city"
+  to = "/vicino-a/:city/aperitivo-in-giardino"
+  status = 301
+
+[[redirects]]
+  from = "/pizzeria-giardino-vicino-:city"
+  to = "/vicino-a/:city/pizza"
+  status = 301
+
+# ── Pagine inglesi ────────────────────────────────────────────────────────────
+
+[[redirects]]
+  from = "/en/home"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/en/a-la-carte-specialties"
+  to = "/menu/specialita"
+  status = 301
+
+[[redirects]]
+  from = "/en/our-pizza"
+  to = "/menu/pizza"
+  status = 301
+
+[[redirects]]
+  from = "/en/hamburgers"
+  to = "/menu/specialita"
+  status = 301
+
+[[redirects]]
+  from = "/en/lunch-menu"
+  to = "/menu"
+  status = 301
+
+[[redirects]]
+  from = "/en/aperitivo-garden-brianza"
+  to = "/eventi-speciali/aperitivo-in-giardino"
+  status = 301
+
+[[redirects]]
+  from = "/en/loyalty-program"
+  to = "/fidelity"
+  status = 301
+
+[[redirects]]
+  from = "/en/gallery"
+  to = "/galleria"
+  status = 301
+
+[[redirects]]
+  from = "/en/book-a-table"
+  to = "/prenota"
+  status = 301
+
+[[redirects]]
+  from = "/en/thursday-risotto-selection"
+  to = "/eventi-speciali/girorisotti"
+  status = 301
+
+[[redirects]]
+  from = "/en/wine-list"
+  to = "/menu/vini"
+  status = 301
+
+[[redirects]]
+  from = "/en/craft-beers"
+  to = "/menu/birre"
+  status = 301
+
+[[redirects]]
+  from = "/en/cocktails"
+  to = "/menu/cocktails"
+  status = 301
+
+[[redirects]]
+  from = "/en/events/latin-night"
+  to = "/eventi-speciali/serata-latina"
+  status = 301
+
+[[redirects]]
+  from = "/en/corporate-events"
+  to = "/"
+  status = 301
+
+# Blog inglese → blog italiano (slug diversi)
+[[redirects]]
+  from = "/en/blog/san-genesio-hermitage"
+  to = "/blog/sentieri-eremo-san-genesio"
+  status = 301
+
+[[redirects]]
+  from = "/en/blog/perch-risotto-recipe"
+  to = "/blog/risotto-al-pesce-persico"
+  status = 301
+
+[[redirects]]
+  from = "/en/blog/the-local-breweries"
+  to = "/blog/i-birrifici-del-territorio"
+  status = 301
+
+[[redirects]]
+  from = "/en/blog/giro-ditalia-colle-brianza"
+  to = "/blog/giro-ditalia-colle-brianza"
+  status = 301
+
+# Catch-all inglese
+[[redirects]]
+  from = "/en/*"
+  to = "/"
+  status = 301

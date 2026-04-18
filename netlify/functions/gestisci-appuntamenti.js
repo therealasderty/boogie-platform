@@ -33,12 +33,44 @@ exports.handler = async (event) => {
         title:              r.fields['Titolo'] || '',
         data:               r.fields['Data'] || '',
         ora:                r.fields['Ora'] || '',
-        tipo:               r.fields['Tipo'] || 'Appuntamento',
+        oraFine:            r.fields['OraFine'] || '',
+        visibilita:         r.fields['Tipo'] || 'promozione',
         note:               r.fields['Note'] || '',
+        descrizioneBreve:   r.fields['DescrizioneBreve'] || '',
         ricorrenza:         r.fields['Ricorrenza'] || 'nessuna',
         giorniSettimana:    r.fields['GiorniSettimana'] || '',
+        giorniEsclusione:   r.fields['GiorniEsclusione'] || '',
+        bloccaGiorno:       !!r.fields['BloccaGiorno'],
         dataFineRicorrenza: r.fields['DataFineRicorrenza'] || '',
+        slug:               r.fields['Slug'] || '',
+        fotoHero:           r.fields['FotoHero'] || '',
+        tagFotoIntro:       r.fields['TagFotoIntro'] || '',
+        titoloIntro:        r.fields['TitoloIntro'] || '',
+        testoIntro:         r.fields['TestoIntro'] || '',
+        blocchi:            r.fields['Blocchi'] || '[]',
+        stato:              r.fields['Stato'] || 'attivo',
+        metaTitle:          r.fields['MetaTitle'] || '',
+        metaDescription:    r.fields['MetaDescription'] || '',
+        inPrimoPiano:       !!r.fields['InPrimoPiano'],
       }))
+      // Auto-dormiente: eventi singoli con data passata ancora attivi
+      const oggi = new Date().toISOString().split('T')[0]
+      const daArchiviare = appuntamenti.filter(a =>
+        (!a.ricorrenza || a.ricorrenza === 'nessuna') &&
+        a.data && a.data < oggi &&
+        a.stato === 'attivo'
+      )
+      if (daArchiviare.length > 0) {
+        fetch(`${BASE_URL}`, {
+          method: 'PATCH',
+          headers: AT_HEADERS,
+          body: JSON.stringify({
+            records: daArchiviare.map(a => ({ id: a.id, fields: { 'Stato': 'dormiente' } }))
+          })
+        }).catch(() => {}) // fire-and-forget
+        daArchiviare.forEach(a => { a.stato = 'dormiente' })
+      }
+
       return { statusCode: 200, headers: CORS, body: JSON.stringify({ success: true, appuntamenti }) }
     } catch (e) {
       return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: e.message }) }
@@ -54,10 +86,24 @@ exports.handler = async (event) => {
         'Titolo':              body.title,
         'Data':                body.data,
         'Ora':                 body.ora || '',
-        'Tipo':                body.tipo || 'Appuntamento',
+        'OraFine':             body.oraFine || '',
+        'Tipo':                body.visibilita || 'promozione',
         'Note':                body.note || '',
+        'DescrizioneBreve':    body.descrizioneBreve || '',
         'Ricorrenza':          body.ricorrenza || 'nessuna',
         'GiorniSettimana':     body.giorniSettimana || '',
+        'GiorniEsclusione':    body.giorniEsclusione || '',
+        'BloccaGiorno':        !!body.bloccaGiorno,
+        'Slug':                body.slug || '',
+        'FotoHero':            body.fotoHero || '',
+        'TagFotoIntro':        body.tagFotoIntro || '',
+        'TitoloIntro':         body.titoloIntro || '',
+        'TestoIntro':          body.testoIntro || '',
+        'Blocchi':             body.blocchi || '[]',
+        'Stato':               body.stato || 'attivo',
+        'MetaTitle':           body.metaTitle || '',
+        'MetaDescription':     body.metaDescription || '',
+        'InPrimoPiano':        !!body.inPrimoPiano,
         ...(body.dataFineRicorrenza ? { 'DataFineRicorrenza': body.dataFineRicorrenza } : {}),
       }
 

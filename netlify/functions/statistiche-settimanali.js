@@ -129,6 +129,85 @@ function getFestivita(weekday, mon, chiusure) {
   )?.descrizione || null
 }
 
+// Festività italiane fisse + Pasqua 2024-2028
+const FESTIVITA_IT = [
+  ...['2024','2025','2026','2027','2028'].flatMap(y => [
+    `${y}-01-01`, `${y}-01-06`, `${y}-04-25`, `${y}-05-01`,
+    `${y}-06-02`, `${y}-08-15`, `${y}-11-01`, `${y}-12-08`,
+    `${y}-12-25`, `${y}-12-26`,
+  ]),
+  '2024-03-31','2024-04-01','2025-04-20','2025-04-21',
+  '2026-04-05','2026-04-06','2027-03-28','2027-03-29',
+  '2028-04-16','2028-04-17',
+]
+
+const FESTIVITA_NOMI = {
+  '01-01': 'Capodanno', '01-06': 'Epifania', '04-25': 'Festa della Liberazione',
+  '05-01': 'Festa del Lavoro', '06-02': 'Festa della Repubblica',
+  '08-15': 'Ferragosto', '11-01': 'Ognissanti', '12-08': 'Immacolata',
+  '12-25': 'Natale', '12-26': 'Santo Stefano',
+  '2024-03-31': 'Pasqua', '2024-04-01': 'Pasquetta',
+  '2025-04-20': 'Pasqua', '2025-04-21': 'Pasquetta',
+  '2026-04-05': 'Pasqua', '2026-04-06': 'Pasquetta',
+  '2027-03-28': 'Pasqua', '2027-03-29': 'Pasquetta',
+  '2028-04-16': 'Pasqua', '2028-04-17': 'Pasquetta',
+}
+
+function getFestivitaSettimana(dataInizio, dataFine) {
+  const result = []
+  const d = new Date(dataInizio + 'T12:00:00')
+  const fine = new Date(dataFine + 'T12:00:00')
+  while (d <= fine) {
+    const iso = formatDate(d)
+    const mmdd = iso.slice(5)
+    if (FESTIVITA_IT.includes(iso)) {
+      result.push(FESTIVITA_NOMI[iso] || FESTIVITA_NOMI[mmdd] || mmdd)
+    }
+    d.setDate(d.getDate() + 1)
+  }
+  return result
+}
+
+async function fetchMeteoStorico(dataInizio, dataFine) {
+  try {
+    const url = `https://archive-api.open-meteo.com/v1/archive?latitude=45.7833&longitude=9.3667&start_date=${dataInizio}&end_date=${dataFine}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe/Rome`
+    const res = await fetch(url)
+    if (!res.ok) return null
+    const json = await res.json()
+    const giorni = (json.daily?.time || []).map((date, i) => ({
+      date,
+      tMax:    Math.round(json.daily.temperature_2m_max[i]),
+      tMin:    Math.round(json.daily.temperature_2m_min[i]),
+      pioggia: Math.round(json.daily.precipitation_sum[i] * 10) / 10,
+      code:    json.daily.weathercode[i],
+    }))
+    const pioggiaTot  = giorni.reduce((s, g) => s + g.pioggia, 0)
+    const tMaxMedia   = Math.round(giorni.reduce((s, g) => s + g.tMax, 0) / giorni.length)
+    const giorniPioggia = giorni.filter(g => g.pioggia > 1).length
+    return { giorni, pioggiaTot: Math.round(pioggiaTot * 10) / 10, tMaxMedia, giorniPioggia }
+  } catch {
+    return null
+  }
+}
+
+async function fetchEventiSettimana(dataInizio, dataFine) {
+  const AIRTABLE_AGENDA = process.env.AIRTABLE_AGENDA || 'Agenda'
+  try {
+    const formula = encodeURIComponent(
+      `AND(DATETIME_FORMAT({Data},'YYYY-MM-DD') >= "${dataInizio}", DATETIME_FORMAT({Data},'YYYY-MM-DD') <= "${dataFine}")`
+    )
+    const res = await fetch(
+      `${BASE}/${encodeURIComponent(AIRTABLE_AGENDA)}?filterByFormula=${formula}&fields[]=${encodeURIComponent('Titolo')}&fields[]=${encodeURIComponent('Data')}`,
+      { headers: AT_HEADERS }
+    )
+    if (!res.ok) return []
+    const json = await res.json()
+    return (json.records || []).map(r => r.fields['Titolo']).filter(Boolean)
+  } catch {
+    return []
+  }
+}
+
 // Recupera orari e chiusure da Airtable
 async function fetchOrariEChiusure() {
   const [resOrari, resChiusure] = await Promise.all([
@@ -188,7 +267,13 @@ async function calcAndSaveWeek(dataInizio, dataFine, settimana, prevStats) {
   const mon = new Date(dataInizio + 'T12:00:00')
   const sun = new Date(dataFine   + 'T12:00:00')
 
-  const { orari, chiusure } = await fetchOrariEChiusure()
+  const [{ orari, chiusure }, meteo, eventi] = await Promise.all([
+    fetchOrariEChiusure(),
+    fetchMeteoStorico(dataInizio, dataFine),
+    fetchEventiSettimana(dataInizio, dataFine),
+  ])
+  const festivita = getFestivitaSettimana(dataInizio, dataFine)
+  const contesto = { meteo, eventi, festivita }
   const giorniAperti = getGiorniAperti(mon, sun, orari, chiusure)
 
   const formula = encodeURIComponent(
@@ -247,9 +332,9 @@ async function calcAndSaveWeek(dataInizio, dataFine, settimana, prevStats) {
     ? giorniApertiEntries.sort((a, b) => b[1] - a[1])
     : Object.entries(perGiorno).sort((a, b) => b[1] - a[1])
   const weekdayPieno = parseInt(giorniSorted[0][0])
-  const festivita = getFestivita(weekdayPieno, mon, chiusure)
-  const giornopiuPieno = festivita
-    ? `${GIORNI_NOME[weekdayPieno]} (${festivita})`
+  const festivitaGiorno = getFestivita(weekdayPieno, mon, chiusure)
+  const giornopiuPieno = festivitaGiorno
+    ? `${GIORNI_NOME[weekdayPieno]} (${festivitaGiorno})`
     : GIORNI_NOME[weekdayPieno]
   const giornopiuVuoto = GIORNI_NOME[parseInt(giorniSorted[giorniSorted.length - 1][0])]
 
@@ -355,6 +440,7 @@ async function calcAndSaveWeek(dataInizio, dataFine, settimana, prevStats) {
     prenotazioni: totPrenotazioni,
     persone:      totPersone,
     recordId:     statsJson.id,
+    contesto,
     statsForAI: {
       dataInizio, dataFine, settimana,
       prenotazioni:        totPrenotazioni,
@@ -413,11 +499,22 @@ async function callGemini(prompt) {
 }
 
 // Genera analisi settimanale
-async function generateWeeklyAnalysis(s, settimane = []) {
+async function generateWeeklyAnalysis(s, settimane = [], contesto = {}) {
   const fmt = d => { const [,m,g] = d.split('-'); return `${g}/${m}` }
 
-  return callGemini(`Sei l'assistente analitico del Boogie Bistrot. Analizza i dati della settimana ${fmt(s.dataInizio)}–${fmt(s.dataFine)} e produci un report per le proprietarie.
+  const { meteo, eventi, festivita } = contesto
+  const righeContesto = []
+  if (festivita?.length)  righeContesto.push(`Festività: ${festivita.join(', ')}`)
+  if (eventi?.length)     righeContesto.push(`Eventi al locale: ${eventi.join(', ')}`)
+  if (meteo) {
+    const desc = meteo.giorniPioggia >= 4 ? 'settimana molto piovosa' :
+                 meteo.giorniPioggia >= 2 ? 'settimana parzialmente piovosa' : 'settimana prevalentemente soleggiata'
+    righeContesto.push(`Meteo: ${desc}, temp. max media ${meteo.tMaxMedia}°C, pioggia ${meteo.giorniPioggia} giorni su 7`)
+  }
+  const contestoStr = righeContesto.length ? `\nCONTESTO SETTIMANA:\n${righeContesto.map(r => `- ${r}`).join('\n')}\n` : ''
 
+  return callGemini(`Sei l'assistente analitico del Boogie Bistrot. Analizza i dati della settimana ${fmt(s.dataInizio)}–${fmt(s.dataFine)} e produci un report per le proprietarie.
+${contestoStr}
 DATI:
 - Prenotazioni: ${s.prenotazioni} (sito: ${s.prenotazioniSito}, tel: ${s.prenotazioniTel}${s.prenotazioniEventi ? `, eventi: ${s.prenotazioniEventi}` : ''})
 - Coperti: ${s.persone} (Pranzo: ${s.copertipranzo}, Aperitivo: ${s.copertiAperitivo}, Cena: ${s.copertiCena})
@@ -427,6 +524,9 @@ DATI:
 - Slot più richiesto: ${s.slotPiuRichiesto} — fascia meno richiesta: ${s.fasciaMenoRichiesta}
 
 Rispondi ESCLUSIVAMENTE con questo formato, nessun testo fuori dalla struttura:
+
+📍 CONTESTO
+[due righe max che spiegano il contesto della settimana: meteo, festività, eventi speciali — sii concisa e diretta]
 
 ✅ PRO
 • [punto di forza 1 — max 12 parole]
@@ -485,6 +585,47 @@ Rispondi ESCLUSIVAMENTE con questo formato, nessun testo fuori dalla struttura:
 Ottimizzazione Flussi: [azione concreta — max 15 parole]
 Gestione Staff: [azione concreta — max 15 parole]
 Strategia di Crescita: [azione concreta — max 15 parole]`)
+}
+
+// Recupera tutti i record statistiche con tutti i campi + recordId (per rigenerare AI)
+async function fetchAllStatsRecordsFull() {
+  const fields = [
+    'Settimana','Data inizio','Data fine',
+    'Prenotazioni totali','Persone totali',
+    'Prenotazioni sito','Prenotazioni telefono','Prenotazioni eventi',
+    'Cancellazioni','Tasso cancellazione','Lead time medio (giorni)','Dimensione media gruppo',
+    'Clienti unici','Clienti di ritorno',
+    'Giorno più pieno','Giorno più vuoto','Slot più richiesto','Fascia meno richiesta',
+    'Coperti pranzo','Coperti aperitivo','Coperti cena',
+  ].map(f => `fields[]=${encodeURIComponent(f)}`).join('&')
+  const records = await fetchAllRecords(
+    `${BASE}/${STATS_TABLE}?sort[0][field]=Data%20inizio&sort[0][direction]=asc&${fields}`
+  )
+  return records.map(r => ({
+    recordId:            r.id,
+    settimana:           r.fields['Settimana'] || '',
+    dataInizio:          r.fields['Data inizio'] || '',
+    dataFine:            r.fields['Data fine'] || '',
+    prenotazioni:        r.fields['Prenotazioni totali'] || 0,
+    persone:             r.fields['Persone totali'] || 0,
+    prenotazioniSito:    r.fields['Prenotazioni sito'] || 0,
+    prenotazioniTel:     r.fields['Prenotazioni telefono'] || 0,
+    prenotazioniEventi:  r.fields['Prenotazioni eventi'] || 0,
+    cancellazioni:       r.fields['Cancellazioni'] || 0,
+    tassoCancellazione:  parseFloat(String(r.fields['Tasso cancellazione']||'0').replace('%','')) || 0,
+    leadTime:            r.fields['Lead time medio (giorni)'] || 0,
+    dimGruppo:           r.fields['Dimensione media gruppo'] || 0,
+    clientiUnici:        r.fields['Clienti unici'] || 0,
+    clientiRitorno:      r.fields['Clienti di ritorno'] || 0,
+    lastMinute:          0,
+    giornopiuPieno:      r.fields['Giorno più pieno'] || '',
+    giornopiuVuoto:      r.fields['Giorno più vuoto'] || '',
+    slotPiuRichiesto:    r.fields['Slot più richiesto'] || '',
+    fasciaMenoRichiesta: r.fields['Fascia meno richiesta'] || '',
+    copertipranzo:       r.fields['Coperti pranzo'] || 0,
+    copertiAperitivo:    r.fields['Coperti aperitivo'] || 0,
+    copertiCena:         r.fields['Coperti cena'] || 0,
+  }))
 }
 
 // Recupera tutti i record statistiche per l'analisi globale
@@ -628,6 +769,40 @@ exports.handler = async (event) => {
       }
     }
 
+    // — Modalità regenerateAI: rigenera solo il testo AI per tutte le settimane esistenti —
+    if (body.regenerateAI) {
+      const tuttiRecord = await fetchAllStatsRecordsFull()
+      console.log(`[REGEN-AI] ${tuttiRecord.length} settimane trovate`)
+
+      // Versione light per fetchAllStatsRecords (storico per confronto)
+      const storico = await fetchAllStatsRecords()
+
+      const results = []
+      for (const rec of tuttiRecord) {
+        console.log(`[REGEN-AI] ${rec.settimana} (${rec.dataInizio} → ${rec.dataFine})`)
+        try {
+          const [meteoRec, eventiRec] = await Promise.all([
+            fetchMeteoStorico(rec.dataInizio, rec.dataFine).catch(() => null),
+            fetchEventiSettimana(rec.dataInizio, rec.dataFine).catch(() => []),
+          ])
+          const festivitaRec = getFestivitaSettimana(rec.dataInizio, rec.dataFine)
+          const contesto = { meteo: meteoRec, eventi: eventiRec, festivita: festivitaRec }
+          const analisi = await generateWeeklyAnalysis(rec, storico, contesto)
+          await patchStatRecord(rec.recordId, { 'Analisi AI': analisi })
+          results.push({ settimana: rec.settimana, ok: true })
+        } catch (e) {
+          console.error(`[REGEN-AI] ${rec.settimana} fallita:`, e.message)
+          results.push({ settimana: rec.settimana, ok: false, error: e.message })
+        }
+      }
+
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ success: true, message: `Rigenerazione AI completata: ${results.filter(r=>r.ok).length}/${results.length}`, results }),
+      }
+    }
+
     // — Modalità singola settimana (schedulata o manuale) —
     let oggi = new Date()
     if (isManual) {
@@ -673,7 +848,7 @@ exports.handler = async (event) => {
     // Analisi AI settimanale
     let analisiWeek = ''
     try {
-      analisiWeek = await generateWeeklyAnalysis(result.statsForAI, tutteSettimane)
+      analisiWeek = await generateWeeklyAnalysis(result.statsForAI, tutteSettimane, result.contesto || {})
       await patchStatRecord(result.recordId, { 'Analisi AI': analisiWeek })
       console.log('Analisi AI settimanale salvata')
     } catch (e) { console.error('Analisi AI settimanale fallita:', e.message) }

@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { authFetch } from '../lib/authFetch'
+import { API_BASE } from '../lib/config'
 
-const BASE = 'https://shimmering-sundae-54b044.netlify.app/.netlify/functions'
+const BASE = API_BASE
 
 export function useTag() {
   const [tag, setTag] = useState([])

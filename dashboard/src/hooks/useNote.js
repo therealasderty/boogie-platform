@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { authFetch } from '../lib/authFetch'
+import { API_BASE } from '../lib/config'
 
-const API = 'https://shimmering-sundae-54b044.netlify.app/.netlify/functions/note'
+const API = API_BASE + '/note'
 
 export function useNote() {
   const [note, setNote] = useState([])

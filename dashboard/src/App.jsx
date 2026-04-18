@@ -11,6 +11,12 @@ import ClientiPanel from './components/panels/ClientiPanel'
 import CalendarioPanel from './components/panels/CalendarioPanel'
 import AnalyticsPanel from './components/panels/AnalyticsPanel'
 import AgendaPanel from './components/panels/AgendaPanel'
+import MenuPanel from './components/panels/MenuPanel'
+import MediaPanel from './components/panels/MediaPanel'
+import FaqPanel from './components/panels/FaqPanel'
+import BlogPanel from './components/panels/BlogPanel'
+import LocalSeoPanel from './components/panels/LocalSeoPanel'
+import RecensioniSitoPanel from './components/panels/RecensioniSitoPanel'
 import FloatingButton from './components/FloatingButton'
 import ModalPrenotazione from './components/ModalPrenotazione'
 import styles from './App.module.css'
@@ -44,6 +50,12 @@ export default function App() {
       case 'clienti':    return <ClientiPanel />
       case 'analytics':  return <AnalyticsPanel />
       case 'agenda':     return <AgendaPanel />
+      case 'menu':       return <MenuPanel />
+      case 'media':      return <MediaPanel />
+      case 'faq':        return <FaqPanel />
+      case 'blog':       return <BlogPanel />
+      case 'local-seo':  return <LocalSeoPanel />
+      case 'recensioni': return <RecensioniSitoPanel />
       default: return null
     }
   }

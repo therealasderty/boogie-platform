@@ -1,26 +1,119 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@font-face {
+  font-family: 'IvyMode';
+  src: url('/fonts/ivymode-regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
+
+@font-face {
+  font-family: 'IvyMode';
+  src: url('/fonts/ivymode-light.woff') format('woff');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── Design tokens ─────────────────────────────────────────────
+   Modifica qui, si propaga ovunque nel progetto.
+   In Tailwind v4 ogni --color-* diventa una classe bg-*, text-*, border-*.
+   Ogni --radius-* diventa rounded-*.
+   ─────────────────────────────────────────────────────────────── */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  /* Colori base */
+  --color-background: #ffffff;
+  --color-foreground: #171717;
+
+  /* Brand */
+  --color-brand: #eece9d;           /* CTA principale (prenotazioni) */
+  --color-brand-hover: #f5deb3;     /* hover CTA principale (più chiaro) */
+
+  /* Superfici scure (navbar, pannelli, overlay) */
+  --color-surface-dark: #1a1a1a;    /* sfondo dark mode e pannello evento hero */
+  --color-navbar-bg: #000000;       /* navbar scrollata — usare con opacità via /55 ecc. */
+
+  /* Testo */
+  --color-text-muted: oklch(100% 0 0 / 75%);   /* testo secondario su sfondo scuro */
+  --color-text-faint: oklch(100% 0 0 / 45%);   /* label uppercase, meta */
+
+  /* Font */
+  --font-sans: var(--font-raleway), sans-serif;
+  --font-ivy: 'IvyMode', serif;
+
+  /* Superfici neutre calde */
+  --color-surface-warm: #faf8f4;   /* sfondo sezioni chiare (menu, blog, recensioni) */
+
+  /* Tipografia — scale riutilizzabile */
+  --text-label: 0.7rem;        /* label uppercase tiny (indirizzo, telefono…) */
+  --text-meta: 0.875rem;       /* testo secondario / info */
+  --text-body: 1rem;           /* corpo testo standard */
+  --text-lead: 1.125rem;       /* testo introduttivo */
+  --text-section: 1.75rem;     /* titoli di sezione (h2) */
+  --text-title: 2rem;          /* titoli card grandi (menu) */
+  --tracking-label: 0.12em;    /* lettera-spaziatura label uppercase */
+
+  /* Border radius */
+  --radius-btn: 8px;                /* tutti i pulsanti */
+  --radius-card: 12px;              /* card, dropdown, pannelli */
+  --radius-pill: 999px;             /* dots, badge */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@keyframes slide-in-right {
+  from { transform: translateX(80px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes navbar-in {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+@keyframes kenburns-1 {
+  from { transform: scale(1)    translateX(0)     translateY(0); }
+  to   { transform: scale(1.06) translateX(-2%)   translateY(-1.5%); }
+}
+
+@keyframes kenburns-2 {
+  from { transform: scale(1.04) translateX(2%)    translateY(0); }
+  to   { transform: scale(1)    translateX(-1%)   translateY(2%); }
+}
+
+html {
+  background: #1a1a1a; /* overscroll in fondo → colore footer */
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  padding-bottom: 64px; /* spazio per bottom bar mobile */
 }
+
+@media (min-width: 768px) {
+  body {
+    padding-bottom: 0;
+  }
+}
+
+/* Rich text (contenuto eventi + FAQ) */
+.rich-text h2, .faq-risposta h2 { font-family: var(--font-sans); font-weight: 600; color: #fff; font-size: 1.4rem; margin: 1.6em 0 0.4em; }
+.rich-text h3, .faq-risposta h3 { font-family: var(--font-sans); font-weight: 600; color: #fff; font-size: 1.15rem; margin: 1.4em 0 0.35em; }
+.rich-text h2:first-child, .rich-text h3:first-child,
+.faq-risposta h2:first-child, .faq-risposta h3:first-child { margin-top: 0; }
+.rich-text p, .faq-risposta p  { margin: 0 0 0.75em; }
+.rich-text p:last-child, .faq-risposta p:last-child { margin-bottom: 0; }
+.rich-text ul, .faq-risposta ul { padding-left: 1.25em; margin: 0.5em 0 0.75em; list-style: disc; }
+.rich-text ol, .faq-risposta ol { padding-left: 1.25em; margin: 0.5em 0 0.75em; list-style: decimal; }
+.rich-text li, .faq-risposta li { margin-bottom: 0.3em; }
+.rich-text strong, .faq-risposta strong { font-weight: 700; color: oklch(100% 0 0 / 90%); }
+.rich-text em, .faq-risposta em { font-style: italic; }
+.rich-text u, .faq-risposta u  { text-decoration: underline; }
+.rich-text s, .faq-risposta s  { text-decoration: line-through; }
+.rich-text a, .faq-risposta a  { color: var(--color-brand); text-decoration: underline; text-underline-offset: 3px; }
+.rich-text a:hover, .faq-risposta a:hover { color: var(--color-brand-hover); }
+.rich-text blockquote, .faq-risposta blockquote { border-left: 3px solid oklch(100% 0 0 / 20%); margin: 0.75em 0; padding: 4px 16px; color: oklch(100% 0 0 / 50%); font-style: italic; }
+.rich-text hr, .faq-risposta hr { border: none; border-top: 1px solid oklch(100% 0 0 / 10%); margin: 1.5em 0; }

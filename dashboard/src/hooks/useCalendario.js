@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { authFetch } from '../lib/authFetch'
+import { API_BASE } from '../lib/config'
 
-const NETLIFY_BASE = 'https://shimmering-sundae-54b044.netlify.app/.netlify/functions'
+const NETLIFY_BASE = API_BASE
 
 const STATO_COLORI = {
   'Confermata': '#2E7D32',

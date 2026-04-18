@@ -1,0 +1,60 @@
+.panel { animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.panelHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; padding-bottom: 16px; border-bottom: var(--border-style); }
+.panelTitle { display: flex; align-items: center; gap: 8px; font-size: 1.15rem; font-weight: 700; color: var(--text); }
+
+.lista { display: flex; flex-direction: column; gap: 6px; }
+
+.item { background: var(--bg2); border: var(--border-style); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; align-items: center; gap: 10px; }
+.itemBody { flex: 1; min-width: 0; }
+.itemCitta { font-size: 0.92rem; font-weight: 600; color: var(--text); }
+.itemMeta { font-size: 0.78rem; color: var(--text3); margin-top: 3px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.itemActions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+
+.badge { display: inline-flex; padding: 1px 8px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+.badgeOn  { background: rgba(46,125,50,0.12); color: #2E7D32; }
+.badgeOff { background: var(--bg3); color: var(--text3); }
+
+.servizioTag { display: inline-flex; padding: 2px 8px; background: var(--bg3); border-radius: 20px; font-size: 0.72rem; color: var(--text2); font-family: monospace; }
+
+.toggleBtn { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: var(--radius-sm); border: 1px solid transparent; cursor: pointer; transition: background 0.15s; background: none; }
+.toggleOn  { color: #2E7D32; background: rgba(46,125,50,0.1); }
+.toggleOff { color: var(--text3); }
+.toggleOn:hover  { background: rgba(46,125,50,0.18); }
+.toggleOff:hover { background: var(--bg3); }
+
+.empty { font-size: 0.88rem; color: var(--text3); text-align: center; padding: 40px 20px; font-style: italic; }
+.msg { font-size: 0.85rem; padding: 9px 14px; border-radius: var(--radius-sm); margin-bottom: 16px; }
+.ok  { background: rgba(46,125,50,0.1); color: #2E7D32; border: 1px solid rgba(46,125,50,0.3); }
+.err { background: rgba(192,57,43,0.1); color: #C0392B; border: 1px solid rgba(192,57,43,0.3); }
+
+/* Modal */
+.modalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; display: flex; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto; animation: fadeIn 0.15s ease; }
+.modal { background: var(--bg); border: var(--border-style); border-top: 3px solid var(--accent); border-radius: var(--radius); width: 100%; max-width: 680px; box-shadow: var(--shadow-md); animation: slideUp 0.2s ease; margin: auto; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+.modalHeader { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px; border-bottom: var(--border-style); position: sticky; top: 0; background: var(--bg); z-index: 1; border-radius: var(--radius) var(--radius) 0 0; }
+.modalTitolo { font-size: 1rem; font-weight: 700; color: var(--text); }
+.modalBody { padding: 22px 24px; display: flex; flex-direction: column; gap: 16px; }
+.modalFooter { padding: 16px 24px; border-top: var(--border-style); display: flex; align-items: center; justify-content: space-between; gap: 10px; position: sticky; bottom: 0; background: var(--bg); border-radius: 0 0 var(--radius) var(--radius); }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; color: var(--text2); }
+.fieldRow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field input, .field textarea {
+  width: 100%; border: var(--border-style); color: var(--text); padding: 9px 12px;
+  font-size: 0.9rem; outline: none; border-radius: var(--radius-sm);
+  background: var(--bg2); font-family: var(--font-body); line-height: 1.5;
+}
+.field input:focus, .field textarea:focus { border-color: var(--accent); }
+.field textarea { resize: vertical; min-height: 72px; }
+
+.serviziGrid { display: flex; flex-wrap: wrap; gap: 8px; }
+.servizioBtn { padding: 5px 12px; border-radius: 20px; font-size: 0.78rem; font-family: monospace; cursor: pointer; border: 1px solid var(--border); background: var(--bg2); color: var(--text2); transition: all 0.15s; }
+.servizioBtn:hover { border-color: var(--accent); }
+.servizioBtnActive { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 600; }
+
+.seoSection { border: var(--border-style); border-radius: var(--radius-sm); padding: 14px 16px; background: var(--bg2); }
+.seoTitle { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; color: var(--text2); margin-bottom: 12px; }
+
+.urlPreview { font-size: 0.75rem; color: var(--text3); font-family: monospace; margin-top: 4px; }

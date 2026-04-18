@@ -12,15 +12,14 @@ const GIORNI = [
   { label: 'Sabato',    value: 6 },
   { label: 'Domenica',  value: 0 },
 ]
-const FASCE = ['Pranzo', 'Aperitivo', 'Cena']
+const FASCE = ['Pranzo', 'Cena']
 
 const DEFAULT_FASCIA_ORARI = { oraInizio: '', oraFine: '', intervallo: 15 }
 
 function buildState(orari) {
   const fasceOrari = {
-    Pranzo:     { ...DEFAULT_FASCIA_ORARI },
-    Aperitivo:  { ...DEFAULT_FASCIA_ORARI },
-    Cena:       { ...DEFAULT_FASCIA_ORARI },
+    Pranzo: { ...DEFAULT_FASCIA_ORARI },
+    Cena:   { ...DEFAULT_FASCIA_ORARI },
   }
   const grid = {}
   for (const g of GIORNI)

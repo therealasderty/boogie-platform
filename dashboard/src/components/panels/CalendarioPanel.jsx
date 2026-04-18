@@ -1,10 +1,11 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import listPlugin from '@fullcalendar/list'
 import interactionPlugin from '@fullcalendar/interaction'
 import { useCalendario } from '../../hooks/useCalendario'
+import { useAppuntamenti } from '../../hooks/useAppuntamenti'
 import { IconNote, IconClose, IconCalendar, IconRefresh, IconEdit } from '../../icons/index.jsx'
 import ModalPrenotazione from '../ModalPrenotazione.jsx'
 import styles from './CalendarioPanel.module.css'
@@ -26,7 +27,18 @@ const STATO_COLORI = {
 const isMobile = () => window.innerWidth <= 768
 
 function EventoContenuto({ info }) {
-  const { ora, persone, stato, note } = info.event.extendedProps
+  const { ora, persone, stato, note, isAgenda, oraLabel, ricorrente } = info.event.extendedProps
+  if (isAgenda) {
+    const dotColor = ricorrente ? '#9B91F0' : '#c9a84c'
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '1px 4px', width: '100%', overflow: 'hidden', cursor: 'default', opacity: 0.55 }}>
+        <span style={{ flexShrink: 0, width: '5px', height: '5px', borderRadius: '50%', background: dotColor }} />
+        <span style={{ fontSize: '0.72rem', color: 'var(--text2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+          {info.event.title}
+        </span>
+      </div>
+    )
+  }
   const bg = STATO_COLORI[stato] || '#7A6448'
   return (
     <div style={{ background: bg, borderRadius: '4px', padding: '2px 6px', width: '100%', cursor: 'pointer', overflow: 'hidden' }}>
@@ -78,8 +90,49 @@ function ModalDettaglio({ evento, onClose, onEdit }) {
   )
 }
 
+const BASE_SINGOLO = {
+  backgroundColor: 'transparent',
+  borderColor:     'transparent',
+  textColor:       'var(--text2)',
+}
+const BASE_RICORRENTE = {
+  backgroundColor: 'transparent',
+  borderColor:     'transparent',
+  textColor:       'var(--text2)',
+}
+
+function buildAgendaEvents(appuntamenti) {
+  return appuntamenti.flatMap(a => {
+    const oraLabel = a.ora && a.oraFine ? `${a.ora}–${a.oraFine}` : (a.ora || '')
+    const ricorrente = a.ricorrenza && a.ricorrenza !== 'nessuna'
+    const colori = ricorrente ? BASE_RICORRENTE : BASE_SINGOLO
+    const base = {
+      title: a.title,
+      ...colori,
+      editable:      false,
+      extendedProps: { isAgenda: true, ricorrente, oraLabel },
+    }
+    if (!ricorrente) {
+      return a.data ? [{ ...base, id: `ag-${a.id}`, date: a.data }] : []
+    }
+    const endRecur = a.dataFineRicorrenza || undefined
+    if (a.ricorrenza === 'giornaliera') {
+      const esclusi = a.giorniEsclusione ? a.giorniEsclusione.split(',').map(Number) : []
+      const daysOfWeek = [0,1,2,3,4,5,6].filter(d => !esclusi.includes(d))
+      return [{ ...base, id: `ag-${a.id}`, daysOfWeek, startRecur: a.data || undefined, endRecur }]
+    }
+    if (a.ricorrenza === 'settimanale') {
+      const daysOfWeek = a.giorniSettimana ? a.giorniSettimana.split(',').map(Number) : []
+      return [{ ...base, id: `ag-${a.id}`, daysOfWeek, startRecur: a.data || undefined, endRecur }]
+    }
+    return []
+  })
+}
+
 export default function CalendarioPanel() {
   const { eventi, loading, ricarica } = useCalendario()
+  const { appuntamenti } = useAppuntamenti()
+  const agendaEvents = useMemo(() => buildAgendaEvents(appuntamenti), [appuntamenti])
   const calRef = useRef(null)
   const [vistaAttiva, setVistaAttiva] = useState(isMobile() ? 'listWeek' : 'dayGridMonth')
   const [eventoSelezionato, setEventoSelezionato] = useState(null)
@@ -133,9 +186,12 @@ export default function CalendarioPanel() {
           plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
           initialView={vistaAttiva}
           locale="it"
-          events={eventi}
+          events={[...agendaEvents, ...eventi]}
           eventContent={(info) => <EventoContenuto info={info} />}
-          eventClick={(info) => setEventoSelezionato(info.event)}
+          eventClick={(info) => {
+            if (info.event.extendedProps.isAgenda) return
+            setEventoSelezionato(info.event)
+          }}
           headerToolbar={{ left: 'prev,next today', center: 'title', right: '' }}
           buttonText={{ today: 'Vai ad oggi' }}
           height="auto"

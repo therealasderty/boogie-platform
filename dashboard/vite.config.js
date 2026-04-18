@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/.netlify/functions': {
-        target: 'https://shimmering-sundae-54b044.netlify.app',
+        target: 'http://localhost:8888',
         changeOrigin: true,
       }
     }

@@ -3,8 +3,9 @@ import { authFetch } from '../lib/authFetch'
 import { useTag } from '../hooks/useTag'
 import { IconClose, IconCheck } from '../icons/index.jsx'
 import styles from './ModalPrenotazione.module.css'
+import { API_BASE } from '../lib/config'
 
-const NETLIFY_BASE = 'https://shimmering-sundae-54b044.netlify.app/.netlify/functions'
+const NETLIFY_BASE = API_BASE
 const DISPONIBILITA_URL = `${NETLIFY_BASE}/disponibilita`
 const GESTISCI_URL = `${NETLIFY_BASE}/gestisci-prenotazione`
 

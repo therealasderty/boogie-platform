@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAnalytics } from '../../hooks/useAnalytics'
+import { useUmamiStats } from '../../hooks/useUmamiStats'
 import { IconAnalytics } from '../../icons/index.jsx'
 import styles from './AnalyticsPanel.module.css'
 
@@ -154,10 +155,11 @@ function AnalisiAI({ testo, titolo }) {
   if (!testo) return null
 
   const parseSection = (text, emoji) => {
-    const match = text.match(new RegExp(`${emoji}[^\\n]*\\n([\\s\\S]*?)(?=✅|⚠️|💡|$)`))
+    const match = text.match(new RegExp(`${emoji}[^\\n]*\\n([\\s\\S]*?)(?=📍|✅|⚠️|💡|$)`))
     return (match?.[1] || '').trim().split('\n').filter(Boolean)
   }
 
+  const contesto = parseSection(testo, '📍')
   const pro  = parseSection(testo, '✅')
   const crit = parseSection(testo, '⚠️')
   const opp  = parseSection(testo, '💡')
@@ -168,6 +170,11 @@ function AnalisiAI({ testo, titolo }) {
         <span className={styles.analisiAiIcon}>✦</span>
         <span className={styles.analisiAiTitolo}>{titolo || 'Analisi AI'}</span>
       </div>
+      {contesto.length > 0 && (
+        <div className={styles.analisiContesto}>
+          {contesto.map((r, i) => <p key={i}>{r.replace(/^•\s*/, '')}</p>)}
+        </div>
+      )}
       <div className={styles.analisiAiBoxes}>
         <div className={`${styles.analisiBox} ${styles.analisiBoxPro}`}>
           <div className={styles.analisiBoxTitle}>✅ PRO</div>
@@ -221,7 +228,18 @@ const GIORNI_NOME_FULL = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giov
 // Mappa da nome abbreviato (Mon-first) al nome completo
 const GIORNI_TO_NOME = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
 
-function VistaSettimana({ s, medie }) {
+function UmamiKpi({ data, loading }) {
+  if (loading) return <div className={styles.kpiCard} style={{ opacity: 0.4, fontSize: '0.75rem', color: 'var(--text3)' }}>Caricamento dati web…</div>
+  if (!data) return null
+  return (
+    <>
+      <KpiCard label="Visite sito" value={data.visite} sub="sessioni nel periodo" />
+      <KpiCard label="Visitatori unici" value={data.visitatori} sub={data.bounceRate ? `bounce ${data.bounceRate}%` : undefined} />
+    </>
+  )
+}
+
+function VistaSettimana({ s, medie, umami, umamiLoading }) {
   const chiusiSet = new Set(s.giorniChiusi ? s.giorniChiusi.split(', ') : [])
   const totaleCoperti = s.copertipranzo + s.copertiAperitivo + s.copertiCena
   const fasceBarre = [
@@ -254,6 +272,7 @@ function VistaSettimana({ s, medie }) {
         <KpiCard label="Anticipo medio prenotazione" value={`${s.leadTime}g`} sub="giorni prima dell'arrivo" />
         <KpiCard label="Dim. media gruppo" value={s.dimGruppo} sub="persone" />
         <KpiCard label="Clienti unici"     value={s.clientiUnici} sub={s.clientiDiRitorno > 0 ? `${s.clientiDiRitorno} di ritorno` : undefined} />
+        <UmamiKpi data={umami} loading={umamiLoading} />
       </div>
       <div className={`${styles.card} ${styles.cardFullWidth}`}>
         <div className={styles.cardTitle}>Insights settimana</div>
@@ -292,7 +311,7 @@ function VistaSettimana({ s, medie }) {
 }
 
 // — Vista globale con medie
-function VistaGlobale({ settimane }) {
+function VistaGlobale({ settimane, umami, umamiLoading }) {
   const n = settimane.length
 
   const mediaPrenotazioni = avg(settimane.map(s => s.prenotazioni))
@@ -391,6 +410,34 @@ function VistaGlobale({ settimane }) {
           <LineChart settimane={settimane} />
         </div>
       )}
+
+      {/* ── Dati digitali Umami ── */}
+      {(umamiLoading || umami) && (
+        <div className={styles.chartsGrid}>
+          <div className={styles.card}>
+            <div className={styles.cardTitle}>Top pagine</div>
+            {umamiLoading && <div style={{ fontSize: '0.75rem', color: 'var(--text3)', padding: '1rem 0' }}>Caricamento…</div>}
+            {umami?.pages?.length > 0 && (
+              <BarChart items={umami.pages.map(p => ({
+                label: p.url.replace(/^https?:\/\/[^/]+/, '') || '/',
+                value: p.visite,
+              }))} />
+            )}
+            {!umamiLoading && !umami?.pages?.length && <div style={{ fontSize: '0.75rem', color: 'var(--text3)', padding: '1rem 0' }}>Nessun dato</div>}
+          </div>
+          <div className={styles.card}>
+            <div className={styles.cardTitle}>Sorgenti di traffico</div>
+            {umamiLoading && <div style={{ fontSize: '0.75rem', color: 'var(--text3)', padding: '1rem 0' }}>Caricamento…</div>}
+            {umami?.sources?.length > 0 && (
+              <BarChart items={umami.sources.map(s => ({
+                label: s.sorgente,
+                value: s.visite,
+              }))} />
+            )}
+            {!umamiLoading && !umami?.sources?.length && <div style={{ fontSize: '0.75rem', color: 'var(--text3)', padding: '1rem 0' }}>Nessun dato</div>}
+          </div>
+        </div>
+      )}
     </>
   )
 }
@@ -405,6 +452,17 @@ export default function AnalyticsPanel() {
     prenotazioni: avg(settimane.map(s => s.prenotazioni)),
     persone:      avg(settimane.map(s => s.persone)),
   } : null
+
+  // Umami — settimana corrente
+  const { data: umamiWeek, loading: umamiWeekLoading } = useUmamiStats(
+    s?.dataInizio || null,
+    s?.dataFine   || null
+  )
+
+  // Umami — intero periodo (vista globale)
+  const startGlobal = settimane.length > 0 ? settimane[settimane.length - 1].dataInizio : null
+  const endGlobal   = settimane.length > 0 ? settimane[0].dataFine                      : null
+  const { data: umamiGlobal, loading: umamiGlobalLoading } = useUmamiStats(startGlobal, endGlobal)
 
   return (
     <div className={styles.panel}>
@@ -454,8 +512,8 @@ export default function AnalyticsPanel() {
 
       {!loading && settimane.length > 0 && (
         <div className={styles.body}>
-          {vista === 'settimana' && s && <VistaSettimana s={s} medie={medie} />}
-          {vista === 'globale' && <VistaGlobale settimane={settimane} />}
+          {vista === 'settimana' && s && <VistaSettimana s={s} medie={medie} umami={umamiWeek} umamiLoading={umamiWeekLoading} />}
+          {vista === 'globale' && <VistaGlobale settimane={settimane} umami={umamiGlobal} umamiLoading={umamiGlobalLoading} />}
         </div>
       )}
     </div>
