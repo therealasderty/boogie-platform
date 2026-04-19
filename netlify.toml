@@ -21,6 +21,9 @@
 [functions.pulizia-chiusure]
   schedule = "0 3 * * 1"
 
+[functions.statistiche-settimanali]
+  schedule = "0 23 * * 0"
+
 # ── Redirect 301 dal sito vecchio ─────────────────────────────────────────────
 
 # Menu
