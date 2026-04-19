@@ -127,7 +127,7 @@ export default function FormPrenotazione() {
 
   if (stato === 'successo') {
     return (
-      <div className="rounded-card border border-brand/30 bg-brand/10 p-10 text-center">
+      <div className="rounded-card border border-brand/30 bg-brand/10 p-10 text-center mt-10">
         <p className="text-black font-medium mb-3" style={{ fontSize: 'var(--text-section)' }}>Prenotazione inviata ✓</p>
         <p className="text-neutral-600" style={{ fontSize: 'var(--text-body)' }}>
           Riceverai una conferma via email. Ti aspettiamo il {dataLeggibile(data)} alle {oraSelezionata}.
@@ -151,6 +151,10 @@ export default function FormPrenotazione() {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
+      <p className="text-black/50 leading-relaxed" style={{ fontSize: 'var(--text-lead)' }}>
+        Scegli la data e l&apos;orario, compila i tuoi dati e invia la richiesta.
+        Riceverai una conferma via email entro pochi minuti.
+      </p>
 
       {/* Data */}
       <div>

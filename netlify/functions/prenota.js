@@ -102,7 +102,7 @@ exports.handler = async (event) => {
   }
 
   // ── 3. Notifica Telegram ─────────────────────────────────────────
-  const linkConferma = `${SITO_URL}/conferma-prenotazione?id=${recordId}`;
+  const linkConferma = `${SITO_URL}/conferma-prenotazione.html?id=${recordId}`;
   const preferenzaEmoji = preferenza === 'Pizza' ? '🍕' : preferenza === 'Cucina' ? '🍽️' : '';
 
   try {

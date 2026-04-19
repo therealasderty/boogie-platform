@@ -93,7 +93,7 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
                 fill
                 className="object-cover"
                 priority={i === 0}
-                sizes="80vw"
+                sizes="(min-width: 768px) 80vw, 100vw"
               />
             </div>
           </div>

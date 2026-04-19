@@ -35,16 +35,20 @@ exports.handler = async (event) => {
   }
 
   try {
-    const [statsRes, pagesRes, sourcesRes] = await Promise.all([
+    const [statsRes, pagesRes, sourcesRes, devicesRes, prenotaRes] = await Promise.all([
       fetch(`${UMAMI_BASE}/websites/${UMAMI_WEBSITE_ID}/stats?startAt=${start}&endAt=${end}`, { headers: atHeaders }),
       fetch(`${UMAMI_BASE}/websites/${UMAMI_WEBSITE_ID}/metrics?type=url&startAt=${start}&endAt=${end}&limit=8`, { headers: atHeaders }),
       fetch(`${UMAMI_BASE}/websites/${UMAMI_WEBSITE_ID}/metrics?type=referrer&startAt=${start}&endAt=${end}&limit=8`, { headers: atHeaders }),
+      fetch(`${UMAMI_BASE}/websites/${UMAMI_WEBSITE_ID}/metrics?type=device&startAt=${start}&endAt=${end}`, { headers: atHeaders }),
+      fetch(`${UMAMI_BASE}/websites/${UMAMI_WEBSITE_ID}/stats?startAt=${start}&endAt=${end}&url=%2Fprenota`, { headers: atHeaders }),
     ])
 
-    const [stats, pages, sources] = await Promise.all([
+    const [stats, pages, sources, devices, prenotaStats] = await Promise.all([
       statsRes.json(),
       pagesRes.json(),
       sourcesRes.json(),
+      devicesRes.json(),
+      prenotaRes.json(),
     ])
 
     return {
@@ -53,12 +57,14 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         success: true,
         data: {
-          visite:     stats.visits?.value    ?? 0,
-          pageviews:  stats.pageviews?.value ?? 0,
-          visitatori: stats.visitors?.value  ?? 0,
-          bounceRate: stats.bounces?.value   ?? 0,
+          visite:        stats.visits?.value    ?? 0,
+          pageviews:     stats.pageviews?.value ?? 0,
+          visitatori:    stats.visitors?.value  ?? 0,
+          bounceRate:    stats.bounces?.value   ?? 0,
+          visitePrenota: prenotaStats.visits?.value ?? 0,
           pages:   (Array.isArray(pages)   ? pages   : []).map(p => ({ url: p.x, visite: p.y })),
           sources: (Array.isArray(sources) ? sources : []).map(s => ({ sorgente: s.x || '(diretto)', visite: s.y })),
+          devices: (Array.isArray(devices) ? devices : []).map(d => ({ device: d.x || 'altro', visite: d.y })),
         },
       }),
     }

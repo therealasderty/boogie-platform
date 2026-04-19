@@ -144,11 +144,12 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
     return () => { document.body.style.overflow = '' }
   }, [mobileOpen])
 
-  // Chiudi menu quando si naviga
+  // Chiudi menu e torna in cima quando si naviga
   useEffect(() => {
     setMobileOpen(false)
     setMenuScrolled(false)
     setPrenotaVisible(false)
+    window.scrollTo({ top: 0, behavior: 'instant' })
   }, [pathname])
 
   // Nascondi bottom bar quando la sezione #prenota è visibile
@@ -445,11 +446,6 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
               </li>
             ))}
 
-            <li className="border-b border-white/10">
-              <button className="flex items-center gap-2 py-4 text-white text-base cursor-pointer">
-                IT <ChevronDown />
-              </button>
-            </li>
           </ul>
 
           {/* Orari */}

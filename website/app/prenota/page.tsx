@@ -23,10 +23,6 @@ export default function PrenotaPage() {
       <section className="py-20 px-6 md:px-14 bg-white">
         <div className="max-w-2xl mx-auto">
           <FadeIn>
-            <p className="text-black/50 leading-relaxed mb-10" style={{ fontSize: 'var(--text-lead)' }}>
-              Scegli la data e l&apos;orario, compila i tuoi dati e invia la richiesta.
-              Riceverai una conferma via email entro pochi minuti.
-            </p>
             <FormPrenotazione />
           </FadeIn>
         </div>

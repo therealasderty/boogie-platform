@@ -91,11 +91,19 @@ export default function MenuLista({ sezioni, mostraAllergeni = false }: MenuList
                           {v.descrizione}
                         </span>
                       )}
-                      {v.note && (
-                        <span className="text-neutral-300 font-light" style={{ fontSize: 'var(--text-label)' }}>
-                          {v.note}
-                        </span>
-                      )}
+                      {(() => {
+                        if (!v.note) return null
+                        let note = v.note
+                        if (v.senzaGlutine) note = note.replace(/senza\s+glutine/gi, '')
+                        if (v.senzaLattosio) note = note.replace(/senza\s+lattosio/gi, '')
+                        const cleaned = note.replace(/^[\s,;.·\-]+|[\s,;.·\-]+$/g, '').trim()
+                        if (!cleaned) return null
+                        return (
+                          <span className="text-neutral-300 font-light" style={{ fontSize: 'var(--text-label)' }}>
+                            {cleaned}
+                          </span>
+                        )
+                      })()}
                     </div>
                     <div className="flex flex-col items-end gap-1 flex-shrink-0">
                       {v.prezzo != null && (

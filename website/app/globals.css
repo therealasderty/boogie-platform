@@ -84,6 +84,7 @@
 
 html {
   background: #1a1a1a; /* overscroll in fondo → colore footer */
+  overflow-x: clip;    /* evita scroll orizzontale da animazioni translateX pre-trigger */
 }
 
 body {
@@ -91,6 +92,10 @@ body {
   color: var(--color-foreground);
   font-family: var(--font-sans);
   padding-bottom: 64px; /* spazio per bottom bar mobile */
+}
+
+h2 {
+  line-height: 1.15;
 }
 
 @media (min-width: 768px) {

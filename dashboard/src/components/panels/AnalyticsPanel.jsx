@@ -228,13 +228,19 @@ const GIORNI_NOME_FULL = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giov
 // Mappa da nome abbreviato (Mon-first) al nome completo
 const GIORNI_TO_NOME = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
 
-function UmamiKpi({ data, loading }) {
+function UmamiKpi({ data, loading, prenotazioniSito }) {
   if (loading) return <div className={styles.kpiCard} style={{ opacity: 0.4, fontSize: '0.75rem', color: 'var(--text3)' }}>Caricamento dati web…</div>
   if (!data) return null
+  const pxPerVisit = data.visite > 0 ? (data.pageviews / data.visite).toFixed(1) : '—'
+  const convRate = data.visitePrenota > 0 && prenotazioniSito > 0
+    ? Math.min(100, Math.round(prenotazioniSito / data.visitePrenota * 100)) + '%'
+    : '—'
   return (
     <>
       <KpiCard label="Visite sito" value={data.visite} sub="sessioni nel periodo" />
       <KpiCard label="Visitatori unici" value={data.visitatori} sub={data.bounceRate ? `bounce ${data.bounceRate}%` : undefined} />
+      <KpiCard label="Pagine per visita" value={pxPerVisit} sub={`${data.pageviews} pageviews tot.`} />
+      <KpiCard label="Conv. /prenota" value={convRate} sub={data.visitePrenota ? `${data.visitePrenota} visite` : undefined} />
     </>
   )
 }
@@ -272,7 +278,7 @@ function VistaSettimana({ s, medie, umami, umamiLoading }) {
         <KpiCard label="Anticipo medio prenotazione" value={`${s.leadTime}g`} sub="giorni prima dell'arrivo" />
         <KpiCard label="Dim. media gruppo" value={s.dimGruppo} sub="persone" />
         <KpiCard label="Clienti unici"     value={s.clientiUnici} sub={s.clientiDiRitorno > 0 ? `${s.clientiDiRitorno} di ritorno` : undefined} />
-        <UmamiKpi data={umami} loading={umamiLoading} />
+        <UmamiKpi data={umami} loading={umamiLoading} prenotazioniSito={s.prenotazioniSito} />
       </div>
       <div className={`${styles.card} ${styles.cardFullWidth}`}>
         <div className={styles.cardTitle}>Insights settimana</div>
@@ -372,6 +378,13 @@ function VistaGlobale({ settimane, umami, umamiLoading }) {
         <KpiCard label="Anticipo medio prenotazione" value={`${mediaLeadTime}g`} sub="giorni prima dell'arrivo" />
         <KpiCard label="Dim. media gruppo"       value={mediaDimGruppo} sub="persone" />
         <KpiCard label="Clienti unici/sett."     value={mediaClienti} sub={mediaClientiRitorno > 0 ? `media ${mediaClientiRitorno} di ritorno` : undefined} />
+        {!umamiLoading && umami && (
+          <>
+            <KpiCard label="Visite sito" value={umami.visite} sub="nel periodo" />
+            <KpiCard label="Pagine per visita" value={umami.visite > 0 ? (umami.pageviews / umami.visite).toFixed(1) : '—'} sub={`${umami.pageviews} pageviews tot.`} />
+            <KpiCard label="Conv. /prenota" value={umami.visitePrenota > 0 && totPrenSito > 0 ? Math.min(100, Math.round(totPrenSito / umami.visitePrenota * 100)) + '%' : '—'} sub={umami.visitePrenota ? `${umami.visitePrenota} visite prenota` : undefined} />
+          </>
+        )}
       </div>
       <div className={`${styles.card} ${styles.cardFullWidth}`}>
         <div className={styles.cardTitle}>Pattern ricorrenti</div>
@@ -435,6 +448,14 @@ function VistaGlobale({ settimane, umami, umamiLoading }) {
               }))} />
             )}
             {!umamiLoading && !umami?.sources?.length && <div style={{ fontSize: '0.75rem', color: 'var(--text3)', padding: '1rem 0' }}>Nessun dato</div>}
+          </div>
+          <div className={styles.card}>
+            <div className={styles.cardTitle}>Dispositivi</div>
+            {umamiLoading && <div style={{ fontSize: '0.75rem', color: 'var(--text3)', padding: '1rem 0' }}>Caricamento…</div>}
+            {umami?.devices?.length > 0 && (
+              <PieChart items={umami.devices.map(d => ({ label: d.device, value: d.visite }))} />
+            )}
+            {!umamiLoading && !umami?.devices?.length && <div style={{ fontSize: '0.75rem', color: 'var(--text3)', padding: '1rem 0' }}>Nessun dato</div>}
           </div>
         </div>
       )}
