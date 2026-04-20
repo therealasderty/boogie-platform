@@ -25,7 +25,7 @@ function useCloudinaryWidget(onUpload) {
       alert('Widget Cloudinary non ancora caricato, riprova tra un secondo.')
       return
     }
-    const widget = window.cloudinary.createUploadWidget(
+    window.cloudinary.createUploadWidget(
       {
         cloudName:    CL_CLOUD_NAME,
         uploadPreset: CL_PRESET,
@@ -37,14 +37,9 @@ function useCloudinaryWidget(onUpload) {
       (error, result) => {
         if (!error && result?.event === 'success') {
           onUpload(result.info.secure_url)
-          widget.destroy()
-        }
-        if (result?.event === 'close') {
-          widget.destroy()
         }
       }
-    )
-    widget.open()
+    ).open()
   }
 
   return { open }
