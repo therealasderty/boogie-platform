@@ -10,39 +10,33 @@ const AIRTABLE_BASE_ID = import.meta.env.VITE_AIRTABLE_BASE_ID
 const CL_CLOUD_NAME    = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
 const CL_PRESET        = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
 
-function useCloudinaryWidget(onUpload) {
-  useEffect(() => {
-    if (!document.getElementById('cloudinary-widget-script')) {
-      const script = document.createElement('script')
-      script.id  = 'cloudinary-widget-script'
-      script.src = 'https://upload-widget.cloudinary.com/global/all.js'
-      document.body.appendChild(script)
-    }
-  }, [])
+function useCloudinaryUpload(onUpload) {
+  const inputRef = useRef(null)
+  const [uploading, setUploading] = useState(false)
 
-  function open() {
-    if (!window.cloudinary) {
-      alert('Widget Cloudinary non ancora caricato, riprova tra un secondo.')
-      return
+  function open() { inputRef.current?.click() }
+
+  async function handleChange(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('upload_preset', CL_PRESET)
+      const res  = await fetch(`https://api.cloudinary.com/v1_1/${CL_CLOUD_NAME}/image/upload`, { method: 'POST', body: fd })
+      const data = await res.json()
+      if (data.secure_url) onUpload(data.secure_url)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setUploading(false)
+      e.target.value = ''
     }
-    window.cloudinary.createUploadWidget(
-      {
-        cloudName:    CL_CLOUD_NAME,
-        uploadPreset: CL_PRESET,
-        sources:      ['local', 'url', 'camera'],
-        multiple:     false,
-        language:     'it',
-        cropping:     false,
-      },
-      (error, result) => {
-        if (!error && result?.event === 'success') {
-          onUpload(result.info.secure_url)
-        }
-      }
-    ).open()
   }
 
-  return { open }
+  const input = <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleChange} />
+  return { open, input, uploading }
 }
 const BASE = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}`
 const AT_HEADERS = { 'Authorization': `Bearer ${AIRTABLE_TOKEN}`, 'Content-Type': 'application/json' }
@@ -65,7 +59,7 @@ function MediaModal({ item, onClose, onSave, tagEsistenti = [] }) {
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState(null)
 
-  const { open: openWidget } = useCloudinaryWidget(url => setForm(f => ({ ...f, url })))
+  const { open: openWidget, input: cloudinaryInput, uploading } = useCloudinaryUpload(url => setForm(f => ({ ...f, url })))
 
   function set(field, val) { setForm(f => ({ ...f, [field]: val })) }
 
@@ -135,8 +129,9 @@ function MediaModal({ item, onClose, onSave, tagEsistenti = [] }) {
             <label style={{ fontSize: '0.75rem', color: 'var(--text3)', display: 'block', marginBottom: 4 }}>Immagine *</label>
             <div style={{ display: 'flex', gap: 6 }}>
               <input style={{ ...inputStyle, flex: 1 }} value={form.url} onChange={e => set('url', e.target.value)} placeholder="https://res.cloudinary.com/boogie-bistrot/..." />
-              <button type="button" className="btn-secondary" onClick={openWidget} style={{ whiteSpace: 'nowrap', fontSize: '0.8rem' }}>
-                ↑ Carica
+              {cloudinaryInput}
+              <button type="button" className="btn-secondary" onClick={openWidget} disabled={uploading} style={{ whiteSpace: 'nowrap', fontSize: '0.8rem', opacity: uploading ? 0.6 : 1 }}>
+                {uploading ? 'Caricamento…' : '↑ Carica'}
               </button>
             </div>
           </div>
