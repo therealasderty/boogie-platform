@@ -33,7 +33,20 @@ function formatGiorniSettimana(giorniStr: string): string {
   return ranges.join(', ')
 }
 
-function formatLabelEvento(e: { data: string | null; ricorrente: boolean; ricorrenza: string; giornoSettimana: string; giorniEsclusione: string; orario: string; orarioFine: string }): string {
+function formatGiornaliera(esclusiEvento: number[], giorniChiusi: number[]): string {
+  const tuttiEsclusi = [...new Set([...esclusiEvento, ...giorniChiusi])]
+  const attivi = ORDINE_SETTIMANA.filter(d => !tuttiEsclusi.includes(d))
+  if (attivi.length === 0) return ''
+  if (attivi.length === 7) return 'Tutti i giorni'
+  const firstIdx = ORDINE_SETTIMANA.indexOf(attivi[0])
+  const lastIdx  = ORDINE_SETTIMANA.indexOf(attivi[attivi.length - 1])
+  const inRange  = ORDINE_SETTIMANA.slice(firstIdx, lastIdx + 1)
+  const esclusiInRange = inRange.filter(d => !attivi.includes(d))
+  const rangeLabel = firstIdx === lastIdx ? GIORNI_LABEL[attivi[0]] : `${GIORNI_LABEL[attivi[0]]}–${GIORNI_LABEL[attivi[attivi.length - 1]]}`
+  return esclusiInRange.length === 0 ? rangeLabel : `${rangeLabel} (escluso ${esclusiInRange.map(n => GIORNI_BREVI[n]).join(', ')})`
+}
+
+function formatLabelEvento(e: { data: string | null; ricorrente: boolean; ricorrenza: string; giornoSettimana: string; giorniEsclusione: string; orario: string; orarioFine: string }, giorniChiusi: number[] = []): string {
   let giornoLabel = ''
 
   if (e.data && !e.ricorrente) {
@@ -41,12 +54,7 @@ function formatLabelEvento(e: { data: string | null; ricorrente: boolean; ricorr
     giornoLabel = `${GIORNI_LABEL[d.getDay()]} ${d.getDate()} ${MESI_FULL[d.getMonth()]}`
   } else if (e.ricorrenza === 'giornaliera') {
     const esclusi = e.giorniEsclusione ? e.giorniEsclusione.split(',').map(Number).filter(n => !isNaN(n)) : []
-    if (esclusi.length === 0) {
-      giornoLabel = 'Tutti i giorni'
-    } else {
-      const nomiEsclusi = esclusi.map(n => GIORNI_BREVI[n]).filter(Boolean).join(', ')
-      giornoLabel = `Lun–Dom (escluso ${nomiEsclusi})`
-    }
+    giornoLabel = formatGiornaliera(esclusi, giorniChiusi)
   } else if (e.ricorrenza === 'settimanale' && e.giornoSettimana) {
     let label = formatGiorniSettimana(e.giornoSettimana) || ''
     if (e.giorniEsclusione) {
@@ -83,14 +91,14 @@ function Card({ href, titolo, meta, avatar, esterno = false, highlight = false }
       transition: 'all 0.2s',
     }}>
       {avatar && (
-        <div style={{ width: 72, flexShrink: 0, position: 'relative', alignSelf: 'stretch' }}>
+        <div style={{ width: highlight ? 90 : 72, flexShrink: 0, position: 'relative', alignSelf: 'stretch' }}>
           <Image src={avatar} alt={titolo} fill style={{ objectFit: 'cover' }} />
         </div>
       )}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px' }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 12, padding: highlight ? '18px 16px' : '14px 16px' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: '#fff', lineHeight: 1.3 }}>{titolo}</p>
-          {meta && <p style={{ margin: '3px 0 0', fontSize: '0.85rem', fontWeight: 300, color: 'rgba(255,255,255,0.4)' }}>{meta}</p>}
+          <p style={{ margin: 0, fontSize: highlight ? '1.1rem' : '1rem', fontWeight: 600, color: '#fff', lineHeight: 1.3 }}>{titolo}</p>
+          {meta && <p style={{ margin: '4px 0 0', fontSize: highlight ? '0.88rem' : '0.85rem', fontWeight: 300, color: 'rgba(255,255,255,0.4)' }}>{meta}</p>}
         </div>
         <svg width="16" height="16" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, color: 'rgba(255,255,255,0.25)' }}>
           <path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -117,6 +125,12 @@ export default async function LinksPage() {
     fetchMedia('cocktail'),
   ])
   const orariDisplay = buildOrariLines(orari, chiusure)
+  const giorniConOrari = new Set(orari.filter(o => o.attivo && o.giorno !== null).map(o => o.giorno as number))
+  const chiusiOrdinari = [0,1,2,3,4,5,6].filter(d => !giorniConOrari.has(d))
+  const chiusiSettimanali = chiusure
+    .filter(c => c.tipo === 'Giorno della settimana' && c.tipoApertura === 'Chiusura' && c.giorno !== null)
+    .map(c => c.giorno as number)
+  const giorniChiusi = [...new Set([...chiusiOrdinari, ...chiusiSettimanali])]
 
   const eventiAttivi = eventi.filter(e => {
     if (e.stato !== 'attivo') return false
@@ -198,7 +212,7 @@ export default async function LinksPage() {
                   key={i}
                   href={e.slug ? `/eventi-speciali/${e.slug}` : '/eventi-speciali'}
                   titolo={e.titolo}
-                  meta={formatLabelEvento(e)}
+                  meta={formatLabelEvento(e, giorniChiusi)}
                   avatar={e.fotoHero || undefined}
                   highlight
                 />
