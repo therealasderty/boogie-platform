@@ -19,8 +19,12 @@ import Footer from '@/components/Footer'
 import { fetchMedia } from '@/lib/media'
 
 export default async function GalleriaPage() {
-  const mediaGalleria = await fetchMedia('galleria')
-  const immagini = mediaGalleria.map(m => ({ src: m.url, alt: m.alt || m.nome }))
+  const [mediaLocation, mediaCarta] = await Promise.all([
+    fetchMedia('location'),
+    fetchMedia('carta'),
+  ])
+  const immaginiLocation = mediaLocation.map(m => ({ src: m.url, alt: m.alt || m.nome }))
+  const immaginiCarta = mediaCarta.map(m => ({ src: m.url, alt: m.alt || m.nome }))
 
   return (
     <main>
@@ -33,19 +37,21 @@ export default async function GalleriaPage() {
       <SezioneIntro
         inverti
         fotoContenuta
+        nascondiImmagineMobile
         breadcrumb={[
           { label: 'Home', href: '/' },
           { label: 'Galleria' },
         ]}
         label="I nostri spazi"
-        titolo="Un luogo che vale una visita, prima ancora di sedersi a tavola"
-        testo="<p>Il Boogie Bistrot è prima di tutto un luogo. Un giardino che cambia con le stagioni, sale interne che raccontano una storia, angoli curati in ogni dettaglio. Queste foto sono un assaggio di quello che ti aspetta.</p><br/><p>Dal tavolo sotto il pergolato alla sala con il camino in inverno: ogni spazio ha la sua personalità, ogni visita la sua atmosfera.</p>"
+        titolo="Un viaggio visivo nel cuore del Boogie Bistrot"
+        testo="<p>Ti diamo il benvenuto nella nostra galleria fotografica. Queste immagini ti faranno scoprire il <strong>Boogie Bistrot</strong> in ogni suo aspetto: dai piatti della nostra cucina, che unisce <strong>tradizione brianzola e creatività</strong>, agli spazi della nostra location storica a Colle Brianza.</p><br/><p>Sfogliando queste foto, potrai vedere il nostro <strong>giardino</strong>, particolarmente apprezzato nelle serate estive per la sua naturale frescura, e i nostri piatti più amati.</p><br/><p>Le immagini parlano spesso più delle parole... ma <strong>l'esperienza dal vivo è ancora meglio!</strong></p>"
         immagini={[
           { src: '/images/hero/2.avif', alt: 'Il giardino di Boogie Bistrot' },
           { src: '/images/hero/1.webp', alt: 'Le sale interne' },
         ]}
       />
-      <MosaicoFoto immagini={immagini.length > 0 ? immagini : undefined} />
+      {/* Galleria fotografica — su desktop usa tag location + carta */}
+      <MosaicoFoto immagini={[...immaginiLocation, ...immaginiCarta].length > 0 ? [...immaginiLocation, ...immaginiCarta] : undefined} />
       <SezioneFAQ />
       <SezioneContatti />
       <Footer />

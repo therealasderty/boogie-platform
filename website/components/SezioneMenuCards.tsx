@@ -33,8 +33,7 @@ function Card({ v, priority = false }: { v: MenuCard; priority?: boolean }) {
   return (
     <Link
       href={v.href}
-      className="group relative flex items-end overflow-hidden rounded-card w-full"
-      style={{ height: '400px' }}
+      className="group relative flex items-end overflow-hidden rounded-card w-full aspect-square md:aspect-auto md:h-[400px]"
     >
       <div className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-105">
         <Image

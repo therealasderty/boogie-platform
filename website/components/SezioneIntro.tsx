@@ -17,9 +17,10 @@ interface SezioneIntroProps {
   fotoContenuta?: boolean
   breadcrumb?: BreadcrumbItem[]
   fullWidth?: boolean
+  nascondiImmagineMobile?: boolean
 }
 
-export default function SezioneIntro({ immagini = [], label, titolo, testo, inverti = false, cta, fotoContenuta = false, breadcrumb, fullWidth = false }: SezioneIntroProps) {
+export default function SezioneIntro({ immagini = [], label, titolo, testo, inverti = false, cta, fotoContenuta = false, breadcrumb, fullWidth = false, nascondiImmagineMobile = false }: SezioneIntroProps) {
   const [imgs, setImgs] = useState(immagini)
   const [current, setCurrent] = useState(0)
   const [locked, setLocked] = useState(false)
@@ -162,11 +163,11 @@ export default function SezioneIntro({ immagini = [], label, titolo, testo, inve
           inverti ? (
             <>
               <motion.div className="md:flex-1 md:flex md:flex-col" {...fadeLeft}>{testi}</motion.div>
-              <motion.div className="md:flex-1 md:flex md:flex-col" {...fadeRight}>{foto}</motion.div>
+              <motion.div className={`md:flex-1 md:flex md:flex-col ${nascondiImmagineMobile ? 'hidden md:flex' : ''}`} {...fadeRight}>{foto}</motion.div>
             </>
           ) : (
             <>
-              <motion.div className="md:flex-1 md:flex md:flex-col" {...fadeLeft}>{foto}</motion.div>
+              <motion.div className={`md:flex-1 md:flex md:flex-col ${nascondiImmagineMobile ? 'hidden md:flex' : ''}`} {...fadeLeft}>{foto}</motion.div>
               <motion.div className="md:flex-1 md:flex md:flex-col" {...fadeRight}>{testi}</motion.div>
             </>
           )

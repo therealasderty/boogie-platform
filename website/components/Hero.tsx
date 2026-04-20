@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -28,6 +28,8 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
   const [locked, setLocked] = useState(false)
   const [news, setNews] = useState(0)
   const [newsLocked, setNewsLocked] = useState(false)
+  const heroTouchX = useRef(0)
+  const newsTouchX = useRef(0)
 
   useEffect(() => {
     setMounted(true)
@@ -67,11 +69,24 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
     return () => clearInterval(t)
   }, [news, goToNews])
 
+  function handleHeroTouchStart(e: React.TouchEvent) { heroTouchX.current = e.touches[0].clientX }
+  function handleHeroTouchEnd(e: React.TouchEvent) {
+    const diff = heroTouchX.current - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 50) diff > 0 ? next() : prev()
+  }
+  function handleNewsTouchStart(e: React.TouchEvent) { newsTouchX.current = e.touches[0].clientX }
+  function handleNewsTouchEnd(e: React.TouchEvent) {
+    const diff = newsTouchX.current - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 50) diff > 0
+      ? goToNews((news + 1) % newsItems.length)
+      : goToNews((news - 1 + newsItems.length) % newsItems.length)
+  }
+
   return (
     <section className="relative flex h-screen flex-col md:flex-row overflow-hidden">
 
       {/* ── Carosello principale (75%) — cross dissolve ───────────── */}
-      <div className="relative h-[80vh] md:h-full md:flex-[4]">
+      <div className="relative h-[80vh] md:h-full md:flex-[4]" onTouchStart={handleHeroTouchStart} onTouchEnd={handleHeroTouchEnd}>
 
         {/* Immagini in stack, fade in/out */}
         {heroImages.map((img, i) => (
@@ -199,7 +214,7 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
       </div>
 
       {/* ── Pannello news (25%) ──────────────────────────────────── */}
-      <div className="relative flex-shrink-0 md:h-full md:flex-1 overflow-hidden bg-brand">
+      <div className="relative flex-shrink-0 md:h-full md:flex-1 overflow-hidden bg-brand" onTouchStart={handleNewsTouchStart} onTouchEnd={handleNewsTouchEnd}>
 
         {/* Slide orizzontali */}
         <div

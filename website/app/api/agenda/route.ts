@@ -31,7 +31,7 @@ export async function GET() {
 
     const json = await res.json()
     const events = (json.records ?? [])
-      .filter((r: { fields: Record<string, unknown> }) => r.fields['Stato'] !== 'dormiente')
+      .filter((r: { fields: Record<string, unknown> }) => r.fields['Stato'] === 'attivo')
       .map((r: { fields: Record<string, unknown> }) => {
         const f = r.fields
         const ricorrenza = (f['Ricorrenza'] as string) || 'nessuna'

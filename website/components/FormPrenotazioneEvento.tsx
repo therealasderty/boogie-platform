@@ -83,6 +83,7 @@ export default function FormPrenotazioneEvento({
   const [consensoPrivacy, setConsensoPrivacy] = useState(false)
   const [consensoMarketing, setConsensoMarketing] = useState(false)
   const [erroreMsg, setErroreMsg] = useState('')
+  const successRef = useRef<HTMLDivElement>(null)
 
   function nextDay(iso: string) {
     const d = new Date(iso + 'T00:00:00')
@@ -167,12 +168,18 @@ export default function FormPrenotazioneEvento({
     }
   }
 
+  useEffect(() => {
+    if (stato === 'successo') {
+      setTimeout(() => successRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)
+    }
+  }, [stato])
+
   if (stato === 'successo') {
     return (
-      <div className="rounded-card border border-brand/30 bg-brand/5 p-8 text-center">
-        <p className="text-brand font-medium mb-2" style={{ fontSize: 'var(--text-section)' }}>Prenotazione inviata</p>
+      <div ref={successRef} className="rounded-card border border-brand/30 bg-brand/5 p-8 text-center">
+        <p className="text-brand font-medium mb-2" style={{ fontSize: 'var(--text-section)' }}>Prenotazione inviata ✓</p>
         <p className="text-text-muted" style={{ fontSize: 'var(--text-body)' }}>
-          Riceverai una conferma via email. Ti aspettiamo{` il ${dataLeggibile(data)}`} alle {oraSelezionata}.
+          Riceverai una conferma via email entro pochi minuti.
         </p>
       </div>
     )

@@ -259,9 +259,9 @@ export default async function CityServicePage({
 
       {/* Mappa */}
       <section className="py-16 px-6 md:px-14" style={{ backgroundColor: '#1a1a1a' }}>
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           <FadeIn>
-            <div className="mb-8">
+            <div className="mb-6">
               <span
                 className="uppercase text-white/30 font-medium"
                 style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
@@ -293,7 +293,7 @@ export default async function CityServicePage({
                 </a>
               </div>
             </div>
-            <div className="overflow-hidden rounded-card" style={{ height: 400 }}>
+            <div className="overflow-hidden rounded-card" style={{ height: 260 }}>
               <iframe
                 src={MAPS_EMBED}
                 width="100%"

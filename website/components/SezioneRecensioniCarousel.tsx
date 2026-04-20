@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import type { RecensioneItem } from '@/lib/recensioni'
 
@@ -17,8 +17,8 @@ function IconGoogle() {
 
 function IconTripadvisor() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="#00AF87">
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4.5 6.5c0 2.49-2.01 4.5-4.5 4.5s-4.5-2.01-4.5-4.5S9.51 7 12 7s4.5 2.01 4.5 4.5zM12 9.5c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5 2.5-1.12 2.5-2.5S13.38 9.5 12 9.5z"/>
+    <svg width="14" height="14" viewBox="155 248 540 348" fill="#00AF87">
+      <path d="M645.87,354.41l43.05-46.84h-95.47c-47.79-32.65-105.51-51.66-167.93-51.66s-119.9,19.05-167.61,51.66h-95.7l43.05,46.84c-26.39,24.08-42.93,58.75-42.93,97.26,0,72.67,58.91,131.58,131.58,131.58,34.52,0,65.97-13.31,89.45-35.08l42.17,45.92,42.17-45.88c23.48,21.76,54.89,35.04,89.41,35.04,72.67,0,131.66-58.91,131.66-131.58.04-38.55-16.5-73.22-42.89-97.26ZM293.94,540.71c-49.19,0-89.05-39.86-89.05-89.05s39.86-89.05,89.05-89.05,89.05,39.86,89.05,89.05-39.86,89.05-89.05,89.05ZM425.56,449.08c0-58.6-42.61-108.9-98.85-130.38,30.41-12.72,63.78-19.77,98.81-19.77s68.44,7.05,98.85,19.77c-56.2,21.52-98.81,71.79-98.81,130.38ZM557.14,540.71c-49.19,0-89.05-39.86-89.05-89.05s39.86-89.05,89.05-89.05,89.05,39.86,89.05,89.05-39.86,89.05-89.05,89.05ZM557.14,404.95c-25.79,0-46.68,20.89-46.68,46.68s20.89,46.68,46.68,46.68,46.68-20.89,46.68-46.68c0-25.75-20.89-46.68-46.68-46.68ZM340.62,451.67c0,25.79-20.89,46.68-46.68,46.68s-46.68-20.89-46.68-46.68,20.89-46.68,46.68-46.68c25.79-.04,46.68,20.89,46.68,46.68Z"/>
     </svg>
   )
 }
@@ -42,9 +42,18 @@ interface Props {
 export default function SezioneRecensioniCarousel({ recensioni }: Props) {
   const [current, setCurrent] = useState(0)
   const r = recensioni[current]
+  const touchStartX = useRef(0)
 
   function prev() { setCurrent((c) => (c - 1 + recensioni.length) % recensioni.length) }
   function next() { setCurrent((c) => (c + 1) % recensioni.length) }
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX
+  }
+  function handleTouchEnd(e: React.TouchEvent) {
+    const diff = touchStartX.current - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 50) diff > 0 ? next() : prev()
+  }
 
   useEffect(() => {
     const t = setInterval(() => setCurrent((c) => (c + 1) % recensioni.length), 5000)
@@ -83,6 +92,8 @@ export default function SezioneRecensioniCarousel({ recensioni }: Props) {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-80px' }}
         transition={{ duration: 0.6, ease: 'easeOut', delay: 0.15 }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         <span
           className="font-ivy text-brand select-none block mb-4"

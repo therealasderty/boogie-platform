@@ -48,7 +48,9 @@ export async function fetchEventi(): Promise<EventoAgenda[]> {
     if (!res.ok) return []
 
     const json = await res.json()
-    return (json.records ?? []).map((r: { fields: Record<string, unknown> }) => {
+    return (json.records ?? [])
+    .filter((r: { fields: Record<string, unknown> }) => (r.fields['Stato'] as string) !== 'bozza')
+    .map((r: { fields: Record<string, unknown> }) => {
       const f = r.fields
       const ricorrente = !!f['Ricorrenza'] && f['Ricorrenza'] !== 'nessuna'
       return {

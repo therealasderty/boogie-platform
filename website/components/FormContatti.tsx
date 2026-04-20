@@ -71,6 +71,15 @@ export default function FormContatti() {
 
       <div className="flex flex-col gap-2">
         <label className="block text-neutral-500 font-medium mb-1.5" style={{ fontSize: 'var(--text-meta)' }}>
+          Data di nascita <span className="text-neutral-400 font-light">(opzionale)</span>
+        </label>
+        <input type="date"
+          className="w-full px-4 py-3 rounded-btn bg-neutral-50 border border-neutral-200 text-neutral-800 focus:outline-none focus:border-neutral-400 transition-colors font-light"
+          style={{ fontSize: 'var(--text-meta)', colorScheme: 'light' }} />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className="block text-neutral-500 font-medium mb-1.5" style={{ fontSize: 'var(--text-meta)' }}>
           Messaggio
         </label>
         <textarea required rows={5} placeholder="Come possiamo aiutarti?"

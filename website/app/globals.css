@@ -96,6 +96,11 @@ body {
 
 h2 {
   line-height: 1.15;
+  font-weight: 700;
+}
+
+body {
+  overflow-x: clip;
 }
 
 @media (min-width: 768px) {

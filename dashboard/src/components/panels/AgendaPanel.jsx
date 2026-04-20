@@ -568,11 +568,12 @@ function SezioneLabel({ label, count }) {
 function SezioniAppuntamenti({ appuntamenti, onEdit }) {
   const oggi = new Date().toISOString().split('T')[0]
 
-  const pagineAttive    = appuntamenti.filter(a => a.slug && a.stato !== 'dormiente')
-  const promozioniAttive = appuntamenti.filter(a => !a.slug && (!a.data || a.data >= oggi))
+  const pagineAttive    = appuntamenti.filter(a => a.slug && a.stato === 'attivo')
+  const promozioniAttive = appuntamenti.filter(a => !a.slug && a.stato === 'attivo' && (!a.data || a.data >= oggi))
   const dormienti       = appuntamenti.filter(a => a.slug && a.stato === 'dormiente')
+  const bozze           = appuntamenti.filter(a => a.stato === 'bozza')
 
-  if (pagineAttive.length === 0 && promozioniAttive.length === 0 && dormienti.length === 0) return null
+  if (pagineAttive.length === 0 && promozioniAttive.length === 0 && dormienti.length === 0 && bozze.length === 0) return null
 
   return (
     <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -600,6 +601,17 @@ function SezioniAppuntamenti({ appuntamenti, onEdit }) {
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {dormienti.map(a => <CardAppuntamento key={a.id} a={a} onEdit={onEdit} />)}
+          </div>
+        </div>
+      )}
+      {bozze.length > 0 && (
+        <div>
+          <SezioneLabel label="Bozze" count={bozze.length} />
+          <p style={{ fontSize: '0.78rem', color: 'var(--text3)', marginBottom: 8 }}>
+            Non visibili sul sito. Pubblicali impostando lo stato su "Attivo".
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {bozze.map(a => <CardAppuntamento key={a.id} a={a} onEdit={onEdit} />)}
           </div>
         </div>
       )}
@@ -736,16 +748,19 @@ export default function AgendaPanel() {
     const isDormiente = a.stato === 'dormiente'
     const isBozza = a.stato === 'bozza'
     const vis = a.slug ? 'pagina' : 'promozione'
-    const color = (isDormiente || isBozza)
+    const color = isDormiente
       ? '#94a3b8'
-      : isRicorrente
-        ? (VISIBILITA_COLORI_RICORRENTE[vis] || VISIBILITA_COLORI_RICORRENTE['promozione'])
-        : (VISIBILITA_COLORI[vis] || VISIBILITA_COLORI['promozione'])
+      : isBozza
+        ? '#ffffff'
+        : isRicorrente
+          ? (VISIBILITA_COLORI_RICORRENTE[vis] || VISIBILITA_COLORI_RICORRENTE['promozione'])
+          : (VISIBILITA_COLORI[vis] || VISIBILITA_COLORI['promozione'])
     const base = {
       title:           a.title,
       backgroundColor: color,
       borderColor:     color,
-      textColor:       '#fff',
+      textColor:       isBozza ? '#000' : '#fff',
+      classNames:      isBozza ? ['fc-event-bozza'] : [],
       extendedProps:   a,
     }
 
@@ -858,16 +873,18 @@ export default function AgendaPanel() {
               displayEventTime={false}
               eventContent={(info) => {
                 if (info.event.classNames.includes('fc-festivita-label')) return null
-                const { ora, oraFine } = info.event.extendedProps
+                const { ora, oraFine, stato } = info.event.extendedProps
+                const isBozza = stato === 'bozza'
                 const oraLabel = ora && oraFine ? `${ora}–${oraFine}` : (ora || '')
                 const bg = info.event.backgroundColor
+                const textCol = isBozza ? '#1e293b' : '#fff'
                 return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', overflow: 'hidden', padding: '2px 6px', borderRadius: '3px', background: bg, width: '100%' }}>
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.75rem', fontWeight: 600, color: '#fff' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', overflow: 'hidden', padding: '2px 6px', borderRadius: '3px', background: bg, width: '100%', border: isBozza ? '1.5px dashed #94a3b8' : 'none' }}>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.75rem', fontWeight: 600, color: textCol, fontStyle: isBozza ? 'italic' : 'normal' }}>
                       {info.event.title}
                     </span>
                     {oraLabel && (
-                      <span style={{ flexShrink: 0, fontSize: '0.68rem', background: 'rgba(0,0,0,0.25)', borderRadius: '4px', padding: '1px 5px', fontWeight: 500, color: '#fff' }}>
+                      <span style={{ flexShrink: 0, fontSize: '0.68rem', background: isBozza ? 'rgba(0,0,0,0.08)' : 'rgba(0,0,0,0.25)', borderRadius: '4px', padding: '1px 5px', fontWeight: 500, color: textCol }}>
                         {oraLabel}
                       </span>
                     )}

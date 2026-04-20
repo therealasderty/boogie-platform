@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 interface Slot   { ora: string; disponibili: number; pieno: boolean }
 interface Fascia { fascia: string; slots: Slot[] }
@@ -67,6 +67,7 @@ export default function FormPrenotazione() {
   const [accordionAperto, setAccordionAperto] = useState(false)
   const [stato, setStato] = useState<'pronto' | 'inviando' | 'successo' | 'errore'>('pronto')
   const [erroreMsg, setErroreMsg] = useState('')
+  const successRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!data) return
@@ -125,12 +126,18 @@ export default function FormPrenotazione() {
     }
   }
 
+  useEffect(() => {
+    if (stato === 'successo') {
+      setTimeout(() => successRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)
+    }
+  }, [stato])
+
   if (stato === 'successo') {
     return (
-      <div className="rounded-card border border-brand/30 bg-brand/10 p-10 text-center mt-10">
+      <div ref={successRef} className="rounded-card border border-brand/30 bg-brand/10 p-10 text-center mt-10">
         <p className="text-black font-medium mb-3" style={{ fontSize: 'var(--text-section)' }}>Prenotazione inviata ✓</p>
         <p className="text-neutral-600" style={{ fontSize: 'var(--text-body)' }}>
-          Riceverai una conferma via email. Ti aspettiamo il {dataLeggibile(data)} alle {oraSelezionata}.
+          Riceverai una conferma via email entro pochi minuti.
         </p>
       </div>
     )
@@ -353,7 +360,7 @@ export default function FormPrenotazione() {
                   Data di nascita <span className="text-neutral-400 font-light">(opzionale)</span>
                 </label>
                 <input type="date" value={dataNascita} onChange={e => setDataNascita(e.target.value)}
-                  className={inputClass} style={{ fontSize: 'var(--text-body)', colorScheme: 'light' }} />
+                  className={inputClass} style={{ fontSize: 'var(--text-body)', colorScheme: 'light', minHeight: '46px' }} />
                 <p className="mt-1.5 text-neutral-400 font-light" style={{ fontSize: 'var(--text-meta)' }}>
                   🎂 Compilala per ricevere una sorpresa speciale nel mese del tuo compleanno
                 </p>

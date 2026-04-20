@@ -401,7 +401,9 @@ export default function Calendario({ orari = [], chiusure = [] }: { orari?: Orar
     <section id="calendario" className="bg-neutral-800 py-16 md:py-20">
       <div className="max-w-7xl mx-auto px-6">
 
-        <h2 className="text-white mb-10" style={{ fontSize: 'var(--text-section)' }}>I Nostri appuntamenti</h2>
+        <h2 className="text-white mb-10" style={{ fontSize: 'var(--text-section)' }}>
+          {isMobile ? 'Appuntamenti del giorno' : 'Gli appuntamenti della settimana'}
+        </h2>
 
         <div className="rounded-card overflow-hidden border border-neutral-800 shadow-[0_4px_20px_rgba(0,0,0,0.25)]">
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 declare global {
   interface Window {
@@ -70,13 +71,22 @@ function markAsSeen(id: string) {
   try { localStorage.setItem(storageKey(id), String(Date.now())) } catch {}
 }
 
+const POPUP_BLACKLIST = [
+  /^\/prenota(\/|$)/,
+  /^\/links(\/|$)/,
+  /^\/eventi-speciali(\/|$)/,
+  /^\/vicino-a\/.+\/.+/,
+]
+
 export default function PopupManager() {
+  const pathname = usePathname()
   const [popup,     setPopup]     = useState<PopupData | null>(null)
   const [urgency,   setUrgency]   = useState<Urgency>('distante')
   const [visible,   setVisible]   = useState(false)
   const [animating, setAnimating] = useState(false)
 
   useEffect(() => {
+    if (POPUP_BLACKLIST.some(re => re.test(pathname))) return
     let timer: ReturnType<typeof setTimeout>
 
     async function carica() {
@@ -102,7 +112,7 @@ export default function PopupManager() {
 
     carica()
     return () => clearTimeout(timer)
-  }, [])
+  }, [pathname])
 
   function chiudi() {
     setAnimating(false)

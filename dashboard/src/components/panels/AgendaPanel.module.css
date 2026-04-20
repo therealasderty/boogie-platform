@@ -153,6 +153,7 @@
 :global(.fc .fc-daygrid-day:hover) { background: var(--bg3) !important; cursor: pointer; }
 :global(.fc .fc-event) { border-radius: 3px !important; font-size: 0.75rem !important; padding: 1px 4px !important; }
 :global(.fc-festivita-label .fc-event-title) { font-size: 0.7rem !important; color: #A0722A !important; }
+:global(.fc-event-bozza) { border: none !important; background: transparent !important; }
 
 /* ─── Editor evento inline ─── */
 @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }

@@ -24,7 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const eventi = await fetchEventi()
     eventiEntries = eventi
-      .filter(e => e.slug)
+      .filter(e => e.slug && e.stato === 'attivo')
       .map(e => ({
         url:             `${BASE_URL}/eventi-speciali/${e.slug}`,
         lastModified:    new Date(),

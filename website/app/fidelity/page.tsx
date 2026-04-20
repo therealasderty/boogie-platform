@@ -52,10 +52,10 @@ export default async function FidelityPage() {
             >
               Come funziona
             </span>
-            <h2 className="font-raleway font-semibold text-neutral-900 mt-4 mb-6 leading-tight" style={{ fontSize: '2.5rem' }}>
+            <h2 className="font-semibold text-neutral-900 mt-4 mb-5 leading-tight" style={{ fontSize: 'var(--text-section)' }}>
               Boogie Elite: il programma che premia ogni visita
             </h2>
-            <p className="text-neutral-500 font-light leading-relaxed mb-10" style={{ fontSize: 'var(--text-lead)' }}>
+            <p className="text-neutral-500 font-light leading-relaxed mb-8" style={{ fontSize: 'var(--text-body)' }}>
               Inizia subito a raccogliere vantaggi. Il nostro programma fedeltà è pensato per premiarti ogni volta
               che scegli Boogie Bistrot. Con <strong className="text-neutral-700 font-medium">5 punti per ogni euro speso</strong>,
               potrai presto goderti spritz omaggio, dessert, sconti e persino cene complete.
@@ -63,15 +63,15 @@ export default async function FidelityPage() {
             </p>
 
             {/* Callout punti */}
-            <div className="flex items-center gap-6 rounded-card border border-brand/30 bg-brand/5 px-8 py-7">
+            <div className="flex items-center gap-5 rounded-card border border-brand/30 bg-brand/5 px-6 py-5">
               <div className="text-center flex-shrink-0">
-                <span className="font-ivy font-normal text-brand leading-none" style={{ fontSize: '3.5rem' }}>5</span>
+                <span className="font-ivy font-normal text-brand leading-none" style={{ fontSize: '2.5rem' }}>5</span>
                 <span className="block text-brand/70 font-medium uppercase mt-1" style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}>punti</span>
               </div>
-              <div className="w-px h-12 bg-brand/20 flex-shrink-0" />
+              <div className="w-px h-10 bg-brand/20 flex-shrink-0" />
               <div>
-                <span className="text-neutral-800 font-medium block" style={{ fontSize: 'var(--text-section)' }}>= 1€ speso</span>
-                <span className="text-neutral-500 font-light mt-1 block" style={{ fontSize: 'var(--text-body)' }}>
+                <span className="text-neutral-800 font-medium block" style={{ fontSize: 'var(--text-lead)' }}>= 1€ speso</span>
+                <span className="text-neutral-500 font-light mt-1 block" style={{ fontSize: 'var(--text-meta)' }}>
                   Ad esempio: una cena da 40€ ti dà subito <strong className="text-neutral-700 font-medium">200 punti</strong>
                 </span>
               </div>
@@ -90,7 +90,7 @@ export default async function FidelityPage() {
             >
               Catalogo premi
             </span>
-            <h2 className="font-raleway font-semibold text-white mt-4 mb-12 leading-tight" style={{ fontSize: '2.5rem' }}>
+            <h2 className="font-semibold text-white mt-4 mb-10 leading-tight" style={{ fontSize: 'var(--text-section)' }}>
               Cosa puoi sbloccare
             </h2>
           </FadeIn>
@@ -100,7 +100,7 @@ export default async function FidelityPage() {
               <FadeIn key={p.punti} delay={i * 0.07}>
                 <div className="flex items-center gap-5 py-5 border-b border-white/8">
                   <div className="flex-shrink-0 w-24 text-right">
-                    <span className="font-ivy font-normal text-brand leading-none" style={{ fontSize: '1.75rem' }}>
+                    <span className="font-ivy font-normal text-brand leading-none" style={{ fontSize: 'var(--text-section)' }}>
                       {formatPunti(p.punti)}
                     </span>
                     <span className="block text-brand/50 font-medium uppercase" style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}>
@@ -109,7 +109,7 @@ export default async function FidelityPage() {
                   </div>
                   <div className="flex-shrink-0 w-px h-10 bg-white/10" />
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <span style={{ fontSize: '1.4rem' }}>{p.icona}</span>
+                    <span style={{ fontSize: 'var(--text-lead)' }}>{p.icona}</span>
                     <span className="text-white/80 font-light leading-snug" style={{ fontSize: 'var(--text-body)' }}>
                       {p.premio}
                     </span>
@@ -122,7 +122,7 @@ export default async function FidelityPage() {
       </section>
 
       {/* ── Form iscrizione ── */}
-      <section className="py-20 px-6 md:px-14 bg-white">
+      <section id="iscriviti" className="py-20 px-6 md:px-14 bg-white">
         <div className="max-w-2xl mx-auto">
           <FadeIn>
             <span
@@ -131,7 +131,7 @@ export default async function FidelityPage() {
             >
               Registrazione gratuita
             </span>
-            <h2 className="font-raleway font-semibold text-neutral-900 mt-4 mb-4 leading-tight" style={{ fontSize: '2.5rem' }}>
+            <h2 className="font-semibold text-neutral-900 mt-4 mb-4 leading-tight" style={{ fontSize: 'var(--text-section)' }}>
               Iscriviti ora
             </h2>
             <div className="flex flex-wrap gap-2 mb-6">

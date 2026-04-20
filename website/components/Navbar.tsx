@@ -112,6 +112,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
   const { eventoTitolo } = usePageContext()
   const isHome = pathname === '/'
   const isPrenotaPage = pathname === '/prenota'
+  const isFidelityPage = pathname === '/fidelity'
   const isEventoPage = /^\/eventi-speciali\/.+/.test(pathname)
   const isCityServicePage = /^\/vicino-a\/.+\/.+/.test(pathname)
   const prenotaHref = (isEventoPage || isCityServicePage) ? '#prenota' : '/prenota'
@@ -478,54 +479,66 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
 
       {/* ── Bottom bar mobile ─────────────────────────────────────── */}
       <div className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 backdrop-blur-md border-t border-black/10 transition-transform duration-300 ${mobileOpen || prenotaVisible ? 'translate-y-full' : 'translate-y-0'}`} style={{ backgroundColor: '#1a1a1a' }}>
-        <div className="flex items-stretch h-16">
+        {isFidelityPage ? (
+          <div className="flex items-stretch h-16">
+            <a
+              href="#iscriviti"
+              className="flex-1 flex items-center justify-center font-semibold text-black bg-brand hover:bg-brand-hover active:bg-brand-hover transition-colors"
+              style={{ fontSize: 'var(--text-meta)' }}
+            >
+              Iscriviti alla Fidelity
+            </a>
+          </div>
+        ) : (
+          <div className="flex items-stretch h-16">
 
-          {/* Contattaci → chiama */}
-          <a
-            href={`tel:${PHONE.replace(/\s/g, '')}`}
-            className="flex-1 flex flex-col items-center justify-center gap-1 text-white/70 active:bg-white/5"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M2.5 4.5C2.5 3.4 3.4 2.5 4.5 2.5h1.75a1 1 0 0 1 .95.68l.9 2.7a1 1 0 0 1-.23 1.02L6.6 8.18a10.5 10.5 0 0 0 5.22 5.22l1.28-1.27a1 1 0 0 1 1.02-.23l2.7.9a1 1 0 0 1 .68.95V15.5A2 2 0 0 1 15.5 17.5C8.32 17.5 2.5 11.68 2.5 4.5Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-            </svg>
-            <span className="text-[10px] tracking-wide">Contattaci</span>
-          </a>
-
-          {/* Divisore */}
-          <div className="w-px bg-white/10 my-3" />
-
-          {/* Come raggiungerci → Maps */}
-          <a
-            href={MAPS_HREF}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 flex flex-col items-center justify-center gap-1 text-white/70 active:bg-white/5"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M10 2a6 6 0 0 1 6 6c0 4-6 10-6 10S4 12 4 8a6 6 0 0 1 6-6Z" stroke="currentColor" strokeWidth="1.4" />
-              <circle cx="10" cy="8" r="2" stroke="currentColor" strokeWidth="1.4" />
-            </svg>
-            <span className="text-[10px] tracking-wide">Come raggiungerci</span>
-          </a>
-
-          {/* Divisore */}
-          {showPrenotaBtn && <div className="w-px bg-white/10 my-3" />}
-
-          {/* Prenota */}
-          {showPrenotaBtn && (
-            <Link
-              href={prenotaHref}
-              className="flex-1 flex flex-col items-center justify-center gap-1 text-black bg-brand hover:bg-brand-hover active:bg-brand-hover px-2 transition-colors"
+            {/* Contattaci → chiama */}
+            <a
+              href={`tel:${PHONE.replace(/\s/g, '')}`}
+              className="flex-1 flex flex-col items-center justify-center gap-1 text-white/70 active:bg-white/5"
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" strokeWidth="1.4" />
-                <path d="M3 8h14M7 2v3M13 2v3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                <path d="M2.5 4.5C2.5 3.4 3.4 2.5 4.5 2.5h1.75a1 1 0 0 1 .95.68l.9 2.7a1 1 0 0 1-.23 1.02L6.6 8.18a10.5 10.5 0 0 0 5.22 5.22l1.28-1.27a1 1 0 0 1 1.02-.23l2.7.9a1 1 0 0 1 .68.95V15.5A2 2 0 0 1 15.5 17.5C8.32 17.5 2.5 11.68 2.5 4.5Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
               </svg>
-              <span className="text-[10px] tracking-wide text-center leading-tight line-clamp-1">{prenotaBottomLabel}</span>
-            </Link>
-          )}
+              <span className="text-[10px] tracking-wide">Contattaci</span>
+            </a>
 
-        </div>
+            {/* Divisore */}
+            <div className="w-px bg-white/10 my-3" />
+
+            {/* Come raggiungerci → Maps */}
+            <a
+              href={MAPS_HREF}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex flex-col items-center justify-center gap-1 text-white/70 active:bg-white/5"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M10 2a6 6 0 0 1 6 6c0 4-6 10-6 10S4 12 4 8a6 6 0 0 1 6-6Z" stroke="currentColor" strokeWidth="1.4" />
+                <circle cx="10" cy="8" r="2" stroke="currentColor" strokeWidth="1.4" />
+              </svg>
+              <span className="text-[10px] tracking-wide">Come raggiungerci</span>
+            </a>
+
+            {/* Divisore */}
+            {showPrenotaBtn && <div className="w-px bg-white/10 my-3" />}
+
+            {/* Prenota */}
+            {showPrenotaBtn && (
+              <Link
+                href={prenotaHref}
+                className="flex-1 flex flex-col items-center justify-center gap-1 text-black bg-brand hover:bg-brand-hover active:bg-brand-hover px-2 transition-colors"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" strokeWidth="1.4" />
+                  <path d="M3 8h14M7 2v3M13 2v3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                </svg>
+                <span className="text-[10px] tracking-wide text-center leading-tight line-clamp-1">{prenotaBottomLabel}</span>
+              </Link>
+            )}
+
+          </div>
+        )}
       </div>
 
     </>
