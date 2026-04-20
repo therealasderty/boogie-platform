@@ -11,10 +11,7 @@ const CL_CLOUD_NAME    = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
 const CL_PRESET        = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
 
 function useCloudinaryWidget(onUpload) {
-  const widgetRef = useRef(null)
-
   useEffect(() => {
-    // Carica lo script del widget se non è già presente
     if (!document.getElementById('cloudinary-widget-script')) {
       const script = document.createElement('script')
       script.id  = 'cloudinary-widget-script'
@@ -28,8 +25,7 @@ function useCloudinaryWidget(onUpload) {
       alert('Widget Cloudinary non ancora caricato, riprova tra un secondo.')
       return
     }
-    if (widgetRef.current) { widgetRef.current.open(); return }
-    widgetRef.current = window.cloudinary.createUploadWidget(
+    const widget = window.cloudinary.createUploadWidget(
       {
         cloudName:    CL_CLOUD_NAME,
         uploadPreset: CL_PRESET,
@@ -41,10 +37,14 @@ function useCloudinaryWidget(onUpload) {
       (error, result) => {
         if (!error && result?.event === 'success') {
           onUpload(result.info.secure_url)
+          widget.destroy()
+        }
+        if (result?.event === 'close') {
+          widget.destroy()
         }
       }
     )
-    widgetRef.current.open()
+    widget.open()
   }
 
   return { open }
