@@ -10,9 +10,13 @@ const AIRTABLE_BASE_ID = import.meta.env.VITE_AIRTABLE_BASE_ID
 const CL_CLOUD_NAME    = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
 const CL_PRESET        = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
 
-function useCloudinaryUpload(onUpload) {
+function useCloudinaryUpload(onUpload, onError) {
   const inputRef = useRef(null)
   const [uploading, setUploading] = useState(false)
+  const onUploadRef = useRef(onUpload)
+  const onErrorRef  = useRef(onError)
+  useEffect(() => { onUploadRef.current = onUpload }, [onUpload])
+  useEffect(() => { onErrorRef.current  = onError  }, [onError])
 
   function open() { inputRef.current?.click() }
 
@@ -21,14 +25,22 @@ function useCloudinaryUpload(onUpload) {
     if (!file) return
     setUploading(true)
     try {
+      if (!CL_CLOUD_NAME || !CL_PRESET) throw new Error('Env VITE_CLOUDINARY_CLOUD_NAME o VITE_CLOUDINARY_UPLOAD_PRESET non configurate')
       const fd = new FormData()
       fd.append('file', file)
       fd.append('upload_preset', CL_PRESET)
       const res  = await fetch(`https://api.cloudinary.com/v1_1/${CL_CLOUD_NAME}/image/upload`, { method: 'POST', body: fd })
       const data = await res.json()
-      if (data.secure_url) onUpload(data.secure_url)
+      if (data.secure_url) {
+        onUploadRef.current(data.secure_url)
+      } else {
+        const msg = data.error?.message || JSON.stringify(data)
+        onErrorRef.current?.(msg)
+        console.error('Cloudinary error:', data)
+      }
     } catch (err) {
-      console.error(err)
+      onErrorRef.current?.(err.message)
+      console.error('Upload error:', err)
     } finally {
       setUploading(false)
       e.target.value = ''
@@ -59,7 +71,10 @@ function MediaModal({ item, onClose, onSave, tagEsistenti = [] }) {
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState(null)
 
-  const { open: openWidget, input: cloudinaryInput, uploading } = useCloudinaryUpload(url => setForm(f => ({ ...f, url })))
+  const { open: openWidget, input: cloudinaryInput, uploading } = useCloudinaryUpload(
+    url => { setForm(f => ({ ...f, url })); setError(null) },
+    msg => setError(`Upload fallito: ${msg}`)
+  )
 
   function set(field, val) { setForm(f => ({ ...f, [field]: val })) }
 
