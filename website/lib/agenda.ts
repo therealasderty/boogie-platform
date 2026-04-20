@@ -87,3 +87,56 @@ export async function fetchEventoBySlug(slug: string): Promise<EventoAgenda | nu
   const eventi = await fetchEventi()
   return eventi.find(e => e.slug === slug) ?? null
 }
+
+const ORDINE_SETT  = [1, 2, 3, 4, 5, 6, 0]
+const GIORNI_LABEL = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
+const GIORNI_BREVI = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab']
+
+function fmtGiorniRange(str: string): string {
+  const nums = str.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n))
+  if (!nums.length) return ''
+  const sorted = ORDINE_SETT.filter(g => nums.includes(g))
+  const ranges: string[] = []
+  let i = 0
+  while (i < sorted.length) {
+    let j = i
+    while (j + 1 < sorted.length && ORDINE_SETT.indexOf(sorted[j + 1]) === ORDINE_SETT.indexOf(sorted[j]) + 1) j++
+    const chunk = sorted.slice(i, j + 1)
+    ranges.push(chunk.length === 1 ? GIORNI_LABEL[chunk[0]] : `${GIORNI_LABEL[chunk[0]]}–${GIORNI_LABEL[chunk[chunk.length - 1]]}`)
+    i = j + 1
+  }
+  return ranges.join(', ')
+}
+
+export function formatBadgeRicorrente(
+  evento: { ricorrenza: string; giornoSettimana: string; giorniEsclusione: string; orario: string; orarioFine: string },
+  giorniChiusi: number[] = []
+): string {
+  let giorni = ''
+
+  if (evento.ricorrenza === 'giornaliera') {
+    const esclusiEvento = evento.giorniEsclusione ? evento.giorniEsclusione.split(',').map(Number).filter(n => !isNaN(n)) : []
+    const tuttiEsclusi  = [...new Set([...esclusiEvento, ...giorniChiusi])]
+    const attivi        = ORDINE_SETT.filter(d => !tuttiEsclusi.includes(d))
+    if (attivi.length === 0) return ''
+    if (attivi.length === 7) {
+      giorni = 'Tutti i giorni'
+    } else {
+      const firstIdx       = ORDINE_SETT.indexOf(attivi[0])
+      const lastIdx        = ORDINE_SETT.indexOf(attivi[attivi.length - 1])
+      const inRange        = ORDINE_SETT.slice(firstIdx, lastIdx + 1)
+      const esclusiInRange = inRange.filter(d => !attivi.includes(d))
+      const rangeLabel     = `${GIORNI_LABEL[attivi[0]]}–${GIORNI_LABEL[attivi[attivi.length - 1]]}`
+      giorni = esclusiInRange.length === 0 ? rangeLabel : `${rangeLabel} (escluso ${esclusiInRange.map(n => GIORNI_BREVI[n]).join(', ')})`
+    }
+  } else if (evento.ricorrenza === 'settimanale' && evento.giornoSettimana) {
+    giorni = fmtGiorniRange(evento.giornoSettimana)
+    if (evento.giorniEsclusione) {
+      const esclusi = evento.giorniEsclusione.split(',').map(Number).filter(n => !isNaN(n) && GIORNI_BREVI[n])
+      if (esclusi.length) giorni += ` (escluso ${esclusi.map(n => GIORNI_BREVI[n]).join(', ')})`
+    }
+  }
+
+  const orario = evento.orario ? ` · ore ${evento.orario}${evento.orarioFine ? `–${evento.orarioFine}` : ''}` : ''
+  return giorni ? `${giorni}${orario}` : ''
+}

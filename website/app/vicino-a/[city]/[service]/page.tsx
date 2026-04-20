@@ -10,7 +10,8 @@ import BlocchiRenderer from '@/components/BlocchiRenderer'
 import FormPrenotazioneEvento from '@/components/FormPrenotazioneEvento'
 import SetEventoTitolo from '@/components/SetEventoTitolo'
 import { fetchLocalita, fetchLocalitaBySlug, fetchIntroServizio } from '@/lib/localita'
-import { fetchEventoBySlug } from '@/lib/agenda'
+import { fetchEventoBySlug, formatBadgeRicorrente } from '@/lib/agenda'
+import { fetchOrari, fetchChiusure } from '@/lib/orari'
 import { fetchMedia } from '@/lib/media'
 
 function localDateStr(d: Date): string {
@@ -36,49 +37,6 @@ function prossimaOccorrenza(evento: { ricorrenza: string; giornoSettimana: strin
   return ''
 }
 
-const GIORNI_LABEL_L     = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
-const GIORNI_BREVI_L     = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab']
-const ORDINE_SETT_L      = [1, 2, 3, 4, 5, 6, 0]
-
-function fmtGiorni(str: string): string {
-  const nums = str.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n))
-  if (!nums.length) return ''
-  const sorted = ORDINE_SETT_L.filter(g => nums.includes(g))
-  const ranges: string[] = []
-  let i = 0
-  while (i < sorted.length) {
-    let j = i
-    while (j + 1 < sorted.length && ORDINE_SETT_L.indexOf(sorted[j + 1]) === ORDINE_SETT_L.indexOf(sorted[j]) + 1) j++
-    const chunk = sorted.slice(i, j + 1)
-    ranges.push(chunk.length === 1 ? GIORNI_LABEL_L[chunk[0]] : `${GIORNI_LABEL_L[chunk[0]]}–${GIORNI_LABEL_L[chunk[chunk.length - 1]]}`)
-    i = j + 1
-  }
-  return ranges.join(', ')
-}
-
-function formatBadgeRicorrente(evento: { ricorrenza: string; giornoSettimana: string; giorniEsclusione: string; orario: string; orarioFine: string }): string {
-  let giorni = ''
-  if (evento.ricorrenza === 'giornaliera') {
-    const esclusi = evento.giorniEsclusione ? evento.giorniEsclusione.split(',').map(Number).filter(n => !isNaN(n)) : []
-    const attivi = ORDINE_SETT_L.filter(g => !esclusi.includes(g))
-    if (attivi.length) {
-      const primo = GIORNI_LABEL_L[attivi[0]]
-      const ultimo = GIORNI_LABEL_L[attivi[attivi.length - 1]]
-      giorni = primo === ultimo ? primo : `${primo}–${ultimo}`
-      const esclusoNelRange = esclusi.filter(n => GIORNI_BREVI_L[n])
-      const escNomi = esclusoNelRange.map(n => GIORNI_BREVI_L[n]).filter(Boolean)
-      if (escNomi.length) giorni += ` (escluso ${escNomi.join(', ')})`
-    }
-  } else if (evento.ricorrenza === 'settimanale' && evento.giornoSettimana) {
-    giorni = fmtGiorni(evento.giornoSettimana)
-    if (evento.giorniEsclusione) {
-      const esclusi = evento.giorniEsclusione.split(',').map(Number).filter(n => !isNaN(n) && GIORNI_BREVI_L[n])
-      if (esclusi.length) giorni += ` (escluso ${esclusi.map(n => GIORNI_BREVI_L[n]).join(', ')})`
-    }
-  }
-  const orario = evento.orario ? ` · ore ${evento.orario}${evento.orarioFine ? `–${evento.orarioFine}` : ''}` : ''
-  return giorni ? `${giorni}${orario}` : ''
-}
 
 const MAPS_EMBED ='https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2783.5923879393986!2d9.35971967649393!3d45.759317071080446!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4786a7b703fbd1af%3A0x557d2a719fe1678a!2sBoogie%20Bistrot!5e0!3m2!1sit!2sit!4v1776238958687!5m2!1sit!2sit'
 
@@ -132,14 +90,23 @@ export default async function CityServicePage({
 }) {
   const { city, service } = await params
 
-  const [localita, evento, introServizio] = await Promise.all([
+  const [localita, evento, introServizio, orari, chiusure] = await Promise.all([
     fetchLocalitaBySlug(city),
     fetchEventoBySlug(service),
     fetchIntroServizio(city, service),
+    fetchOrari(),
+    fetchChiusure(),
   ])
 
   // 404 se città non esiste, servizio non esiste, o servizio non è attivo per questa città
   if (!localita || !evento || !localita.serviziAttivi.includes(service)) notFound()
+
+  const giorniConOrari    = new Set(orari.filter(o => o.attivo && o.giorno !== null).map(o => o.giorno as number))
+  const chiusiOrdinari    = [0,1,2,3,4,5,6].filter(d => !giorniConOrari.has(d))
+  const chiusiSettimanali = chiusure
+    .filter(c => c.tipo === 'Giorno della settimana' && c.tipoApertura === 'Chiusura' && c.giorno !== null)
+    .map(c => c.giorno as number)
+  const giorniChiusi = [...new Set([...chiusiOrdinari, ...chiusiSettimanali])]
 
   const tagMedia = evento.tagFotoIntro ? await fetchMedia(evento.tagFotoIntro) : []
   const introImages = tagMedia.map(m => ({ src: m.url, alt: m.alt || evento.titolo }))
@@ -151,7 +118,7 @@ export default async function CityServicePage({
     return `${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}`
   })() : null
   const heroBadge = evento.ricorrente
-    ? (formatBadgeRicorrente(evento) || null)
+    ? (formatBadgeRicorrente(evento, giorniChiusi) || null)
     : dataFormattata
       ? (evento.orario
           ? `${dataFormattata} · ore ${evento.orario}${evento.orarioFine ? `–${evento.orarioFine}` : ''}`

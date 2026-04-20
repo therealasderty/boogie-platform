@@ -6,7 +6,8 @@ import SezioneIntro from '@/components/SezioneIntro'
 import SezioneContatti from '@/components/SezioneContatti'
 import Footer from '@/components/Footer'
 import FadeIn from '@/components/FadeIn'
-import { fetchEventi, fetchEventoBySlug } from '@/lib/agenda'
+import { fetchEventi, fetchEventoBySlug, formatBadgeRicorrente } from '@/lib/agenda'
+import { fetchOrari, fetchChiusure } from '@/lib/orari'
 import { fetchMedia } from '@/lib/media'
 import BlocchiRenderer from '@/components/BlocchiRenderer'
 import FormPrenotazioneEvento from '@/components/FormPrenotazioneEvento'
@@ -62,50 +63,6 @@ export async function generateMetadata(
 const MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno',
               'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre']
 const GIORNI = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato']
-const GIORNI_LABEL     = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
-const GIORNI_BREVI_EVT = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab']
-const ORDINE_SETT      = [1, 2, 3, 4, 5, 6, 0]
-
-function fmtGiorni(str: string): string {
-  const nums = str.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n))
-  if (!nums.length) return ''
-  const sorted = ORDINE_SETT.filter(g => nums.includes(g))
-  const ranges: string[] = []
-  let i = 0
-  while (i < sorted.length) {
-    let j = i
-    while (j + 1 < sorted.length && ORDINE_SETT.indexOf(sorted[j + 1]) === ORDINE_SETT.indexOf(sorted[j]) + 1) j++
-    const chunk = sorted.slice(i, j + 1)
-    ranges.push(chunk.length === 1 ? GIORNI_LABEL[chunk[0]] : `${GIORNI_LABEL[chunk[0]]}–${GIORNI_LABEL[chunk[chunk.length - 1]]}`)
-    i = j + 1
-  }
-  return ranges.join(', ')
-}
-
-function formatBadgeRicorrente(evento: { ricorrenza: string; giornoSettimana: string; giorniEsclusione: string; orario: string; orarioFine: string }): string {
-  let giorni = ''
-  if (evento.ricorrenza === 'giornaliera') {
-    const esclusi = evento.giorniEsclusione ? evento.giorniEsclusione.split(',').map(Number).filter(n => !isNaN(n)) : []
-    const attivi = ORDINE_SETT.filter(g => !esclusi.includes(g))
-    if (attivi.length) {
-      const primo = GIORNI_LABEL[attivi[0]]
-      const ultimo = GIORNI_LABEL[attivi[attivi.length - 1]]
-      giorni = primo === ultimo ? primo : `${primo}–${ultimo}`
-      // esclusioni che cadono dentro lo span
-      const esclusoNelRange = esclusi.filter(n => GIORNI_BREVI_EVT[n] && n !== 1) // ignora lun se è il giorno di chiusura iniziale
-      const escNomi = esclusoNelRange.map(n => GIORNI_BREVI_EVT[n]).filter(Boolean)
-      if (escNomi.length) giorni += ` (escluso ${escNomi.join(', ')})`
-    }
-  } else if (evento.ricorrenza === 'settimanale' && evento.giornoSettimana) {
-    giorni = fmtGiorni(evento.giornoSettimana)
-    if (evento.giorniEsclusione) {
-      const esclusi = evento.giorniEsclusione.split(',').map(Number).filter(n => !isNaN(n) && GIORNI_BREVI_EVT[n])
-      if (esclusi.length) giorni += ` (escluso ${esclusi.map(n => GIORNI_BREVI_EVT[n]).join(', ')})`
-    }
-  }
-  const orario = evento.orario ? ` · ore ${evento.orario}${evento.orarioFine ? `–${evento.orarioFine}` : ''}` : ''
-  return giorni ? `${giorni}${orario}` : ''
-}
 
 function localDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -133,8 +90,19 @@ function prossimaOccorrenza(evento: { ricorrenza: string; giornoSettimana: strin
 
 export default async function EventoPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const evento = await fetchEventoBySlug(slug)
+  const [evento, orari, chiusure] = await Promise.all([
+    fetchEventoBySlug(slug),
+    fetchOrari(),
+    fetchChiusure(),
+  ])
   if (!evento) notFound()
+
+  const giorniConOrari   = new Set(orari.filter(o => o.attivo && o.giorno !== null).map(o => o.giorno as number))
+  const chiusiOrdinari   = [0,1,2,3,4,5,6].filter(d => !giorniConOrari.has(d))
+  const chiusiSettimanali = chiusure
+    .filter(c => c.tipo === 'Giorno della settimana' && c.tipoApertura === 'Chiusura' && c.giorno !== null)
+    .map(c => c.giorno as number)
+  const giorniChiusi = [...new Set([...chiusiOrdinari, ...chiusiSettimanali])]
 
   // Immagini carosello intro: solo da tagFotoIntro (libreria media)
   const tagMedia = evento.tagFotoIntro ? await fetchMedia(evento.tagFotoIntro) : []
@@ -149,7 +117,7 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
   })() : null
 
   const heroBadge = evento.ricorrente
-    ? (formatBadgeRicorrente(evento) || null)
+    ? (formatBadgeRicorrente(evento, giorniChiusi) || null)
     : dataFormattata
       ? (evento.orario
           ? `${dataFormattata} · ore ${evento.orario}${evento.orarioFine ? `–${evento.orarioFine}` : ''}`
