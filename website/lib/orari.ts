@@ -258,6 +258,30 @@ export async function fetchChiusure(): Promise<ChiusuraRecord[]> {
   }
 }
 
+export async function fetchGiorniAperti(): Promise<Set<number>> {
+  const token = process.env.AIRTABLE_TOKEN
+  const base  = process.env.AIRTABLE_BASE_ID
+  const table = process.env.AIRTABLE_ORARI || 'Orari'
+  if (!token || !base) return new Set()
+  try {
+    const res = await fetch(
+      `https://api.airtable.com/v0/${base}/${encodeURIComponent(table)}?fields[]=Giorni&fields[]=Attivo`,
+      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 3600 } }
+    )
+    if (!res.ok) return new Set()
+    const json = await res.json()
+    const giorni = new Set<number>()
+    for (const r of (json.records ?? [])) {
+      if (!r.fields['Attivo']) continue
+      const g = r.fields['Giorni']
+      if (Array.isArray(g)) g.forEach((d: string) => giorni.add(parseInt(d)))
+    }
+    return giorni
+  } catch {
+    return new Set()
+  }
+}
+
 export async function fetchOrari(): Promise<OrarioRecord[]> {
   const token = process.env.AIRTABLE_TOKEN
   const base = process.env.AIRTABLE_BASE_ID

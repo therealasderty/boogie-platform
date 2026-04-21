@@ -5,6 +5,7 @@ import SezioneContatti from '@/components/SezioneContatti'
 import Footer from '@/components/Footer'
 import FadeIn from '@/components/FadeIn'
 import { fetchEventi, EventoAgenda } from '@/lib/agenda'
+import { fetchGiorniAperti } from '@/lib/orari'
 
 export const revalidate = 300
 
@@ -18,7 +19,7 @@ const NOMI_GIORNI = ['domenica','lunedì','martedì','mercoledì','giovedì','ve
 
 const ART = (d: number) => d === 0 ? 'la' : 'il' // domenica è femminile
 
-function schedaRicorrenza(evento: EventoAgenda): string {
+function schedaRicorrenza(evento: EventoAgenda, giorniAperti?: Set<number>): string {
   const remap = (d: number) => d === 0 ? 7 : d // domenica da 0 a 7 per ordinamento lun-dom
   const esclusoLabel = (giorni: number[]) =>
     giorni.map(d => `${ART(d)} ${NOMI_GIORNI[d]}`).join(' e ')
@@ -39,9 +40,12 @@ function schedaRicorrenza(evento: EventoAgenda): string {
 
   if (evento.ricorrenza === 'giornaliera') {
     const esclusi = (evento.giorniEsclusione || '').split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n))
-    if (esclusi.length === 0) return 'tutti i giorni'
-    const attivi = [0,1,2,3,4,5,6].filter(d => !esclusi.includes(d)).sort((a, b) => remap(a) - remap(b))
+    const attivi = [0,1,2,3,4,5,6]
+      .filter(d => !esclusi.includes(d))
+      .filter(d => !giorniAperti || giorniAperti.size === 0 || giorniAperti.has(d))
+      .sort((a, b) => remap(a) - remap(b))
     if (attivi.length === 0) return ''
+    if (attivi.length === 7) return 'tutti i giorni'
     const first = attivi[0], last = attivi[attivi.length - 1]
     const firstR = remap(first), lastR = remap(last)
     const inRange = Array.from({ length: lastR - firstR + 1 }, (_, i) => (firstR + i === 7 ? 0 : firstR + i))
@@ -118,14 +122,14 @@ function CardEventoUnico({ evento }: { evento: EventoAgenda }) {
   )
 }
 
-function CardEventoRicorrente({ evento }: { evento: EventoAgenda }) {
+function CardEventoRicorrente({ evento, giorniAperti }: { evento: EventoAgenda; giorniAperti?: Set<number> }) {
   const href = evento.slug ? `/eventi-speciali/${evento.slug}` : null
   const imgUrl = evento.fotoHero ||
     (evento.blocchi?.find(b => b.tipo === 'immagine' && (b as {url?:string}).url)
       ? (evento.blocchi.find(b => b.tipo === 'immagine') as {url:string}).url
       : null)
 
-  const schedaLabel = schedaRicorrenza(evento)
+  const schedaLabel = schedaRicorrenza(evento, giorniAperti)
   const orarioLabel = evento.orario
     ? `ore ${evento.orario}${evento.orarioFine ? `–${evento.orarioFine}` : ''}`
     : null
@@ -177,7 +181,7 @@ function CardEventoRicorrente({ evento }: { evento: EventoAgenda }) {
 }
 
 export default async function EventiSpecialiPage() {
-  const tutti = await fetchEventi()
+  const [tutti, giorniAperti] = await Promise.all([fetchEventi(), fetchGiorniAperti()])
   const oggi = new Date().toISOString().split('T')[0]
 
   const prossimi = tutti.filter(e => !e.ricorrente && e.data && e.data >= oggi)
@@ -221,7 +225,7 @@ export default async function EventiSpecialiPage() {
                 Ogni settimana
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {fissi.map((e, i) => <CardEventoRicorrente key={i} evento={e} />)}
+                {fissi.map((e, i) => <CardEventoRicorrente key={i} evento={e} giorniAperti={giorniAperti} />)}
               </div>
             </FadeIn>
           )}
