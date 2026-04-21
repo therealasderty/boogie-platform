@@ -89,11 +89,6 @@
   to = "/"
   status = 301
 
-[[redirects]]
-  from = "/eventi-aziendali"
-  to = "/"
-  status = 301
-
 # Pagine standalone eventi
 [[redirects]]
   from = "/girorisotti"
@@ -129,11 +124,6 @@
   to = "/vicino-a/:city/menu-lavoro"
   status = 301
 
-# /eventi-aziendali per città: nessuna pagina equivalente nel nuovo sito
-[[redirects]]
-  from = "/ristorante-vicino-:city/eventi-aziendali"
-  to = "/"
-  status = 301
 
 # Pagine base città (senza servizio specifico)
 # ⚠️ Aggiorna la destinazione con lo slug servizio corretto se esiste in Airtable
