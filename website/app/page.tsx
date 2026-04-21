@@ -112,25 +112,26 @@ export default async function Home() {
 
   const oggi = new Date().toISOString().split('T')[0]
   const heroNews = eventi
-    .filter(e => e.fotoHero && e.descrizioneBreve && e.stato === 'attivo')
+    .filter(e => e.fotoHero && e.descrizioneBreve && (e.stato === 'attivo' || (e.stato === 'dormiente' && e.mostraInNews)))
     .sort((a, b) => {
-      const aF = !a.ricorrente && a.data && a.data >= oggi
-      const bF = !b.ricorrente && b.data && b.data >= oggi
+      const aF = a.stato === 'attivo' && !a.ricorrente && a.data && a.data >= oggi
+      const bF = b.stato === 'attivo' && !b.ricorrente && b.data && b.data >= oggi
       if (aF && !bF) return -1
       if (!aF && bF) return 1
       return 0
     })
     .slice(0, 5)
     .map(e => {
-      const giornoLabel = formatLabelEvento(e, giorniChiusi)
-      const oraLabel = e.orario ? (e.orarioFine ? `${e.orario}–${e.orarioFine}` : e.orario) : ''
+      const isDormiente = e.stato === 'dormiente'
+      const giornoLabel = isDormiente ? 'Prossimamente' : formatLabelEvento(e, giorniChiusi)
+      const oraLabel = !isDormiente && e.orario ? (e.orarioFine ? `${e.orario}–${e.orarioFine}` : e.orario) : ''
       const label = oraLabel ? `${giornoLabel}\n${oraLabel}` : giornoLabel
       return {
         label,
         titolo: e.titolo,
         descrizione: e.descrizioneBreve,
         href: e.slug ? `/eventi-speciali/${e.slug}` : '/eventi-speciali',
-        ctaLabel: 'Scopri di più',
+        ctaLabel: isDormiente ? 'Rimani aggiornato' : 'Scopri di più',
         image: e.fotoHero,
       }
     })

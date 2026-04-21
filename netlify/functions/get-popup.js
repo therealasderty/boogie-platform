@@ -22,8 +22,9 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'GET') return { statusCode: 405, headers: CORS, body: 'Method not allowed' }
 
   try {
+    const formula = encodeURIComponent('OR({Stato}="attivo",AND({Stato}="dormiente",{InPrimoPiano}=1))')
     const res = await fetch(
-      `${BASE_URL}?filterByFormula={Stato}="attivo"&sort[0][field]=Data&sort[0][direction]=asc&maxRecords=50`,
+      `${BASE_URL}?filterByFormula=${formula}&sort[0][field]=Data&sort[0][direction]=asc&maxRecords=50`,
       { headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` } }
     )
     if (!res.ok) throw new Error(await res.text())
@@ -34,20 +35,25 @@ exports.handler = async (event) => {
     const oggi     = new Date().toISOString().split('T')[0]
     const in7giorni = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
 
-    // 1. Una tantum nei prossimi 7 giorni (priorità assoluta)
-    const imminenti = records
+    const attivi = records.filter(r => r.fields['Stato'] === 'attivo')
+
+    // 1. Una tantum attivi nei prossimi 7 giorni (priorità assoluta)
+    const imminenti = attivi
       .filter(r => !isRicorrente(r) && r.fields['Data'] >= oggi && r.fields['Data'] <= in7giorni)
       .sort((a, b) => (a.fields['Data'] || '').localeCompare(b.fields['Data'] || ''))
 
-    // 2. Una tantum futuri oltre i 7 giorni (seconda priorità)
-    const futuri = records
+    // 2. Una tantum attivi futuri oltre i 7 giorni
+    const futuri = attivi
       .filter(r => !isRicorrente(r) && r.fields['Data'] > in7giorni)
       .sort((a, b) => (a.fields['Data'] || '').localeCompare(b.fields['Data'] || ''))
 
-    // 3. Ricorrenti (fallback)
-    const ricorrenti = records.filter(r => isRicorrente(r))
+    // 3. Dormienti con InPrimoPiano
+    const dormienteInPrimoPiano = records.filter(r => r.fields['Stato'] === 'dormiente')
 
-    const selected = imminenti[0] || futuri[0] || ricorrenti[0] || null
+    // 4. Ricorrenti attivi (fallback)
+    const ricorrenti = attivi.filter(r => isRicorrente(r))
+
+    const selected = imminenti[0] || futuri[0] || dormienteInPrimoPiano[0] || ricorrenti[0] || null
 
     if (!selected) {
       return { statusCode: 200, headers: CORS, body: JSON.stringify({ success: true, popup: null }) }
@@ -61,6 +67,7 @@ exports.handler = async (event) => {
       fotoHero:         f['FotoHero'] || '',
       data:             f['Data'] || null,
       ricorrente:       isRicorrente(selected),
+      stato:            f['Stato'] || 'attivo',
     }
 
     return { statusCode: 200, headers: CORS, body: JSON.stringify({ success: true, popup }) }

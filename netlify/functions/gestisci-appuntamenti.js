@@ -52,6 +52,7 @@ exports.handler = async (event) => {
         metaTitle:          r.fields['MetaTitle'] || '',
         metaDescription:    r.fields['MetaDescription'] || '',
         inPrimoPiano:       !!r.fields['InPrimoPiano'],
+        mostraInNews:       !!r.fields['MostraInNews'],
       }))
       // Auto-dormiente: eventi singoli con data passata ancora attivi
       const oggi = new Date().toISOString().split('T')[0]
@@ -104,6 +105,7 @@ exports.handler = async (event) => {
         'MetaTitle':           body.metaTitle || '',
         'MetaDescription':     body.metaDescription || '',
         'InPrimoPiano':        !!body.inPrimoPiano,
+        'MostraInNews':        !!body.mostraInNews,
         ...(body.dataFineRicorrenza ? { 'DataFineRicorrenza': body.dataFineRicorrenza } : {}),
       }
 

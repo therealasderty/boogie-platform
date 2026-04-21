@@ -17,6 +17,7 @@ type PopupData = {
   fotoHero:         string
   data:             string | null
   ricorrente:       boolean
+  stato:            string
 }
 
 type Urgency = 'distante' | 'imminente' | 'lastMinute'
@@ -124,10 +125,13 @@ export default function PopupManager() {
 
   if (!visible || !popup) return null
 
+  const isDormiente  = popup.stato === 'dormiente'
   const isLastMinute = urgency === 'lastMinute'
-  const badge        = getBadge(popup.data, urgency)
-  const href         = popup.slug ? `/eventi-speciali/${popup.slug}` : '/prenota'
-  const dataLabel    = popup.data && !popup.ricorrente ? formatData(popup.data) : null
+  const badge        = isDormiente ? 'Prossimamente' : getBadge(popup.data, urgency)
+  const href         = popup.slug
+    ? (isDormiente ? `/eventi-speciali/${popup.slug}#prenota` : `/eventi-speciali/${popup.slug}`)
+    : '/prenota'
+  const dataLabel    = !isDormiente && popup.data && !popup.ricorrente ? formatData(popup.data) : null
 
   return (
     <div
@@ -230,7 +234,7 @@ export default function PopupManager() {
               className="bg-brand hover:bg-brand-hover text-black/80 font-semibold px-6 py-3 rounded-btn transition-colors"
               style={{ fontSize: 'var(--text-meta)' }}
             >
-              Scopri di più
+              {isDormiente ? 'Rimani aggiornato' : 'Scopri di più'}
             </Link>
             <button
               onClick={chiudi}

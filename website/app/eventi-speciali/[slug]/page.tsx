@@ -154,7 +154,7 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
 
   return (
     <main>
-      <SetEventoTitolo titolo={evento.titolo} />
+      <SetEventoTitolo titolo={evento.titolo} dormiente={evento.stato === 'dormiente'} />
       {jsonLd && (
         <script
           type="application/ld+json"
@@ -164,15 +164,14 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
       <PaginaHero
         titolo={evento.titolo}
         sottotitolo="Eventi Speciali"
-        badge={heroBadge || undefined}
+        badge={evento.stato === 'dormiente' ? undefined : (heroBadge || undefined)}
         image={evento.fotoHero || '/images/hero/1.webp'}
       />
 
       {evento.stato === 'dormiente' && (
         <div className="px-6 md:px-14 py-4" style={{ backgroundColor: '#1a1a1a' }}>
           <div className="max-w-3xl mx-auto">
-            <div className="flex items-start gap-3 rounded-card px-5 py-4" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)' }}>
-              <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>⏸</span>
+            <div className="rounded-card px-5 py-4" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)' }}>
               <p className="text-text-muted leading-relaxed m-0" style={{ fontSize: 'var(--text-meta)' }}>
                 <strong className="text-white">"{evento.titolo}"</strong> al momento non è attivo.
                 Torna a trovarci presto — questo appuntamento tornerà!

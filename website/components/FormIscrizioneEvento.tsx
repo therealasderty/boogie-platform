@@ -61,6 +61,12 @@ export default function FormIscrizioneEvento({ eventoTitolo }: { eventoTitolo: s
       </div>
 
       <form onSubmit={handleSubmit} noValidate>
+        <p className="text-text-faint mb-6" style={{ fontSize: 'var(--text-meta)' }}>
+          Vuoi prenotare un tavolo per un&apos;altra data?{' '}
+          <a href="/prenota" className="text-brand underline underline-offset-2 hover:text-brand-hover transition-colors">
+            Vai alla prenotazione
+          </a>
+        </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-text-faint font-medium mb-1.5" style={{ fontSize: 'var(--text-meta)' }}>Nome *</label>

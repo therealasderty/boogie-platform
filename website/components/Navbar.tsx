@@ -109,14 +109,16 @@ function HamburgerIcon({ open }: { open: boolean }) {
 
 export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: { righe: string[]; avvisoSettimana: boolean; giorniChiusi?: number[] }; eventi?: EventoAgenda[] }) {
   const pathname = usePathname()
-  const { eventoTitolo } = usePageContext()
+  const { eventoTitolo, eventoDormiente } = usePageContext()
   const isHome = pathname === '/'
   const isPrenotaPage = pathname === '/prenota'
   const isFidelityPage = pathname === '/fidelity'
   const isEventoPage = /^\/eventi-speciali\/.+/.test(pathname)
   const isCityServicePage = /^\/vicino-a\/.+\/.+/.test(pathname)
   const prenotaHref = (isEventoPage || isCityServicePage) ? '#prenota' : '/prenota'
-  const prenotaLabel = (isEventoPage || isCityServicePage) && eventoTitolo ? `Prenota ${eventoTitolo}` : 'Prenota un tavolo'
+  const prenotaLabel = (isEventoPage || isCityServicePage) && eventoTitolo
+    ? (eventoDormiente ? `Rimani aggiornato su ${eventoTitolo}` : `Prenota ${eventoTitolo}`)
+    : 'Prenota un tavolo'
   const prenotaBottomLabel = prenotaLabel
   const showPrenotaBtn = !isPrenotaPage
 

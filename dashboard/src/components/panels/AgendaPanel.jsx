@@ -110,6 +110,7 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
     try { return JSON.parse(appuntamento?.blocchi || '[]') } catch { return [] }
   })
   const [inPrimoPiano, setInPrimoPiano] = useState(appuntamento?.inPrimoPiano || false)
+  const [mostraInNews, setMostraInNews] = useState(appuntamento?.mostraInNews || false)
   const [metaTitle, setMetaTitle] = useState(appuntamento?.metaTitle || '')
   const [metaDescription, setMetaDescription] = useState(appuntamento?.metaDescription || '')
   const [loading, setLoading] = useState(false)
@@ -175,6 +176,7 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
         metaTitle: metaTitle.trim(),
         metaDescription: metaDescription.trim(),
         inPrimoPiano,
+        mostraInNews,
       })
     } catch (e) {
       setErrore(e.message || 'Errore durante il salvataggio')
@@ -325,6 +327,10 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
                 <label className={styles.checkLabel}>
                   <input type="checkbox" checked={inPrimoPiano} onChange={e => setInPrimoPiano(e.target.checked)} />
                   ⭐ Mostra nel pop-up "In primo piano"
+                </label>
+                <label className={styles.checkLabel}>
+                  <input type="checkbox" checked={mostraInNews} onChange={e => setMostraInNews(e.target.checked)} />
+                  📰 Mostra nel carousel news (visibile anche se dormiente)
                 </label>
               </div>
 
