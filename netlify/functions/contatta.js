@@ -14,6 +14,8 @@ exports.handler = async (event) => {
   const EMAIL_RISTORANTE = process.env.EMAIL_RISTORANTE;
   const EMAIL_FROM       = process.env.EMAIL_FROM;
   const BREVO_LIST_ID    = parseInt(process.env.BREVO_LIST_ID) || 3;
+  const AIRTABLE_TOKEN   = process.env.AIRTABLE_TOKEN;
+  const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
 
   let data;
   try {
@@ -33,6 +35,32 @@ exports.handler = async (event) => {
     'Content-Type': 'application/json',
     'api-key': BREVO_API_KEY,
   };
+
+  // ── Salva messaggio su Airtable ─────────────────────────────────
+  try {
+    await fetch(
+      `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/RichiesteContatti`,
+      {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          records: [{
+            fields: {
+              Nome:              nome,
+              Cognome:           cognome || '',
+              Email:             email,
+              Telefono:          telefono || '',
+              Messaggio:         messaggio,
+              ConsensoMarketing: consenso_marketing ? true : false,
+              DataRichiesta:     new Date().toISOString(),
+            },
+          }],
+        }),
+      }
+    )
+  } catch (err) {
+    console.error('Airtable save error:', err);
+  }
 
   // ── 1. Aggiungi/aggiorna contatto su Brevo ───────────────────────
   try {

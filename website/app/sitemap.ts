@@ -11,6 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const statiche: MetadataRoute.Sitemap = [
     { url: BASE_URL,                              lastModified: new Date(), changeFrequency: 'weekly',  priority: 1.0 },
     { url: `${BASE_URL}/eventi-speciali`,         lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.9 },
+    { url: `${BASE_URL}/eventi-aziendali`,        lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE_URL}/menu/pizza`,              lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE_URL}/menu/specialita`,         lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE_URL}/menu/vini`,               lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
@@ -31,6 +32,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: 'weekly' as const,
         priority:        0.8,
       }))
+  } catch {}
+
+  // Pagine eventi aziendali per città
+  let eventiAziendaliEntries: MetadataRoute.Sitemap = []
+  try {
+    const localita = await fetchLocalita()
+    eventiAziendaliEntries = localita.map(l => ({
+      url:             `${BASE_URL}/eventi-aziendali/${l.slug}`,
+      lastModified:    new Date(),
+      changeFrequency: 'monthly' as const,
+      priority:        0.7,
+    }))
   } catch {}
 
   // Pagine local SEO
@@ -57,5 +70,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   } catch {}
 
-  return [...statiche, ...eventiEntries, ...localitaEntries]
+  return [...statiche, ...eventiEntries, ...eventiAziendaliEntries, ...localitaEntries]
 }

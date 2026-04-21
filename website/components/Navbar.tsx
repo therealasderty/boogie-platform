@@ -211,6 +211,11 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
             onMouseEnter={() => openDropdown('eventi')}
             onMouseLeave={scheduleClose}
           >
+            <Link href="/eventi-aziendali" onClick={() => setActiveDropdown(null)} className="block px-5 py-3 hover:bg-brand transition-colors border-b border-black/5">
+              <span className="text-[11px] text-black/40 uppercase tracking-wider block">Location & catering</span>
+              <span className="text-sm text-black/70">Eventi Aziendali</span>
+            </Link>
+            {eventi.length > 0 && <div className="border-t border-black/10" />}
             {eventi.map((e, i) => (
               <Link key={i} href={e.slug ? `/eventi-speciali/${e.slug}` : '/eventi-speciali'} onClick={() => setActiveDropdown(null)} className="block px-5 py-3 hover:bg-brand transition-colors border-b border-black/5 last:border-b-0">
                 <span className="text-[11px] text-black/40 uppercase tracking-wider block">
@@ -395,6 +400,15 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
                   </button>
                   {mobileExpanded === 'eventi' && (
                     <div className="pb-4 flex flex-col gap-2">
+                      <Link
+                        href="/eventi-aziendali"
+                        className="flex items-center gap-3 rounded-card overflow-hidden bg-white/5 border border-white/10 hover:bg-white/10 active:bg-white/15 transition-colors px-4 py-3"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[10px] text-white/40 uppercase tracking-wider block mb-0.5">Location & catering</span>
+                          <span className="text-sm text-white font-medium leading-snug block">Eventi Aziendali</span>
+                        </div>
+                      </Link>
                       {eventi.map((e, i) => (
                         <Link
                           key={i}
@@ -430,9 +444,33 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
                   )}
                 </>
               ) : (
-                <Link href="/eventi-speciali" className="block py-4 text-white text-base">
-                  Appuntamenti
-                </Link>
+                <>
+                  <button
+                    className="w-full flex items-center justify-between py-4 text-white text-base cursor-pointer"
+                    onClick={() => setMobileExpanded(mobileExpanded === 'eventi' ? null : 'eventi')}
+                  >
+                    Appuntamenti
+                    <span className={`transition-transform duration-200 ${mobileExpanded === 'eventi' ? 'rotate-180' : ''}`}>
+                      <ChevronDown />
+                    </span>
+                  </button>
+                  {mobileExpanded === 'eventi' && (
+                    <div className="pb-4 flex flex-col gap-2">
+                      <Link
+                        href="/eventi-aziendali"
+                        className="flex items-center gap-3 rounded-card overflow-hidden bg-white/5 border border-white/10 hover:bg-white/10 active:bg-white/15 transition-colors px-4 py-3"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[10px] text-white/40 uppercase tracking-wider block mb-0.5">Location & catering</span>
+                          <span className="text-sm text-white font-medium leading-snug block">Eventi Aziendali</span>
+                        </div>
+                      </Link>
+                      <Link href="/eventi-speciali" className="text-xs text-white/30 hover:text-white/60 transition-colors pt-1 text-right pr-1">
+                        Tutti gli appuntamenti →
+                      </Link>
+                    </div>
+                  )}
+                </>
               )}
             </li>
 
