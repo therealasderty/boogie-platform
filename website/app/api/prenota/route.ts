@@ -44,10 +44,10 @@ export async function POST(req: NextRequest) {
             'Email':              email,
             'Telefono':           telefono,
             'Note':               note || '',
-            'Preferenza':         preferenza || '',
-            'Evento':             evento || '',
+            'Preferenza':         preferenza || null,
+            'Evento':             evento || null,
             'Canale':             'Sito web',
-            'Data Nascita':       data_nascita || '',
+            'Data Nascita':       data_nascita || null,
             'Consenso Privacy':   consenso_privacy,
             'Consenso Marketing': consenso_marketing,
             'Timestamp':          new Date().toISOString(),
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
 
   // ── 3. Brevo contatto ────────────────────────────────────────────
   if (BREVO_API_KEY) {
-    fetch('https://api.brevo.com/v3/contacts', {
+    await fetch('https://api.brevo.com/v3/contacts', {
       method: 'POST',
       headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'api-key': BREVO_API_KEY },
       body: JSON.stringify({
@@ -121,7 +121,7 @@ ${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F4
 <p style="font-size:13px;color:#8B6F47;">Per informazioni: <a href="mailto:${EMAIL_RISTORANTE}" style="color:#C4913A;">${EMAIL_RISTORANTE}</a></p>
 </td></tr></table></td></tr></table></body></html>`
 
-    fetch('https://api.brevo.com/v3/smtp/email', {
+    await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'api-key': BREVO_API_KEY },
       body: JSON.stringify({
@@ -154,7 +154,7 @@ ${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F4
 <a href="${linkConferma}" style="display:inline-block;background:#1A1610;color:white;text-decoration:none;padding:14px 32px;font-size:14px;font-weight:bold;">✓ CONFERMA PRENOTAZIONE</a>
 </td></tr></table></td></tr></table></body></html>`
 
-      fetch('https://api.brevo.com/v3/smtp/email', {
+      await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
         headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'api-key': BREVO_API_KEY },
         body: JSON.stringify({
