@@ -45,6 +45,7 @@ export default function FormPrenotazioneEvento({
   maxPosti,
   titolo,
   ricorrente,
+  dataFormattata,
 }: {
   data: string
   orario?: string
@@ -53,6 +54,7 @@ export default function FormPrenotazioneEvento({
   maxPosti?: number | string
   titolo?: string
   ricorrente?: boolean
+  dataFormattata?: string
 }) {
   // Tre modalità:
   // 1. haRange: orario + orarioFine → fetch disponibilità, filtra slot nel range evento
@@ -174,17 +176,6 @@ export default function FormPrenotazioneEvento({
     }
   }, [stato])
 
-  if (stato === 'successo') {
-    return (
-      <div ref={successRef} className="rounded-card border border-brand/30 bg-brand/5 p-8 text-center">
-        <p className="text-brand font-medium mb-2" style={{ fontSize: 'var(--text-section)' }}>Prenotazione inviata ✓</p>
-        <p className="text-text-muted" style={{ fontSize: 'var(--text-body)' }}>
-          Riceverai una conferma via email entro pochi minuti.
-        </p>
-      </div>
-    )
-  }
-
   const slotsDisponibili = fasce.flatMap(f => f.slots).filter(s => !s.pieno)
   const hasSlots = (orario && !orarioFine) || slotsDisponibili.length > 0
   const maxPersone = maxPosti ? Math.min(Number(maxPosti), 10) : 10
@@ -195,15 +186,58 @@ export default function FormPrenotazioneEvento({
   // così l'utente può cambiare data invece di restare bloccato sul messaggio d'errore.
   if (stato === 'chiuso' && !ricorrente) {
     return (
-      <div className="rounded-card border border-white/10 p-6">
-        <p className="text-text-muted" style={{ fontSize: 'var(--text-body)' }}>
-          Le prenotazioni online non sono disponibili per questa data. Contattaci direttamente per riservare il tuo posto.
-        </p>
-      </div>
+      <>
+        {titolo && (
+          <div className="mb-6">
+            <h3 className="font-raleway font-semibold text-white mb-2" style={{ fontSize: '1.75rem' }}>
+              Prenota per l&apos;appuntamento {titolo}
+            </h3>
+            {dataFormattata && (
+              <p className="text-text-faint mt-1" style={{ fontSize: 'var(--text-meta)' }}>{dataFormattata}</p>
+            )}
+            <p className="text-text-faint mb-6 mt-1" style={{ fontSize: 'var(--text-meta)' }}>
+              Vuoi prenotare a cena o a pranzo per un altro giorno?{' '}
+              <a href="/prenota" className="text-brand hover:text-brand-hover underline underline-offset-2 transition-colors">
+                Vai alla pagina prenotazioni
+              </a>
+            </p>
+          </div>
+        )}
+        <div className="rounded-card border border-white/10 p-6">
+          <p className="text-text-muted" style={{ fontSize: 'var(--text-body)' }}>
+            Le prenotazioni online non sono disponibili per questa data. Contattaci direttamente per riservare il tuo posto.
+          </p>
+        </div>
+      </>
     )
   }
 
   return (
+    <>
+      {stato !== 'successo' && titolo && (
+        <div className="mb-6">
+          <h3 className="font-raleway font-semibold text-white mb-2" style={{ fontSize: '1.75rem' }}>
+            Prenota per l&apos;appuntamento {titolo}
+          </h3>
+          {dataFormattata && (
+            <p className="text-text-faint mt-1" style={{ fontSize: 'var(--text-meta)' }}>{dataFormattata}</p>
+          )}
+          <p className="text-text-faint mb-6 mt-1" style={{ fontSize: 'var(--text-meta)' }}>
+            Vuoi prenotare a cena o a pranzo per un altro giorno?{' '}
+            <a href="/prenota" className="text-brand hover:text-brand-hover underline underline-offset-2 transition-colors">
+              Vai alla pagina prenotazioni
+            </a>
+          </p>
+        </div>
+      )}
+      {stato === 'successo' ? (
+        <div ref={successRef} className="rounded-card border border-brand/30 bg-brand/5 p-8 text-center">
+          <p className="text-brand font-medium mb-2" style={{ fontSize: 'var(--text-section)' }}>Prenotazione inviata ✓</p>
+          <p className="text-text-muted" style={{ fontSize: 'var(--text-body)' }}>
+            Riceverai una conferma via email entro pochi minuti.
+          </p>
+        </div>
+      ) : (
     <form onSubmit={handleSubmit} noValidate>
 
       {/* Data — solo per eventi ricorrenti */}
@@ -379,5 +413,7 @@ export default function FormPrenotazioneEvento({
         </>
       )}
     </form>
+      )}
+    </>
   )
 }

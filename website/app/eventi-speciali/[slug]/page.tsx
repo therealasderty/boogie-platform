@@ -233,18 +233,6 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
               <FormIscrizioneEvento eventoTitolo={evento.titolo} />
             ) : (
               <>
-                <h3 className="font-raleway font-semibold text-white mb-2" style={{ fontSize: '1.75rem' }}>
-                  Prenota per l&apos;appuntamento {evento.titolo}
-                </h3>
-                {dataFormattata && !evento.ricorrente && (
-                  <p className="text-text-faint mt-1" style={{ fontSize: 'var(--text-meta)' }}>{dataFormattata}</p>
-                )}
-                <p className="text-text-faint mb-6 mt-1" style={{ fontSize: 'var(--text-meta)' }}>
-                  Vuoi prenotare a cena o a pranzo per un altro giorno?{' '}
-                  <Link href="/prenota" className="text-brand hover:text-brand-hover underline underline-offset-2 transition-colors">
-                    Vai alla pagina prenotazioni
-                  </Link>
-                </p>
                 {evento.ricorrente
                   ? (() => {
                       const prossima = prossimaOccorrenza(evento) || localDateStr(new Date())
@@ -264,6 +252,7 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
                         orario={evento.orario || undefined}
                         orarioFine={evento.orarioFine || undefined}
                         titolo={evento.titolo}
+                        dataFormattata={dataFormattata || undefined}
                       />
                     : (
                       <Link
