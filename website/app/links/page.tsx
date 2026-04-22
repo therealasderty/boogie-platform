@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 // ─── Helpers label evento ─────────────────────────────────────────────────────
 const GIORNI_BREVI   = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab']
 const GIORNI_LABEL   = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
+const GIORNI_ESTESI  = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato']
 const MESI_FULL      = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre']
 const ORDINE_SETTIMANA = [1, 2, 3, 4, 5, 6, 0]
 
@@ -56,7 +57,10 @@ function formatLabelEvento(e: { data: string | null; ricorrente: boolean; ricorr
     const esclusi = e.giorniEsclusione ? e.giorniEsclusione.split(',').map(Number).filter(n => !isNaN(n)) : []
     giornoLabel = formatGiornaliera(esclusi, giorniChiusi)
   } else if (e.ricorrenza === 'settimanale' && e.giornoSettimana) {
-    let label = formatGiorniSettimana(e.giornoSettimana) || ''
+    const nums = e.giornoSettimana.split(',').map(Number).filter(n => !isNaN(n))
+    let label = nums.length === 1 && GIORNI_ESTESI[nums[0]]
+      ? `Ogni ${GIORNI_ESTESI[nums[0]]}`
+      : `Ogni ${formatGiorniSettimana(e.giornoSettimana)}`
     if (e.giorniEsclusione) {
       const esclusi = e.giorniEsclusione.split(',').map(Number).filter(n => !isNaN(n) && GIORNI_BREVI[n])
       if (esclusi.length > 0) label += ` (escluso ${esclusi.map(n => GIORNI_BREVI[n]).join(', ')})`

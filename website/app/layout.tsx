@@ -50,8 +50,8 @@ export default async function RootLayout({
   const orariDisplay = buildOrariLines(orari, chiusure)
   const oggi = new Date().toISOString().split('T')[0]
   const eventiNavbar: EventoAgenda[] = [
-    ...eventiRaw.filter(e => !e.ricorrente && e.data && e.data >= oggi).slice(0, 3),
-    ...eventiRaw.filter(e => e.ricorrente).slice(0, 2),
+    ...eventiRaw.filter(e => !e.ricorrente && e.data && e.data >= oggi && e.stato !== 'dormiente').slice(0, 3),
+    ...eventiRaw.filter(e => e.ricorrente && e.stato !== 'dormiente').slice(0, 2),
   ]
 
   return (

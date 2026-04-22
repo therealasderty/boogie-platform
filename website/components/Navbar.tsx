@@ -52,7 +52,11 @@ function formatRicorrente(e: EventoAgenda, giorniChiusi: number[] = []): string 
       if (nomi.length > 0) label += ` (escluso il ${nomi.join(', ')})`
     }
   } else if (e.ricorrenza === 'settimanale' && e.giornoSettimana) {
-    label = formatGiorniSettimana(e.giornoSettimana) || 'ricorrente'
+    const nums = e.giornoSettimana.split(',').map(Number).filter(n => !isNaN(n))
+    label = nums.length === 1 && GIORNI_FULL[nums[0]]
+      ? `Ogni ${GIORNI_FULL[nums[0]]}`
+      : `Ogni ${formatGiorniSettimana(e.giornoSettimana)}`
+    if (!label.trim() || label === 'Ogni ') label = 'ricorrente'
   } else if (e.data) {
     const from = formatDataShort(e.data)
     const to = e.dataFine ? formatDataShort(e.dataFine) : ''
