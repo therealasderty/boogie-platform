@@ -42,6 +42,7 @@ import {
   Question,
   Article,
   MapPin,
+  ShareNetwork,
 } from '@phosphor-icons/react'
 import GoogleIcon from './GoogleIcon.jsx'
 import TripAdvisorIcon from './TripAdvisorIcon.jsx'
@@ -116,3 +117,6 @@ export const IconBlog        = icon(Article)
 
 // — Local SEO
 export const IconLocalSeo    = icon(MapPin)
+
+// — Social Scheduler
+export const IconSocial      = icon(ShareNetwork)

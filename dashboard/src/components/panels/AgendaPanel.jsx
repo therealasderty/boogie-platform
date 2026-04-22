@@ -113,6 +113,8 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
   const [mostraInNews, setMostraInNews] = useState(appuntamento?.mostraInNews || false)
   const [metaTitle, setMetaTitle] = useState(appuntamento?.metaTitle || '')
   const [metaDescription, setMetaDescription] = useState(appuntamento?.metaDescription || '')
+  const [socialCopy, setSocialCopy] = useState(appuntamento?.socialCopy || '')
+  const [statoSocial, setStatoSocial] = useState(appuntamento?.statoSocial || 'nessuno')
   const [loading, setLoading] = useState(false)
   const [errore, setErrore] = useState(null)
 
@@ -120,6 +122,8 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
   const [sezioneInfo, setSezioneInfo] = useState(true)
   const [sezionePagina, setSezionePagina] = useState(!!appuntamento?.slug)
   const [sezioneSeo, setSezioneSeo] = useState(false)
+  const [sezioneSocial, setSezioneSocial] = useState(false)
+  const [generandoCaption, setGenerandoCaption] = useState(false)
 
   // Conferma eliminazione
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -177,10 +181,36 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
         metaDescription: metaDescription.trim(),
         inPrimoPiano,
         mostraInNews,
+        socialCopy: socialCopy.trim(),
+        statoSocial,
       })
     } catch (e) {
       setErrore(e.message || 'Errore durante il salvataggio')
       setLoading(false)
+    }
+  }
+
+  async function handleGeneraCaption() {
+    setGenerandoCaption(true)
+    try {
+      const res = await authFetch('/.netlify/functions/pubblica-social?action=genera-caption', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          titolo: title,
+          descrizione: descrizioneBreve,
+          data: dataVal,
+          ora,
+          tipo: 'evento',
+        }),
+      })
+      const data = await res.json()
+      if (data.success && data.caption) setSocialCopy(data.caption)
+      else alert('Errore generazione: ' + (data.error || 'risposta non valida'))
+    } catch (e) {
+      alert('Errore generazione caption: ' + e.message)
+    } finally {
+      setGenerandoCaption(false)
     }
   }
 
@@ -463,6 +493,59 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
                 <label>Meta Description ({metaDescription.length}/160)</label>
                 <textarea value={metaDescription} onChange={e => setMetaDescription(e.target.value)}
                   rows={2} placeholder="Breve descrizione per i motori di ricerca..." maxLength={200} />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── SEZIONE 4: Social Media ── */}
+        <div className={styles.sezione}>
+          <button type="button" className={styles.sezioneHeader} onClick={() => setSezioneSocial(v => !v)}>
+            <span className={styles.sezioneTitolo}>📱 Social Media</span>
+            {statoSocial === 'pronto' && (
+              <span className={styles.sezioneBadge} style={{ background: 'rgba(230,126,34,0.12)', color: '#E67E22', borderColor: 'rgba(230,126,34,0.3)' }}>Pronto</span>
+            )}
+            {statoSocial === 'pubblicato' && (
+              <span className={styles.sezioneBadge} style={{ background: 'rgba(39,174,96,0.12)', color: '#27AE60', borderColor: 'rgba(39,174,96,0.3)' }}>Pubblicato</span>
+            )}
+            <span className={`${styles.sezioneArrow} ${sezioneSocial ? styles.sezioneArrowOpen : ''}`}>›</span>
+          </button>
+          {sezioneSocial && (
+            <div className={styles.sezioneBody}>
+              <div className={styles.field}>
+                <label>Stato social</label>
+                <div className={styles.tipoGroup}>
+                  {[
+                    { v: 'nessuno',    label: '— Nessuno',    bg: '#64748b' },
+                    { v: 'pronto',     label: '⏳ Pronto',     bg: '#E67E22' },
+                    { v: 'pubblicato', label: '✓ Pubblicato', bg: '#27AE60' },
+                  ].map(({ v, label, bg }) => (
+                    <button key={v} type="button"
+                      className={`${styles.tipoBtn} ${statoSocial === v ? styles.tipoBtnActive : ''}`}
+                      style={statoSocial === v ? { background: bg, borderColor: bg } : {}}
+                      onClick={() => setStatoSocial(v)}
+                    >{label}</button>
+                  ))}
+                </div>
+              </div>
+              <div className={styles.field}>
+                <label>Caption social <span style={{ fontWeight: 400, color: 'var(--text3)' }}>({socialCopy.length} caratteri)</span></label>
+                <textarea
+                  value={socialCopy}
+                  onChange={e => setSocialCopy(e.target.value)}
+                  rows={5}
+                  placeholder="Testo del post per Instagram, Facebook e Google Business..."
+                />
+              </div>
+              <div>
+                <button type="button" className={styles.btnAi} onClick={handleGeneraCaption} disabled={generandoCaption || !title.trim()}>
+                  <Sparkle size={13} weight="fill" />
+                  {generandoCaption ? 'Generando...' : 'Genera Caption AI'}
+                </button>
+                <p style={{ margin: '8px 0 0', fontSize: '0.75rem', color: 'var(--text3)' }}>
+                  Usa Gemini (piano gratuito) per scrivere la caption basandosi su titolo, descrizione e data dell'evento.
+                  Richiede <code style={{ fontSize: '0.72rem', background: 'var(--bg3)', padding: '1px 4px', borderRadius: 3 }}>GEMINI_API_KEY</code> nelle env vars Netlify.
+                </p>
               </div>
             </div>
           )}

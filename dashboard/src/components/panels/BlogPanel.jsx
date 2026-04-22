@@ -6,8 +6,10 @@ import {
   SortableContext, useSortable, verticalListSortingStrategy, arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { Sparkle } from '@phosphor-icons/react'
 import { useBlog } from '../../hooks/useBlog'
 import { IconEdit, IconTrash, IconClose, IconPlus, IconDrag, IconEye, IconEyeSlash } from '../../icons/index.jsx'
+import { authFetch } from '../../lib/authFetch'
 import RichTextEditor from './RichTextEditor'
 import { MediaLibraryModal } from './BlocchiEditor'
 import { useMedia } from '../../hooks/useMedia'
@@ -28,13 +30,38 @@ function Modal({ item, salva, onClose, onSaved, onElimina }) {
   const isEdit = !!item
   const [form, setForm] = useState(item
     ? { ...item }
-    : { titolo: '', slug: '', autore: '', dataPubblicazione: '', categoria: '', descrizioneBreve: '', fotoHero: '', contenuto: '', metaTitle: '', metaDescription: '', pubblicato: false }
+    : { titolo: '', slug: '', autore: '', dataPubblicazione: '', categoria: '', descrizioneBreve: '', fotoHero: '', contenuto: '', metaTitle: '', metaDescription: '', pubblicato: false, socialCopy: '', statoSocial: 'nessuno' }
   )
   const [slugModificato, setSlugModificato] = useState(isEdit)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState(null)
   const [mostraMedia, setMostraMedia] = useState(false)
+  const [sezioneSocial, setSezioneSocial] = useState(false)
+  const [generandoCaption, setGenerandoCaption] = useState(false)
   const { items: mediaItems } = useMedia()
+
+  async function handleGeneraCaption() {
+    setGenerandoCaption(true)
+    try {
+      const res = await authFetch('/.netlify/functions/pubblica-social?action=genera-caption', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          titolo: form.titolo,
+          descrizione: form.descrizioneBreve,
+          data: form.dataPubblicazione,
+          tipo: 'articolo',
+        }),
+      })
+      const data = await res.json()
+      if (data.success && data.caption) set('socialCopy', data.caption)
+      else alert('Errore generazione: ' + (data.error || 'risposta non valida'))
+    } catch (e) {
+      alert('Errore generazione caption: ' + e.message)
+    } finally {
+      setGenerandoCaption(false)
+    }
+  }
 
   function set(k, v) { setForm(p => ({ ...p, [k]: v })) }
 
@@ -188,6 +215,85 @@ function Modal({ item, salva, onClose, onSaved, onElimina }) {
                 />
                 Pubblica sul sito
               </label>
+            </div>
+
+            {/* ── Sezione Social ── */}
+            <div style={{ border: 'var(--border-style)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+              <button
+                type="button"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                  padding: '12px 14px', background: 'var(--bg2)', border: 'none',
+                  cursor: 'pointer', fontFamily: 'var(--font-body)', textAlign: 'left',
+                }}
+                onClick={() => setSezioneSocial(v => !v)}
+              >
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)', flex: 1 }}>📱 Social Media</span>
+                {form.statoSocial === 'pronto' && (
+                  <span style={{ fontSize: '0.72rem', fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: 'rgba(230,126,34,0.12)', color: '#E67E22', border: '1px solid rgba(230,126,34,0.3)' }}>Pronto</span>
+                )}
+                {form.statoSocial === 'pubblicato' && (
+                  <span style={{ fontSize: '0.72rem', fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: 'rgba(39,174,96,0.12)', color: '#27AE60', border: '1px solid rgba(39,174,96,0.3)' }}>Pubblicato</span>
+                )}
+                <span style={{ fontSize: '1rem', color: 'var(--text3)', transform: sezioneSocial ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}>›</span>
+              </button>
+              {sezioneSocial && (
+                <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, borderTop: 'var(--border-style)', background: 'var(--bg)' }}>
+                  <div className={styles.field}>
+                    <label>Stato social</label>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {[
+                        { v: 'nessuno',    label: '— Nessuno',    bg: '#64748b' },
+                        { v: 'pronto',     label: '⏳ Pronto',     bg: '#E67E22' },
+                        { v: 'pubblicato', label: '✓ Pubblicato', bg: '#27AE60' },
+                      ].map(({ v, label, bg }) => (
+                        <button
+                          key={v}
+                          type="button"
+                          style={{
+                            flex: 1, padding: '7px 10px',
+                            border: form.statoSocial === v ? `1px solid ${bg}` : 'var(--border-style)',
+                            borderRadius: 'var(--radius-sm)',
+                            background: form.statoSocial === v ? bg : 'none',
+                            color: form.statoSocial === v ? '#fff' : 'var(--text2)',
+                            fontSize: '0.82rem', fontFamily: 'var(--font-body)',
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => set('statoSocial', v)}
+                        >{label}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className={styles.field}>
+                    <label>Caption social <span style={{ fontWeight: 400, color: 'var(--text3)' }}>({(form.socialCopy || '').length} caratteri)</span></label>
+                    <textarea
+                      value={form.socialCopy || ''}
+                      onChange={e => set('socialCopy', e.target.value)}
+                      rows={5}
+                      style={{ border: 'var(--border-style)', borderRadius: 'var(--radius-sm)', background: 'var(--bg2)', color: 'var(--text)', padding: '8px 10px', fontSize: '0.88rem', fontFamily: 'var(--font-body)', resize: 'vertical', outline: 'none', lineHeight: '1.55' }}
+                      placeholder="Testo del post per Instagram, Facebook e Google Business..."
+                    />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <button
+                      type="button"
+                      onClick={handleGeneraCaption}
+                      disabled={generandoCaption || !form.titolo.trim()}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 6,
+                        padding: '7px 14px',
+                        background: 'linear-gradient(135deg, #7B5EA7, #1565C0)',
+                        color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)',
+                        fontSize: '0.8rem', fontWeight: 600, fontFamily: 'var(--font-body)',
+                        cursor: generandoCaption ? 'wait' : 'pointer', opacity: generandoCaption ? 0.7 : 1,
+                      }}
+                    >
+                      <Sparkle size={13} weight="fill" />
+                      {generandoCaption ? 'Generando...' : 'Genera Caption AI'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
           </div>

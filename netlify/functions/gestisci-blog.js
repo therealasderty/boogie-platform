@@ -42,6 +42,8 @@ exports.handler = async (event) => {
         metaDescription:  r.fields['MetaDescription'] || '',
         pubblicato:       r.fields['Pubblicato'] !== false,
         ordine:           r.fields['Ordine'] || 0,
+        socialCopy:       r.fields['SocialCopy'] || '',
+        statoSocial:      r.fields['StatoSocial'] || 'nessuno',
       }))
       return { statusCode: 200, headers: CORS, body: JSON.stringify({ success: true, articoli }) }
     } catch (e) {
@@ -66,6 +68,8 @@ exports.handler = async (event) => {
         'MetaDescription':   body.metaDescription || '',
         'Pubblicato':        !!body.pubblicato,
         'Ordine':            body.ordine || 0,
+        'SocialCopy':        body.socialCopy || '',
+        'StatoSocial':       body.statoSocial || 'nessuno',
       }
       const res = await fetch(BASE_URL, {
         method: 'POST',
@@ -99,6 +103,8 @@ exports.handler = async (event) => {
       if (body.metaDescription  !== undefined) fields['MetaDescription']   = body.metaDescription
       if (body.pubblicato       !== undefined) fields['Pubblicato']        = !!body.pubblicato
       if (body.ordine           !== undefined) fields['Ordine']            = body.ordine
+      if (body.socialCopy       !== undefined) fields['SocialCopy']        = body.socialCopy
+      if (body.statoSocial      !== undefined) fields['StatoSocial']       = body.statoSocial
 
       const res = await fetch(`${BASE_URL}/${body.id}`, {
         method: 'PATCH',

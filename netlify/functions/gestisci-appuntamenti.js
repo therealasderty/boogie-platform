@@ -10,7 +10,7 @@ const AT_HEADERS       = { 'Authorization': `Bearer ${AIRTABLE_TOKEN}`, 'Content
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, DELETE, PATCH, OPTIONS',
 }
 
 exports.handler = async (event) => {
@@ -53,6 +53,8 @@ exports.handler = async (event) => {
         metaDescription:    r.fields['MetaDescription'] || '',
         inPrimoPiano:       !!r.fields['InPrimoPiano'],
         mostraInNews:       !!r.fields['MostraInNews'],
+        socialCopy:         r.fields['SocialCopy'] || '',
+        statoSocial:        r.fields['StatoSocial'] || 'nessuno',
       }))
       // Auto-dormiente: eventi singoli con data passata ancora attivi
       const oggi = new Date().toISOString().split('T')[0]
@@ -106,6 +108,8 @@ exports.handler = async (event) => {
         'MetaDescription':     body.metaDescription || '',
         'InPrimoPiano':        !!body.inPrimoPiano,
         'MostraInNews':        !!body.mostraInNews,
+        'SocialCopy':          body.socialCopy || '',
+        'StatoSocial':         body.statoSocial || 'nessuno',
         ...(body.dataFineRicorrenza ? { 'DataFineRicorrenza': body.dataFineRicorrenza } : {}),
       }
 
@@ -129,6 +133,29 @@ exports.handler = async (event) => {
       if (!res.ok) throw new Error(await res.text())
       const json = await res.json()
       return { statusCode: 200, headers: CORS, body: JSON.stringify({ success: true, id: json.id }) }
+    } catch (e) {
+      return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: e.message }) }
+    }
+  }
+
+  // PATCH — aggiorna campi specifici (usato da Social Scheduler)
+  if (event.httpMethod === 'PATCH') {
+    try {
+      const body = JSON.parse(event.body)
+      if (!body.id) return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'id mancante' }) }
+      const fields = {}
+      if (body.socialCopy  !== undefined) fields['SocialCopy']  = body.socialCopy
+      if (body.statoSocial !== undefined) fields['StatoSocial'] = body.statoSocial
+      if (body.stato       !== undefined) fields['Stato']       = body.stato
+      if (body.inPrimoPiano !== undefined) fields['InPrimoPiano'] = !!body.inPrimoPiano
+      if (body.mostraInNews !== undefined) fields['MostraInNews'] = !!body.mostraInNews
+      const res = await fetch(`${BASE_URL}/${body.id}`, {
+        method: 'PATCH',
+        headers: AT_HEADERS,
+        body: JSON.stringify({ fields }),
+      })
+      if (!res.ok) throw new Error(await res.text())
+      return { statusCode: 200, headers: CORS, body: JSON.stringify({ success: true }) }
     } catch (e) {
       return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: e.message }) }
     }

@@ -42,6 +42,13 @@
 - [ ] Aggiungere su Netlify: `BREVO_LIST_ID_EVENTI`
 - [x] `BREVO_API_KEY`, `EMAIL_RISTORANTE`, `EMAIL_FROM`, `BREVO_LIST_ID` — già configurate
 
+## Social Automation
+
+- [x] `META_PAGE_ID`, `META_ACCESS_TOKEN`, `META_IG_USER_ID` — configurati
+- [x] `GEMINI_API_KEY` — configurata
+- [ ] **Airtable**: aggiungere campo `SocialCopy` (Long text) e `StatoSocial` (Single select: nessuno/pronto/pubblicato) alle tabelle `Agenda` e `Blog`
+- [ ] **Google Business Profile** — configurare `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`, `GOOGLE_LOCATION_NAME` per pubblicare Local Post su Google Maps
+
 ## Airtable / Dati
 
 - [ ] Rimuovere la fascia "Aperitivo" dalla tabella **Orari** in Airtable.
