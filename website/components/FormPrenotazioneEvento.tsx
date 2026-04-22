@@ -37,6 +37,18 @@ function localDateStr(d: Date): string {
 function oggi() { return localDateStr(new Date()) }
 function traUnMese() { const d = new Date(); d.setMonth(d.getMonth() + 3); return localDateStr(d) }
 
+const GIORNI_NOMI = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato']
+
+function prossimaDataValida(fromIso: string, giorniConsentiti: number[]): string {
+  const d = new Date(fromIso + 'T00:00:00')
+  for (let i = 0; i <= 7; i++) {
+    const check = new Date(d)
+    check.setDate(check.getDate() + i)
+    if (giorniConsentiti.includes(check.getDay())) return localDateStr(check)
+  }
+  return fromIso
+}
+
 export default function FormPrenotazioneEvento({
   data: dataProp,
   orario,
@@ -46,6 +58,7 @@ export default function FormPrenotazioneEvento({
   titolo,
   ricorrente,
   dataFormattata,
+  giornoSettimana,
 }: {
   data: string
   orario?: string
@@ -55,7 +68,12 @@ export default function FormPrenotazioneEvento({
   titolo?: string
   ricorrente?: boolean
   dataFormattata?: string
+  giornoSettimana?: string
 }) {
+  const giorniConsentiti = ricorrente && giornoSettimana
+    ? giornoSettimana.split(',').map(Number).filter(n => !isNaN(n))
+    : []
+
   // Tre modalità:
   // 1. haRange: orario + orarioFine → fetch disponibilità, filtra slot nel range evento
   // 2. orario fisso (solo start): mostra badge fisso, non fa fetch
@@ -252,10 +270,27 @@ export default function FormPrenotazioneEvento({
             min={oggi()}
             max={traUnMese()}
             value={data}
-            onChange={e => { userChangedDate.current = true; autoAdvanceRef.current = 0; setData(e.target.value) }}
+            onChange={e => {
+              userChangedDate.current = true
+              autoAdvanceRef.current = 0
+              const selected = e.target.value
+              if (giorniConsentiti.length > 0) {
+                const d = new Date(selected + 'T00:00:00')
+                if (!giorniConsentiti.includes(d.getDay())) {
+                  setData(prossimaDataValida(selected, giorniConsentiti))
+                  return
+                }
+              }
+              setData(selected)
+            }}
             className={inputClass}
             style={{ fontSize: 'var(--text-body)', colorScheme: 'dark' }}
           />
+          {giorniConsentiti.length > 0 && (
+            <p className="mt-2 text-text-faint/70" style={{ fontSize: 'var(--text-meta)' }}>
+              Disponibile ogni {giorniConsentiti.map(n => GIORNI_NOMI[n]).join(', ')}
+            </p>
+          )}
         </div>
       )}
 

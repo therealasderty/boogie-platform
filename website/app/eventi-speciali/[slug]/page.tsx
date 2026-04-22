@@ -243,6 +243,7 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
                           orarioFine={evento.orarioFine || undefined}
                           titolo={evento.titolo}
                           ricorrente
+                          giornoSettimana={evento.giornoSettimana || undefined}
                         />
                       )
                     })()

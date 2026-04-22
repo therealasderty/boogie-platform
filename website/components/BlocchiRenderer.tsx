@@ -182,7 +182,7 @@ async function RendererCardOfferte({ b }: { b: BloccoCardOfferte }) {
 function RendererPrezzo({ b }: { b: BloccoPrezzo }) {
   if (!b.importo && !b.titolo && !b.voci?.length) return null
   return (
-    <section className="py-12 border-b border-neutral-200">
+    <section className="py-12">
       <div className="rounded-card px-6 py-8 bg-white">
         {b.importo && (
           <div className="font-raleway font-semibold text-brand mb-1" style={{ fontSize: '2.5rem' }}>

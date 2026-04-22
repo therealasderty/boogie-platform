@@ -90,9 +90,10 @@ export async function fetchEventoBySlug(slug: string): Promise<EventoAgenda | nu
   return eventi.find(e => e.slug === slug) ?? null
 }
 
-const ORDINE_SETT  = [1, 2, 3, 4, 5, 6, 0]
-const GIORNI_LABEL = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
-const GIORNI_BREVI = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab']
+const ORDINE_SETT   = [1, 2, 3, 4, 5, 6, 0]
+const GIORNI_LABEL  = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
+const GIORNI_BREVI  = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab']
+const GIORNI_ESTESI = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato']
 
 function fmtGiorniRange(str: string): string {
   const nums = str.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n))
@@ -132,7 +133,11 @@ export function formatBadgeRicorrente(
       giorni = esclusiInRange.length === 0 ? rangeLabel : `${rangeLabel} (escluso ${esclusiInRange.map(n => GIORNI_BREVI[n]).join(', ')})`
     }
   } else if (evento.ricorrenza === 'settimanale' && evento.giornoSettimana) {
-    giorni = fmtGiorniRange(evento.giornoSettimana)
+    const nums = evento.giornoSettimana.split(',').map(Number).filter(n => !isNaN(n))
+    const label = nums.length === 1 && GIORNI_ESTESI[nums[0]]
+      ? `Ogni ${GIORNI_ESTESI[nums[0]]}`
+      : `Ogni ${fmtGiorniRange(evento.giornoSettimana)}`
+    giorni = label
     if (evento.giorniEsclusione) {
       const esclusi = evento.giorniEsclusione.split(',').map(Number).filter(n => !isNaN(n) && GIORNI_BREVI[n])
       if (esclusi.length) giorni += ` (escluso ${esclusi.map(n => GIORNI_BREVI[n]).join(', ')})`
