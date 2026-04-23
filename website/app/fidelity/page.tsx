@@ -53,7 +53,7 @@ export default async function FidelityPage() {
               Come funziona
             </span>
             <h2 className="font-semibold text-neutral-900 mt-4 mb-5 leading-tight" style={{ fontSize: 'var(--text-section)' }}>
-              Boogie Elite: il programma che premia ogni visita
+              Boogie Fidelity: il programma che premia ogni visita
             </h2>
             <p className="text-neutral-500 font-light leading-relaxed mb-8" style={{ fontSize: 'var(--text-body)' }}>
               Inizia subito a raccogliere vantaggi. Il nostro programma fedeltà è pensato per premiarti ogni volta

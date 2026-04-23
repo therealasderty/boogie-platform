@@ -47,7 +47,7 @@ export default function FormFidelity() {
       <div className="rounded-card border border-brand/30 bg-brand/10 p-10 text-center">
         <p className="text-black font-medium mb-3" style={{ fontSize: 'var(--text-section)' }}>Iscrizione completata ✓</p>
         <p className="text-neutral-600 font-light" style={{ fontSize: 'var(--text-body)' }}>
-          Benvenuto nel programma Boogie Elite! Riceverai una email di conferma a breve.
+          Benvenuto nel programma Boogie Fidelity! Riceverai una email di conferma a breve.
           Da ora in poi ogni visita conta.
         </p>
       </div>

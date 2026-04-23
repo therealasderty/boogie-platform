@@ -32,7 +32,7 @@ export default async function GalleriaPage() {
         titolo="Galleria Fotografica"
         sottotitolo="La location"
         tagline="Il giardino, le sale, i piatti — scorri la nostra storia per immagini"
-        image="/images/hero/1.webp"
+        image={[...immaginiLocation, ...immaginiCarta][0]?.src ?? '/images/hero/1.webp'}
       />
       <SezioneIntro
         inverti
@@ -45,10 +45,14 @@ export default async function GalleriaPage() {
         label="I nostri spazi"
         titolo="Un viaggio visivo nel cuore del Boogie Bistrot"
         testo="<p>Ti diamo il benvenuto nella nostra galleria fotografica. Queste immagini ti faranno scoprire il <strong>Boogie Bistrot</strong> in ogni suo aspetto: dai piatti della nostra cucina, che unisce <strong>tradizione brianzola e creatività</strong>, agli spazi della nostra location storica a Colle Brianza.</p><br/><p>Sfogliando queste foto, potrai vedere il nostro <strong>giardino</strong>, particolarmente apprezzato nelle serate estive per la sua naturale frescura, e i nostri piatti più amati.</p><br/><p>Le immagini parlano spesso più delle parole... ma <strong>l'esperienza dal vivo è ancora meglio!</strong></p>"
-        immagini={[
-          { src: '/images/hero/2.avif', alt: 'Il giardino di Boogie Bistrot' },
-          { src: '/images/hero/1.webp', alt: 'Le sale interne' },
-        ]}
+        immagini={
+          [...immaginiLocation, ...immaginiCarta].length > 0
+            ? [...immaginiLocation, ...immaginiCarta].slice(0, 4)
+            : [
+                { src: '/images/hero/2.avif', alt: 'Il giardino di Boogie Bistrot' },
+                { src: '/images/hero/1.webp', alt: 'Le sale interne' },
+              ]
+        }
       />
       {/* Galleria fotografica — su desktop usa tag location + carta */}
       <MosaicoFoto immagini={[...immaginiLocation, ...immaginiCarta].length > 0 ? [...immaginiLocation, ...immaginiCarta] : undefined} />
