@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import PaginaHero from '@/components/PaginaHero'
+import SezioneMenu from '@/components/SezioneMenu'
+import SezioneRecensioni from '@/components/SezioneRecensioni'
 import SezioneContatti from '@/components/SezioneContatti'
 import Footer from '@/components/Footer'
 import FadeIn from '@/components/FadeIn'
@@ -136,6 +138,24 @@ export default async function BlogSlugPage({ params }: { params: Promise<{ slug:
         </div>
       </section>
 
+      <div className="bg-surface-warm pt-16 md:pt-20 px-6 md:px-14">
+        <div className="max-w-7xl mx-auto text-center">
+          <span
+            className="uppercase text-black/40 font-medium"
+            style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
+          >
+            Boogie Bistrot
+          </span>
+          <h2
+            className="font-semibold text-neutral-900 mt-4"
+            style={{ fontSize: 'var(--text-section)' }}
+          >
+            Cosa puoi trovare al Boogie
+          </h2>
+        </div>
+      </div>
+      <SezioneMenu />
+      <SezioneRecensioni />
       <SezioneContatti />
       <Footer />
     </main>

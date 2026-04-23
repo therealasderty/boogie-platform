@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-
-const inputClass = "w-full px-4 py-3 rounded-btn bg-neutral-50 border border-neutral-200 text-neutral-800 placeholder-neutral-300 focus:outline-none focus:border-neutral-400 transition-colors font-light"
+import { inputClass, labelClass } from '@/lib/form-classes'
 
 export default function FormContatti() {
   const [stato, setStato] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle')
@@ -58,14 +57,14 @@ export default function FormContatti() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="flex flex-col gap-2">
-          <label className="block text-neutral-500 font-medium mb-1.5" style={{ fontSize: 'var(--text-meta)' }}>
+          <label className={labelClass} style={{ fontSize: 'var(--text-meta)' }}>
             Nome
           </label>
           <input name="nome" type="text" required placeholder="Mario"
             className={inputClass} style={{ fontSize: 'var(--text-meta)' }} />
         </div>
         <div className="flex flex-col gap-2">
-          <label className="block text-neutral-500 font-medium mb-1.5" style={{ fontSize: 'var(--text-meta)' }}>
+          <label className={labelClass} style={{ fontSize: 'var(--text-meta)' }}>
             Cognome
           </label>
           <input name="cognome" type="text" required placeholder="Rossi"
@@ -75,14 +74,14 @@ export default function FormContatti() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="flex flex-col gap-2">
-          <label className="block text-neutral-500 font-medium mb-1.5" style={{ fontSize: 'var(--text-meta)' }}>
+          <label className={labelClass} style={{ fontSize: 'var(--text-meta)' }}>
             Telefono
           </label>
           <input name="telefono" type="tel" placeholder="+39 000 000 0000"
             className={inputClass} style={{ fontSize: 'var(--text-meta)' }} />
         </div>
         <div className="flex flex-col gap-2">
-          <label className="block text-neutral-500 font-medium mb-1.5" style={{ fontSize: 'var(--text-meta)' }}>
+          <label className={labelClass} style={{ fontSize: 'var(--text-meta)' }}>
             Email
           </label>
           <input name="email" type="email" required placeholder="mario@email.it"
@@ -91,7 +90,7 @@ export default function FormContatti() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className="block text-neutral-500 font-medium mb-1.5" style={{ fontSize: 'var(--text-meta)' }}>
+        <label className={labelClass} style={{ fontSize: 'var(--text-meta)' }}>
           Data di nascita <span className="text-neutral-400 font-light">(opzionale)</span>
         </label>
         <input name="data_nascita" type="date"
@@ -100,7 +99,7 @@ export default function FormContatti() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className="block text-neutral-500 font-medium mb-1.5" style={{ fontSize: 'var(--text-meta)' }}>
+        <label className={labelClass} style={{ fontSize: 'var(--text-meta)' }}>
           Messaggio
         </label>
         <textarea name="messaggio" required rows={5} placeholder="Come possiamo aiutarti?"

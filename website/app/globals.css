@@ -110,20 +110,50 @@ body {
 }
 
 /* Rich text (contenuto eventi + FAQ) */
-.rich-text h2, .faq-risposta h2 { font-family: var(--font-sans); font-weight: 600; color: #fff; font-size: 1.4rem; margin: 1.6em 0 0.4em; }
-.rich-text h3, .faq-risposta h3 { font-family: var(--font-sans); font-weight: 600; color: #fff; font-size: 1.15rem; margin: 1.4em 0 0.35em; }
-.rich-text h2:first-child, .rich-text h3:first-child,
-.faq-risposta h2:first-child, .faq-risposta h3:first-child { margin-top: 0; }
-.rich-text p, .faq-risposta p  { margin: 0 0 0.75em; }
-.rich-text p:last-child, .faq-risposta p:last-child { margin-bottom: 0; }
-.rich-text ul, .faq-risposta ul { padding-left: 1.25em; margin: 0.5em 0 0.75em; list-style: disc; }
-.rich-text ol, .faq-risposta ol { padding-left: 1.25em; margin: 0.5em 0 0.75em; list-style: decimal; }
-.rich-text li, .faq-risposta li { margin-bottom: 0.3em; }
-.rich-text strong, .faq-risposta strong { font-weight: 700; color: oklch(100% 0 0 / 90%); }
-.rich-text em, .faq-risposta em { font-style: italic; }
-.rich-text u, .faq-risposta u  { text-decoration: underline; }
-.rich-text s, .faq-risposta s  { text-decoration: line-through; }
-.rich-text a, .faq-risposta a  { color: var(--color-brand); text-decoration: underline; text-underline-offset: 3px; }
-.rich-text a:hover, .faq-risposta a:hover { color: var(--color-brand-hover); }
-.rich-text blockquote, .faq-risposta blockquote { border-left: 3px solid oklch(100% 0 0 / 20%); margin: 0.75em 0; padding: 4px 16px; color: oklch(100% 0 0 / 50%); font-style: italic; }
-.rich-text hr, .faq-risposta hr { border: none; border-top: 1px solid oklch(100% 0 0 / 10%); margin: 1.5em 0; }
+:is(.rich-text, .faq-risposta) h2 { font-family: var(--font-sans); font-weight: 600; color: #fff; font-size: 1.4rem; margin: 1.6em 0 0.4em; }
+:is(.rich-text, .faq-risposta) h3 { font-family: var(--font-sans); font-weight: 600; color: #fff; font-size: 1.15rem; margin: 1.4em 0 0.35em; }
+:is(.rich-text, .faq-risposta) :is(h2, h3):first-child { margin-top: 0; }
+:is(.rich-text, .faq-risposta) p  { margin: 0 0 0.75em; }
+:is(.rich-text, .faq-risposta) p:last-child { margin-bottom: 0; }
+:is(.rich-text, .faq-risposta) ul { padding-left: 1.25em; margin: 0.5em 0 0.75em; list-style: disc; }
+:is(.rich-text, .faq-risposta) ol { padding-left: 1.25em; margin: 0.5em 0 0.75em; list-style: decimal; }
+:is(.rich-text, .faq-risposta) li { margin-bottom: 0.3em; }
+:is(.rich-text, .faq-risposta) strong { font-weight: 700; color: oklch(100% 0 0 / 90%); }
+:is(.rich-text, .faq-risposta) em { font-style: italic; }
+:is(.rich-text, .faq-risposta) u  { text-decoration: underline; }
+:is(.rich-text, .faq-risposta) s  { text-decoration: line-through; }
+:is(.rich-text, .faq-risposta) a  { color: var(--color-brand); text-decoration: underline; text-underline-offset: 3px; }
+:is(.rich-text, .faq-risposta) a:hover { color: var(--color-brand-hover); }
+:is(.rich-text, .faq-risposta) blockquote { border-left: 3px solid oklch(100% 0 0 / 20%); margin: 0.75em 0; padding: 4px 16px; color: oklch(100% 0 0 / 50%); font-style: italic; }
+:is(.rich-text, .faq-risposta) hr { border: none; border-top: 1px solid oklch(100% 0 0 / 10%); margin: 1.5em 0; }
+.rich-text img { max-width: 100%; height: auto; border-radius: 12px; margin: 1.5em 0; display: block; }
+
+/* ── Utility classes riusabili ─────────────────────────────────────────────── */
+
+/* Card blog/eventi */
+.card-badge {
+  position: absolute; top: 1rem; left: 1rem;
+  background: rgba(255,255,255,0.9); backdrop-filter: blur(4px);
+  color: rgba(0,0,0,0.6); font-weight: 500;
+  padding: 0.25rem 0.75rem; border-radius: var(--radius-pill);
+  font-size: var(--text-label); letter-spacing: var(--tracking-label);
+}
+.card-img { position: relative; height: 15rem; overflow: hidden; }
+.card-body { display: flex; flex-direction: column; gap: 0.75rem; padding: 1.75rem; flex: 1; }
+.img-zoom { transition: transform 0.7s ease-out; }
+.img-zoom:where(.group:hover *) { transform: scale(1.05); }
+
+/* Link articoli con freccia */
+.article-link {
+  margin-top: 0.75rem; align-self: flex-start;
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  font-weight: 500; font-size: var(--text-meta);
+  color: rgba(0,0,0,0.7); transition: color 0.15s;
+}
+.article-link:hover { color: #000; }
+
+/* Label form */
+.form-label {
+  display: block; color: rgb(115 115 115); font-weight: 500;
+  margin-bottom: 0.375rem; font-size: var(--text-meta);
+}

@@ -17,7 +17,7 @@ export default function GrigliaFotoLocation({ foto }: { foto: MediaItem[] }) {
     <div>
       <div className="grid grid-cols-2 gap-3 md:gap-4">
         {visibili.map((f) => (
-          <div key={f.id} className="relative aspect-square rounded-card overflow-hidden">
+          <div key={f.id} className="relative aspect-[3/2] rounded-card overflow-hidden">
             <Image
               src={f.url}
               alt={f.alt || 'Boogie Bistrot — location'}

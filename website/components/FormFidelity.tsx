@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 
-const inputClass  = 'w-full bg-neutral-50 border border-neutral-200 rounded-btn px-4 py-3 text-neutral-800 placeholder-neutral-300 outline-none focus:border-neutral-400 transition-colors font-light'
-const labelClass  = 'block text-neutral-500 font-medium mb-1.5'
+import { inputClass, labelClass } from '@/lib/form-classes'
+
 const sectionLabelClass = 'block text-neutral-500 uppercase font-medium mb-3'
 
 export default function FormFidelity() {

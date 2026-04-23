@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-const inputClass = 'w-full bg-white/5 border border-white/15 rounded-btn px-4 py-2.5 text-white placeholder-white/25 outline-none focus:border-brand/50 transition-colors'
+import { inputClassDark as inputClass } from '@/lib/form-classes'
 
 export default function FormIscrizioneEvento({ eventoTitolo }: { eventoTitolo: string }) {
   const [stato, setStato] = useState<'pronto' | 'inviando' | 'successo' | 'errore'>('pronto')

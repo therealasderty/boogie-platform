@@ -1,26 +1,32 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { fetchEventi } from '@/lib/agenda'
+import { fetchEventi, formatBadgeRicorrente } from '@/lib/agenda'
+import { fetchOrari, fetchChiusure } from '@/lib/orari'
 
 const MESI_SHORT = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic']
-const GIORNI_LABEL = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
 
-function formatLabel(evento: { ricorrente: boolean; data: string | null; giornoSettimana: string; orario: string }): string {
-  if (!evento.ricorrente && evento.data) {
+function formatLabel(evento: { ricorrente: boolean; data: string | null; ricorrenza: string; giornoSettimana: string; giorniEsclusione: string; orario: string; orarioFine: string }, giorniChiusi: number[]): string {
+  if (evento.ricorrente) {
+    return formatBadgeRicorrente(evento, giorniChiusi)
+  }
+  if (evento.data) {
     const d = new Date(evento.data + 'T00:00:00')
-    return `${d.getDate()} ${MESI_SHORT[d.getMonth()]}`
+    const data = `${d.getDate()} ${MESI_SHORT[d.getMonth()]}`
+    return evento.orario ? `${data} · ore ${evento.orario}` : data
   }
-  if (evento.ricorrente && evento.giornoSettimana) {
-    const giorni = evento.giornoSettimana.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n))
-    if (giorni.length === 1) return `ogni ${GIORNI_LABEL[giorni[0]]}`
-    if (giorni.length > 1) return `${GIORNI_LABEL[giorni[0]]}–${GIORNI_LABEL[giorni[giorni.length - 1]]}`
-  }
-  return 'Appuntamento fisso'
+  return ''
 }
 
 export default async function AltriAppuntamenti({ slugCorrente }: { slugCorrente: string }) {
-  const tutti = await fetchEventi()
+  const [tutti, orari, chiusure] = await Promise.all([fetchEventi(), fetchOrari(), fetchChiusure()])
   const oggi = new Date().toISOString().split('T')[0]
+
+  const giorniConOrari = new Set(orari.filter(o => o.attivo && o.giorno !== null).map(o => o.giorno as number))
+  const chiusiOrdinari = [0,1,2,3,4,5,6].filter(d => !giorniConOrari.has(d))
+  const chiusiSettimanali = chiusure
+    .filter(c => c.tipo === 'Giorno della settimana' && c.tipoApertura === 'Chiusura' && c.giorno !== null)
+    .map(c => c.giorno as number)
+  const giorniChiusi = [...new Set([...chiusiOrdinari, ...chiusiSettimanali])]
 
   const visibili = tutti.filter(e =>
     e.stato === 'attivo' &&
@@ -64,15 +70,14 @@ export default async function AltriAppuntamenti({ slugCorrente }: { slugCorrente
               </div>
               <div
                 className="absolute inset-0"
-                style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%)' }}
+                style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 55%, transparent 100%)' }}
               />
               <div className="relative z-10 p-5">
                 <p className="font-semibold text-white leading-tight" style={{ fontSize: 'var(--text-lead)' }}>
                   {e.titolo}
                 </p>
                 <p className="text-white/60 font-light mt-1" style={{ fontSize: 'var(--text-label)' }}>
-                  {formatLabel(e)}
-                  {e.orario ? ` · ore ${e.orario}` : ''}
+                  {formatLabel(e, giorniChiusi)}
                 </p>
               </div>
             </Link>

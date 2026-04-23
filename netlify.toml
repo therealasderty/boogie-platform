@@ -96,8 +96,13 @@
   status = 301
 
 [[redirects]]
+  from = "/eventi-speciali/aperitivo-in-giardino"
+  to = "/eventi-speciali/aperitivo"
+  status = 301
+
+[[redirects]]
   from = "/aperitivo-in-giardino-brianza"
-  to = "/eventi-speciali/aperitivo-in-giardino"
+  to = "/eventi-speciali/aperitivo"
   status = 301
 
 [[redirects]]
@@ -171,7 +176,7 @@
 
 [[redirects]]
   from = "/en/aperitivo-garden-brianza"
-  to = "/eventi-speciali/aperitivo-in-giardino"
+  to = "/eventi-speciali/aperitivo"
   status = 301
 
 [[redirects]]

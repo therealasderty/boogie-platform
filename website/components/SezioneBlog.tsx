@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import FadeIn from '@/components/FadeIn'
+import ArrowRightIcon from '@/components/ArrowRightIcon'
 import { fetchEventi } from '@/lib/agenda'
 import { fetchArticoli } from '@/lib/blog'
 
@@ -70,9 +71,7 @@ export default async function SezioneBlog() {
               style={{ fontSize: 'var(--text-meta)' }}
             >
               Tutti gli articoli
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <ArrowRightIcon />
             </Link>
           )}
           {!usaBlog && !usaFallback && (
@@ -82,9 +81,7 @@ export default async function SezioneBlog() {
               style={{ fontSize: 'var(--text-meta)' }}
             >
               Tutti gli eventi
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <ArrowRightIcon />
             </Link>
           )}
         </FadeIn>
@@ -96,24 +93,13 @@ export default async function SezioneBlog() {
               <FadeIn key={a.id} delay={i * 0.1}>
                 <article className="group flex flex-col bg-white rounded-card overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
                   {a.fotoHero && (
-                    <div className="relative h-60 overflow-hidden">
+                    <div className="card-img">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={a.fotoHero}
-                        alt={a.titolo}
-                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                      />
-                      {a.categoria && (
-                        <span
-                          className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-black/60 font-medium px-3 py-1 rounded-pill"
-                          style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
-                        >
-                          {a.categoria}
-                        </span>
-                      )}
+                      <img src={a.fotoHero} alt={a.titolo} className="w-full h-full object-cover img-zoom" />
+                      {a.categoria && <span className="card-badge">{a.categoria}</span>}
                     </div>
                   )}
-                  <div className="flex flex-col gap-3 p-7 flex-1">
+                  <div className="card-body">
                     <h3 className="font-semibold text-neutral-900 leading-snug" style={{ fontSize: 'var(--text-lead)' }}>
                       {a.titolo}
                     </h3>
@@ -122,15 +108,9 @@ export default async function SezioneBlog() {
                         {a.descrizioneBreve}
                       </p>
                     )}
-                    <Link
-                      href={`/blog/${a.slug}`}
-                      className="mt-3 self-start inline-flex items-center gap-2 font-medium text-black/70 hover:text-black transition-colors"
-                      style={{ fontSize: 'var(--text-meta)' }}
-                    >
+                    <Link href={`/blog/${a.slug}`} className="article-link">
                       Leggi l&apos;articolo
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                      <ArrowRightIcon />
                     </Link>
                   </div>
                 </article>
@@ -146,46 +126,27 @@ export default async function SezioneBlog() {
               const href = e.slug ? `/eventi-speciali/${e.slug}` : '/eventi-speciali'
               return (
                 <FadeIn key={i} delay={i * 0.1}>
-                <article className="group flex flex-col bg-white rounded-card overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
-                  <div className="relative h-60 overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={e.fotoHero}
-                      alt={e.titolo}
-                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                    />
-                    <span
-                      className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-black/60 font-medium px-3 py-1 rounded-pill"
-                      style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
-                    >
-                      {e.ricorrente ? 'Appuntamento fisso' : 'Prossimamente'}
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-3 p-7 flex-1">
-                    <h3
-                      className="font-semibold text-neutral-900 leading-snug"
-                      style={{ fontSize: 'var(--text-lead)' }}
-                    >
-                      {e.titolo}
-                    </h3>
-                    <p
-                      className="text-neutral-500 font-light leading-relaxed flex-1"
-                      style={{ fontSize: 'var(--text-meta)' }}
-                    >
-                      {e.descrizioneBreve}
-                    </p>
-                    <Link
-                      href={href}
-                      className="mt-3 self-start inline-flex items-center gap-2 font-medium text-black/70 hover:text-black transition-colors"
-                      style={{ fontSize: 'var(--text-meta)' }}
-                    >
-                      Scopri di più
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </Link>
-                  </div>
-                </article>
+                  <article className="group flex flex-col bg-white rounded-card overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+                    <div className="card-img">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={e.fotoHero} alt={e.titolo} className="w-full h-full object-cover img-zoom" />
+                      <span className="card-badge">
+                        {e.ricorrente ? 'Appuntamento fisso' : 'Prossimamente'}
+                      </span>
+                    </div>
+                    <div className="card-body">
+                      <h3 className="font-semibold text-neutral-900 leading-snug" style={{ fontSize: 'var(--text-lead)' }}>
+                        {e.titolo}
+                      </h3>
+                      <p className="text-neutral-500 font-light leading-relaxed flex-1" style={{ fontSize: 'var(--text-meta)' }}>
+                        {e.descrizioneBreve}
+                      </p>
+                      <Link href={href} className="article-link">
+                        Scopri di più
+                        <ArrowRightIcon />
+                      </Link>
+                    </div>
+                  </article>
                 </FadeIn>
               )
             })}
@@ -197,47 +158,30 @@ export default async function SezioneBlog() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {ARTICOLI_FALLBACK.map((a, i) => (
               <FadeIn key={a.href} delay={i * 0.1}>
-              <article className="group flex flex-col bg-white rounded-card overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
-                <div className="relative h-60 overflow-hidden">
-                  <Image
-                    src={a.image}
-                    alt={a.titolo}
-                    fill
-                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                  />
-                  <span
-                    className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-black/60 font-medium px-3 py-1 rounded-pill"
-                    style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
-                  >
-                    {a.label}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-3 p-7 flex-1">
-                  <h3
-                    className="font-semibold text-neutral-900 leading-snug"
-                    style={{ fontSize: 'var(--text-lead)' }}
-                  >
-                    {a.titolo}
-                  </h3>
-                  <p
-                    className="text-neutral-500 font-light leading-relaxed flex-1"
-                    style={{ fontSize: 'var(--text-meta)' }}
-                  >
-                    {a.intro}
-                  </p>
-                  <Link
-                    href={a.href}
-                    className="mt-3 self-start inline-flex items-center gap-2 font-medium text-black/70 hover:text-black transition-colors"
-                    style={{ fontSize: 'var(--text-meta)' }}
-                  >
-                    Leggi l&apos;articolo
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </Link>
-                </div>
-              </article>
+                <article className="group flex flex-col bg-white rounded-card overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+                  <div className="card-img">
+                    <Image
+                      src={a.image}
+                      alt={a.titolo}
+                      fill
+                      className="object-cover img-zoom"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                    />
+                    <span className="card-badge">{a.label}</span>
+                  </div>
+                  <div className="card-body">
+                    <h3 className="font-semibold text-neutral-900 leading-snug" style={{ fontSize: 'var(--text-lead)' }}>
+                      {a.titolo}
+                    </h3>
+                    <p className="text-neutral-500 font-light leading-relaxed flex-1" style={{ fontSize: 'var(--text-meta)' }}>
+                      {a.intro}
+                    </p>
+                    <Link href={a.href} className="article-link">
+                      Leggi l&apos;articolo
+                      <ArrowRightIcon />
+                    </Link>
+                  </div>
+                </article>
               </FadeIn>
             ))}
           </div>
@@ -251,9 +195,7 @@ export default async function SezioneBlog() {
             style={{ fontSize: 'var(--text-meta)' }}
           >
             {usaBlog || usaFallback ? 'Tutti gli articoli' : 'Tutti gli eventi'}
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <ArrowRightIcon />
           </Link>
         </div>
 

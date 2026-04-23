@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { inputClassDark as inputClass, selectClassDark as selectClass } from '@/lib/form-classes'
 
 interface Slot   { ora: string; disponibili: number; pieno: boolean }
 interface Fascia { fascia: string; slots: Slot[] }
@@ -18,9 +19,6 @@ function timeToMin(t: string) {
   const [h, m] = t.split(':').map(Number)
   return h * 60 + m
 }
-
-const selectClass = 'w-full appearance-none bg-white/5 border border-white/15 rounded-btn px-4 py-2.5 text-white outline-none focus:border-brand/50 transition-colors cursor-pointer'
-const inputClass  = 'w-full bg-white/5 border border-white/15 rounded-btn px-4 py-2.5 text-white placeholder-white/25 outline-none focus:border-brand/50 transition-colors'
 
 function SelectWrapper({ children }: { children: React.ReactNode }) {
   return (
@@ -197,8 +195,6 @@ export default function FormPrenotazioneEvento({
   const slotsDisponibili = fasce.flatMap(f => f.slots).filter(s => !s.pieno)
   const hasSlots = (orario && !orarioFine) || slotsDisponibili.length > 0
   const maxPersone = maxPosti ? Math.min(Number(maxPosti), 10) : 10
-
-  const inputClass  = 'w-full bg-white/5 border border-white/15 rounded-btn px-4 py-2.5 text-white outline-none focus:border-brand/50 transition-colors'
 
   // Per eventi ricorrenti, non bloccare il form quando chiuso: mostra solo il date picker
   // così l'utente può cambiare data invece di restare bloccato sul messaggio d'errore.

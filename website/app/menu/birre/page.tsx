@@ -1,5 +1,13 @@
 import type { Metadata } from 'next'
 import PaginaHero from '@/components/PaginaHero'
+import SezioneIntro from '@/components/SezioneIntro'
+import MenuLista from '@/components/MenuLista'
+import AltreSpecialita from '@/components/AltreSpecialita'
+import SezioneFAQ from '@/components/SezioneFAQ'
+import SezioneContatti from '@/components/SezioneContatti'
+import Footer from '@/components/Footer'
+import { fetchMenuBirre } from '@/lib/menu'
+import { fetchMedia } from '@/lib/media'
 
 export async function generateMetadata(): Promise<Metadata> {
   const media = await fetchMedia('birra')
@@ -16,14 +24,6 @@ export async function generateMetadata(): Promise<Metadata> {
     },
   }
 }
-import SezioneIntro from '@/components/SezioneIntro'
-import MenuLista from '@/components/MenuLista'
-import AltreSpecialita from '@/components/AltreSpecialita'
-import SezioneFAQ from '@/components/SezioneFAQ'
-import SezioneContatti from '@/components/SezioneContatti'
-import Footer from '@/components/Footer'
-import { fetchMenuBirre } from '@/lib/menu'
-import { fetchMedia } from '@/lib/media'
 
 export default async function BirrePage() {
   const [sezioni, mediaBirre] = await Promise.all([

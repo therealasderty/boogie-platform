@@ -13,6 +13,7 @@ import { fetchLocalita, fetchLocalitaBySlug, fetchIntroServizio } from '@/lib/lo
 import { fetchEventoBySlug, formatBadgeRicorrente } from '@/lib/agenda'
 import { fetchOrari, fetchChiusure } from '@/lib/orari'
 import { fetchMedia } from '@/lib/media'
+import AltriAppuntamenti from '@/components/AltriAppuntamenti'
 
 function localDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -267,6 +268,8 @@ export default async function CityServicePage({
           </FadeIn>
         </div>
       </section>
+
+      <AltriAppuntamenti slugCorrente={service} />
 
       <SezioneContatti />
       <Footer />

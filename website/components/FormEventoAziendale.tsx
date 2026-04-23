@@ -10,7 +10,7 @@ const TIPI_EVENTO = [
   'Altro',
 ]
 
-const inputClass = "w-full px-4 py-3 rounded-btn bg-neutral-50 border border-neutral-200 text-neutral-800 placeholder-neutral-300 focus:outline-none focus:border-neutral-400 transition-colors font-light"
+import { inputClass } from '@/lib/form-classes'
 
 export default function FormEventoAziendale() {
   const [stato, setStato] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle')

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -22,12 +22,15 @@ const HERO_FALLBACK = [
 export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsItems: newsItemsProp }: { orariDisplay?: { righe: string[]; avvisoSettimana: boolean }; heroImages?: { src: string; alt: string }[]; newsItems?: NewsItem[] }) {
   const rawImages = heroImagesProp?.length ? heroImagesProp : HERO_FALLBACK
   const newsItems = newsItemsProp ?? []
+  // Clone first item at end for infinite loop effect
+  const clonedNews = useMemo(() => newsItems.length > 1 ? [...newsItems, newsItems[0]] : newsItems, [newsItems])
   const [heroImages, setHeroImages] = useState(rawImages)
   const [mounted, setMounted] = useState(false)
   const [current, setCurrent] = useState(0)
   const [locked, setLocked] = useState(false)
   const [news, setNews] = useState(0)
   const [newsLocked, setNewsLocked] = useState(false)
+  const [newsTransition, setNewsTransition] = useState(true)
   const heroTouchX = useRef(0)
   const newsTouchX = useRef(0)
 
@@ -53,11 +56,24 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
     (index: number) => {
       if (newsLocked) return
       setNewsLocked(true)
+      setNewsTransition(true)
       setNews(index)
-      setTimeout(() => setNewsLocked(false), 600)
+      setTimeout(() => setNewsLocked(false), 620)
     },
     [newsLocked]
   )
+
+  // When we land on the clone (index = newsItems.length), silently reset to 0
+  useEffect(() => {
+    if (news === newsItems.length && newsItems.length > 1) {
+      const t = setTimeout(() => {
+        setNewsTransition(false)
+        setNews(0)
+        requestAnimationFrame(() => requestAnimationFrame(() => setNewsTransition(true)))
+      }, 620)
+      return () => clearTimeout(t)
+    }
+  }, [news, newsItems.length])
 
   useEffect(() => {
     const t = setInterval(next, 5000)
@@ -65,9 +81,11 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
   }, [next])
 
   useEffect(() => {
-    const t = setInterval(() => goToNews((news + 1) % newsItems.length), 6000)
+    if (newsItems.length <= 1) return
+    // Always advance by 1; clone handles the wrap-around
+    const t = setInterval(() => goToNews(news + 1), 6000)
     return () => clearInterval(t)
-  }, [news, goToNews])
+  }, [news, goToNews, newsItems.length])
 
   function handleHeroTouchStart(e: React.TouchEvent) { heroTouchX.current = e.touches[0].clientX }
   function handleHeroTouchEnd(e: React.TouchEvent) {
@@ -78,8 +96,8 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
   function handleNewsTouchEnd(e: React.TouchEvent) {
     const diff = newsTouchX.current - e.changedTouches[0].clientX
     if (Math.abs(diff) > 50) diff > 0
-      ? goToNews((news + 1) % newsItems.length)
-      : goToNews((news - 1 + newsItems.length) % newsItems.length)
+      ? goToNews(news + 1)
+      : goToNews(news === 0 ? newsItems.length - 1 : news - 1)
   }
 
   return (
@@ -218,17 +236,18 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
 
         {/* Slide orizzontali */}
         <div
-          className="flex h-full transition-transform duration-600 ease-in-out will-change-transform"
+          className="flex h-full will-change-transform"
           style={{
-            width: `${newsItems.length * 100}%`,
-            transform: `translateX(-${(news * 100) / newsItems.length}%)`,
+            width: `${clonedNews.length * 100}%`,
+            transform: `translateX(-${(news * 100) / clonedNews.length}%)`,
+            transition: newsTransition ? 'transform 600ms ease-in-out' : 'none',
           }}
         >
-          {newsItems.map((item) => (
+          {clonedNews.map((item, idx) => (
             <div
-              key={item.titolo}
+              key={`${item.titolo}-${idx}`}
               className="relative h-full flex flex-col"
-              style={{ width: `${100 / newsItems.length}%` }}
+              style={{ width: `${100 / clonedNews.length}%` }}
             >
               {/* Mobile: foto full-height al livello slide */}
               <div className="absolute inset-0 md:hidden overflow-hidden">
@@ -299,12 +318,12 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
               key={i}
               onClick={() => goToNews(i)}
               aria-label={`News ${i + 1}`}
-              className={`h-px transition-all duration-300 ${i === news ? 'w-8 bg-black/60' : 'w-4 bg-black/25 hover:bg-black/40'}`}
+              className={`h-px transition-all duration-300 ${(news % newsItems.length) === i ? 'w-8 bg-black/60' : 'w-4 bg-black/25 hover:bg-black/40'}`}
             />
           ))}
           <div className="ml-auto flex gap-2">
             <button
-              onClick={() => goToNews((news - 1 + newsItems.length) % newsItems.length)}
+              onClick={() => goToNews(news === 0 ? newsItems.length - 1 : news - 1)}
               aria-label="Precedente"
               className="w-8 h-8 rounded-btn border border-black/20 flex items-center justify-center hover:bg-black/10 transition-colors cursor-pointer"
             >
@@ -313,7 +332,7 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
               </svg>
             </button>
             <button
-              onClick={() => goToNews((news + 1) % newsItems.length)}
+              onClick={() => goToNews(news + 1)}
               aria-label="Prossima"
               className="w-8 h-8 rounded-btn border border-black/20 flex items-center justify-center hover:bg-black/10 transition-colors cursor-pointer"
             >

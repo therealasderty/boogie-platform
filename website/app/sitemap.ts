@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { fetchEventi } from '@/lib/agenda'
 import { fetchLocalita } from '@/lib/localita'
+import { fetchArticoli } from '@/lib/blog'
 
 const BASE_URL = process.env.SITO_URL || 'https://boogiebistrot.com'
 
@@ -11,6 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const statiche: MetadataRoute.Sitemap = [
     { url: BASE_URL,                              lastModified: new Date(), changeFrequency: 'weekly',  priority: 1.0 },
     { url: `${BASE_URL}/eventi-speciali`,         lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.9 },
+    { url: `${BASE_URL}/blog`,                    lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.8 },
     { url: `${BASE_URL}/eventi-aziendali`,        lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE_URL}/menu/pizza`,              lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE_URL}/menu/specialita`,         lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
@@ -70,5 +72,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   } catch {}
 
-  return [...statiche, ...eventiEntries, ...eventiAziendaliEntries, ...localitaEntries]
+  // Articoli blog pubblicati
+  let blogEntries: MetadataRoute.Sitemap = []
+  try {
+    const articoli = await fetchArticoli()
+    blogEntries = articoli
+      .filter(a => a.slug)
+      .map(a => ({
+        url:             `${BASE_URL}/blog/${a.slug}`,
+        lastModified:    a.dataPubblicazione ? new Date(a.dataPubblicazione) : new Date(),
+        changeFrequency: 'monthly' as const,
+        priority:        0.7,
+      }))
+  } catch {}
+
+  return [...statiche, ...eventiEntries, ...eventiAziendaliEntries, ...localitaEntries, ...blogEntries]
 }

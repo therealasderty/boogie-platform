@@ -2,7 +2,9 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
+import Image from '@tiptap/extension-image'
 import { useEffect, useState } from 'react'
+import { MediaLibraryModal } from './BlocchiEditor'
 
 const btn = (active) => ({
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -20,12 +22,14 @@ const sep = { width: 1, background: 'var(--border)', margin: '0 2px', alignSelf:
 export default function RichTextEditor({ value, onChange }) {
   const [linkDialogOpen, setLinkDialogOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
+  const [mediaOpen, setMediaOpen] = useState(false)
 
   const editor = useEditor({
     extensions: [
       StarterKit,
       Underline,
       Link.configure({ openOnClick: false, HTMLAttributes: { rel: 'noopener noreferrer' } }),
+      Image.configure({ HTMLAttributes: { class: 'rich-text-img' } }),
     ],
     content: value || '',
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
@@ -103,6 +107,10 @@ export default function RichTextEditor({ value, onChange }) {
         <button type="button" title="Inserisci link" style={btn(e.isActive('link'))}
           onMouseDown={ev => { ev.preventDefault(); openLinkDialog() }}>🔗</button>
 
+        {/* Immagine */}
+        <button type="button" title="Inserisci immagine dalla libreria" style={btn(false)}
+          onMouseDown={ev => { ev.preventDefault(); setMediaOpen(true) }}>🖼</button>
+
         <div style={sep} />
 
         {/* Undo / Redo */}
@@ -156,7 +164,16 @@ export default function RichTextEditor({ value, onChange }) {
         .tiptap a { color: var(--accent); text-decoration: underline; cursor: pointer; }
         .tiptap blockquote { border-left: 3px solid var(--border); margin: 0.4em 0; padding: 4px 12px; color: var(--text3); font-style: italic; }
         .tiptap hr { border: none; border-top: 1px solid var(--border); margin: 0.6em 0; }
+        .tiptap img.rich-text-img { max-width: 100%; height: auto; border-radius: 6px; margin: 0.5em 0; display: block; }
+        .tiptap img.rich-text-img.ProseMirror-selectednode { outline: 2px solid var(--accent); }
       `}</style>
+
+      {mediaOpen && (
+        <MediaLibraryModal
+          onSelect={m => { e.chain().focus().setImage({ src: m.url, alt: m.alt || '' }).run(); setMediaOpen(false) }}
+          onClose={() => setMediaOpen(false)}
+        />
+      )}
     </div>
   )
 }

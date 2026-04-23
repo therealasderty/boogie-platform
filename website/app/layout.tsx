@@ -54,9 +54,42 @@ export default async function RootLayout({
     ...eventiRaw.filter(e => e.ricorrente && e.stato !== 'dormiente').slice(0, 2),
   ]
 
+  const localBusinessJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Restaurant',
+    name: 'Boogie Bistrot',
+    url: 'https://boogiebistrot.com',
+    telephone: ['+390399260568', '+393465813309'],
+    email: 'info@boogiebistrot.com',
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: 'Via Europa, 2',
+      addressLocality: 'Colle Brianza',
+      addressRegion: 'LC',
+      postalCode: '23886',
+      addressCountry: 'IT',
+    },
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: 45.7593,
+      longitude: 9.3620,
+    },
+    hasMap: 'https://maps.google.com/?cid=6154073069839278986',
+    servesCuisine: ['Italiana', 'Brianzola', 'Pizza'],
+    priceRange: '€€',
+    sameAs: [
+      'https://www.facebook.com/boogiebistrot',
+      'https://www.instagram.com/boogiebistrot',
+    ],
+  }
+
   return (
     <html lang="it" className={`${raleway.variable} h-full`}>
       <body className="min-h-full flex flex-col">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
+        />
         <PageContextProvider>
           <Navbar orariDisplay={orariDisplay} eventi={eventiNavbar} />
           {children}

@@ -69,7 +69,9 @@ function formatLabelEvento(e: { data: string | null; ricorrente: boolean; ricorr
     return formatGiornaliera(esclusi, giorniChiusi)
   }
   if (e.ricorrenza === 'settimanale' && e.giornoSettimana) {
-    let label = formatGiorniSettimana(e.giornoSettimana) || ''
+    const nums = e.giornoSettimana.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n))
+    const baseLabel = nums.length === 1 ? GIORNI_ESTESI[nums[0]] : (formatGiorniSettimana(e.giornoSettimana) || '')
+    let label = baseLabel ? `ogni ${baseLabel}` : ''
     if (e.giorniEsclusione) {
       const esclusi = e.giorniEsclusione.split(',').map(Number).filter(n => !isNaN(n) && GIORNI_BREVI[n])
       if (esclusi.length > 0) label += ` (escluso ${esclusi.map(n => GIORNI_BREVI[n]).join(', ')})`
@@ -85,12 +87,11 @@ const HERO_FALLBACK = [
 ]
 
 export default async function Home() {
-  const [orari, chiusure, mediaHero, mediaLocation, mediaChiSiamo, mediaChiSiamoIntro, eventi, mediaCarta, mediaPizza, mediaBirra, mediaVino, mediaCocktail] = await Promise.all([
+  const [orari, chiusure, mediaHero, mediaLocation, mediaChiSiamoIntro, eventi, mediaCarta, mediaPizza, mediaBirra, mediaVino, mediaCocktail] = await Promise.all([
     fetchOrari(),
     fetchChiusure(),
     fetchMedia('hero'),
     fetchMedia('location'),
-    fetchMedia('form-contatto'),
     fetchMedia('chi-siamo'),
     fetchEventi(),
     fetchMedia('carta'),
@@ -213,11 +214,8 @@ export default async function Home() {
       <SezioneMenu />
       <SezioneRecensioni />
       <SezioneFAQ />
-      {/* <SezioneBlog /> — TODO: sezione blog da sviluppare */}
-      <SezioneContatti
-        fotoSrc={mediaChiSiamo[0]?.url ?? '/images/hero/2.avif'}
-        fotoAlt={mediaChiSiamo[0]?.alt || 'Boogie Bistrot'}
-      />
+      <SezioneBlog />
+      <SezioneContatti />
       <Footer />
     </main>
   )
