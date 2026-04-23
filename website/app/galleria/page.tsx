@@ -35,7 +35,10 @@ export default async function GalleriaPage() {
   const immaginiLocation = mediaLocation.map(m => ({ src: m.url, alt: m.alt || m.nome }))
   const immaginiCarta = mediaCarta.map(m => ({ src: m.url, alt: m.alt || m.nome }))
 
-  const tutteLeImmagini = shuffle([...immaginiLocation, ...immaginiCarta])
+  const seen = new Set<string>()
+  const tutteLeImmagini = shuffle(
+    [...immaginiLocation, ...immaginiCarta].filter(m => seen.has(m.src) ? false : (seen.add(m.src), true))
+  )
   const heroImage = tutteLeImmagini[0]?.src ?? '/images/hero/1.webp'
   const immaginiCarousel = tutteLeImmagini.length > 0 ? tutteLeImmagini.slice(0, 4) : FALLBACK_IMMAGINI
 
