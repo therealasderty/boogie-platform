@@ -7,7 +7,7 @@ import SezioneContatti from '@/components/SezioneContatti'
 import Footer from '@/components/Footer'
 import FadeIn from '@/components/FadeIn'
 import BlocchiRenderer from '@/components/BlocchiRenderer'
-import FormPrenotazioneEvento from '@/components/FormPrenotazioneEvento'
+import FormPrenotazioneMultiStep from '@/components/FormPrenotazioneMultiStep'
 import SetEventoTitolo from '@/components/SetEventoTitolo'
 import { fetchLocalita, fetchLocalitaBySlug, fetchIntroServizio } from '@/lib/localita'
 import { fetchEventoBySlug, formatBadgeRicorrente } from '@/lib/agenda'
@@ -189,30 +189,32 @@ export default async function CityServicePage({
       <section id="prenota" className="text-white py-16 px-6 md:px-14" style={{ backgroundColor: '#1a1a1a' }}>
         <div className="max-w-3xl mx-auto">
           <FadeIn>
-              {evento.ricorrente
-                ? <FormPrenotazioneEvento
-                    data={prossimaOccorrenza(evento) || localDateStr(new Date())}
-                    orario={evento.orario || undefined}
-                    orarioFine={evento.orarioFine || undefined}
-                    titolo={evento.titolo}
-                    ricorrente
-                  />
-                : evento.data
-                  ? <FormPrenotazioneEvento
-                      data={evento.data}
+              <div className="bg-white rounded-card p-8">
+                {evento.ricorrente
+                  ? <FormPrenotazioneMultiStep
+                      dataProp={prossimaOccorrenza(evento) || localDateStr(new Date())}
                       orario={evento.orario || undefined}
                       orarioFine={evento.orarioFine || undefined}
                       titolo={evento.titolo}
-                      dataFormattata={dataFormattata || undefined}
+                      ricorrente
                     />
-                  : <Link
-                      href="/prenota"
-                      className="inline-block bg-brand hover:bg-brand-hover text-black font-semibold px-8 py-3.5 rounded-btn transition-colors"
-                      style={{ fontSize: 'var(--text-body)' }}
-                    >
-                      Prenota un tavolo
-                    </Link>
-              }
+                  : evento.data
+                    ? <FormPrenotazioneMultiStep
+                        dataProp={evento.data}
+                        orario={evento.orario || undefined}
+                        orarioFine={evento.orarioFine || undefined}
+                        titolo={evento.titolo}
+                        dataFormattata={dataFormattata || undefined}
+                      />
+                    : <Link
+                        href="/prenota"
+                        className="inline-block bg-brand hover:bg-brand-hover text-black font-semibold px-8 py-3.5 rounded-btn transition-colors"
+                        style={{ fontSize: 'var(--text-body)' }}
+                      >
+                        Prenota un tavolo
+                      </Link>
+                }
+              </div>
           </FadeIn>
         </div>
       </section>

@@ -52,6 +52,7 @@ exports.handler = async (event) => {
         metaTitle:          r.fields['MetaTitle'] || '',
         metaDescription:    r.fields['MetaDescription'] || '',
         inPrimoPiano:       !!r.fields['InPrimoPiano'],
+        dataTBD:            !!r.fields['DataTBD'],
         mostraInNews:       !!r.fields['MostraInNews'],
         socialCopy:         r.fields['SocialCopy'] || '',
         statoSocial:        r.fields['StatoSocial'] || 'nessuno',
@@ -107,6 +108,7 @@ exports.handler = async (event) => {
         'MetaTitle':           body.metaTitle || '',
         'MetaDescription':     body.metaDescription || '',
         'InPrimoPiano':        !!body.inPrimoPiano,
+        'DataTBD':             !!body.dataTBD,
         'MostraInNews':        !!body.mostraInNews,
         'SocialCopy':          body.socialCopy || '',
         'StatoSocial':         body.statoSocial || 'nessuno',
@@ -148,6 +150,7 @@ exports.handler = async (event) => {
       if (body.statoSocial !== undefined) fields['StatoSocial'] = body.statoSocial
       if (body.stato       !== undefined) fields['Stato']       = body.stato
       if (body.inPrimoPiano !== undefined) fields['InPrimoPiano'] = !!body.inPrimoPiano
+      if (body.dataTBD      !== undefined) fields['DataTBD']      = !!body.dataTBD
       if (body.mostraInNews !== undefined) fields['MostraInNews'] = !!body.mostraInNews
       const res = await fetch(`${BASE_URL}/${body.id}`, {
         method: 'PATCH',

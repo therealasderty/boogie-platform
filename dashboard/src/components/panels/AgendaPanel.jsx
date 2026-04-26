@@ -82,6 +82,7 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
   const [dataVal, setDataVal] = useState(appuntamento?.data || prefill?.data || data || '')
   const [ora, setOra] = useState(appuntamento?.ora || '')
   const [oraFine, setOraFine] = useState(appuntamento?.oraFine || '')
+  const [dataTBD, setDataTBD] = useState(appuntamento?.dataTBD || false)
   const [note, setNote] = useState(appuntamento?.note || '')
   const [ricorrenza, setRicorrenza] = useState(appuntamento?.ricorrenza || 'nessuna')
   const [giorniSett, setGiorniSett] = useState(() => {
@@ -180,6 +181,7 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
         metaTitle: metaTitle.trim(),
         metaDescription: metaDescription.trim(),
         inPrimoPiano,
+        dataTBD,
         mostraInNews,
         socialCopy: socialCopy.trim(),
         statoSocial,
@@ -243,16 +245,28 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                 <div className={styles.field}>
                   <label>{ricorrenza !== 'nessuna' ? 'Data inizio' : 'Data'}</label>
-                  <input type="date" value={dataVal} onChange={e => setDataVal(e.target.value)} />
+                  <input type="date" value={dataVal} onChange={e => setDataVal(e.target.value)} disabled={dataTBD} style={dataTBD ? { opacity: 0.4 } : {}} />
                 </div>
                 <div className={styles.field}>
                   <label>Ora inizio</label>
-                  <input type="time" value={ora} onChange={e => setOra(e.target.value)} />
+                  <input type="time" value={ora} onChange={e => setOra(e.target.value)} disabled={dataTBD} style={dataTBD ? { opacity: 0.4 } : {}} />
                 </div>
                 <div className={styles.field}>
                   <label>Ora fine</label>
-                  <input type="time" value={oraFine} onChange={e => setOraFine(e.target.value)} />
+                  <input type="time" value={oraFine} onChange={e => setOraFine(e.target.value)} disabled={dataTBD} style={dataTBD ? { opacity: 0.4 } : {}} />
                 </div>
+              </div>
+
+              <div className={styles.field}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}>
+                  <input
+                    type="checkbox"
+                    checked={dataTBD}
+                    onChange={e => setDataTBD(e.target.checked)}
+                    style={{ accentColor: 'var(--accent)', width: 15, height: 15, cursor: 'pointer', flexShrink: 0 }}
+                  />
+                  <span>Data da definire (TBD) — mostra badge "Data da definire" nella hero e form di attesa sul sito</span>
+                </label>
               </div>
 
               <div className={styles.field}>

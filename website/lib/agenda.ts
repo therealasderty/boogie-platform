@@ -28,6 +28,7 @@ export interface EventoAgenda {
   testoIntro:      string
   blocchi:         Blocco[]
   stato:           'attivo' | 'dormiente'
+  dataTBD:         boolean
   mostraInNews:    boolean
   bloccaGiorno:    boolean
   metaTitle:       string
@@ -74,6 +75,7 @@ export async function fetchEventi(): Promise<EventoAgenda[]> {
         testoIntro:      (f['TestoIntro'] as string) ?? '',
         blocchi:         (() => { try { return JSON.parse((f['Blocchi'] as string) || '[]') } catch { return [] } })(),
         stato:           ((f['Stato'] as string) === 'dormiente' ? 'dormiente' : 'attivo'),
+        dataTBD:         !!(f['DataTBD'] as boolean),
         mostraInNews:    !!(f['MostraInNews'] as boolean),
         bloccaGiorno:    !!(f['BloccaGiorno'] as boolean),
         metaTitle:       (f['MetaTitle'] as string) ?? '',

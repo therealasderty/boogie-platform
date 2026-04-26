@@ -4,7 +4,13 @@ import { useState } from 'react'
 
 import { inputClassDark as inputClass } from '@/lib/form-classes'
 
-export default function FormIscrizioneEvento({ eventoTitolo }: { eventoTitolo: string }) {
+export default function FormIscrizioneEvento({
+  eventoTitolo,
+  variante = 'terminato',
+}: {
+  eventoTitolo: string
+  variante?: 'terminato' | 'tbd'
+}) {
   const [stato, setStato] = useState<'pronto' | 'inviando' | 'successo' | 'errore'>('pronto')
   const [nome, setNome] = useState('')
   const [cognome, setCognome] = useState('')
@@ -33,9 +39,12 @@ export default function FormIscrizioneEvento({ eventoTitolo }: { eventoTitolo: s
   if (stato === 'successo') {
     return (
       <div className="rounded-card border border-brand/30 bg-brand/5 p-8 text-center">
-        <p className="text-brand font-medium mb-2" style={{ fontSize: 'var(--text-section)' }}>Sei nella lista</p>
+        <p className="text-brand font-medium mb-2" style={{ fontSize: 'var(--text-section)' }}>Sei nella lista ✓</p>
         <p className="text-text-muted" style={{ fontSize: 'var(--text-body)' }}>
-          Ti avviseremo non appena <strong className="text-white">"{eventoTitolo}"</strong> tornerà disponibile.
+          {variante === 'tbd'
+            ? <>Ti avviseremo non appena la data di <strong className="text-white">"{eventoTitolo}"</strong> sarà confermata.</>
+            : <>Ti avviseremo non appena <strong className="text-white">"{eventoTitolo}"</strong> tornerà disponibile.</>
+          }
         </p>
       </div>
     )
@@ -43,20 +52,39 @@ export default function FormIscrizioneEvento({ eventoTitolo }: { eventoTitolo: s
 
   return (
     <div>
-      {/* Messaggio appuntamento terminato */}
+      {/* Messaggio contestuale */}
       <div className="flex items-start gap-4 rounded-card p-5 mb-8" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)' }}>
         <div className="flex-shrink-0 w-10 h-10 rounded-pill flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.06)' }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-faint">
-            <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
-          </svg>
+          {variante === 'tbd' ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-faint">
+              <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
+            </svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-faint">
+              <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+            </svg>
+          )}
         </div>
         <div>
-          <p className="text-white font-medium mb-1" style={{ fontSize: 'var(--text-body)' }}>
-            Questo appuntamento è terminato
-          </p>
-          <p className="text-text-faint leading-relaxed m-0" style={{ fontSize: 'var(--text-meta)' }}>
-            <strong className="text-text-muted">"{eventoTitolo}"</strong> non è al momento disponibile per nuove prenotazioni — ma potrebbe tornare. Lascia i tuoi contatti e ti avviseremo per primi.
-          </p>
+          {variante === 'tbd' ? (
+            <>
+              <p className="text-white font-medium mb-1" style={{ fontSize: 'var(--text-body)' }}>
+                Stiamo definendo la programmazione
+              </p>
+              <p className="text-text-faint leading-relaxed m-0" style={{ fontSize: 'var(--text-meta)' }}>
+                La data di <strong className="text-text-muted">"{eventoTitolo}"</strong> non è ancora stata fissata. Lascia i tuoi contatti: ti avviseremo non appena la serata sarà confermata.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-white font-medium mb-1" style={{ fontSize: 'var(--text-body)' }}>
+                Questo appuntamento è terminato
+              </p>
+              <p className="text-text-faint leading-relaxed m-0" style={{ fontSize: 'var(--text-meta)' }}>
+                <strong className="text-text-muted">"{eventoTitolo}"</strong> non è al momento disponibile per nuove prenotazioni — ma potrebbe tornare. Lascia i tuoi contatti e ti avviseremo per primi.
+              </p>
+            </>
+          )}
         </div>
       </div>
 
@@ -124,7 +152,7 @@ export default function FormIscrizioneEvento({ eventoTitolo }: { eventoTitolo: s
           className="bg-brand hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed text-black font-semibold px-8 py-3.5 rounded-btn transition-colors cursor-pointer"
           style={{ fontSize: 'var(--text-body)' }}
         >
-          {stato === 'inviando' ? 'Invio in corso…' : 'Avvisami quando torna'}
+          {stato === 'inviando' ? 'Invio in corso…' : variante === 'tbd' ? 'Avvisami quando è confermata' : 'Avvisami quando torna'}
         </button>
       </form>
     </div>

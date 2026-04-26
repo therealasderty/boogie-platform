@@ -10,7 +10,7 @@ import { fetchEventi, fetchEventoBySlug, formatBadgeRicorrente } from '@/lib/age
 import { fetchOrari, fetchChiusure } from '@/lib/orari'
 import { fetchMedia } from '@/lib/media'
 import BlocchiRenderer from '@/components/BlocchiRenderer'
-import FormPrenotazioneEvento from '@/components/FormPrenotazioneEvento'
+import FormPrenotazioneMultiStep from '@/components/FormPrenotazioneMultiStep'
 import FormIscrizioneEvento from '@/components/FormIscrizioneEvento'
 import SetEventoTitolo from '@/components/SetEventoTitolo'
 import AltriAppuntamenti from '@/components/AltriAppuntamenti'
@@ -116,13 +116,15 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
     return `${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}`
   })() : null
 
-  const heroBadge = evento.ricorrente
-    ? (formatBadgeRicorrente(evento, giorniChiusi) || null)
-    : dataFormattata
-      ? (evento.orario
-          ? `${dataFormattata} · ore ${evento.orario}${evento.orarioFine ? `–${evento.orarioFine}` : ''}`
-          : dataFormattata)
-      : null
+  const heroBadge = evento.dataTBD
+    ? 'Data da definire'
+    : evento.ricorrente
+      ? (formatBadgeRicorrente(evento, giorniChiusi) || null)
+      : dataFormattata
+        ? (evento.orario
+            ? `${dataFormattata} · ore ${evento.orario}${evento.orarioFine ? `–${evento.orarioFine}` : ''}`
+            : dataFormattata)
+        : null
 
   // JSON-LD strutturato per Google Events
   const jsonLd = evento.data ? {
@@ -168,13 +170,15 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
         image={evento.fotoHero || '/images/hero/1.webp'}
       />
 
-      {evento.stato === 'dormiente' && (
+      {(evento.stato === 'dormiente' || evento.dataTBD) && (
         <div className="px-6 md:px-14 py-4" style={{ backgroundColor: '#1a1a1a' }}>
           <div className="max-w-3xl mx-auto">
             <div className="rounded-card px-5 py-4" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)' }}>
               <p className="text-text-muted leading-relaxed m-0" style={{ fontSize: 'var(--text-meta)' }}>
-                <strong className="text-white">"{evento.titolo}"</strong> al momento non è attivo.
-                Torna a trovarci presto — questo appuntamento tornerà!
+                {evento.dataTBD
+                  ? <>Stiamo lavorando alla programmazione di <strong className="text-white">"{evento.titolo}"</strong>. La data sarà annunciata a breve — iscriviti qui sotto per essere tra i primi a saperlo.</>
+                  : <><strong className="text-white">"{evento.titolo}"</strong> al momento non è attivo. Torna a trovarci presto — questo appuntamento tornerà!</>
+                }
               </p>
             </div>
           </div>
@@ -230,15 +234,18 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
               </nav>
             )}
             {evento.stato === 'dormiente' ? (
-              <FormIscrizioneEvento eventoTitolo={evento.titolo} />
+              <FormIscrizioneEvento eventoTitolo={evento.titolo} variante="terminato" />
+            ) : evento.dataTBD ? (
+              <FormIscrizioneEvento eventoTitolo={evento.titolo} variante="tbd" />
             ) : (
               <>
+                <div className="bg-white rounded-card p-8">
                 {evento.ricorrente
                   ? (() => {
                       const prossima = prossimaOccorrenza(evento) || localDateStr(new Date())
                       return (
-                        <FormPrenotazioneEvento
-                          data={prossima}
+                        <FormPrenotazioneMultiStep
+                          dataProp={prossima}
                           orario={evento.orario || undefined}
                           orarioFine={evento.orarioFine || undefined}
                           titolo={evento.titolo}
@@ -248,8 +255,8 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
                       )
                     })()
                   : evento.data
-                    ? <FormPrenotazioneEvento
-                        data={evento.data}
+                    ? <FormPrenotazioneMultiStep
+                        dataProp={evento.data}
                         orario={evento.orario || undefined}
                         orarioFine={evento.orarioFine || undefined}
                         titolo={evento.titolo}
@@ -265,6 +272,7 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
                       </Link>
                     )
                 }
+              </div>
               </>
             )}
             <div className="pt-8">

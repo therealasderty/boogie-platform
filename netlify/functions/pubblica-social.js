@@ -131,6 +131,108 @@ async function getGoogleAccessToken() {
   return data.access_token
 }
 
+// ── Meta: Instagram Carosello ────────────────────────────────────────────────
+
+async function pubblicaCaroselloInstagram(imageUrls, caption) {
+  if (!META_IG_USER_ID || !META_ACCESS_TOKEN) {
+    throw new Error('META_IG_USER_ID o META_ACCESS_TOKEN non configurati')
+  }
+  if (!imageUrls || imageUrls.length < 2) {
+    throw new Error('Il carosello richiede almeno 2 immagini')
+  }
+
+  // Step 1: container per ogni immagine child
+  const childIds = []
+  for (const imageUrl of imageUrls) {
+    const res  = await fetch(
+      `https://graph.facebook.com/v19.0/${META_IG_USER_ID}/media`,
+      {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          image_url:        imageUrl,
+          is_carousel_item: true,
+          access_token:     META_ACCESS_TOKEN,
+        }),
+      }
+    )
+    const data = await res.json()
+    if (!res.ok || data.error) {
+      throw new Error(data.error?.message || `IG child container fallito per: ${imageUrl}`)
+    }
+    childIds.push(data.id)
+  }
+
+  // Step 2: container carosello
+  const carouselRes  = await fetch(
+    `https://graph.facebook.com/v19.0/${META_IG_USER_ID}/media`,
+    {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        media_type:   'CAROUSEL',
+        children:     childIds.join(','),
+        caption,
+        access_token: META_ACCESS_TOKEN,
+      }),
+    }
+  )
+  const carouselData = await carouselRes.json()
+  if (!carouselRes.ok || carouselData.error) {
+    throw new Error(carouselData.error?.message || `IG carousel container failed (${carouselRes.status})`)
+  }
+
+  // Step 3: pubblica
+  const publishRes  = await fetch(
+    `https://graph.facebook.com/v19.0/${META_IG_USER_ID}/media_publish`,
+    {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ creation_id: carouselData.id, access_token: META_ACCESS_TOKEN }),
+    }
+  )
+  const publishData = await publishRes.json()
+  if (!publishRes.ok || publishData.error) {
+    throw new Error(publishData.error?.message || `IG carousel publish failed (${publishRes.status})`)
+  }
+  return { id: publishData.id, slides: childIds.length }
+}
+
+// ── Meta: Facebook multi-immagine ────────────────────────────────────────────
+
+async function pubblicaFacebookMultiImmagine(imageUrls, caption) {
+  if (!META_PAGE_ID || !META_ACCESS_TOKEN) {
+    throw new Error('META_PAGE_ID o META_ACCESS_TOKEN non configurati')
+  }
+
+  // Carica ogni foto non pubblicata
+  const photoIds = []
+  for (const imageUrl of imageUrls) {
+    const res  = await fetch(`https://graph.facebook.com/v19.0/${META_PAGE_ID}/photos`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ url: imageUrl, published: false, access_token: META_ACCESS_TOKEN }),
+    })
+    const data = await res.json()
+    if (!res.ok || data.error) throw new Error(data.error?.message || `FB photo upload failed: ${imageUrl}`)
+    photoIds.push(data.id)
+  }
+
+  // Crea feed con foto allegate
+  const res  = await fetch(`https://graph.facebook.com/v19.0/${META_PAGE_ID}/feed`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({
+      message:        caption,
+      attached_media: photoIds.map(id => ({ media_fbid: id })),
+      access_token:   META_ACCESS_TOKEN,
+    }),
+  })
+  const data = await res.json()
+  if (!res.ok || data.error) throw new Error(data.error?.message || `FB multi-photo feed failed (${res.status})`)
+  return { id: data.id, foto: photoIds.length }
+}
+
 // ── Meta: Instagram ───────────────────────────────────────────────────────────
 
 async function pubblicaSuInstagram(imageUrl, caption) {
@@ -299,9 +401,73 @@ exports.handler = async (event) => {
     }
   }
 
+  // ── Pubblica carosello ───────────────────────────────────────────────────
+  if (action === 'pubblica-carosello') {
+    const { caption, imageUrls, piattaforme = [], postId } = body
+    if (!caption?.trim()) {
+      return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'caption obbligatoria' }) }
+    }
+    if (!Array.isArray(imageUrls) || imageUrls.length === 0) {
+      return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'imageUrls obbligatorio (array)' }) }
+    }
+    if (!Array.isArray(piattaforme) || piattaforme.length === 0) {
+      return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'seleziona almeno una piattaforma' }) }
+    }
+
+    const risultati = {}
+    const errori    = {}
+
+    if (piattaforme.includes('instagram')) {
+      try {
+        risultati.instagram = imageUrls.length === 1
+          ? await pubblicaSuInstagram(imageUrls[0], caption)
+          : await pubblicaCaroselloInstagram(imageUrls, caption)
+      } catch (e) { errori.instagram = e.message }
+    }
+
+    if (piattaforme.includes('facebook')) {
+      try {
+        risultati.facebook = imageUrls.length === 1
+          ? await pubblicaSuFacebook(imageUrls[0], caption)
+          : await pubblicaFacebookMultiImmagine(imageUrls, caption)
+      } catch (e) { errori.facebook = e.message }
+    }
+
+    if (piattaforme.includes('google')) {
+      try { risultati.google = await pubblicaSuGoogle(caption) }
+      catch (e) { errori.google = e.message }
+    }
+
+    // Aggiorna record SocialPosts se postId presente
+    if (postId && AIRTABLE_TOKEN && AIRTABLE_BASE_ID) {
+      const SOCIAL_TABLE = process.env.AIRTABLE_SOCIAL_POSTS || 'SocialPosts'
+      const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(SOCIAL_TABLE)}/${postId}`
+      const tuttoOk = Object.keys(errori).length === 0
+      fetch(url, {
+        method:  'PATCH',
+        headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}`, 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          fields: {
+            'Stato':                  tuttoOk ? 'Pubblicato' : 'Errore',
+            'DataPubblicata':         new Date().toISOString(),
+            'RisultatiPubblicazione': JSON.stringify({ risultati, errori }),
+            'ErroreMsg':              Object.values(errori).join('; '),
+          },
+        }),
+      }).catch(() => {})
+    }
+
+    const tuttoOk = Object.keys(errori).length === 0
+    return {
+      statusCode: 200,
+      headers:    CORS,
+      body:       JSON.stringify({ success: tuttoOk, risultati, errori }),
+    }
+  }
+
   return {
     statusCode: 400,
     headers: CORS,
-    body: JSON.stringify({ success: false, error: 'action non valida. Usa ?action=genera-caption o ?action=pubblica' }),
+    body: JSON.stringify({ success: false, error: 'action non valida. Usa ?action=genera-caption, ?action=pubblica o ?action=pubblica-carosello' }),
   }
 }

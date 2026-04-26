@@ -24,6 +24,9 @@
 [functions.statistiche-settimanali]
   schedule = "0 23 * * 0"
 
+[functions.pubblica-social-schedulato]
+  schedule = "0 * * * *"
+
 # ── Redirect 301 dal sito vecchio ─────────────────────────────────────────────
 
 # Menu

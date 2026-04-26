@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import styles from './Sidebar.module.css'
 import {
   IconHome, IconCalendar, IconLock, IconFidelity,
-  IconClienti, IconMarketing, IconLogout, IconMenu, IconClose, IconAnalytics, IconAgenda, IconClock, IconForkKnife, IconImages, IconFaq, IconBlog, IconLocalSeo, IconStar, IconSocial,
+  IconClienti, IconMarketing, IconLogout, IconMenu, IconClose, IconAnalytics, IconAgenda, IconClock, IconForkKnife, IconImages, IconFaq, IconBlog, IconLocalSeo, IconStar, IconSocial, IconPostBuilder,
 } from '../icons/index.jsx'
 
 const NAV_ITEMS = [
@@ -25,7 +25,8 @@ const NAV_ITEMS = [
   { id: 'analytics',  Icon: IconAnalytics, label: 'Analytics' },
   { id: 'separator5', section: 'Marketing' },
   { id: 'marketing',  Icon: IconMarketing, label: 'Mail massive (Brevo)', href: 'https://app.brevo.com' },
-  { id: 'social',     Icon: IconSocial,   label: 'Social Scheduler' },
+  { id: 'social',        Icon: IconSocial,       label: 'Social Scheduler' },
+  { id: 'post-builder',  Icon: IconPostBuilder,  label: 'Post Builder'     },
 ]
 
 export default function Sidebar({ view, onNav, onLogout }) {

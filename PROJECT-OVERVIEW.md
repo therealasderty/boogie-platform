@@ -2,11 +2,15 @@
 
 Monorepo in `/boogie-platform` su GitHub: therealasderty.
 
+**Boogie Bistrot** — ristorante a Colle Brianza (LC). Cucina del territorio rivisitata, pizza forno a legna, birre locali, eventi tutto l'anno, giardino in estate.
+
+---
+
 ## Stack e struttura
 
-- `website/` — Next.js 15 App Router, TypeScript, Tailwind CSS v4 (via `@import "tailwindcss"` in globals.css, nessun tailwind.config.js)
-- `dashboard/` — React + Vite, JSX, FullCalendar, Phosphor Icons, @dnd-kit, Tiptap
-- `netlify/functions/` — Netlify Functions condivise per tutte le API
+- `website/` — Next.js 16.2.3, React 19, TypeScript, Tailwind CSS v4
+- `dashboard/` — React 18 + Vite, JSX, FullCalendar, Phosphor Icons, @dnd-kit, Tiptap
+- `netlify/functions/` — 42 funzioni serverless Node.js (backend + automazioni)
 
 **Deploy:** Netlify. `netlify.toml` nella root: `base=website`, `publish=.next`, `functions=../netlify/functions`.
 
@@ -14,75 +18,32 @@ Monorepo in `/boogie-platform` su GitHub: therealasderty.
 
 ## Design System (`website/app/globals.css`)
 
-Tutto in `@theme inline`. Mai colori/radius/font hardcoded nei componenti.
+Tutto in `@theme inline` (Tailwind v4). Mai colori/radius/font hardcoded nei componenti.
 
-- `--color-brand: #eece9d` → `bg-brand`, `text-brand` (CTA prenotazioni)
-- `--color-brand-hover: #f5deb3` → `hover:bg-brand-hover` (più chiaro, non scuro)
-- `--color-surface-dark: #0a0a0a`, `--color-navbar-bg: #000000`, `--color-surface-warm` (beige chiaro)
-- Font: `--font-sans: var(--font-raleway)` (Google), `--font-ivy: 'IvyMode', serif` (self-hosted in `public/fonts/`)
-  - **IvyMode solo per titoli h1/h2.** Tutto il resto Raleway.
-- Radius: `rounded-btn` (8px), `rounded-card` (12px), `rounded-pill` (999px)
-- Tipografia: `--text-label` (0.7rem), `--text-meta` (0.875rem), `--text-body` (1rem), `--text-lead` (1.125rem), `--text-section`
-- CSS globale per rich text: `.rich-text` e `.faq-risposta` (formattano HTML da Tiptap)
-- Animazioni entrance: `cubic-bezier(0.16, 1, 0.3, 1)` a 1.4s. Pattern `mounted` (useState + useEffect) per evitare flash SSR.
+### Colori
+| Token | Valore | Uso |
+|-------|--------|-----|
+| `--color-brand` | `#eece9d` | CTA prenotazioni (gold/beige) |
+| `--color-brand-hover` | `#f5deb3` | Hover brand (più chiaro, non scuro) |
+| `--color-surface-dark` | `#1a1a1a` | Sfondo sezioni dark, footer |
+| `--color-navbar-bg` | `#000000` | Navbar scrolled |
+| `--color-surface-warm` | `#faf8f4` | Sfondo sezioni chiare |
+| `--color-text-muted` | oklch(100% 0 0 / 75%) | Testo secondario su dark |
+| `--color-text-faint` | oklch(100% 0 0 / 45%) | Label uppercase, meta su dark |
 
----
+### Tipografia
+- `--font-sans: var(--font-raleway)` (Google Fonts) — corpo testo e UI
+- `--font-ivy: 'IvyMode', serif` (self-hosted in `public/fonts/`) — **solo h1/h2**
+- Scale: `--text-label` (0.7rem), `--text-meta` (0.875rem), `--text-body` (1rem), `--text-lead` (1.125rem), `--text-section` (1.75rem), `--text-title` (2rem)
+- `--tracking-label: 0.12em` per label uppercase
 
-## Componenti website (`website/components/`)
+### Radius & Animazioni
+- `--radius-btn` (8px), `--radius-card` (12px), `--radius-pill` (999px)
+- Keyframes: `slide-in-right`, `navbar-in`, `kenburns-1/2` (hero)
+- Entrance pattern: `cubic-bezier(0.16, 1, 0.3, 1)` a ~1.4s. Usa `mounted` (useState + useEffect) per evitare flash SSR.
 
-### `Navbar.tsx`
-- Desktop: fixed, trasparente → `bg-black/55 backdrop-blur` allo scroll
-- Homepage non scrollata: no logo, voci left-aligned. Scrollata/altre pagine: logo + voci + prenota
-- Mobile: hamburger fixed, no bar. Bottom bar fissa con Contattaci/Maps/Prenota
-- Dropdown eventi con preview prossimi appuntamenti da Airtable
-- Voci: Menu (dropdown), Appuntamenti (dropdown), Gallery, Blog, Fidelity Card, Contattaci, FAQ
-
-### `Hero.tsx`
-- Carosello principale (80%) + pannello news brand (20%)
-- Cross dissolve, Ken Burns, auto-avanza 5s
-- Animazioni entrance: logo+h1+buttons da sinistra (delay 0s), info/orari dal basso (delay 0.6s)
-- Pannello news: slide orizzontali, foto sfuma verso brand
-
-### `PaginaHero.tsx`
-- Hero per pagine interne: 50vh, parallax con Framer Motion
-- Animazione: slide dall'alto (translateY(-100%) → 0) al mount
-
-### `Footer.tsx`
-- 4 colonne: Logo+social | Esplora | Vieni da noi | Contatti
-- Sfondo `#1a1a1a`
-
-### `SezioneMenu.tsx`
-- Server component asincrono
-- Voci: Specialità alla Carta, La Pizza, Carta dei Vini, Le Birre, Cocktail
-- Foto dinamiche da `fetchMedia(tag)` per tag: carta, pizza, vini, birra, cocktail
-- Carta dei Vini: full width
-
-### `SezioneBlog.tsx`
-- Priorità 1: articoli blog pubblicati da Airtable (`fetchArticoli()`)
-- Priorità 2: eventi con foto+descrizione breve da Airtable
-- Fallback: articoli placeholder statici
-- Link → `/blog` o `/eventi-speciali` in base a cosa mostra
-
-### `SezioneFAQ.tsx` + `SezioneFAQAccordion.tsx`
-- Server component + client accordion
-- Dati da `fetchFaq()`, risposta come HTML con `dangerouslySetInnerHTML`
-
-### `BlocchiRenderer.tsx`
-- Renderizza array `Blocco[]` (testo, immagine, menu, prenotazione, artista)
-
-### `FormPrenotazioneEvento.tsx` / `FormIscrizioneEvento.tsx`
-- Form prenotazione dedicato per eventi, con slot
-
-### `FadeIn.tsx`
-- Wrapper animazione fade+translateY via Intersection Observer
-
-### `PopupManager.tsx`
-- Client component, inserito in `layout.tsx`
-- Fetch da `/.netlify/functions/get-popup` dopo 3s dal mount
-- localStorage: key `bb-popup-{slug}`, TTL 24h — non mostra se già visto
-- Animazione: `translateY(24px) → 0`, `opacity 0 → 1`, `cubic-bezier(0.16, 1, 0.3, 1)` 0.6s
-- Card fixed bottom-right: foto hero con gradient, IvyMode title, Raleway description, CTA brand
-- Controllato dal campo `InPrimoPiano` (checkbox) in Airtable Agenda
+### CSS globale
+- `.rich-text`, `.faq-risposta` — formattano HTML da Tiptap su sfondo dark
 
 ---
 
@@ -91,22 +52,70 @@ Tutto in `@theme inline`. Mai colori/radius/font hardcoded nei componenti.
 | Rotta | Note |
 |-------|------|
 | `/` | Homepage: Hero + SezioneMenu + SezioneBlog + SezioneRecensioni + SezioneContatti |
+| `/prenota` | Form prenotazione tavolo con slot disponibilità |
 | `/menu/[categoria]` | specialita, pizza, vini, birre, cocktails — dati da Airtable Menu |
 | `/eventi-speciali` | Lista eventi da Airtable Agenda |
-| `/eventi-speciali/[slug]` | Pagina evento con BlocchiRenderer + form prenotazione + JSON-LD Event |
+| `/eventi-speciali/[slug]` | Pagina evento: BlocchiRenderer + form iscrizione + JSON-LD Event |
 | `/blog` | Lista articoli blog da Airtable |
 | `/blog/[slug]` | Articolo con rich text HTML + JSON-LD BlogPosting |
-| `/prenota` | Form prenotazione tavolo |
-| `/galleria` | Galleria foto da Cloudinary/Airtable Media |
-| `/faq` | FAQ da Airtable |
-| `/fidelity` | Programma fidelity |
-| `/contattaci` | Pagina contatti |
+| `/faq` | FAQ accordion da Airtable |
+| `/galleria` | Mosaico foto da Airtable Media (TODO: filtri tag) |
+| `/fidelity` | Programma fidelity + form iscrizione |
+| `/contattaci` | Form contatti + mappa |
+| `/links` | Pagina link social (Spotify, YouTube, IG…) — proprio layout |
 | `/privacy` | Privacy policy |
-| `/vicino-a/[city]` | Local SEO: pagina città con intro, foto location, SezioneMenu, appuntamenti → `/eventi-speciali/[slug]`, mappa Google Maps embed + directions dinamici |
-| `/vicino-a/[city]/[service]` | Local SEO: pagina servizio per città — 404 se city/service non trovati o service non in `serviziAttivi`; BlocchiRenderer da evento Agenda madre; JSON-LD Event; canonical self-referencing |
-| `/eventi-aziendali` | Pagina eventi aziendali: punti di forza, sezione gastronomica, griglia foto location navigabile, `FormEventoAziendale` |
-| `/eventi-aziendali/[city]` | Variante localizzata per le 10 città ("vicino a [Città]"); `generateStaticParams` da Airtable Localita; canonical per città; TODO: filtrare per `ServiziAttivi` |
-| `/sitemap.ts` | Sitemap dinamica — include `/vicino-a/[city]` (priority 0.7), `/vicino-a/[city]/[service]` (priority 0.6), `/eventi-aziendali` (0.8), `/eventi-aziendali/[city]` (0.7) |
+| `/cookie-policy` | Cookie policy |
+| `/design` | Design system showcase (DEV only) |
+| `/vicino-a/[city]` | Local SEO: intro città, foto location, menu, appuntamenti, mappa embed |
+| `/vicino-a/[city]/[service]` | Local SEO: servizio per città — BlocchiRenderer evento madre; JSON-LD Event; canonical self-referencing |
+| `/eventi-aziendali` | Landing eventi aziendali: punti di forza, gastronomia, griglia foto, FormEventoAziendale |
+| `/eventi-aziendali/[city]` | Variante localizzata per 10 città; `generateStaticParams` da Airtable Localita |
+| `/sitemap.ts` | Sitemap dinamica (events, blog, vicino-a, eventi-aziendali) |
+| `/robots.ts` | Robots.txt dinamico |
+
+### API Routes (`website/app/api/`)
+`/prenota`, `/disponibilita`, `/agenda`, `/fidelity`, `/iscriviti-aggiornamenti`, `/get-popup`, `/contatta`, `/debug-media`
+
+---
+
+## Componenti website (`website/components/`)
+
+### Layout & Navigation
+- **Navbar.tsx** — Fixed, trasparente → `bg-black/55 backdrop-blur` allo scroll. Homepage non scrollata: no logo, voci left-aligned. Dropdown eventi con preview prossimi appuntamenti da Airtable. Mobile: hamburger + bottom bar fissa (Contattaci/Maps/Prenota).
+- **Footer.tsx** — 4 colonne: Logo+social | Esplora | Vieni da noi | Contatti. Sfondo `#1a1a1a`.
+- **PaginaHero.tsx** — Hero pagine interne: 50vh, parallax Framer Motion, slide dall'alto al mount.
+
+### Hero
+- **Hero.tsx** — Carosello principale (80%) + pannello news brand (20%). Cross dissolve, Ken Burns, auto-avanza 5s. Pannello news: slide orizzontali. Animazioni entrance: logo+h1+buttons da sinistra (delay 0s), info dal basso (delay 0.6s).
+
+### Form (6)
+`FormPrenotazione.tsx`, `FormPrenotazioneEvento.tsx`, `FormIscrizioneEvento.tsx`, `FormFidelity.tsx`, `FormContatti.tsx`, `FormEventoAziendale.tsx`
+
+### Menu
+- **SezioneMenu.tsx** — Server component asincrono. Nav tabs: Specialità, Pizza, Vini, Birre, Cocktail. Foto dinamiche da `fetchMedia(tag)`.
+- **SezioneMenuCards.tsx** — Carousel card menu per homepage.
+- **MenuLista.tsx** / **MenuCarta.tsx** — Visualizzazioni lista ed elenco con descrizione, prezzo, badge intolleranze.
+
+### Sezioni homepage
+- **SezioneBlog.tsx** — Priorità: articoli Airtable → eventi con foto → placeholder. Link → `/blog` o `/eventi-speciali`.
+- **SezioneFAQ.tsx** + **SezioneFAQAccordion.tsx** — Server + client accordion. Risposte HTML con `dangerouslySetInnerHTML`.
+- **SezioneRecensioni.tsx** + **SezioneRecensioniCarousel.tsx** — Google Reviews.
+- **SezioneContatti.tsx** + **SezioneContattiClient.tsx** — Mappa embed + form.
+- **SezioneIntro.tsx** — Testo + immagine per pagine evento/local SEO.
+
+### Media & Rich Content
+- **MosaicoFoto.tsx** — Grid masonry con fade-in, hover zoom.
+- **GrigliaFotoLocation.tsx** — Grid foto per pagine local SEO.
+- **BlocchiRenderer.tsx** — Renderizza `Blocco[]` (Testo, Immagine, Menu, Prenotazione, Artista, CardOfferte, Prezzo).
+
+### Interactive
+- **PopupManager.tsx** — Client, in `layout.tsx`. Fetch da `get-popup` dopo 3s. localStorage key `bb-popup-{slug}` con TTL 24h. Card fixed bottom-right, animazione cubic-bezier 0.6s.
+- **EventoPopup.tsx** — Card popup modale evento.
+- **CookieBanner.tsx** + **GestisciCookieButton.tsx** — Cookie consent con localStorage.
+- **Calendario.tsx** — Mini calendario giorni aperti/chiusi evento.
+
+### Utility
+`FadeIn.tsx`, `SmartImage.tsx`, `AltreSpecialita.tsx`, `AltriAppuntamenti.tsx`, `SetEventoTitolo.tsx`, `ArrowRightIcon.tsx`, `LinksPrenotaSticky.tsx`
 
 ---
 
@@ -114,35 +123,85 @@ Tutto in `@theme inline`. Mai colori/radius/font hardcoded nei componenti.
 
 | File | Contenuto |
 |------|-----------|
-| `agenda.ts` | `fetchEventi()`, `fetchEventoBySlug()`, tipo `EventoAgenda` + tipi `Blocco*` |
+| `agenda.ts` | `fetchEventi()`, `fetchEventoBySlug()`, tipo `EventoAgenda` + tipi `Blocco*`, `formatBadgeRicorrente()` |
 | `blog.ts` | `fetchArticoli()`, `fetchArticoloBySlug()`, tipo `ArticoloBlog` |
+| `menu.ts` | `fetchPizza/Birre/Vini/Cocktails/Specialita()`, tipo `SezioneMenu`, parsing badge intolleranze |
 | `faq.ts` | `fetchFaq()`, tipo `FaqItem` |
-| `localita.ts` | `fetchLocalita()`, `fetchLocalitaBySlug(slug)`, tipo `LocalitaItem` |
-| `media.ts` | `fetchMedia(tag?)` da Airtable Media |
-| `orari.ts` | `fetchOrari()` |
-| `page-context.ts` | Context client per titolo evento corrente |
+| `orari.ts` | `fetchOrari()`, `fetchChiusure()`, `fetchGiorniAperti()`, `buildOrariLines()` |
+| `media.ts` | `fetchMedia(tag?)`, `fetchMediaByTag()` da Airtable Media |
+| `localita.ts` | `fetchLocalita()`, `fetchLocalitaBySlug()`, tipo `LocalitaItem`. 10 città: Lecco, Merate, Oggiono, Calolziocorte, Casatenovo, Missaglia, Olgiate Molgora, Cernusco Lombardone, Lomagna, Airuno |
+| `recensioni.ts` | Fetch recensioni Google/TripAdvisor |
+| `form-classes.ts` | Classi Tailwind centralizzate per form (inputClass, labelClass…) |
+| `page-context.tsx` | React Context client per titolo evento corrente |
 
-Tutti usano `next: { revalidate: 30 }` (test) — da portare a 300 in produzione.
+Tutte usano `next: { revalidate: 30 }` (test) — portare a **300 in produzione**.
 
 ---
 
 ## Netlify Functions (`netlify/functions/`)
 
-Tutte protette da `verifyToken` salvo eccezioni. Header CORS su tutte.
+42 funzioni serverless Node.js. Tutte protette da `verifyToken` (JWT) salvo eccezioni pubbliche. CORS su tutte.
 
+### Prenotazioni
 | Funzione | Auth | Scopo |
 |----------|------|-------|
-| `gestisci-appuntamenti.js` | sì | GET/POST/DELETE agenda (Airtable `Agenda`) |
-| `gestisci-blog.js` | sì | GET/POST/PATCH/DELETE articoli blog (Airtable `Blog`) |
-| `gestisci-faq.js` | sì | GET/POST/PATCH/DELETE FAQ (Airtable `FAQ`) |
-| `gestisci-localita.js` | sì | GET/POST/PATCH/DELETE località Local SEO (Airtable `Localita`) |
-| `gestisci-menu.js` | sì | GET/POST/PATCH/DELETE menu (Airtable `Menu`) |
+| `prenota.js` | no | POST → Airtable + email Brevo + notifica Telegram |
+| `conferma.js` | no | GET conferma da link email → flag "Confermata" + tag Brevo |
+| `disponibilita.js` | no | GET slot liberi per data/persone |
+| `gestisci-prenotazione.js` | sì | PATCH da dashboard |
+| `get-prenotazioni.js` | sì | GET lista prenotazioni |
+| `prenotazioni-attesa.js` | sì | GET lista d'attesa |
+| `prenotazioni-giornaliere.js` | sì | GET per analytics |
+| `cancella-prenotazione.js` | sì | DELETE + notifica email |
+
+### Agenda / Contenuti
+| Funzione | Auth | Scopo |
+|----------|------|-------|
+| `gestisci-appuntamenti.js` | sì | GET/POST/PATCH/DELETE Agenda Airtable |
+| `suggerisci-agenda.js` | sì | Gemini API suggerisce tipo evento |
+| `gestisci-blog.js` | sì | CRUD Blog Airtable |
+| `gestisci-faq.js` | sì | CRUD FAQ Airtable |
+| `gestisci-menu.js` | sì | CRUD Menu Airtable |
 | `get-menu.js` | no | GET pubblico menu |
-| `get-popup.js` | no | GET pubblico — evento `InPrimoPiano=true` più rilevante |
-| `contatta.js` | no | POST pubblico — form contatti generico; salva su Airtable `RichiesteContatti` + email Brevo |
-| `contatta-evento-aziendale.js` | no | POST pubblico — form eventi aziendali; salva su Airtable `RichiesteEventi` + email Brevo |
-| `statistiche-settimanali.js` | sì | aggregazione statistiche |
-| varie altri | sì | prenotazioni, fidelity, orari, chiusure, note, tag, recensioni, media |
+| `get-popup.js` | no | GET evento `InPrimoPiano=true` per popup |
+| `gestisci-orari.js` | sì | PATCH orari apertura |
+| `get-orari.js` | no | GET orari formattati |
+| `gestisci-chiusure.js` | sì | CRUD chiusure straordinarie |
+| `get-chiusure.js` | no | GET chiusure |
+| `pulizia-chiusure.js` | — | **CRON** lunedì 3:00 — rimuove chiusure scadute |
+
+### Local SEO
+| Funzione | Auth | Scopo |
+|----------|------|-------|
+| `gestisci-localita.js` | sì | CRUD città (Localita Airtable) |
+| `gestisci-localita-servizi.js` | sì | Sync LocalitaServizi (combo città × servizio) |
+
+### Analytics & AI
+| Funzione | Auth | Scopo |
+|----------|------|-------|
+| `statistiche-settimanali.js` | — | **CRON** domenica 23:00 — KPI settimana → Airtable Statistiche |
+| `get-statistiche.js` | sì | GET statistiche con trend |
+| `genera-analisi.js` | sì | Gemini API → report (PRO, CRITICITÀ, OPPORTUNITÀ) → AnalisiIA |
+| `genera-analisi-background.js` | — | Background function (15min), rigenera analisi storiche |
+
+### Contatti & Email
+| Funzione | Auth | Scopo |
+|----------|------|-------|
+| `contatta.js` | no | Form contatti → RichiesteContatti + email Brevo |
+| `contatta-evento-aziendale.js` | no | Form eventi aziendali → RichiesteEventi + email Brevo |
+
+### Fidelity
+`fidelity-iscrizione.js`, `fidelity-ricarica.js`, `fidelity-clienti.js`, `get-clienti.js`, `get-tag.js`
+
+### Social & Recensioni
+| Funzione | Auth | Scopo |
+|----------|------|-------|
+| `pubblica-social.js` | sì | Genera caption Gemini + pubblica su Meta (FB+IG) e Google Business Profile (Local Post) |
+| `scraping-recensioni.js` | sì | Scraping Google Reviews |
+| `scraping-tripadvisor.js` | sì | Scraping TripAdvisor |
+
+### Misc
+`auth.js`, `verifyToken.js`, `note.js`, `dati-dashboard.js`, `feedback.js`, `salva-feedback.js`, `get-umami-stats.js`
 
 ---
 
@@ -152,35 +211,62 @@ Tutte protette da `verifyToken` salvo eccezioni. Header CORS su tutte.
 |---------|----------------|
 | `Agenda` | Titolo, Slug, Data, Ora, OraFine, Ricorrenza, GiorniSettimana, DescrizioneBreve, FotoHero, TitoloIntro, TestoIntro, TagFotoIntro, Blocchi (JSON), Stato, MetaTitle, MetaDescription, InPrimoPiano (checkbox) |
 | `Blog` | Titolo, Slug, Autore, DataPubblicazione, Categoria, DescrizioneBreve, FotoHero, Contenuto (HTML), MetaTitle, MetaDescription, Pubblicato, Ordine |
-| `FAQ` | Domanda, Risposta (HTML con link), Ordine, Attivo — 9 voci caricate |
-| `Localita` | Citta, Slug, ServiziAttivi (Long text, comma-separated), IntroText (HTML), MetaTitle, MetaDescription, Attiva, Ordine — 10 città caricate (Lecco, Merate, Oggiono, Calolziocorte, Casatenovo, Missaglia, Olgiate Molgora, Cernusco Lombardone, Lomagna, Airuno) |
-| `Menu` | Nome, Categoria, Descrizione, Prezzo, Ordine, Attivo, FotoUrl |
-| `Media` | Url, Alt, Tag (multi), Ordine |
-| `Orari` | Giorno, Aperturapranzo, ChiusuraPranzo, AperturaCena, ChiusuraCena, Chiuso |
-| `RichiesteEventi` | Nome, Cognome, Email, Telefono, TipoEvento, NumOspiti, DataEvento, Note, ConsensoMarketing, DataRichiesta — popolata da `contatta-evento-aziendale.js` |
-| `RichiesteContatti` | Nome, Cognome, Email, Telefono, Messaggio, ConsensoMarketing, DataRichiesta — popolata da `contatta.js` |
+| `FAQ` | Domanda, Risposta (HTML), Ordine, Attivo |
+| `Localita` | Citta, Slug, ServiziAttivi (comma-separated), IntroText (HTML), MetaTitle, MetaDescription, Attiva, Ordine |
+| `Menu` | Nome, Categoria, Descrizione, Prezzo, Formato, BadgeIntolleranze, Ordine, Attivo |
+| `Media` | Url, Alt, Tag (multi), Ordine, SoloMobile |
+| `Orari` | Giorno, AperturaPranzo, ChiusuraPranzo, AperturaCena, ChiusuraCena, Chiuso |
+| `Prenotazioni` | Nome, Email, Telefono, Data, Ora, Persone, Fascia, Note, Stato, ConsensoMarketing |
+| `ClientiFidelity` | Nome, Cognome, Email, Telefono, Crediti, DataIscrizione, Tag |
+| `Statistiche` | Settimana, Prenotazioni, Coperti, Cancellazioni, ClientiUnici, LeadTime, AnalisiIA |
+| `RichiesteEventi` | Nome, Cognome, Email, Telefono, TipoEvento, NumOspiti, DataEvento, Note, ConsensoMarketing |
+| `RichiesteContatti` | Nome, Cognome, Email, Telefono, Messaggio, ConsensoMarketing |
+| `Popup` | Config popup modali |
 
 ---
 
 ## Dashboard (`dashboard/src/`)
 
 ### Pannelli attivi
-- `CalendarioPanel` — FullCalendar prenotazioni
-- `AgendaPanel` — eventi/appuntamenti con BlocchiEditor, RichTextEditor, drag foto; checkbox "In primo piano" per popup; sezione SEO (MetaTitle/MetaDescription) per pagine dedicate
-- `MenuPanel` — gestione menu con DnD
-- `MediaPanel` — libreria media con upload Cloudinary
-- `FaqPanel` — FAQ con DnD e RichTextEditor
-- `BlogPanel` — articoli blog con DnD, toggle pubblicato, modal editor RichTextEditor + sezione SEO
-- `LocalSeoPanel` — lista città con toggle attiva, modal editor con RichTextEditor intro, servizi dinamici da Agenda, sezione SEO, preview URL
-- `FidelityPanel`, `ClientiPanel`, `AnalyticsPanel`, `GestisciOrariPanel`
+| Panel | Funzionalità |
+|-------|-------------|
+| **Home** | Widget: prenotazioni in attesa, meteo (Open-Meteo), recensioni, note |
+| **CalendarioPanel** | FullCalendar (4 view). Editor evento inline. Chiusure + festività 2024-2028. AI "Suggerisci agenda" via Gemini |
+| **AgendaPanel** | Lista/edit eventi completa, BlocchiEditor, RichTextEditor, sezione SEO |
+| **MenuPanel** | CRUD menu con DnD per riordino |
+| **MediaPanel** | Upload/gestione foto Cloudinary con tag e ordine |
+| **FaqPanel** | FAQ con DnD e RichTextEditor (Tiptap) |
+| **BlogPanel** | CRUD articoli, DnD, toggle pubblicato, modal editor + SEO |
+| **LocalSeoPanel** | Lista città, toggle attiva, RichTextEditor intro, servizi dinamici da Agenda, SEO, preview URL |
+| **OrariPanel / GestisciOrariPanel** | Orari apertura per fascia/giorno + chiusure straordinarie |
+| **FidelityPanel** | 3 tab: Iscrivi, Ricarica, GestisciTag |
+| **ClientiPanel** | Database clienti fidelity con crediti e storico |
+| **AnalyticsPanel** | KPI settimanali (prenotazioni, coperti, cancellazioni, clienti unici, LTV). Grafici: bar giorni, pie fasce. Report AI Gemini |
+| **RecensioniSitoPanel** | Scraping + visualizzazione Google Reviews e TripAdvisor |
+| **SocialPanel** | Genera caption Gemini + pubblica su Meta (FB+IG) e Google Business Profile |
 
-### Sidebar — sezioni
-1. Home
-2. Prenotazioni: Calendario, Gestisci Orari
-3. Clienti: Programma Fidelity, Database Clienti
-4. Gestione sito: Menu, Appuntamenti, Libreria Media, FAQ, Blog, Local SEO
-5. Statistiche: Analytics
-6. Marketing: Mail massive (Brevo)
+### Hooks (`dashboard/src/hooks/`) — 20 hook
+`useAppuntamenti`, `useBlog`, `useCalendario`, `useChiusure`, `useFaq`, `useFidelity`, `useLocalita`, `useMedia`, `useMenu`, `useMeteo`, `useNote`, `useOrari`, `usePrenotazioni`, `usePrenotazioniGiornaliere`, `useRecensioni`, `useRecensioniSito`, `useTag`, `useAnalytics`, `useUmamiStats`, `useTheme`
+
+### Componenti utility dashboard
+`Login.jsx`, `Sidebar.jsx`, `ModalPrenotazione.jsx`, `FloatingButton.jsx`, `BlocchiEditor.jsx`, `RichTextEditor.jsx`
+Widget home: `AttesaWidget`, `MeteoWidget`, `RecensioniWidget`, `PrenotazioniWidget`
+
+---
+
+## Integrazioni esterne
+
+| Servizio | Uso |
+|----------|-----|
+| **Airtable** | Database centrale (CMS) per tutti i contenuti |
+| **Brevo** | Email transazionali + newsletter + tag clienti |
+| **Gemini API** | Genera caption social, analisi KPI, suggerisce agenda (modelli: `gemini-2.5-flash` → fallback `gemini-2.0-flash`) |
+| **Meta Graph API** | Pubblica post su Facebook Page + Instagram Business |
+| **Google Business Profile** | Pubblica Local Post (OAuth2 refresh token) |
+| **Telegram** | Notifiche nuove prenotazioni al ristorante |
+| **Umami** | Analytics pageview (tracking + API stats) |
+| **Cloudinary** | Libreria media (upload + CDN) |
+| **Open-Meteo** | Meteo widget dashboard (no API key) |
 
 ---
 
@@ -188,25 +274,29 @@ Tutte protette da `verifyToken` salvo eccezioni. Header CORS su tutte.
 
 - Meta tag statici su tutte le pagine statiche
 - `generateMetadata` dinamico su `/eventi-speciali/[slug]` e `/blog/[slug]`
-- JSON-LD `Event` su pagine evento, `BlogPosting` su articoli blog
-- `og:image` dinamica da `fotoHero` per eventi e blog (Cloudinary URLs)
-- MetaTitle e MetaDescription compilati in Airtable per tutti gli eventi con slug
-- Local SEO: `/vicino-a/[city]` con canonical self-referencing; `/vicino-a/[city]/[service]` con JSON-LD Event e canonical; sitemap include tutte le varianti
-- **Caratteristiche Boogie (da usare nei testi):** cucina del territorio rivisitata, pizza tradizionale forno a legna, birre locali, eventi tutto l'anno, giardino nella bella stagione. NON citare: pizza napoletana, hamburger (rimossi), menu fisso pranzo (non più attivo), eventi specifici come "Girorisotti" nei testi statici
-- **TODO produzione:** `og:image` statica in `public/og-image.jpg` per pagine statiche, `og:url` canonico, `robots.ts`, `LocalBusiness` JSON-LD, revalidate → 300
+- JSON-LD `Event` su pagine evento, `BlogPosting` su articoli blog, `Restaurant` in `layout.tsx`
+- `og:image` dinamica da `fotoHero` (Cloudinary) per eventi e blog
+- Local SEO: `/vicino-a/[city]` + `/vicino-a/[city]/[service]` con canonical; sitemap include tutte le varianti
+- **Caratteristiche Boogie nei testi:** cucina del territorio rivisitata, pizza tradizionale forno a legna, birre locali, eventi tutto l'anno, giardino nella bella stagione
+- **NON citare:** pizza napoletana, hamburger (rimossi), menu fisso pranzo (non attivo)
 
 ---
 
-## TODO produzione (file `TODO-PRODUZIONE.md`)
+## TODO produzione (`TODO-PRODUZIONE.md`)
 
-- Filtri tag nella galleria
-- Progress bar di navigazione (NProgress-style con `usePathname`)
-- `revalidate = 300` su tutte le pagine (ora a 30s per test)
-- `og:image` statica in `public/og-image.jpg` → aggiungere in `layout.tsx`
-- Creare lista Brevo "Aggiornamenti eventi" e aggiungere env vars
-- Rimuovere fascia "Aperitivo" da Airtable Orari
-- Aggiungere campo `InPrimoPiano` (Checkbox) alla tabella Airtable `Agenda`
-- `/eventi-aziendali/[city]`: filtrare `generateStaticParams` per `ServiziAttivi` in Airtable
-- Analisi Gemini in `AnalyticsPanel` su dati `RichiesteEventi` e `RichiesteContatti`
-- Aggiornare Privacy Policy (raccolta dati personali in Airtable)
-- **Multilingua (futuro):** `next-intl`, prefisso `/en` `/fr` `/de` `/es`, tradurre UI + FAQ + descrizioni brevi menu, Airtable con campi `_EN/_FR/_DE/_ES` solo dove serve
+- [ ] Gallery: filtri tag (Cucina, Pizza, Giardino, Locale, Serate)
+- [ ] Progress bar navigazione (NProgress-style con `usePathname`)
+- [ ] `revalidate = 300` su tutte le pagine (ora 30s per test)
+- [ ] `og:image` statica in `public/og-image.jpg` → aggiungere in `layout.tsx`
+- [ ] Creare lista Brevo "Aggiornamenti eventi" + env var
+- [ ] Rimuovere fascia "Aperitivo" da Airtable Orari
+- [ ] `/eventi-aziendali/[city]`: filtrare `generateStaticParams` per `ServiziAttivi`
+- [ ] Analisi Gemini in `AnalyticsPanel` su `RichiesteEventi` e `RichiesteContatti`
+- [ ] Aggiornare Privacy Policy (raccolta dati personali Airtable)
+- [ ] Testare flow Social Automation end-to-end
+- [ ] Configurare dominio custom su Netlify
+- [ ] **Multilingua (futuro):** `next-intl`, prefisso `/en /fr /de /es`, campi Airtable `_EN/_FR/_DE/_ES`
+
+---
+
+*Aggiornato: 23 Aprile 2026*
