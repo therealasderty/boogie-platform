@@ -9,19 +9,11 @@
 
 type TrackingPayload = Record<string, string | number | boolean | undefined>
 
-declare global {
-  interface Window {
-    umami?: {
-      track: (eventName: string, data?: TrackingPayload) => void
-    }
-  }
-}
-
 export function trackEvent(eventName: string, payload?: TrackingPayload) {
   if (typeof window === 'undefined') return
 
   if (typeof window.umami?.track === 'function') {
-    window.umami.track(eventName, payload)
+    window.umami.track(eventName, payload as Record<string, unknown>)
   }
 
   if (process.env.NODE_ENV === 'development') {
