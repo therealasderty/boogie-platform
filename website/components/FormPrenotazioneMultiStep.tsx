@@ -656,28 +656,30 @@ export default function FormPrenotazioneMultiStep({
                 </div>
               </div>
 
-              <div>
-                <label className={labelClass} style={{ fontSize: 'var(--text-meta)' }}>
-                  Preferenza <span className="text-neutral-400 font-light">(opzionale)</span>
-                </label>
-                <div className="flex gap-2">
-                  {(['pizza', 'cucina'] as const).map(v => (
-                    <button
-                      key={v}
-                      type="button"
-                      onClick={() => setPreferenza(prev => prev === v ? '' : v)}
-                      className={`flex-1 px-5 rounded-btn border font-light transition-colors capitalize ${
-                        preferenza === v
-                          ? 'border-brand bg-brand/10 text-brand'
-                          : 'border-neutral-200 bg-neutral-50 text-neutral-500 hover:border-neutral-300'
-                      }`}
-                      style={{ fontSize: 'var(--text-meta)', minHeight: '48px' }}
-                    >
-                      {v === 'pizza' ? '🍕 Pizza' : '🍽️ Cucina'}
-                    </button>
-                  ))}
+              {!isEventoMode && (
+                <div>
+                  <label className={labelClass} style={{ fontSize: 'var(--text-meta)' }}>
+                    Preferenza <span className="text-neutral-400 font-light">(opzionale)</span>
+                  </label>
+                  <div className="flex gap-2">
+                    {(['pizza', 'cucina'] as const).map(v => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setPreferenza(prev => prev === v ? '' : v)}
+                        className={`flex-1 px-5 rounded-btn border font-light transition-colors capitalize ${
+                          preferenza === v
+                            ? 'border-brand bg-brand/10 text-brand'
+                            : 'border-neutral-200 bg-neutral-50 text-neutral-500 hover:border-neutral-300'
+                        }`}
+                        style={{ fontSize: 'var(--text-meta)', minHeight: '48px' }}
+                      >
+                        {v === 'pizza' ? '🍕 Pizza' : '🍽️ Cucina'}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div>
                 <label className={labelClass} style={{ fontSize: 'var(--text-meta)' }}>
