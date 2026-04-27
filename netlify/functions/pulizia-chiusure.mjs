@@ -10,7 +10,7 @@ const AIRTABLE_CHIUSURE = process.env.AIRTABLE_CHIUSURE || 'Chiusure'
 const BASE_URL          = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_CHIUSURE)}`
 const AT_HEADERS        = { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` }
 
-exports.handler = async () => {
+export default async () => {
   try {
     // Recupera tutte le regole di tipo "Data specifica"
     const url = new URL(BASE_URL)
@@ -34,7 +34,7 @@ exports.handler = async () => {
 
     if (daEliminare.length === 0) {
       console.log('Nessuna regola scaduta da eliminare.')
-      return { statusCode: 200, body: 'Nessuna regola scaduta' }
+      return
     }
 
     // Airtable supporta max 10 record per batch delete
@@ -53,10 +53,11 @@ exports.handler = async () => {
     }
 
     console.log(`Eliminate ${daEliminare.length} regole scadute.`)
-    return { statusCode: 200, body: `Eliminate ${daEliminare.length} regole scadute` }
+    return
 
   } catch (err) {
     console.error('Errore pulizia chiusure:', err)
-    return { statusCode: 500, body: err.message }
   }
 }
+
+export const config = { schedule: '0 3 * * 1' }

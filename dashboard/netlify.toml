@@ -4,3 +4,12 @@
 
 [functions]
   directory = "../netlify/functions"
+
+[functions."pulizia-chiusure"]
+  schedule = "0 3 * * 1"
+
+[functions."statistiche-settimanali"]
+  schedule = "0 23 * * 0"
+
+[functions."pubblica-social-schedulato"]
+  schedule = "0 * * * *"

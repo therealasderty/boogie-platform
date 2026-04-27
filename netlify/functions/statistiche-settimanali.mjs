@@ -727,95 +727,17 @@ async function sendNewsletter(analisiWeek, analisiGlobal, s, nSettimane) {
   else console.log('Newsletter inviata a info@boogiebistrot.com')
 }
 
-exports.handler = async (event) => {
-  const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' }
-
-  if (event?.httpMethod === 'OPTIONS') return { statusCode: 204, headers, body: '' }
-
-  const isManual = event?.httpMethod === 'POST'
-  let body = {}
-  if (isManual) {
-    try { body = JSON.parse(event.body || '{}') } catch { /* noop */ }
-    const secret = process.env.STATS_SECRET || 'boogie-stats'
-    if (body.secret !== secret) {
-      return { statusCode: 401, headers, body: JSON.stringify({ success: false, error: 'Unauthorized' }) }
-    }
-  }
-
+export default async () => {
   try {
-    // — Modalità rebuildAll: cancella tutto e ricalcola settimana per settimana —
-    if (body.rebuildAll) {
-      const deleted = await deleteAllStats()
-      console.log(`[REBUILD] Cancellati ${deleted} record esistenti`)
-
-      const weeks = await getAllWeeksFromPrenotazioni()
-      console.log(`[REBUILD] Trovate ${weeks.length} settimane da ricalcolare`)
-
-      const results = []
-      let prevStats = null
-      for (const w of weeks) {
-        const dataInizio = formatDate(w.mon)
-        const dataFine   = formatDate(w.sun)
-        console.log(`[REBUILD] Calcolo ${w.label} (${dataInizio} → ${dataFine})`)
-        const result = await calcAndSaveWeek(dataInizio, dataFine, w.label, prevStats)
-        prevStats = result
-        results.push(w.label)
-      }
-
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({ success: true, message: `Rebuild completato: ${results.length} settimane ricalcolate`, settimane: results }),
-      }
-    }
-
-    // — Modalità regenerateAI: rigenera solo il testo AI per tutte le settimane esistenti —
-    if (body.regenerateAI) {
-      const tuttiRecord = await fetchAllStatsRecordsFull()
-      console.log(`[REGEN-AI] ${tuttiRecord.length} settimane trovate`)
-
-      // Versione light per fetchAllStatsRecords (storico per confronto)
-      const storico = await fetchAllStatsRecords()
-
-      const results = []
-      for (const rec of tuttiRecord) {
-        console.log(`[REGEN-AI] ${rec.settimana} (${rec.dataInizio} → ${rec.dataFine})`)
-        try {
-          const [meteoRec, eventiRec] = await Promise.all([
-            fetchMeteoStorico(rec.dataInizio, rec.dataFine).catch(() => null),
-            fetchEventiSettimana(rec.dataInizio, rec.dataFine).catch(() => []),
-          ])
-          const festivitaRec = getFestivitaSettimana(rec.dataInizio, rec.dataFine)
-          const contesto = { meteo: meteoRec, eventi: eventiRec, festivita: festivitaRec }
-          const analisi = await generateWeeklyAnalysis(rec, storico, contesto)
-          await patchStatRecord(rec.recordId, { 'Analisi AI': analisi })
-          results.push({ settimana: rec.settimana, ok: true })
-        } catch (e) {
-          console.error(`[REGEN-AI] ${rec.settimana} fallita:`, e.message)
-          results.push({ settimana: rec.settimana, ok: false, error: e.message })
-        }
-      }
-
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({ success: true, message: `Rigenerazione AI completata: ${results.filter(r=>r.ok).length}/${results.length}`, results }),
-      }
-    }
-
-    // — Modalità singola settimana (schedulata o manuale) —
-    let oggi = new Date()
-    if (isManual) {
-      if (body.date) oggi = new Date(body.date + 'T12:00:00')
-    } else {
-      oggi.setDate(oggi.getDate() - 1)
-    }
+    // — Modalità singola settimana (schedulata) —
+    const oggi = new Date()
+    oggi.setDate(oggi.getDate() - 1)
     const { mon, sun } = getWeekRange(oggi)
     const dataInizio = formatDate(mon)
     const dataFine   = formatDate(sun)
     const settimana  = getWeekLabel(mon)
 
-    console.log(`[${isManual ? 'MANUALE' : 'SCHEDULATO'}] Statistiche ${settimana} (${dataInizio} → ${dataFine})`)
+    console.log(`[SCHEDULATO] Statistiche ${settimana} (${dataInizio} → ${dataFine})`)
 
     // Upsert: cancella eventuale record esistente per questa settimana
     await deleteStatRecordForWeek(settimana)
@@ -868,18 +790,11 @@ exports.handler = async (event) => {
       } catch (e) { console.error('Newsletter fallita:', e.message) }
     }
 
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ success: true, message: msg, settimana, ...result }),
-    }
+    console.log(msg)
 
   } catch (err) {
     console.error('Errore statistiche:', err)
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ success: false, error: err.message }),
-    }
   }
 }
+
+export const config = { schedule: '0 23 * * 0' }

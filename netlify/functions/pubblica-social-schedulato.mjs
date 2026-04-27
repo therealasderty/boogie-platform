@@ -171,7 +171,7 @@ async function aggiornaRecord(id, fields) {
 
 // ── Handler principale (cron) ─────────────────────────────────────────────────
 
-exports.handler = async () => {
+export default async () => {
   if (!AIRTABLE_TOKEN || !AIRTABLE_BASE_ID) {
     console.error('AIRTABLE_TOKEN o AIRTABLE_BASE_ID non configurati')
     return { statusCode: 500, body: 'Config mancante' }
@@ -246,12 +246,10 @@ exports.handler = async () => {
       console.log(`Post ${record.id}: ${nuovoStato}`, { risultati, errori })
     }
 
-    return {
-      statusCode: 200,
-      body:       `Processati ${records.length} post programmati`,
-    }
+    return
   } catch (err) {
     console.error('Errore cron social:', err)
-    return { statusCode: 500, body: err.message }
   }
 }
+
+export const config = { schedule: '0 * * * *' }
