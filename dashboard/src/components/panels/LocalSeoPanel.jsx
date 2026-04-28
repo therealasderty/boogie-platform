@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useLocalita } from '../../hooks/useLocalita'
 import { authFetch } from '../../lib/authFetch'
 import { API_BASE } from '../../lib/config'
-import { IconEdit, IconTrash, IconClose, IconPlus, IconEye, IconEyeSlash } from '../../icons/index.jsx'
+import { IconEdit, IconTrash, IconClose, IconPlus, IconEye, IconEyeSlash, IconLocalSeo } from '../../icons/index.jsx'
 import RichTextEditor from './RichTextEditor'
 import styles from './LocalSeoPanel.module.css'
 
@@ -142,7 +142,7 @@ function Modal({ item, slugDisponibili, salva, onClose, onSaved, onElimina }) {
 
             {/* SEO */}
             <div className={styles.seoSection}>
-              <div className={styles.seoTitle}>🔍 SEO — opzionale (se vuoto genera automaticamente)</div>
+              <div className={styles.seoTitle}>SEO — opzionale (se vuoto genera automaticamente)</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div className={styles.field}>
                   <label>Meta Title ({form.metaTitle.length}/60)</label>
@@ -276,7 +276,7 @@ export default function LocalSeoPanel() {
     <div className={styles.panel}>
       <div className={styles.panelHeader}>
         <div className={styles.panelTitle}>
-          📍 Local SEO
+          <IconLocalSeo size={18} /> Local SEO
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn-secondary" onClick={handleSync} title="Crea i record mancanti in LocalitaServizi">

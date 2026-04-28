@@ -21,28 +21,28 @@ import { useMedia } from '../../hooks/useMedia'
 const FESTIVITA = [
   // Fisse
   ...['2024','2025','2026','2027','2028'].flatMap(y => [
-    { title: '🎆 Capodanno',           date: `${y}-01-01` },
-    { title: '👑 Epifania',            date: `${y}-01-06` },
-    { title: '🌸 Festa della Liberazione', date: `${y}-04-25` },
-    { title: '⚒️ Festa del Lavoro',    date: `${y}-05-01` },
-    { title: '🇮🇹 Festa della Repubblica', date: `${y}-06-02` },
-    { title: '☀️ Ferragosto',          date: `${y}-08-15` },
-    { title: '🕯️ Ognissanti',         date: `${y}-11-01` },
-    { title: '✨ Immacolata',          date: `${y}-12-08` },
-    { title: '🎄 Natale',              date: `${y}-12-25` },
-    { title: '🎁 Santo Stefano',       date: `${y}-12-26` },
+    { title: 'Capodanno',           date: `${y}-01-01` },
+    { title: 'Epifania',            date: `${y}-01-06` },
+    { title: 'Festa della Liberazione', date: `${y}-04-25` },
+    { title: 'Festa del Lavoro',    date: `${y}-05-01` },
+    { title: 'Festa della Repubblica', date: `${y}-06-02` },
+    { title: 'Ferragosto',          date: `${y}-08-15` },
+    { title: 'Ognissanti',         date: `${y}-11-01` },
+    { title: 'Immacolata',          date: `${y}-12-08` },
+    { title: 'Natale',              date: `${y}-12-25` },
+    { title: 'Santo Stefano',       date: `${y}-12-26` },
   ]),
   // Pasqua (mobile)
-  { title: '🐣 Pasqua',     date: '2024-03-31' },
-  { title: '🐣 Pasquetta',  date: '2024-04-01' },
-  { title: '🐣 Pasqua',     date: '2025-04-20' },
-  { title: '🐣 Pasquetta',  date: '2025-04-21' },
-  { title: '🐣 Pasqua',     date: '2026-04-05' },
-  { title: '🐣 Pasquetta',  date: '2026-04-06' },
-  { title: '🐣 Pasqua',     date: '2027-03-28' },
-  { title: '🐣 Pasquetta',  date: '2027-03-29' },
-  { title: '🐣 Pasqua',     date: '2028-04-16' },
-  { title: '🐣 Pasquetta',  date: '2028-04-17' },
+  { title: 'Pasqua',     date: '2024-03-31' },
+  { title: 'Pasquetta',  date: '2024-04-01' },
+  { title: 'Pasqua',     date: '2025-04-20' },
+  { title: 'Pasquetta',  date: '2025-04-21' },
+  { title: 'Pasqua',     date: '2026-04-05' },
+  { title: 'Pasquetta',  date: '2026-04-06' },
+  { title: 'Pasqua',     date: '2027-03-28' },
+  { title: 'Pasquetta',  date: '2027-03-29' },
+  { title: 'Pasqua',     date: '2028-04-16' },
+  { title: 'Pasquetta',  date: '2028-04-17' },
 ]
 
 const VISIBILITA_COLORI = {
@@ -216,7 +216,7 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
     }
   }
 
-  const statoBadge = stato === 'bozza' ? 'Bozza' : stato === 'dormiente' ? 'Dormiente' : null
+  const statoBadge = stato === 'bozza' ? 'Bozza' : stato === 'futuro' ? 'Futuro' : stato === 'passato' ? 'Passato' : null
 
   return (
     <div className={styles.editorPanel}>
@@ -244,29 +244,17 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                 <div className={styles.field}>
-                  <label>{ricorrenza !== 'nessuna' ? 'Data inizio' : 'Data'}</label>
-                  <input type="date" value={dataVal} onChange={e => setDataVal(e.target.value)} disabled={dataTBD} style={dataTBD ? { opacity: 0.4 } : {}} />
+                  <label>{ricorrenza !== 'nessuna' ? 'Data inizio' : 'Data'}{stato === 'futuro' ? ' (da definire)' : ''}</label>
+                  <input type="date" value={dataVal} onChange={e => setDataVal(e.target.value)} disabled={stato === 'futuro'} style={stato === 'futuro' ? { opacity: 0.4 } : {}} />
                 </div>
                 <div className={styles.field}>
                   <label>Ora inizio</label>
-                  <input type="time" value={ora} onChange={e => setOra(e.target.value)} disabled={dataTBD} style={dataTBD ? { opacity: 0.4 } : {}} />
+                  <input type="time" value={ora} onChange={e => setOra(e.target.value)} disabled={stato === 'futuro'} style={stato === 'futuro' ? { opacity: 0.4 } : {}} />
                 </div>
                 <div className={styles.field}>
                   <label>Ora fine</label>
-                  <input type="time" value={oraFine} onChange={e => setOraFine(e.target.value)} disabled={dataTBD} style={dataTBD ? { opacity: 0.4 } : {}} />
+                  <input type="time" value={oraFine} onChange={e => setOraFine(e.target.value)} disabled={stato === 'futuro'} style={stato === 'futuro' ? { opacity: 0.4 } : {}} />
                 </div>
-              </div>
-
-              <div className={styles.field}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}>
-                  <input
-                    type="checkbox"
-                    checked={dataTBD}
-                    onChange={e => setDataTBD(e.target.checked)}
-                    style={{ accentColor: 'var(--accent)', width: 15, height: 15, cursor: 'pointer', flexShrink: 0 }}
-                  />
-                  <span>Data da definire (TBD) — mostra badge "Data da definire" nella hero e form di attesa sul sito</span>
-                </label>
               </div>
 
               <div className={styles.field}>
@@ -331,24 +319,34 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
                     onClick={() => setStato('attivo')}
                   >✓ Attivo</button>
                   <button type="button"
+                    className={`${styles.tipoBtn} ${stato === 'futuro' ? styles.tipoBtnActive : ''}`}
+                    style={stato === 'futuro' ? { background: '#7c3aed', borderColor: '#7c3aed' } : {}}
+                    onClick={() => { setStato('futuro'); setMostraInNews(true) }}
+                  >Futuro</button>
+                  <button type="button"
+                    className={`${styles.tipoBtn} ${stato === 'passato' ? styles.tipoBtnActive : ''}`}
+                    style={stato === 'passato' ? { background: '#64748b', borderColor: '#64748b' } : {}}
+                    onClick={() => setStato('passato')}
+                  >Passato</button>
+                  <button type="button"
                     className={`${styles.tipoBtn} ${stato === 'bozza' ? styles.tipoBtnActive : ''}`}
                     style={stato === 'bozza' ? { background: '#ca8a04', borderColor: '#ca8a04' } : {}}
                     onClick={() => setStato('bozza')}
                   >✎ Bozza</button>
-                  <button type="button"
-                    className={`${styles.tipoBtn} ${stato === 'dormiente' ? styles.tipoBtnActive : ''}`}
-                    style={stato === 'dormiente' ? { background: '#64748b', borderColor: '#64748b' } : {}}
-                    onClick={() => setStato('dormiente')}
-                  >⏸ Dormiente</button>
                 </div>
-                {stato === 'bozza' && (
+                {stato === 'futuro' && (
                   <p style={{ margin: '4px 0 0', fontSize: '0.78rem', color: 'var(--text3)' }}>
-                    L'evento è salvato ma non appare sul sito.
+                    Data non ancora definita. Appare nel carousel e nella lista con "Data da definire". Il form mostra "rimani aggiornato".
                   </p>
                 )}
-                {stato === 'dormiente' && (
+                {stato === 'passato' && (
                   <p style={{ margin: '4px 0 0', fontSize: '0.78rem', color: 'var(--text3)' }}>
-                    La pagina rimane online per la SEO ma mostrerà un avviso ai visitatori.
+                    La pagina rimane online con avviso "appuntamento passato" e form rimani aggiornato.
+                  </p>
+                )}
+                {stato === 'bozza' && (
+                  <p style={{ margin: '4px 0 0', fontSize: '0.78rem', color: 'var(--text3)' }}>
+                    Salvato ma non visibile sul sito.
                   </p>
                 )}
               </div>
@@ -370,11 +368,11 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
                 </label>
                 <label className={styles.checkLabel}>
                   <input type="checkbox" checked={inPrimoPiano} onChange={e => setInPrimoPiano(e.target.checked)} />
-                  ⭐ Mostra nel pop-up "In primo piano"
+                  Mostra nel pop-up "In primo piano"
                 </label>
                 <label className={styles.checkLabel}>
                   <input type="checkbox" checked={mostraInNews} onChange={e => setMostraInNews(e.target.checked)} />
-                  📰 Mostra nel carousel news (visibile anche se dormiente)
+                  Mostra nel carousel news (visibile anche se passato o futuro)
                 </label>
               </div>
 
@@ -421,7 +419,7 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
                   />
                   <button type="button" className="btn-secondary" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
                     onClick={() => setMostraMediaHero(true)}>
-                    🖼 Libreria
+                    Libreria
                   </button>
                 </div>
                 {fotoHero && (
@@ -515,7 +513,7 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
         {/* ── SEZIONE 4: Social Media ── */}
         <div className={styles.sezione}>
           <button type="button" className={styles.sezioneHeader} onClick={() => setSezioneSocial(v => !v)}>
-            <span className={styles.sezioneTitolo}>📱 Social Media</span>
+            <span className={styles.sezioneTitolo}>Social Media</span>
             {statoSocial === 'pronto' && (
               <span className={styles.sezioneBadge} style={{ background: 'rgba(230,126,34,0.12)', color: '#E67E22', borderColor: 'rgba(230,126,34,0.3)' }}>Pronto</span>
             )}
@@ -531,7 +529,7 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
                 <div className={styles.tipoGroup}>
                   {[
                     { v: 'nessuno',    label: '— Nessuno',    bg: '#64748b' },
-                    { v: 'pronto',     label: '⏳ Pronto',     bg: '#E67E22' },
+                    { v: 'pronto',     label: 'Pronto',     bg: '#E67E22' },
                     { v: 'pubblicato', label: '✓ Pubblicato', bg: '#27AE60' },
                   ].map(({ v, label, bg }) => (
                     <button key={v} type="button"
@@ -617,7 +615,9 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
 // ─── Sezioni appuntamenti sotto il calendario ────────────────────────────────
 function CardAppuntamento({ a, onEdit }) {
   const isPagina = !!a.slug
-  const isDormiente = a.stato === 'dormiente'
+  const isPassato = a.stato === 'passato'
+  const isFuturo  = a.stato === 'futuro'
+  const dotColor  = isPassato ? '#64748b' : isFuturo ? '#7c3aed' : isPagina ? 'var(--accent)' : '#E67E22'
   return (
     <button
       type="button"
@@ -626,16 +626,13 @@ function CardAppuntamento({ a, onEdit }) {
         display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
         border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
         padding: '10px 12px', background: 'var(--bg2)', cursor: 'pointer',
-        opacity: isDormiente ? 0.7 : 1,
+        opacity: isPassato ? 0.7 : 1,
         transition: 'border-color 0.15s',
       }}
       onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
       onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
     >
-      <div style={{
-        width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-        background: isDormiente ? '#64748b' : isPagina ? 'var(--accent)' : '#E67E22',
-      }} />
+      <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: dotColor }} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {a.title}
@@ -646,9 +643,14 @@ function CardAppuntamento({ a, onEdit }) {
           </p>
         )}
       </div>
-      {isDormiente && (
+      {isFuturo && (
+        <span style={{ fontSize: '0.68rem', padding: '2px 7px', borderRadius: 999, background: 'rgba(124,58,237,0.12)', color: '#a78bfa', border: '1px solid rgba(124,58,237,0.25)', flexShrink: 0 }}>
+          futuro
+        </span>
+      )}
+      {isPassato && (
         <span style={{ fontSize: '0.68rem', padding: '2px 7px', borderRadius: 999, background: 'rgba(100,116,139,0.15)', color: '#94a3b8', border: '1px solid rgba(100,116,139,0.25)', flexShrink: 0 }}>
-          dormiente
+          passato
         </span>
       )}
     </button>
@@ -673,10 +675,11 @@ function SezioniAppuntamenti({ appuntamenti, onEdit }) {
 
   const pagineAttive    = appuntamenti.filter(a => a.slug && a.stato === 'attivo')
   const promozioniAttive = appuntamenti.filter(a => !a.slug && a.stato === 'attivo' && (!a.data || a.data >= oggi))
-  const dormienti       = appuntamenti.filter(a => a.slug && a.stato === 'dormiente')
+  const futuri          = appuntamenti.filter(a => a.stato === 'futuro')
+  const passati         = appuntamenti.filter(a => a.stato === 'passato' && a.slug)
   const bozze           = appuntamenti.filter(a => a.stato === 'bozza')
 
-  if (pagineAttive.length === 0 && promozioniAttive.length === 0 && dormienti.length === 0 && bozze.length === 0) return null
+  if (pagineAttive.length === 0 && promozioniAttive.length === 0 && futuri.length === 0 && passati.length === 0 && bozze.length === 0) return null
 
   return (
     <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -696,14 +699,25 @@ function SezioniAppuntamenti({ appuntamenti, onEdit }) {
           </div>
         </div>
       )}
-      {dormienti.length > 0 && (
+      {futuri.length > 0 && (
         <div>
-          <SezioneLabel label="Appuntamenti dormienti" count={dormienti.length} />
+          <SezioneLabel label="Appuntamenti futuri" count={futuri.length} />
           <p style={{ fontSize: '0.78rem', color: 'var(--text3)', marginBottom: 8 }}>
-            Le pagine sono online per la SEO ma mostrano un avviso ai visitatori.
+            Data non ancora definita. Visibili nel sito con "Data da definire".
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {dormienti.map(a => <CardAppuntamento key={a.id} a={a} onEdit={onEdit} />)}
+            {futuri.map(a => <CardAppuntamento key={a.id} a={a} onEdit={onEdit} />)}
+          </div>
+        </div>
+      )}
+      {passati.length > 0 && (
+        <div>
+          <SezioneLabel label="Appuntamenti passati" count={passati.length} />
+          <p style={{ fontSize: '0.78rem', color: 'var(--text3)', marginBottom: 8 }}>
+            Le pagine sono online con avviso e form "rimani aggiornato".
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {passati.map(a => <CardAppuntamento key={a.id} a={a} onEdit={onEdit} />)}
           </div>
         </div>
       )}
@@ -729,11 +743,11 @@ function faseSpons(dataEvento) {
   const oggi = new Date(); oggi.setHours(0,0,0,0)
   const evento = new Date(dataEvento + 'T00:00:00')
   const giorni = Math.round((evento - oggi) / 86400000)
-  if (giorni < 2)  return { emoji: '❌', label: 'Troppo tardi per sponsorizzare', sub: 'Usa Stories + link WhatsApp', tipo: 'stop' }
-  if (giorni < 5)  return { emoji: '⚠️', label: 'Solo retargeting', sub: 'Mostralo a chi ti conosce già', tipo: 'warning' }
-  if (giorni <= 14) return { emoji: '✅', label: 'Momento perfetto — lancia ora!', sub: `${giorni} giorni all'evento`, tipo: 'go' }
-  if (giorni <= 30) return { emoji: '⏸️', label: 'Troppo presto per vendere', sub: 'Fai brand awareness, non chiedere prenotazioni', tipo: 'wait' }
-  return              { emoji: '⏸️', label: 'Aspetta ancora', sub: 'Torna quando mancano ~14 giorni', tipo: 'wait' }
+  if (giorni < 2)  return { label: 'Troppo tardi per sponsorizzare', sub: 'Usa Stories + link WhatsApp', tipo: 'stop' }
+  if (giorni < 5)  return { label: 'Solo retargeting', sub: 'Mostralo a chi ti conosce già', tipo: 'warning' }
+  if (giorni <= 14) return { label: 'Momento perfetto — lancia ora!', sub: `${giorni} giorni all'evento`, tipo: 'go' }
+  if (giorni <= 30) return { label: 'Troppo presto per vendere', sub: 'Fai brand awareness, non chiedere prenotazioni', tipo: 'wait' }
+  return              { label: 'Aspetta ancora', sub: 'Torna quando mancano ~14 giorni', tipo: 'wait' }
 }
 
 // ─── Pannello principale ─────────────────────────────────────────────────────
@@ -753,6 +767,7 @@ export default function AgendaPanel() {
     return new Set([...chiusiOrdinari, ...chiusiStraordinari])
   }, [orari, chiusure])
   const [modal, setModal] = useState(null)
+  const [toastNotificati, setToastNotificati] = useState(0)
   const [vistaAttiva, setVistaAttiva] = useState(isMobile() ? 'listWeek' : 'dayGridMonth')
   const [aiAperto, setAiAperto] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
@@ -848,16 +863,19 @@ export default function AgendaPanel() {
 
   const appEvents = appuntamenti.flatMap(a => {
     const isRicorrente = a.ricorrenza && a.ricorrenza !== 'nessuna'
-    const isDormiente = a.stato === 'dormiente'
-    const isBozza = a.stato === 'bozza'
+    const isPassato = a.stato === 'passato'
+    const isFuturo  = a.stato === 'futuro'
+    const isBozza   = a.stato === 'bozza'
     const vis = a.slug ? 'pagina' : 'promozione'
-    const color = isDormiente
+    const color = isPassato
       ? '#94a3b8'
-      : isBozza
-        ? '#ffffff'
-        : isRicorrente
-          ? (VISIBILITA_COLORI_RICORRENTE[vis] || VISIBILITA_COLORI_RICORRENTE['promozione'])
-          : (VISIBILITA_COLORI[vis] || VISIBILITA_COLORI['promozione'])
+      : isFuturo
+        ? '#7c3aed'
+        : isBozza
+          ? '#ffffff'
+          : isRicorrente
+            ? (VISIBILITA_COLORI_RICORRENTE[vis] || VISIBILITA_COLORI_RICORRENTE['promozione'])
+            : (VISIBILITA_COLORI[vis] || VISIBILITA_COLORI['promozione'])
     const base = {
       title:           a.title,
       backgroundColor: color,
@@ -931,6 +949,11 @@ export default function AgendaPanel() {
     const json = dati.id ? await aggiorna(dati) : await aggiungi(dati)
     if (!json.success) throw new Error(json.error || 'Errore Airtable')
     setModal(null)
+    if (json.notificati > 0) {
+      setToastNotificati(json.notificati)
+      setTimeout(() => setToastNotificati(0), 5000)
+    }
+    return json
   }
 
   async function handleElimina(id) {
@@ -940,6 +963,11 @@ export default function AgendaPanel() {
 
   return (
     <div className={styles.panel}>
+      {toastNotificati > 0 && (
+        <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, background: '#16a34a', color: '#fff', padding: '12px 20px', borderRadius: 8, fontSize: '0.9rem', boxShadow: '0 4px 16px rgba(0,0,0,0.25)' }}>
+          {toastNotificati} {toastNotificati === 1 ? 'persona avvisata' : 'persone avvisate'} via email
+        </div>
+      )}
       <div className={styles.panelHeader}>
         <h1 className={styles.panelTitle}>
           <CalendarDots size={20} weight="light" />
@@ -1030,7 +1058,7 @@ export default function AgendaPanel() {
                           const f = faseSpons(s.dataFestivita || s.evento?.data)
                           return (
                             <div className={`${styles.faseBadge} ${styles[`faseBadge_${f.tipo}`]}`}>
-                              <span>{f.emoji} {f.label}</span>
+                              <span>{f.label}</span>
                               {f.sub && <span className={styles.faseSub}>{f.sub}</span>}
                             </div>
                           )

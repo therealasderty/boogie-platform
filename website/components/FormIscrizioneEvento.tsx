@@ -42,8 +42,8 @@ export default function FormIscrizioneEvento({
         <p className="text-brand font-medium mb-2" style={{ fontSize: 'var(--text-section)' }}>Sei nella lista ✓</p>
         <p className="text-text-muted" style={{ fontSize: 'var(--text-body)' }}>
           {variante === 'tbd'
-            ? <>Ti avviseremo non appena la data di <strong className="text-white">"{eventoTitolo}"</strong> sarà confermata.</>
-            : <>Ti avviseremo non appena <strong className="text-white">"{eventoTitolo}"</strong> tornerà disponibile.</>
+            ? <>Ti avviseremo non appena la data di <strong className="text-white">{eventoTitolo}</strong> sarà confermata.</>
+            : <>Ti avviseremo non appena <strong className="text-white">{eventoTitolo}</strong> tornerà disponibile.</>
           }
         </p>
       </div>
@@ -72,7 +72,7 @@ export default function FormIscrizioneEvento({
                 Stiamo definendo la programmazione
               </p>
               <p className="text-text-faint leading-relaxed m-0" style={{ fontSize: 'var(--text-meta)' }}>
-                La data di <strong className="text-text-muted">"{eventoTitolo}"</strong> non è ancora stata fissata. Lascia i tuoi contatti: ti avviseremo non appena la serata sarà confermata.
+                La data di <strong className="text-text-muted">{eventoTitolo}</strong> non è ancora stata fissata. Lascia i tuoi contatti: ti avviseremo non appena la serata sarà confermata.
               </p>
             </>
           ) : (
@@ -81,7 +81,7 @@ export default function FormIscrizioneEvento({
                 Questo appuntamento è terminato
               </p>
               <p className="text-text-faint leading-relaxed m-0" style={{ fontSize: 'var(--text-meta)' }}>
-                <strong className="text-text-muted">"{eventoTitolo}"</strong> non è al momento disponibile per nuove prenotazioni — ma potrebbe tornare. Lascia i tuoi contatti e ti avviseremo per primi.
+                <strong className="text-text-muted">{eventoTitolo}</strong> non è al momento disponibile per nuove prenotazioni — ma potrebbe tornare. Lascia i tuoi contatti e ti avviseremo per primi.
               </p>
             </>
           )}

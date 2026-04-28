@@ -355,7 +355,7 @@ function CardSocial({ item, onAggiornato }) {
           <div className={styles.cardTitolo}>{item.titolo || item.title}</div>
           <div className={styles.cardMeta}>
             <span className={`${styles.badge} ${item.source === 'blog' ? styles.badgeBlog : styles.badgeEvento}`}>
-              {item.source === 'blog' ? '📝 Blog' : '📅 Evento'}
+              {item.source === 'blog' ? 'Blog' : 'Evento'}
             </span>
             {item.data && (
               <span className={styles.cardData}>
@@ -565,7 +565,7 @@ export default function SocialPanel() {
             <>
               <p className={styles.emptyTitolo}>Nessun contenuto pronto per i social</p>
               <p className={styles.emptySub}>
-                Vai in <strong>Appuntamenti</strong> o <strong>Blog</strong>, apri un contenuto, scorri fino alla sezione <em>📱 Social Media</em> e imposta lo stato su <strong>Pronto</strong>.
+                Vai in <strong>Appuntamenti</strong> o <strong>Blog</strong>, apri un contenuto, scorri fino alla sezione <em>Social Media</em> e imposta lo stato su <strong>Pronto</strong>.
               </p>
             </>
           ) : (

@@ -116,7 +116,7 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
     return `${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}`
   })() : null
 
-  const heroBadge = evento.dataTBD
+  const heroBadge = evento.stato === 'futuro'
     ? 'Data da definire'
     : evento.ricorrente
       ? (formatBadgeRicorrente(evento, giorniChiusi) || null)
@@ -156,7 +156,7 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
 
   return (
     <main>
-      <SetEventoTitolo titolo={evento.titolo} dormiente={evento.stato === 'dormiente'} />
+      <SetEventoTitolo titolo={evento.titolo} dormiente={evento.stato === 'passato' || evento.stato === 'futuro'} />
       {jsonLd && (
         <script
           type="application/ld+json"
@@ -166,18 +166,18 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
       <PaginaHero
         titolo={evento.titolo}
         sottotitolo="Eventi Speciali"
-        badge={evento.stato === 'dormiente' ? undefined : (heroBadge || undefined)}
+        badge={evento.stato === 'passato' ? undefined : (heroBadge || undefined)}
         image={evento.fotoHero || '/images/hero/1.webp'}
       />
 
-      {(evento.stato === 'dormiente' || evento.dataTBD) && (
+      {(evento.stato === 'passato' || evento.stato === 'futuro') && (
         <div className="px-6 md:px-14 py-4" style={{ backgroundColor: '#1a1a1a' }}>
           <div className="max-w-3xl mx-auto">
             <div className="rounded-card px-5 py-4" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)' }}>
               <p className="text-text-muted leading-relaxed m-0" style={{ fontSize: 'var(--text-meta)' }}>
-                {evento.dataTBD
-                  ? <>Stiamo lavorando alla programmazione di <strong className="text-white">"{evento.titolo}"</strong>. La data sarà annunciata a breve — iscriviti qui sotto per essere tra i primi a saperlo.</>
-                  : <><strong className="text-white">"{evento.titolo}"</strong> al momento non è attivo. Torna a trovarci presto — questo appuntamento tornerà!</>
+                {evento.stato === 'futuro'
+                  ? <>Stiamo definendo la programmazione di <strong className="text-white">{evento.titolo}</strong> — <a href="#prenota" className="text-brand underline underline-offset-2 hover:text-brand-hover transition-colors">rimani aggiornato</a>.</>
+                  : <><strong className="text-white">{evento.titolo}</strong> è un appuntamento passato, ma potrebbe tornare — <a href="#prenota" className="text-brand underline underline-offset-2 hover:text-brand-hover transition-colors">rimani aggiornato</a>.</>
                 }
               </p>
             </div>
@@ -233,9 +233,9 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
                 <span className="text-text-muted">{evento.titolo}</span>
               </nav>
             )}
-            {evento.stato === 'dormiente' ? (
+            {evento.stato === 'passato' ? (
               <FormIscrizioneEvento eventoTitolo={evento.titolo} variante="terminato" />
-            ) : evento.dataTBD ? (
+            ) : evento.stato === 'futuro' ? (
               <FormIscrizioneEvento eventoTitolo={evento.titolo} variante="tbd" />
             ) : (
               <>

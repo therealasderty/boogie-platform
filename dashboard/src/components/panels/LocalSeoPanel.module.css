@@ -1,5 +1,4 @@
 .panel { animation: fadeIn 0.2s ease; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 .panelHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; padding-bottom: 16px; border-bottom: var(--border-style); }
 .panelTitle { display: flex; align-items: center; gap: 8px; font-size: 1.15rem; font-weight: 700; color: var(--text); }
@@ -52,7 +51,7 @@
 .serviziGrid { display: flex; flex-wrap: wrap; gap: 8px; }
 .servizioBtn { padding: 5px 12px; border-radius: 20px; font-size: 0.78rem; font-family: monospace; cursor: pointer; border: 1px solid var(--border); background: var(--bg2); color: var(--text2); transition: all 0.15s; }
 .servizioBtn:hover { border-color: var(--accent); }
-.servizioBtnActive { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 600; }
+.servizioBtnActive { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 
 .seoSection { border: var(--border-style); border-radius: var(--radius-sm); padding: 14px 16px; background: var(--bg2); }
 .seoTitle { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; color: var(--text2); margin-bottom: 12px; }

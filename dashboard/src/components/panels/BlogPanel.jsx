@@ -8,7 +8,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { Sparkle } from '@phosphor-icons/react'
 import { useBlog } from '../../hooks/useBlog'
-import { IconEdit, IconTrash, IconClose, IconPlus, IconDrag, IconEye, IconEyeSlash } from '../../icons/index.jsx'
+import { IconEdit, IconTrash, IconClose, IconPlus, IconDrag, IconEye, IconEyeSlash, IconBlog } from '../../icons/index.jsx'
 import { authFetch } from '../../lib/authFetch'
 import RichTextEditor from './RichTextEditor'
 import { MediaLibraryModal } from './BlocchiEditor'
@@ -157,7 +157,7 @@ function Modal({ item, salva, onClose, onSaved, onElimina }) {
                 />
                 <button type="button" className="btn-secondary" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
                   onClick={() => setMostraMedia(true)}>
-                  🖼 Libreria
+                  Libreria
                 </button>
               </div>
               {form.fotoHero && (
@@ -179,7 +179,7 @@ function Modal({ item, salva, onClose, onSaved, onElimina }) {
             {/* SEO */}
             <div className={styles.seoSection}>
               <div className={styles.seoTitle}>
-                🔍 SEO
+                SEO
                 <span style={{ fontWeight: 400, color: 'var(--text3)' }}>— opzionale, se vuoto usa titolo e descrizione breve</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -228,7 +228,7 @@ function Modal({ item, salva, onClose, onSaved, onElimina }) {
                 }}
                 onClick={() => setSezioneSocial(v => !v)}
               >
-                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)', flex: 1 }}>📱 Social Media</span>
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)', flex: 1 }}>Social Media</span>
                 {form.statoSocial === 'pronto' && (
                   <span style={{ fontSize: '0.72rem', fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: 'rgba(230,126,34,0.12)', color: '#E67E22', border: '1px solid rgba(230,126,34,0.3)' }}>Pronto</span>
                 )}
@@ -244,7 +244,7 @@ function Modal({ item, salva, onClose, onSaved, onElimina }) {
                     <div style={{ display: 'flex', gap: 6 }}>
                       {[
                         { v: 'nessuno',    label: '— Nessuno',    bg: '#64748b' },
-                        { v: 'pronto',     label: '⏳ Pronto',     bg: '#E67E22' },
+                        { v: 'pronto',     label: 'Pronto',     bg: '#E67E22' },
                         { v: 'pubblicato', label: '✓ Pubblicato', bg: '#27AE60' },
                       ].map(({ v, label, bg }) => (
                         <button
@@ -422,7 +422,7 @@ export default function BlogPanel() {
     <div className={styles.panel}>
       <div className={styles.panelHeader}>
         <div className={styles.panelTitle}>
-          ✍️ Blog
+          <IconBlog size={18} /> Blog
         </div>
         <button className="btn-primary" onClick={apriNuovo}>
           <IconPlus size={14} /> Nuovo articolo

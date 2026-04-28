@@ -64,6 +64,9 @@
   font-display: swap;
 }
 
+/* Animazione globale — referenziata da tutti i pannelli */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {

@@ -119,8 +119,5 @@ export const IconBlog        = icon(Article)
 // — Local SEO
 export const IconLocalSeo    = icon(MapPin)
 
-// — Social Scheduler
-export const IconSocial       = icon(ShareNetwork)
-
-// — Post Builder
-export const IconPostBuilder  = icon(Slideshow)
+// — Social Studio
+export const IconSocialStudio = icon(ShareNetwork)

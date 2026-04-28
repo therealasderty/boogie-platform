@@ -7,7 +7,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useFaq } from '../../hooks/useFaq'
-import { IconEdit, IconTrash, IconClose, IconPlus, IconDrag, IconEye, IconEyeSlash } from '../../icons/index.jsx'
+import { IconEdit, IconTrash, IconClose, IconPlus, IconDrag, IconEye, IconEyeSlash, IconFaq } from '../../icons/index.jsx'
 import RichTextEditor from './RichTextEditor'
 import styles from './FaqPanel.module.css'
 
@@ -163,7 +163,7 @@ export default function FaqPanel() {
   return (
     <div className={styles.panel}>
       <div className={styles.panelHeader}>
-        <div className={styles.panelTitle}>Domande frequenti (FAQ)</div>
+        <div className={styles.panelTitle}><IconFaq size={18} /> Domande frequenti (FAQ)</div>
         <button
           className="btn-primary"
           style={{ display: 'flex', alignItems: 'center', gap: 6 }}

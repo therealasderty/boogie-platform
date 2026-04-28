@@ -17,8 +17,7 @@ import FaqPanel from './components/panels/FaqPanel'
 import BlogPanel from './components/panels/BlogPanel'
 import LocalSeoPanel from './components/panels/LocalSeoPanel'
 import RecensioniSitoPanel from './components/panels/RecensioniSitoPanel'
-import SocialPanel from './components/panels/SocialPanel'
-import PostBuilderPanel from './components/panels/PostBuilderPanel'
+import SocialStudioPanel from './components/panels/SocialStudioPanel'
 import FloatingButton from './components/FloatingButton'
 import ModalPrenotazione from './components/ModalPrenotazione'
 import styles from './App.module.css'
@@ -58,8 +57,7 @@ export default function App() {
       case 'blog':       return <BlogPanel />
       case 'local-seo':  return <LocalSeoPanel />
       case 'recensioni': return <RecensioniSitoPanel />
-      case 'social':        return <SocialPanel />
-      case 'post-builder':  return <PostBuilderPanel />
+      case 'social-studio': return <SocialStudioPanel />
       default: return null
     }
   }

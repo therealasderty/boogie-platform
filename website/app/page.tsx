@@ -113,26 +113,32 @@ export default async function Home() {
 
   const oggi = new Date().toISOString().split('T')[0]
   const heroNews = eventi
-    .filter(e => e.fotoHero && e.descrizioneBreve && (e.stato === 'attivo' || (e.stato === 'dormiente' && e.mostraInNews)))
+    .filter(e => e.fotoHero && e.descrizioneBreve && (e.stato === 'attivo' || e.stato === 'futuro' || (e.stato === 'passato' && e.mostraInNews)))
     .sort((a, b) => {
-      const aF = a.stato === 'attivo' && !a.ricorrente && a.data && a.data >= oggi
-      const bF = b.stato === 'attivo' && !b.ricorrente && b.data && b.data >= oggi
-      if (aF && !bF) return -1
-      if (!aF && bF) return 1
+      // Priorità: 1) attivi futuri datati, 2) futuri (TBD), 3) tutto il resto
+      const aFuturo = a.stato === 'attivo' && !a.ricorrente && a.data && a.data >= oggi
+      const bFuturo = b.stato === 'attivo' && !b.ricorrente && b.data && b.data >= oggi
+      const aTBD    = a.stato === 'futuro'
+      const bTBD    = b.stato === 'futuro'
+      if (aFuturo && !bFuturo) return -1
+      if (!aFuturo && bFuturo) return 1
+      if (aTBD && !bTBD) return -1
+      if (!aTBD && bTBD) return 1
       return 0
     })
     .slice(0, 5)
     .map(e => {
-      const isDormiente = e.stato === 'dormiente'
-      const giornoLabel = isDormiente ? 'Prossimamente' : formatLabelEvento(e, giorniChiusi)
-      const oraLabel = !isDormiente && e.orario ? (e.orarioFine ? `${e.orario}–${e.orarioFine}` : e.orario) : ''
+      const isPassato = e.stato === 'passato'
+      const isFuturo  = e.stato === 'futuro'
+      const giornoLabel = isPassato ? 'Prossimamente' : isFuturo ? 'Data da definire' : formatLabelEvento(e, giorniChiusi)
+      const oraLabel = !isPassato && !isFuturo && e.orario ? (e.orarioFine ? `${e.orario}–${e.orarioFine}` : e.orario) : ''
       const label = oraLabel ? `${giornoLabel}\n${oraLabel}` : giornoLabel
       return {
         label,
         titolo: e.titolo,
         descrizione: e.descrizioneBreve,
         href: e.slug ? `/eventi-speciali/${e.slug}` : '/eventi-speciali',
-        ctaLabel: isDormiente ? 'Rimani aggiornato' : 'Scopri di più',
+        ctaLabel: (isPassato || isFuturo) ? 'Rimani aggiornato' : 'Scopri di più',
         image: e.fotoHero,
       }
     })

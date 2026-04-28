@@ -125,13 +125,14 @@ export default function PopupManager() {
 
   if (!visible || !popup) return null
 
-  const isDormiente  = popup.stato === 'dormiente'
+  const isPassato    = popup.stato === 'passato' || popup.stato === 'dormiente'
+  const isFuturo     = popup.stato === 'futuro'
   const isLastMinute = urgency === 'lastMinute'
-  const badge        = isDormiente ? 'Prossimamente' : getBadge(popup.data, urgency)
+  const badge        = isPassato ? 'Prossimamente' : isFuturo ? 'Data da definire' : getBadge(popup.data, urgency)
   const href         = popup.slug
-    ? (isDormiente ? `/eventi-speciali/${popup.slug}#prenota` : `/eventi-speciali/${popup.slug}`)
+    ? ((isPassato || isFuturo) ? `/eventi-speciali/${popup.slug}#prenota` : `/eventi-speciali/${popup.slug}`)
     : '/prenota'
-  const dataLabel    = !isDormiente && popup.data && !popup.ricorrente ? formatData(popup.data) : null
+  const dataLabel    = !isPassato && !isFuturo && popup.data && !popup.ricorrente ? formatData(popup.data) : null
 
   return (
     <div

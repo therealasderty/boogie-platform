@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // ── 0. Controlla appuntamenti del giorno (bloccaGiorno + banner info) ──
-    const agendaFormula = encodeURIComponent(`AND({Stato}!='dormiente',{Slug}!='')`)
+    const agendaFormula = encodeURIComponent(`AND({Stato}='attivo',{Slug}!='')`)
     const agendaRes = await fetch(
       `${AT(AIRTABLE_AGENDA)}?filterByFormula=${agendaFormula}` +
       `&fields[]=Titolo&fields[]=Slug&fields[]=BloccaGiorno&fields[]=Data` +

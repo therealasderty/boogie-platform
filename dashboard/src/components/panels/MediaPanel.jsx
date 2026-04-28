@@ -262,7 +262,7 @@ function MediaCard({ item, onEdit, onDelete, sortable, dragHandleProps }) {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
           {item.soloMobile && (
             <span style={{ fontSize: '0.68rem', padding: '1px 7px', borderRadius: 999, background: 'rgba(99,102,241,0.15)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.25)' }}>
-              📱 solo mobile
+              solo mobile
             </span>
           )}
           {item.tag.map(t => (

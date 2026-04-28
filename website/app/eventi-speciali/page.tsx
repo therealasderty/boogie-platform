@@ -57,7 +57,7 @@ function schedaRicorrenza(evento: EventoAgenda, giorniAperti?: Set<number>): str
   return evento.giornoSettimana || 'ogni settimana'
 }
 
-function CardEventoUnico({ evento }: { evento: EventoAgenda }) {
+function CardEventoUnico({ evento, variante = 'prossimo' }: { evento: EventoAgenda; variante?: 'prossimo' | 'futuro' | 'passato' }) {
   const href = evento.slug ? `/eventi-speciali/${evento.slug}` : null
   const data = evento.data ? (() => {
     const d = new Date(evento.data! + 'T00:00:00')
@@ -73,34 +73,40 @@ function CardEventoUnico({ evento }: { evento: EventoAgenda }) {
     ? ({ children }: { children: React.ReactNode }) => <Link href={href}>{children}</Link>
     : ({ children }: { children: React.ReactNode }) => <>{children}</>
 
+  const ctaLabel = variante === 'prossimo' ? 'Scopri di più →' : 'Rimani aggiornato →'
+
   return (
     <Wrapper>
-    <article className={`border border-white/10 rounded-card overflow-hidden transition-colors ${href ? 'hover:border-brand/30 cursor-pointer' : ''}`}>
+    <article className={`border rounded-card overflow-hidden transition-colors ${variante === 'passato' ? 'border-white/5 opacity-70' : 'border-white/10'} ${href ? 'hover:border-brand/30 cursor-pointer' : ''}`}>
 
       {imgUrl && (
         <div className="overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={imgUrl} alt={evento.titolo} className="w-full h-48 object-cover" />
+          <img src={imgUrl} alt={evento.titolo} className="w-full h-48 object-cover" style={variante === 'passato' ? { filter: 'grayscale(30%)' } : {}} />
         </div>
       )}
 
       {/* Contenuto */}
       <div className="flex gap-5 p-5">
-        {data && (
-          <div className="flex-shrink-0 flex flex-col items-center justify-center w-16 h-16 rounded-btn border border-brand/40 bg-brand/10">
-            <span className="font-ivy font-normal text-brand leading-none" style={{ fontSize: '1.5rem' }}>
+        {variante === 'futuro' ? (
+          <div className="flex-shrink-0 flex flex-col items-center justify-center w-16 h-16 rounded-btn border border-brand/30 bg-brand/5">
+            <span className="text-brand/60 uppercase font-medium text-center leading-tight" style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}>Data da<br/>definire</span>
+          </div>
+        ) : data ? (
+          <div className={`flex-shrink-0 flex flex-col items-center justify-center w-16 h-16 rounded-btn border ${variante === 'passato' ? 'border-white/10 bg-white/5' : 'border-brand/40 bg-brand/10'}`}>
+            <span className={`font-ivy font-normal leading-none ${variante === 'passato' ? 'text-text-faint' : 'text-brand'}`} style={{ fontSize: '1.5rem' }}>
               {data.giorno}
             </span>
-            <span className="text-brand/70 uppercase font-medium" style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}>
+            <span className={`uppercase font-medium ${variante === 'passato' ? 'text-text-faint/60' : 'text-brand/70'}`} style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}>
               {data.mese}
             </span>
           </div>
-        )}
+        ) : null}
         <div className="flex-1 min-w-0">
           <h3 className="font-raleway font-normal text-white leading-tight" style={{ fontSize: 'var(--text-section)' }}>
             {evento.titolo}
           </h3>
-          {evento.orario && (
+          {variante !== 'futuro' && evento.orario && (
             <p className="text-text-faint mt-1" style={{ fontSize: 'var(--text-meta)' }}>
               ore {evento.orario}{evento.orarioFine ? `–${evento.orarioFine}` : ''}
             </p>
@@ -112,7 +118,7 @@ function CardEventoUnico({ evento }: { evento: EventoAgenda }) {
           )}
           {href && (
             <span className="text-brand mt-3 block" style={{ fontSize: 'var(--text-meta)' }}>
-              Scopri di più →
+              {ctaLabel}
             </span>
           )}
         </div>
@@ -184,9 +190,11 @@ export default async function EventiSpecialiPage() {
   const [tutti, giorniAperti] = await Promise.all([fetchEventi(), fetchGiorniAperti()])
   const oggi = new Date().toISOString().split('T')[0]
 
-  const prossimi = tutti.filter(e => !e.ricorrente && e.data && e.data >= oggi)
-  const fissi    = tutti.filter(e => e.ricorrente)
-  const nessuno  = prossimi.length === 0 && fissi.length === 0
+  const prossimi = tutti.filter(e => e.stato === 'attivo' && !e.ricorrente && e.data && e.data >= oggi)
+  const futuri   = tutti.filter(e => e.stato === 'futuro' && !e.ricorrente)
+  const fissi    = tutti.filter(e => e.stato === 'attivo' && e.ricorrente)
+  const passati  = tutti.filter(e => e.stato === 'passato' && !!e.slug)
+  const nessuno  = prossimi.length === 0 && fissi.length === 0 && futuri.length === 0
 
   return (
     <main>
@@ -214,18 +222,46 @@ export default async function EventiSpecialiPage() {
                 Prossimi appuntamenti
               </h2>
               <div className="flex flex-col gap-4">
-                {prossimi.map((e, i) => <CardEventoUnico key={i} evento={e} />)}
+                {prossimi.map((e, i) => <CardEventoUnico key={i} evento={e} variante="prossimo" />)}
+              </div>
+            </FadeIn>
+          )}
+
+          {futuri.length > 0 && (
+            <FadeIn delay={0.05} className={prossimi.length > 0 ? 'mt-20' : ''}>
+              <h2 className="font-raleway font-normal text-white mb-3" style={{ fontSize: '2.25rem' }}>
+                Prossimamente
+              </h2>
+              <p className="text-text-faint mb-10" style={{ fontSize: 'var(--text-body)' }}>
+                Stiamo definendo le date — iscriviti per essere tra i primi a saperlo.
+              </p>
+              <div className="flex flex-col gap-4">
+                {futuri.map((e, i) => <CardEventoUnico key={i} evento={e} variante="futuro" />)}
               </div>
             </FadeIn>
           )}
 
           {fissi.length > 0 && (
-            <FadeIn delay={prossimi.length > 0 ? 0.1 : 0} className={prossimi.length > 0 ? 'mt-20' : ''}>
+            <FadeIn delay={0.1} className={(prossimi.length > 0 || futuri.length > 0) ? 'mt-20' : ''}>
               <h2 className="font-raleway font-normal text-white mb-10" style={{ fontSize: '2.25rem' }}>
                 Ogni settimana
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {fissi.map((e, i) => <CardEventoRicorrente key={i} evento={e} giorniAperti={giorniAperti} />)}
+              </div>
+            </FadeIn>
+          )}
+
+          {passati.length > 0 && (
+            <FadeIn delay={0.15} className="mt-20">
+              <h2 className="font-raleway font-normal text-white mb-3" style={{ fontSize: '2.25rem' }}>
+                Appuntamenti passati
+              </h2>
+              <p className="text-text-faint mb-10" style={{ fontSize: 'var(--text-body)' }}>
+                Questi eventi potrebbero tornare — rimani aggiornato.
+              </p>
+              <div className="flex flex-col gap-4">
+                {passati.map((e, i) => <CardEventoUnico key={i} evento={e} variante="passato" />)}
               </div>
             </FadeIn>
           )}

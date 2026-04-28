@@ -105,11 +105,11 @@ export default function RichTextEditor({ value, onChange }) {
 
         {/* Link */}
         <button type="button" title="Inserisci link" style={btn(e.isActive('link'))}
-          onMouseDown={ev => { ev.preventDefault(); openLinkDialog() }}>🔗</button>
+          onMouseDown={ev => { ev.preventDefault(); openLinkDialog() }}>Link</button>
 
         {/* Immagine */}
         <button type="button" title="Inserisci immagine dalla libreria" style={btn(false)}
-          onMouseDown={ev => { ev.preventDefault(); setMediaOpen(true) }}>🖼</button>
+          onMouseDown={ev => { ev.preventDefault(); setMediaOpen(true) }}>Img</button>
 
         <div style={sep} />
 
