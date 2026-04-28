@@ -130,7 +130,7 @@ export default async function Home() {
     .map(e => {
       const isPassato = e.stato === 'passato'
       const isFuturo  = e.stato === 'futuro'
-      const giornoLabel = isPassato ? 'Prossimamente' : isFuturo ? 'Data da definire' : formatLabelEvento(e, giorniChiusi)
+      const giornoLabel = isPassato ? 'Prossimamente' : isFuturo ? 'Prossimamente · Data da definire' : formatLabelEvento(e, giorniChiusi)
       const oraLabel = !isPassato && !isFuturo && e.orario ? (e.orarioFine ? `${e.orario}–${e.orarioFine}` : e.orario) : ''
       const label = oraLabel ? `${giornoLabel}\n${oraLabel}` : giornoLabel
       return {

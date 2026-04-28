@@ -201,9 +201,9 @@ function mergeSlots(records: OrarioRecord[]): string {
 
 function getDayHours(date: Date, orari: OrarioRecord[], status: ReturnType<typeof getDayStatus>): string {
   const attivi = orari.filter((o) => o.attivo && o.oraInizio && o.oraFine)
+  // Apertura straordinaria → mostra tutti gli slot disponibili (pranzo + cena)
+  if (status === 'apertura-straordinaria') return mergeSlots(attivi)
   const dayRecords = attivi.filter((o) => o.giorno === date.getDay())
-  // Apertura straordinaria su giorno normalmente chiuso → usa tutti gli slot configurati
-  if (dayRecords.length === 0 && status === 'apertura-straordinaria') return mergeSlots(attivi)
   return mergeSlots(dayRecords)
 }
 

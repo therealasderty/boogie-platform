@@ -143,6 +143,8 @@ export default async function LinksPage() {
     return e.data >= oggi
   })
 
+  const eventiFuturi = eventi.filter(e => e.stato === 'futuro' && !!e.slug)
+
   return (
     <main style={{ backgroundColor: '#1a1a1a', minHeight: '100vh', padding: '40px 20px 80px' }}>
       <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
@@ -207,7 +209,7 @@ export default async function LinksPage() {
         </Link>
 
         {/* Appuntamenti */}
-        {eventiAttivi.length > 0 && (
+        {(eventiAttivi.length > 0 || eventiFuturi.length > 0) && (
           <>
             <Sezione label="Appuntamenti" />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -219,6 +221,15 @@ export default async function LinksPage() {
                   meta={formatLabelEvento(e, giorniChiusi)}
                   avatar={e.fotoHero || undefined}
                   highlight
+                />
+              ))}
+              {eventiFuturi.map((e, i) => (
+                <Card
+                  key={`futuro-${i}`}
+                  href={`/eventi-speciali/${e.slug}`}
+                  titolo={e.titolo}
+                  meta="Prossimamente · Data da definire"
+                  avatar={e.fotoHero || undefined}
                 />
               ))}
             </div>

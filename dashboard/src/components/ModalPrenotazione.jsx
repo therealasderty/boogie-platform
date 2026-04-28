@@ -12,7 +12,7 @@ const GESTISCI_URL = `${NETLIFY_BASE}/gestisci-prenotazione`
 const STATI = ['In attesa', 'Confermata', 'Cancellata']
 
 const EMPTY_FORM = {
-  nome: '', data: '', ora: '', persone: '', telefono: '', email: '', note: '', stato: 'In attesa', tags: []
+  nome: '', data: '', ora: '', persone: '', telefono: '', email: '', note: '', stato: 'In attesa', tags: [], evento: ''
 }
 
 export default function ModalPrenotazione({ prenotazione = null, onClose, onSuccess }) {
@@ -38,6 +38,7 @@ export default function ModalPrenotazione({ prenotazione = null, onClose, onSucc
         note:     prenotazione.note || '',
         stato:    prenotazione.stato || 'In attesa',
         tags:     prenotazione.tags || [],
+        evento:   prenotazione.evento || '',
       })
       if (prenotazione.data) caricaSlots(prenotazione.data)
     }
@@ -122,6 +123,13 @@ export default function ModalPrenotazione({ prenotazione = null, onClose, onSucc
 
         <form className={styles.body} onSubmit={handleSubmit}>
           <div className={styles.grid}>
+
+            {isEdit && form.evento && (
+              <div className={`${styles.field} ${styles.full}`}>
+                <label>Evento</label>
+                <input value={form.evento} readOnly style={{ opacity: 0.7, cursor: 'default', color: 'var(--gold)' }} />
+              </div>
+            )}
 
             <div className={styles.field}>
               <label>Nome e cognome <span className={styles.req}>*</span></label>

@@ -29,6 +29,7 @@ exports.handler = async (event) => {
       url.searchParams.append('fields[]', 'Stato');
       url.searchParams.append('fields[]', 'Note');
       url.searchParams.append('fields[]', 'Telefono');
+      url.searchParams.append('fields[]', 'Evento');
       url.searchParams.set('filterByFormula', "NOT({Stato}='Cancellata')");
       if (offset) url.searchParams.set('offset', offset);
 
@@ -58,6 +59,7 @@ exports.handler = async (event) => {
         stato: r.fields.Stato || '',
         note: r.fields.Note || '',
         telefono: r.fields.Telefono || '',
+        evento: r.fields.Evento || '',
       }));
 
     return {
