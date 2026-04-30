@@ -6,6 +6,7 @@ import listPlugin from '@fullcalendar/list'
 import interactionPlugin from '@fullcalendar/interaction'
 import { useCalendario } from '../../hooks/useCalendario'
 import { useAppuntamenti } from '../../hooks/useAppuntamenti'
+import { useOrari } from '../../hooks/useOrari'
 import { IconNote, IconClose, IconCalendar, IconRefresh, IconEdit } from '../../icons/index.jsx'
 import ModalPrenotazione from '../ModalPrenotazione.jsx'
 import styles from './CalendarioPanel.module.css'
@@ -102,7 +103,8 @@ const BASE_RICORRENTE = {
   textColor:       'var(--text2)',
 }
 
-function buildAgendaEvents(appuntamenti) {
+function buildAgendaEvents(appuntamenti, orari = []) {
+  const aperti = orari.length > 0 ? new Set(orari.filter(o => o.attivo).map(o => o.giorno)) : null
   return appuntamenti.flatMap(a => {
     const oraLabel = a.ora && a.oraFine ? `${a.ora}–${a.oraFine}` : (a.ora || '')
     const ricorrente = a.ricorrenza && a.ricorrenza !== 'nessuna'
@@ -119,11 +121,12 @@ function buildAgendaEvents(appuntamenti) {
     const endRecur = a.dataFineRicorrenza || undefined
     if (a.ricorrenza === 'giornaliera') {
       const esclusi = a.giorniEsclusione ? a.giorniEsclusione.split(',').map(Number) : []
-      const daysOfWeek = [0,1,2,3,4,5,6].filter(d => !esclusi.includes(d))
+      const daysOfWeek = [0,1,2,3,4,5,6].filter(d => !esclusi.includes(d) && (!aperti || aperti.has(d)))
       return [{ ...base, id: `ag-${a.id}`, daysOfWeek, startRecur: a.data || undefined, endRecur }]
     }
     if (a.ricorrenza === 'settimanale') {
-      const daysOfWeek = a.giorniSettimana ? a.giorniSettimana.split(',').map(Number) : []
+      const daysOfWeek = (a.giorniSettimana ? a.giorniSettimana.split(',').map(Number) : [])
+        .filter(d => !aperti || aperti.has(d))
       return [{ ...base, id: `ag-${a.id}`, daysOfWeek, startRecur: a.data || undefined, endRecur }]
     }
     return []
@@ -133,7 +136,8 @@ function buildAgendaEvents(appuntamenti) {
 export default function CalendarioPanel() {
   const { eventi, loading, ricarica } = useCalendario()
   const { appuntamenti } = useAppuntamenti()
-  const agendaEvents = useMemo(() => buildAgendaEvents(appuntamenti), [appuntamenti])
+  const { orari } = useOrari()
+  const agendaEvents = useMemo(() => buildAgendaEvents(appuntamenti, orari), [appuntamenti, orari])
   const calRef = useRef(null)
   const [vistaAttiva, setVistaAttiva] = useState(isMobile() ? 'listWeek' : 'dayGridMonth')
   const [eventoSelezionato, setEventoSelezionato] = useState(null)

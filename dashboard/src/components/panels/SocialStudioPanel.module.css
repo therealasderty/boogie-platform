@@ -48,6 +48,16 @@
 /* ── Tab bar (macro — Post Builder / Calendario) ─────────────────────────────── */
 .tabBar { display: flex; gap: 6px; flex-wrap: wrap; }
 
+/* ── Tipo contenuto toggle (Post / Storia) ───────────────────────────────────── */
+.tipoToggle { display: flex; border: var(--border-style); border-radius: var(--radius-sm); overflow: hidden; width: 100%; }
+.tipoBtn { flex: 1; padding: 8px 20px; background: var(--bg2); color: var(--text2); border: none; font-size: 0.85rem; font-weight: 500; font-family: var(--font-body); cursor: pointer; transition: all 0.15s; }
+.tipoBtn:first-child { border-right: var(--border-style); }
+.tipoBtnActive { background: var(--accent2); color: #fff; font-weight: 700; }
+
+/* ── Chip tipo (Post / Storia) nel calendario e lista ────────────────────────── */
+.calChipPost { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em; padding: 1px 5px; border-radius: 3px; background: rgba(21,101,192,0.1); color: #1565C0; border: 1px solid rgba(21,101,192,0.2); }
+.calChipStoria { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em; padding: 1px 5px; border-radius: 3px; background: rgba(155,145,240,0.12); color: #9B91F0; border: 1px solid rgba(155,145,240,0.3); }
+
 .tabBtn {
   padding: 8px 22px;
   border: var(--border-style); border-radius: var(--radius-sm);
@@ -181,6 +191,79 @@
 /* ── Calendario ──────────────────────────────────────────────────────────────── */
 .calWrap { /* wrapper FullCalendar — padding aggiunto dal componente */ }
 
+.calToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 4px 10px;
+}
+
+.calToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text3);
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s;
+}
+.calToggle:hover { color: var(--text2); }
+.calToggleOn { color: var(--text2); }
+
+.calToggleThumb {
+  position: relative;
+  display: inline-block;
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--bg3);
+  border: 1.5px solid rgba(0,0,0,0.1);
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.calToggleThumb::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text3);
+  transition: transform 0.2s, background 0.2s;
+}
+.calToggleOn .calToggleThumb {
+  background: var(--color-brand, #eece9d);
+  border-color: rgba(0,0,0,0.08);
+}
+.calToggleOn .calToggleThumb::after {
+  transform: translateX(14px);
+  background: #1a1208;
+}
+
+/* Spaziatura bottoni toolbar FullCalendar */
+.calWrap :global(.fc-button) { margin: 0 2px !important; }
+.calWrap :global(.fc-button-group) { gap: 4px; }
+.calWrap :global(.fc-toolbar-chunk) { display: flex; align-items: center; gap: 4px; }
+
+/* "+" su day-cell al hover — appeso al frame via dayCellDidMount */
+.calWrap :global(.social-day-add-btn) {
+  position: absolute; bottom: 5px; right: 5px;
+  opacity: 0; width: 18px; height: 18px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--accent); border-radius: 4px;
+  background: transparent; color: var(--accent);
+  cursor: pointer; transition: opacity 0.15s, background 0.15s;
+  padding: 0; z-index: 2;
+}
+.calWrap :global(.social-day-add-btn:hover) { background: var(--accent); color: #fff; }
+.calWrap :global(.fc-daygrid-day:hover .social-day-add-btn) { opacity: 1; }
+
 /* ═══════════════════════════════════════════════════════════════════════════════
    EDITOR (Post Builder)
 ═══════════════════════════════════════════════════════════════════════════════ */
@@ -271,8 +354,28 @@
 
 .scheduleInfo {
   display: flex; align-items: center; gap: 5px;
-  font-size: 0.75rem; color: var(--text3); margin-top: 2px;
+  font-size: 0.75rem; color: var(--text3); margin-top: 6px;
 }
+
+.btnProgrammato {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: var(--radius-sm);
+  border: 1.5px solid #1565C0; background: rgba(21,101,192,0.08); color: #1565C0;
+  font-size: 0.82rem; font-weight: 600; font-family: var(--font-body);
+  cursor: pointer; transition: background 0.15s;
+}
+.btnProgrammato:hover { background: rgba(21,101,192,0.15); }
+
+.programmaPopover {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 100;
+  background: var(--bg2, #fff); border: var(--border-style); border-radius: var(--radius-sm);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;
+  min-width: 280px;
+}
+.programmaPopoverLabel { font-size: 0.78rem; font-weight: 600; color: var(--text2); }
+.programmaPopoverActions { display: flex; justify-content: flex-end; gap: 8px; width: 100%; }
+.programmaPopoverActions button { flex: 1; }
 
 .colRight { display: flex; flex-direction: column; gap: 14px; }
 
@@ -305,6 +408,30 @@
 }
 .carouselSlot:hover .carouselRemove { opacity: 1; }
 .carouselRemove:hover { background: rgba(192,57,43,0.8); border-color: transparent; }
+
+.carouselGhost {
+  flex-shrink: 0; width: 80px;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px dashed var(--border-color, #d4c9b8); border-radius: var(--radius-sm);
+  background: transparent; color: var(--text3);
+  cursor: pointer; transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.carouselGhost:hover { border-color: var(--accent); color: var(--accent); background: rgba(122,100,72,0.06); }
+
+.ghostPicker {
+  position: absolute; top: 0; left: calc(100% + 8px); z-index: 100;
+  background: var(--bg1); border: var(--border-style); border-radius: var(--radius-sm);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  display: flex; flex-direction: column; gap: 2px; padding: 6px; min-width: 160px;
+}
+.ghostPickerBtn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 8px; border: none; border-radius: 4px;
+  background: transparent; color: var(--text); cursor: pointer;
+  font-size: 0.82rem; font-family: var(--font-body); text-align: left;
+  transition: background 0.12s;
+}
+.ghostPickerBtn:hover { background: var(--bg3); }
 
 .slideStrip {
   display: flex; gap: 8px; flex-wrap: wrap; min-height: 80px; padding: 12px;
@@ -524,3 +651,305 @@
   width: 100%; box-sizing: border-box;
 }
 .composerTextarea:focus { border-color: var(--accent); }
+
+/* ── Feed Preview ─────────────────────────────────────────────────────────────── */
+.feedWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.feedToolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 14px;
+  flex-wrap: wrap;
+}
+
+.feedToolbarLabel {
+  font-size: 0.78rem;
+  color: var(--text3);
+}
+
+.feedGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  max-width: 540px;
+  background: var(--border);
+  border: var(--border-style);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.feedCell {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: var(--bg2);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.feedCell:hover .feedOverlay { opacity: 1; }
+
+.feedCellThumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.feedCellTemplate {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overflow: hidden;
+}
+
+.feedOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10,6,2,0.72);
+  opacity: 0;
+  transition: opacity 0.18s;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 8px;
+  gap: 3px;
+}
+
+.feedOverlayTitolo {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.feedOverlayMeta {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.6);
+}
+
+.feedCellDot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0,0,0,0.3);
+}
+
+.feedCellStoria {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.7);
+  background: rgba(155,145,240,0.5);
+  border-radius: 2px;
+  padding: 1px 4px;
+  text-transform: uppercase;
+}
+
+.feedEmpty {
+  grid-column: 1 / -1;
+  padding: 40px;
+  text-align: center;
+  color: var(--text3);
+  font-size: 0.85rem;
+}
+
+/* ─── Post Preview Modal ─────────────────────────────────────────────────── */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modalBox {
+  position: relative;
+  background: var(--bg2, #fff);
+  border: 1px solid var(--bg3, #EDE8DC);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 380px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modalClose {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.modalClose:hover { background: var(--bg3); }
+
+.modalHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 28px;
+}
+
+.modalTitolo {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.modalBadges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.modalBadgeStato {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #fff;
+  border-radius: 4px;
+  padding: 2px 8px;
+  opacity: 0.9;
+}
+
+
+.modalCarousel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.modalSlideWrap {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.modalArrow {
+  background: var(--bg3);
+  border: 1px solid var(--bg3);
+  color: var(--text2);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.modalArrow:hover:not(:disabled) { background: var(--bg3); filter: brightness(0.95); }
+.modalArrow:disabled { opacity: 0.25; cursor: default; }
+
+.modalDots {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.modalDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--bg3);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s;
+}
+.modalDotActive { background: var(--text3); }
+
+.modalMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modalMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.8rem;
+  color: var(--text2);
+}
+
+
+.modalCaption {}
+
+.modalCaptionLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 5px;
+}
+
+.modalCaptionText {
+  font-size: 0.82rem;
+  color: var(--text2);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  max-height: 120px;
+  overflow-y: auto;
+  background: var(--bg3);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
+  border-top: 1px solid var(--bg3);
+}
+
+.modalBtnEdit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: var(--color-brand, #eece9d);
+  color: #1a1408;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.modalBtnEdit:hover { background: var(--color-brand-hover, #f5deb3); }

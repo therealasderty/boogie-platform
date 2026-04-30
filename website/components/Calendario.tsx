@@ -44,13 +44,6 @@ function getWeekDates(offset = 0): Date[] {
   })
 }
 
-function getWeekNumber(d: Date): number {
-  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
-  const dayNum = date.getUTCDay() || 7
-  date.setUTCDate(date.getUTCDate() + 4 - dayNum)
-  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
-  return Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
-}
 
 function isSameDay(a: Date, b: Date) {
   return a.getDate() === b.getDate() && a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear()
@@ -104,60 +97,125 @@ function getEventsForDay(date: Date, allEvents: CalEvent[], status?: ReturnType<
 
   const override = events.find(e => e.nascondiAltri)
   if (override) return [override]
-  // one-time events first, then recurring
-  return [...events].sort((a, b) => Number(a.ricorrente) - Number(b.ricorrente))
+  // Sort by orario first, then one-time before recurring as tiebreaker
+  return [...events].sort((a, b) => {
+    const aTime = a.orario || '00:00'
+    const bTime = b.orario || '00:00'
+    if (aTime !== bTime) return aTime.localeCompare(bTime)
+    return Number(a.ricorrente) - Number(b.ricorrente)
+  })
 }
 
-// ── Voci sempre disponibili ───────────────────────────────────────────────────
+// ── Fascia helpers ────────────────────────────────────────────────────────────
 
-const SEMPRE_DISPONIBILI = [
-  { titolo: 'Specialità alla carta', link: '/menu/specialita' },
-  { titolo: 'Pizza', link: '/menu/pizza' },
-]
+interface FasciaSlot { inizio: string; fine: string }
+
+function mergeFasciaSlots(slots: FasciaSlot[]): FasciaSlot[] {
+  const sorted = [...slots].sort((a, b) => a.inizio.localeCompare(b.inizio))
+  const merged: FasciaSlot[] = []
+  for (const slot of sorted) {
+    const last = merged[merged.length - 1]
+    if (last && slot.inizio <= last.fine) { if (slot.fine > last.fine) last.fine = slot.fine }
+    else merged.push({ ...slot })
+  }
+  return merged
+}
+
+function formatSlots(slots: FasciaSlot[]): string {
+  return slots.map(s => `${s.inizio}–${s.fine}`).join(' · ')
+}
+
+function getFasceForDay(date: Date, orari: OrarioRecord[]): {
+  pranzo: FasciaSlot[]
+  cena: FasciaSlot[]
+  hasFasce: boolean
+} {
+  const dayOfWeek = date.getDay()
+  const attivi = orari.filter(o => o.attivo && o.giorno === dayOfWeek && o.oraInizio && o.oraFine)
+  const pranzoRaw = attivi.filter(o => o.fascia?.toLowerCase() === 'pranzo').map(o => ({ inizio: o.oraInizio, fine: o.oraFine }))
+  const cenaRaw   = attivi.filter(o => o.fascia?.toLowerCase() === 'cena').map(o => ({ inizio: o.oraInizio, fine: o.oraFine }))
+  const pranzo = mergeFasciaSlots(pranzoRaw)
+  const cena   = mergeFasciaSlots(cenaRaw)
+  return { pranzo, cena, hasFasce: pranzo.length > 0 || cena.length > 0 }
+}
+
+function getEventFascia(ev: CalEvent, hasPranzo: boolean, hasCena: boolean): 'pranzo' | 'cena' | 'any' {
+  if (!ev.orario) return 'any'
+  if (hasPranzo && hasCena) return ev.orario >= '16:00' ? 'cena' : 'pranzo'
+  if (hasPranzo) return 'pranzo'
+  if (hasCena) return 'cena'
+  return 'any'
+}
 
 // ── EventCard ─────────────────────────────────────────────────────────────────
+
+// Tier 1: one-time → brand gold, max prominence
+// Tier 2: ricorrente 1 giorno/settimana → bianco medio
+// Tier 3: ricorrente più giorni / tutti → bianco molto attenuato
+function getRicorrenteType(ev: CalEvent): 'single' | 'multi' {
+  const g = ev.giornoSettimana?.toLowerCase() || ''
+  if (g === 'tutti' || g.includes(',')) return 'multi'
+  return 'single'
+}
 
 function EventCard({ ev }: { ev: CalEvent }) {
   const isChiuso = ev.titolo.toLowerCase().includes('chiuso')
 
-  let borderColor = 'border-white/20'
-  let bgColor = 'bg-white/5'
-  let titleColor = 'text-white/80'
-  let metaColor = 'text-white/40'
+  let borderColor: string
+  let bgColor: string
+  let titleColor: string
+  let metaColor: string
+  let hoverBg: string
+  let showBadge = false
 
   if (isChiuso) {
     borderColor = 'border-white/10'
-    bgColor = 'bg-transparent'
-    titleColor = 'text-white/30'
-    metaColor = 'text-white/20'
+    bgColor     = 'bg-transparent'
+    titleColor  = 'text-white/25'
+    metaColor   = 'text-white/15'
+    hoverBg     = ''
   } else if (!ev.ricorrente) {
-    // one-time: massima visibilità
+    // Tier 1 — evento speciale una tantum
     borderColor = 'border-brand'
-    bgColor = 'bg-brand/15'
-    titleColor = 'text-brand'
-    metaColor = 'text-brand/70'
+    bgColor     = 'bg-brand/10'
+    titleColor  = 'text-brand'
+    metaColor   = 'text-brand/60'
+    hoverBg     = 'hover:bg-brand/20'
+  } else if (getRicorrenteType(ev) === 'single') {
+    // Tier 2 — ricorrente fisso 1 giorno
+    borderColor = 'border-white/35'
+    bgColor     = 'bg-white/[0.06]'
+    titleColor  = 'text-white/75'
+    metaColor   = 'text-white/40'
+    hoverBg     = 'hover:bg-white/[0.10]'
+    showBadge   = true
   } else {
-    // ricorrente: visibile ma secondario
-    borderColor = 'border-white/30'
-    bgColor = 'bg-white/8'
-    titleColor = 'text-white/80'
-    metaColor = 'text-white/45'
+    // Tier 3 — ricorrente multi-giorno / quotidiano
+    borderColor = 'border-white/15'
+    bgColor     = 'bg-transparent'
+    titleColor  = 'text-white/40'
+    metaColor   = 'text-white/25'
+    hoverBg     = 'hover:bg-white/[0.04]'
   }
 
+  const giornoLabel = ev.giornoSettimana
+    ? ev.giornoSettimana.charAt(0).toUpperCase() + ev.giornoSettimana.slice(1).toLowerCase()
+    : ''
+
   const inner = (
-    <div className={`border-l-2 ${borderColor} ${bgColor} rounded-btn px-3 py-2.5 text-left`}>
+    <div className={`border-l-2 ${borderColor} ${bgColor} rounded-btn px-3 py-2.5 text-left transition-colors ${ev.link && !isChiuso ? hoverBg : ''}`}>
       {ev.orario && (
         <div className={`text-xs ${metaColor} mb-1 font-medium`}>
           {ev.orario}{ev.orarioFine ? `–${ev.orarioFine}` : ''}
         </div>
       )}
       <div className={`text-sm font-semibold leading-snug ${titleColor}`}>{ev.titolo}</div>
-      {ev.descrizione && (
-        <div className="text-xs text-neutral-400 mt-1 leading-relaxed">{ev.descrizione}</div>
+      {ev.descrizione && !isChiuso && (
+        <div className="text-xs text-neutral-500 mt-1 leading-relaxed">{ev.descrizione}</div>
       )}
-      {!isChiuso && ev.ricorrente && !ev.giornoSettimana.includes(',') && ev.giornoSettimana.toLowerCase() !== 'tutti' && (
-        <span className={`inline-block mt-2 text-xs font-semibold px-2 py-0.5 rounded-pill ${ev.evidenza ? 'bg-brand/20 text-brand' : 'bg-white/10 text-white/40'}`}>
-          ricorrente
+      {showBadge && giornoLabel && (
+        <span className={`inline-block mt-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-pill ${ev.evidenza ? 'bg-brand/15 text-brand/80' : 'bg-white/8 text-white/30'}`}>
+          ogni {giornoLabel}
         </span>
       )}
     </div>
@@ -173,57 +231,28 @@ function EventCard({ ev }: { ev: CalEvent }) {
   return inner
 }
 
-function SempreDisponibileCard({ item }: { item: { titolo: string; link: string } }) {
+function MenuLink() {
   return (
-    <a href={item.link} className="block border-l-2 border-white/10 bg-transparent rounded-btn px-3 py-2 text-left hover:bg-white/5 transition-colors">
-      <div className="text-xs font-medium text-white/30 leading-snug">{item.titolo}</div>
-    </a>
+    <div className="px-2 py-1.5 text-[11px] text-white/20 leading-relaxed">
+      <a href="/#menu" className="underline decoration-white/15 hover:text-white/40 hover:decoration-white/30 transition-colors">
+        Carta e pizze
+      </a>
+    </div>
+  )
+}
+
+function FasciaHeader({ label, slots }: { label: string; slots: FasciaSlot[] }) {
+  return (
+    <div className="flex items-center gap-2 border-t border-neutral-700/60 pt-2 mt-1">
+      <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-500">{label}</span>
+      {slots.length > 0 && (
+        <span className="text-[10px] text-neutral-600">{formatSlots(slots)}</span>
+      )}
+    </div>
   )
 }
 
 // ── DayColumn ─────────────────────────────────────────────────────────────────
-
-function mergeSlots(records: OrarioRecord[]): string {
-  const slotMap = new Map<string, { inizio: string; fine: string }>()
-  for (const o of records) {
-    const key = `${o.oraInizio}|${o.oraFine}`
-    if (!slotMap.has(key)) slotMap.set(key, { inizio: o.oraInizio, fine: o.oraFine })
-  }
-  const sorted = [...slotMap.values()].sort((a, b) => a.inizio.localeCompare(b.inizio))
-  const merged: { inizio: string; fine: string }[] = []
-  for (const slot of sorted) {
-    const last = merged[merged.length - 1]
-    if (last && slot.inizio <= last.fine) { if (slot.fine > last.fine) last.fine = slot.fine }
-    else merged.push({ ...slot })
-  }
-  return merged.map((s) => `${s.inizio}–${s.fine}`).join(' · ')
-}
-
-function getDayHours(date: Date, orari: OrarioRecord[], status: ReturnType<typeof getDayStatus>): string {
-  const attivi = orari.filter((o) => o.attivo && o.oraInizio && o.oraFine)
-  // Apertura straordinaria → mostra tutti gli slot disponibili (pranzo + cena)
-  if (status === 'apertura-straordinaria') return mergeSlots(attivi)
-  const dayRecords = attivi.filter((o) => o.giorno === date.getDay())
-  return mergeSlots(dayRecords)
-}
-
-function DayInfo({ status, isToday, hours }: {
-  status: ReturnType<typeof getDayStatus>
-  isToday: boolean
-  hours: string
-}) {
-  if (status === 'chiuso' || status === 'chiusura-straordinaria') {
-    const isExtraord = status === 'chiusura-straordinaria'
-    return (
-      <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-semibold uppercase tracking-wide ${isExtraord ? 'bg-red-900/60 text-red-400' : 'bg-neutral-700 text-neutral-400'}`}>
-        Chiuso
-      </span>
-    )
-  }
-  if (!hours) return null
-  const textColor = isToday ? 'text-black/60' : 'text-neutral-400'
-  return <span className={`text-xs font-medium ${textColor}`}>{hours}</span>
-}
 
 function DayColumn({ date, events, isToday, status, orari }: {
   date: Date
@@ -233,33 +262,64 @@ function DayColumn({ date, events, isToday, status, orari }: {
   orari: OrarioRecord[]
 }) {
   const isClosed = status === 'chiuso' || status === 'chiusura-straordinaria'
-  const hours = getDayHours(date, orari, status)
+  const { pranzo: pranzoSlots, cena: cenaSlots, hasFasce } = getFasceForDay(date, orari)
+
+  // Categorize events by fascia
+  const hasPranzo = pranzoSlots.length > 0
+  const hasCena   = cenaSlots.length > 0
+
+  const pranzoEvents = hasFasce ? events.filter(ev => getEventFascia(ev, hasPranzo, hasCena) === 'pranzo') : []
+  const cenaEvents   = hasFasce ? events.filter(ev => getEventFascia(ev, hasPranzo, hasCena) === 'cena')   : []
+  const anyEvents    = hasFasce ? events.filter(ev => getEventFascia(ev, hasPranzo, hasCena) === 'any')    : events
+
   return (
     <div className="flex flex-col min-h-48 border-r border-neutral-800 last:border-r-0">
-      <div className={`px-3 py-3 text-center border-b border-neutral-800 flex flex-col items-center justify-center h-[88px] ${isToday ? 'bg-brand' : 'bg-neutral-900'}`}>
+      <div className={`px-3 py-3 text-center border-b border-neutral-800 flex flex-col items-center justify-center h-[72px] ${isToday ? 'bg-brand' : 'bg-neutral-900'}`}>
         <div className={`text-[10px] uppercase tracking-widest font-semibold leading-none ${isToday ? 'text-black/50' : 'text-neutral-500'}`}>
           {DAY_NAMES[date.getDay()]}
         </div>
         <div className={`text-2xl font-bold leading-none mt-1.5 ${isToday ? 'text-black' : isClosed ? 'text-neutral-600' : 'text-white'}`}>
           {date.getDate()}
         </div>
-        <div className="h-4 flex items-center justify-center mt-1.5">
-          <DayInfo status={status} isToday={isToday} hours={hours} />
-        </div>
+        {(isClosed) && (
+          <div className="h-4 flex items-center justify-center mt-1">
+            <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-semibold uppercase tracking-wide ${status === 'chiusura-straordinaria' ? 'bg-red-900/60 text-red-400' : 'bg-neutral-700 text-neutral-400'}`}>
+              Chiuso
+            </span>
+          </div>
+        )}
       </div>
       <div className={`flex flex-col gap-2 p-2.5 flex-1 bg-neutral-800 ${isToday ? 'border-x border-b border-brand/40 rounded-b-card' : ''}`}>
-        {events.length === 0 && isClosed && (
+        {isClosed && events.length === 0 && (
           <div className="text-xs text-neutral-300 text-center mt-3">—</div>
         )}
-        {events.map((ev, i) => <EventCard key={i} ev={ev} />)}
-        {!isClosed && (
+
+        {/* Uncategorized events (no orario) always at top */}
+        {anyEvents.map((ev, i) => <EventCard key={`any-${i}`} ev={ev} />)}
+
+        {!isClosed && hasFasce ? (
+          <>
+            {hasPranzo && (
+              <>
+                <FasciaHeader label="Pranzo" slots={pranzoSlots} />
+                {pranzoEvents.map((ev, i) => <EventCard key={`p-${i}`} ev={ev} />)}
+                <MenuLink />
+              </>
+            )}
+            {hasCena && (
+              <>
+                <FasciaHeader label="Cena" slots={cenaSlots} />
+                {cenaEvents.map((ev, i) => <EventCard key={`c-${i}`} ev={ev} />)}
+                <MenuLink />
+              </>
+            )}
+          </>
+        ) : !isClosed ? (
           <>
             {events.length > 0 && <div className="border-t border-neutral-700/50 mt-1 pt-1" />}
-            {SEMPRE_DISPONIBILI.map((item) => (
-              <SempreDisponibileCard key={item.link} item={item} />
-            ))}
+            <MenuLink />
           </>
-        )}
+        ) : null}
       </div>
     </div>
   )
@@ -392,7 +452,6 @@ export default function Calendario({ orari = [], chiusure = [] }: { orari?: Orar
   const weekDates = getWeekDates(weekOffset)
   const firstDay = weekDates[0]
   const lastDay = weekDates[6]
-  const weekNumber = getWeekNumber(firstDay)
 
   const weekLabel = `${firstDay.getDate()} ${MONTH_NAMES[firstDay.getMonth()]} — ${lastDay.getDate()} ${MONTH_NAMES[lastDay.getMonth()]} ${lastDay.getFullYear()}`
   const mobileDateLabel = `${DAY_NAMES[mobileDate.getDay()]} ${mobileDate.getDate()} ${MONTH_NAMES[mobileDate.getMonth()]} ${mobileDate.getFullYear()}`

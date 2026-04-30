@@ -5,6 +5,7 @@ import { fetchEventi } from '@/lib/agenda'
 import { fetchMedia } from '@/lib/media'
 import { fetchOrari, fetchChiusure, buildOrariLines } from '@/lib/orari'
 import LinksPrenotaSticky from '@/components/LinksPrenotaSticky'
+import Calendario from '@/components/Calendario'
 
 export const metadata: Metadata = {
   title: 'Boogie Bistrot | Link',
@@ -146,8 +147,8 @@ export default async function LinksPage() {
   const eventiFuturi = eventi.filter(e => e.stato === 'futuro' && !!e.slug)
 
   return (
-    <main style={{ backgroundColor: '#1a1a1a', minHeight: '100vh', padding: '40px 20px 80px' }}>
-      <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
+    <main style={{ backgroundColor: '#1a1a1a', minHeight: '100vh' }}>
+      <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column', padding: '40px 20px 0' }}>
 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
@@ -235,6 +236,13 @@ export default async function LinksPage() {
             </div>
           </>
         )}
+
+      </div>
+
+      {/* Calendario settimana */}
+      <Calendario orari={orari} chiusure={chiusure} />
+
+      <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column', padding: '0 20px' }}>
 
         {/* Menù */}
         <Sezione label="I nostri menù" />

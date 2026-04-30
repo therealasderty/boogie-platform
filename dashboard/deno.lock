@@ -11,13 +11,22 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@dnd-kit/core@^6.3.1",
+        "npm:@dnd-kit/sortable@10",
+        "npm:@dnd-kit/utilities@^3.2.2",
         "npm:@fullcalendar/daygrid@^6.1.11",
         "npm:@fullcalendar/interaction@^6.1.11",
         "npm:@fullcalendar/list@^6.1.11",
         "npm:@fullcalendar/react@^6.1.11",
         "npm:@fullcalendar/timegrid@^6.1.11",
         "npm:@phosphor-icons/react@^2.1.10",
+        "npm:@tiptap/extension-image@^3.22.4",
+        "npm:@tiptap/extension-link@^3.22.3",
+        "npm:@tiptap/extension-underline@^3.22.3",
+        "npm:@tiptap/react@^3.22.3",
+        "npm:@tiptap/starter-kit@^3.22.3",
         "npm:@vitejs/plugin-react@^4.2.1",
+        "npm:html-to-image@^1.11.13",
         "npm:react-dom@^18.2.0",
         "npm:react@^18.2.0",
         "npm:vite@^5.1.0"

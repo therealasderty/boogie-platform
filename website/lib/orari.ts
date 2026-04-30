@@ -49,17 +49,18 @@ export function getDayStatus(
   const dateStr = date.toISOString().split('T')[0]
   const dayOfWeek = date.getDay()
 
-  for (const c of chiusure) {
-    if (c.tipo === 'Giorno della settimana' && c.giorno === dayOfWeek) {
-      return c.tipoApertura === 'Chiusura' ? 'chiusura-straordinaria' : 'apertura-straordinaria'
-    }
+  const matches = chiusure.filter(c => {
+    if (c.tipo === 'Giorno della settimana' && c.giorno === dayOfWeek) return true
     if (c.tipo === 'Data specifica' && c.dataInizio) {
       const fine = c.dataFine || c.dataInizio
-      if (dateStr >= c.dataInizio && dateStr <= fine) {
-        return c.tipoApertura === 'Chiusura' ? 'chiusura-straordinaria' : 'apertura-straordinaria'
-      }
+      return dateStr >= c.dataInizio && dateStr <= fine
     }
-  }
+    return false
+  })
+
+  // Apertura straordinaria ha sempre priorità su chiusura straordinaria
+  if (matches.some(c => c.tipoApertura !== 'Chiusura')) return 'apertura-straordinaria'
+  if (matches.some(c => c.tipoApertura === 'Chiusura')) return 'chiusura-straordinaria'
 
   const hasHours = orari.some((o) => o.attivo && o.giorno === dayOfWeek)
   return hasHours ? 'aperto' : 'chiuso'

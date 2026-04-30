@@ -40,8 +40,8 @@ function isGiornoChiuso(dateStr, orari, chiusure) {
     (c.tipo === 'Data specifica' && c.dataInizio <= dateStr && dateStr <= c.dataFine) ||
     (c.tipo === 'Ricorrente' && c.giorno === dayOfWeek)
 
-  // Apertura straordinaria: ha priorità su tutto
-  if (chiusure.some(c => c.tipoApertura === 'Apertura' && !c.fascia && matchData(c))) return false
+  // Apertura straordinaria: ha priorità su tutto (con o senza fascia)
+  if (chiusure.some(c => c.tipoApertura === 'Apertura' && matchData(c))) return false
 
   // Chiusura straordinaria giornata intera
   if (chiusure.some(c => c.tipoApertura !== 'Apertura' && !c.fascia && matchData(c))) return true
@@ -104,6 +104,7 @@ function GiornoCard({ giorno, chiuso }) {
                   <div className={styles.prenNome}>
                     {p.nome}
                     <PrefBadge preferenza={p.preferenza} />
+                    {p.evento && <span className={styles.eventoChip}>{p.evento}</span>}
                   </div>
                   <div className={styles.prenMeta}>
                     {p.persone} pers.
@@ -111,11 +112,11 @@ function GiornoCard({ giorno, chiuso }) {
                     {p.note && <span className={styles.prenNote}>{p.note}</span>}
                   </div>
                 </div>
-                <div className={styles.prenStato} style={{
-                  color: p.stato === 'Confermata' ? 'var(--success)' : 'var(--accent)'
-                }}>
-                  {p.stato}
-                </div>
+                {p.stato !== 'Confermata' && (
+                  <div className={styles.prenStato} style={{ color: 'var(--accent)' }}>
+                    {p.stato}
+                  </div>
+                )}
               </div>
             ))}
         </div>

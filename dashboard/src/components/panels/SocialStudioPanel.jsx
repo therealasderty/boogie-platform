@@ -22,6 +22,7 @@ import { cloudinaryThumb }   from '../../lib/cloudinary'
 import { useSocialPosts }    from '../../hooks/useSocialPosts'
 import { usePresetSocial }  from '../../hooks/usePresetSocial'
 import { useAppuntamenti }   from '../../hooks/useAppuntamenti'
+import { useOrari }          from '../../hooks/useOrari'
 import { useMedia }          from '../../hooks/useMedia'
 import { IconRefresh, IconTrash, IconEdit } from '../../icons/index.jsx'
 import { TEMPLATES } from './social/SlideTemplates.jsx'
@@ -61,8 +62,32 @@ function uid() {
 function formatData(dateStr) {
   if (!dateStr) return ''
   try {
-    return new Date(dateStr + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
+    const d = dateStr.includes('T') ? new Date(dateStr) : new Date(dateStr + 'T12:00:00')
+    return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
   } catch { return dateStr }
+}
+
+function isoToLocalDateStr(isoStr) {
+  if (!isoStr) return ''
+  const d = new Date(isoStr)
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
+}
+
+// Converte un ISO UTC string in formato "YYYY-MM-DDTHH:MM" per input datetime-local
+function isoToDatetimeLocal(isoStr) {
+  if (!isoStr) return ''
+  try {
+    const d = new Date(isoStr)
+    const pad = n => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:00`
+  } catch { return '' }
+}
+
+// Converte il valore di datetime-local (ora locale) in ISO UTC
+function datetimeLocalToIso(localStr) {
+  if (!localStr) return ''
+  try { return new Date(localStr).toISOString() } catch { return '' }
 }
 
 function buildSlide(template, sorgente, record) {
@@ -79,7 +104,8 @@ function buildSlide(template, sorgente, record) {
   return { id, template: template || 'cover', data: {} }
 }
 
-function buildAgendaEvents(appuntamenti) {
+function buildAgendaEvents(appuntamenti, orari = []) {
+  const aperti = orari.length > 0 ? new Set(orari.filter(o => o.attivo).map(o => o.giorno)) : null
   const BASE = { backgroundColor: 'transparent', borderColor: 'transparent', textColor: 'var(--text2)', editable: false }
   return appuntamenti.flatMap(a => {
     const ricorrente = a.ricorrenza && a.ricorrenza !== 'nessuna'
@@ -88,10 +114,12 @@ function buildAgendaEvents(appuntamenti) {
     const endRecur = a.dataFineRicorrenza || undefined
     if (a.ricorrenza === 'giornaliera') {
       const esclusi = a.giorniEsclusione ? a.giorniEsclusione.split(',').map(Number) : []
-      return [{ ...base, id: `ag-${a.id}`, title: a.title, daysOfWeek: [0,1,2,3,4,5,6].filter(d => !esclusi.includes(d)), startRecur: a.data || undefined, endRecur }]
+      const daysOfWeek = [0,1,2,3,4,5,6].filter(d => !esclusi.includes(d) && (!aperti || aperti.has(d)))
+      return [{ ...base, id: `ag-${a.id}`, title: a.title, daysOfWeek, startRecur: a.data || undefined, endRecur }]
     }
     if (a.ricorrenza === 'settimanale') {
-      const daysOfWeek = a.giorniSettimana ? a.giorniSettimana.split(',').map(Number) : []
+      const daysOfWeek = (a.giorniSettimana ? a.giorniSettimana.split(',').map(Number) : [])
+        .filter(d => !aperti || aperti.has(d))
       return [{ ...base, id: `ag-${a.id}`, title: a.title, daysOfWeek, startRecur: a.data || undefined, endRecur }]
     }
     return []
@@ -111,7 +139,8 @@ function localToday() {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
-function buildGhostSuggestions(appuntamenti, posts) {
+function buildGhostSuggestions(appuntamenti, posts, orari = []) {
+  const aperti = orari.length > 0 ? new Set(orari.filter(o => o.attivo).map(o => o.giorno)) : null
   const oggi = localToday()
   // date già coperte da post reali (±1 giorno per evento)
   const postDate = new Set(posts.filter(p => p.dataProgrammata).map(p => p.dataProgrammata.slice(0, 10)))
@@ -162,6 +191,7 @@ function buildGhostSuggestions(appuntamenti, posts) {
         const d = new Date(oggi + 'T12:00:00')
         d.setDate(d.getDate() + i)
         if (!giorni.includes(d.getDay())) continue
+        if (aperti && !aperti.has(d.getDay())) continue
         const dataEvento = d.toISOString().split('T')[0]
         const dataSuggerita = addDays(dataEvento, -2)
         if (dataSuggerita < oggi) { trovate++; continue }
@@ -179,17 +209,20 @@ function buildGhostSuggestions(appuntamenti, posts) {
 
 const THUMB_H = 80
 
-function TemplateThumbnailPreview({ templateKey }) {
+function TemplateThumbnailPreview({ templateKey, demoImageUrl = '' }) {
   const T = TEMPLATES[templateKey]
   if (!T) return null
-  const { Component, size } = T
+  const { Component, size, demoProps } = T
   const { w, h } = TEMPLATE_SIZES[size || '1:1']
   const scale = THUMB_H / h
   const prevW = Math.round(w * scale)
+  const props = demoImageUrl
+    ? { ...(demoProps || {}), imageUrl: demoImageUrl }
+    : (demoProps || {})
   return (
     <div style={{ width: prevW, height: THUMB_H, overflow: 'hidden', flexShrink: 0, borderRadius: 4 }}>
       <div style={{ width: w, height: h, transform: `scale(${scale})`, transformOrigin: 'top left', pointerEvents: 'none' }}>
-        <Component />
+        <Component {...props} />
       </div>
     </div>
   )
@@ -314,11 +347,87 @@ function SlideEditorFoto({ slide, onChange }) {
   )
 }
 
+// ─── SlideEditorChiusura ──────────────────────────────────────────────────────
+
+function SlideEditorChiusura({ slide, onChange, appuntamenti }) {
+  const { items: mediaItems, loading: mediaLoading } = useMedia()
+  const [tagFiltro, setTagFiltro] = useState('tutti')
+  const { data = {} } = slide
+  function update(key, val) { onChange({ ...slide, data: { ...data, [key]: val } }) }
+
+  const tuttiTag    = ['tutti', ...new Set(mediaItems.flatMap(m => m.tag).filter(Boolean))]
+  const fotoFiltrate = tagFiltro === 'tutti' ? mediaItems : mediaItems.filter(m => m.tag.includes(tagFiltro))
+  const fotoAttuale  = data.imageUrl ? mediaItems.find(m => m.url === data.imageUrl) : null
+
+  return (
+    <div className={styles.slideEditor}>
+      <RecuperaEvento appuntamenti={appuntamenti} template="chiusura" slide={slide} onChange={onChange} />
+      <label className={styles.sectionLabel}>Nome serata</label>
+      <input className={styles.edInput} value={data.nomeSerata || ''} onChange={e => update('nomeSerata', e.target.value)} placeholder="Serata Paella" />
+
+      <label className={styles.sectionLabel}>Foto dalla libreria</label>
+      <div className={styles.tagFiltri}>
+        {tuttiTag.map(t => (
+          <button key={t} className={`${styles.tagBtn} ${tagFiltro === t ? styles.tagBtnActive : ''}`} onClick={() => setTagFiltro(t)}>
+            {t}
+          </button>
+        ))}
+      </div>
+      {mediaLoading ? (
+        <div style={{ fontSize: '0.82rem', color: 'var(--text3)' }}>Caricamento galleria…</div>
+      ) : (
+        <div className={styles.fotoGrid}>
+          {fotoFiltrate.map(foto => (
+            <button
+              key={foto.id}
+              className={`${styles.fotoCell} ${data.imageUrl === foto.url ? styles.fotoCellSelected : ''}`}
+              onClick={() => update('imageUrl', data.imageUrl === foto.url ? '' : foto.url)}
+              title={foto.alt || foto.nome}
+            >
+              <img src={cloudinaryThumb(foto.url, 120)} alt={foto.alt || ''} className={styles.fotoImg} />
+              {data.imageUrl === foto.url && <div className={styles.fotoCheck}>✓</div>}
+            </button>
+          ))}
+        </div>
+      )}
+      {fotoAttuale && (
+        <div className={styles.fotoSelezionataWrap}>
+          <img src={cloudinaryThumb(fotoAttuale.url, 80)} alt="" className={styles.fotoSelezionataPreview} />
+          <div className={styles.fotoSelezionataInfo}>
+            <span>{fotoAttuale.alt || fotoAttuale.nome || 'Foto selezionata'}</span>
+            {fotoAttuale.tag?.length > 0 && <span className={styles.fotoTag}>{fotoAttuale.tag.join(', ')}</span>}
+          </div>
+          <button className={styles.fotoDeseleziona} onClick={() => update('imageUrl', '')}><X size={13} /></button>
+        </div>
+      )}
+      <IndirizzoToggle data={data} update={update} />
+    </div>
+  )
+}
+
 // ─── SlideEditor ─────────────────────────────────────────────────────────────
 
 function fillSlideDataFromEvento(template, a, currentData) {
   if (template === 'cover') return { ...currentData, titolo: a.title || a.titolo || '', data: a.data || '', imageUrl: a.fotoHero || '', descrizione: a.descrizioneBreve || '' }
   if (template === 'storia_evento') return { ...currentData, titolo: a.title || a.titolo || '', data: a.data || '', ora: a.ora || '', imageUrl: a.fotoHero || '' }
+  if (template === 'chiusura') {
+    return { ...currentData, nomeSerata: a.title || a.titolo || '' }
+  }
+  if (template === 'prezzo_evento' || template === 'prezzo_storia') {
+    let blocchi = []
+    try { blocchi = JSON.parse(a.blocchi || '[]') } catch {}
+    const bPrezzo = blocchi.find(b => b.tipo === 'prezzo') || {}
+    return {
+      ...currentData,
+      titolo:        a.title || a.titolo || '',
+      data:          a.data || '',
+      ora:           a.ora || '',
+      imageUrl:      a.fotoHero || '',
+      prezzoImporto: bPrezzo.importo || '',
+      prezzoLabel:   bPrezzo.titolo  || '',
+      voci:          Array.isArray(bPrezzo.voci) ? bPrezzo.voci.filter(v => typeof v === 'string' && v) : [],
+    }
+  }
   return currentData
 }
 
@@ -343,12 +452,25 @@ function RecuperaEvento({ appuntamenti, template, slide, onChange }) {
   )
 }
 
+function IndirizzoToggle({ data, update }) {
+  return (
+    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginTop: 6 }}>
+      <input
+        type="checkbox"
+        checked={!!data.mostraIndirizzo}
+        onChange={e => update('mostraIndirizzo', e.target.checked)}
+      />
+      <span style={{ fontSize: '0.82rem', color: 'var(--text2)' }}>Mostra indirizzo (per sponsorizzate)</span>
+    </label>
+  )
+}
+
 function SlideEditor({ slide, onChange, appuntamenti }) {
   if (!slide) return null
   const { template, data = {} } = slide
   function update(key, val) { onChange({ ...slide, data: { ...data, [key]: val } }) }
 
-  const usaEvento = ['cover', 'storia_evento'].includes(template)
+  const usaEvento = ['cover', 'storia_evento', 'prezzo_evento', 'prezzo_storia', 'chiusura'].includes(template)
 
   if (template === 'foto_11' || template === 'foto_45' || template === 'foto_916') {
     return <SlideEditorFoto slide={slide} onChange={onChange} />
@@ -365,6 +487,7 @@ function SlideEditor({ slide, onChange, appuntamenti }) {
       <textarea className={styles.edTextarea} rows={3} value={data.descrizione || ''} onChange={e => update('descrizione', e.target.value)} placeholder="Goditi la nostra ricca Paella Mista..." />
       <label className={styles.sectionLabel}>URL foto sfondo</label>
       <input className={styles.edInput} value={data.imageUrl || ''} onChange={e => update('imageUrl', e.target.value)} placeholder="https://res.cloudinary.com/..." />
+      <IndirizzoToggle data={data} update={update} />
     </div>
   )
 
@@ -379,8 +502,58 @@ function SlideEditor({ slide, onChange, appuntamenti }) {
       <input className={styles.edInput} value={data.ora || ''} placeholder="es. 20:00" onChange={e => update('ora', e.target.value)} />
       <label className={styles.sectionLabel}>URL immagine sfondo</label>
       <input className={styles.edInput} value={data.imageUrl || ''} placeholder="https://res.cloudinary.com/..." onChange={e => update('imageUrl', e.target.value)} />
+      <IndirizzoToggle data={data} update={update} />
     </div>
   )
+
+  if (template === 'chiusura') return (
+    <SlideEditorChiusura slide={slide} onChange={onChange} appuntamenti={appuntamenti} />
+  )
+
+  if (template === 'prezzo_evento' || template === 'prezzo_storia') {
+    const voci = Array.isArray(data.voci) ? data.voci : []
+    function updateVoce(i, val) {
+      const next = [...voci]; next[i] = val; update('voci', next)
+    }
+    function aggiungiVoce() { update('voci', [...voci, '']) }
+    function rimuoviVoce(i) { update('voci', voci.filter((_, idx) => idx !== i)) }
+    return (
+      <div className={styles.slideEditor}>
+        <RecuperaEvento appuntamenti={appuntamenti} template={template} slide={slide} onChange={onChange} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div>
+            <label className={styles.sectionLabel}>Data</label>
+            <input className={styles.edInput} type="date" value={data.data || ''} onChange={e => update('data', e.target.value)} />
+          </div>
+          <div>
+            <label className={styles.sectionLabel}>Ora</label>
+            <input className={styles.edInput} value={data.ora || ''} placeholder="19:30" onChange={e => update('ora', e.target.value)} />
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div>
+            <label className={styles.sectionLabel}>Importo</label>
+            <input className={styles.edInput} value={data.prezzoImporto || ''} placeholder="26€" onChange={e => update('prezzoImporto', e.target.value)} />
+          </div>
+          <div>
+            <label className={styles.sectionLabel}>Nome menù / offerta</label>
+            <input className={styles.edInput} value={data.prezzoLabel || ''} placeholder="Menù Paella" onChange={e => update('prezzoLabel', e.target.value)} />
+          </div>
+        </div>
+        <label className={styles.sectionLabel}>Cosa è incluso</label>
+        {voci.map((v, i) => (
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 6, marginBottom: 6 }}>
+            <input className={styles.edInput} value={v} onChange={e => updateVoce(i, e.target.value)} placeholder={`Voce ${i + 1}`} style={{ margin: 0 }} />
+            <button className="btn-icon" onClick={() => rimuoviVoce(i)} title="Rimuovi"><X size={13} /></button>
+          </div>
+        ))}
+        <button className="btn-secondary" style={{ fontSize: '0.8rem', marginTop: 2 }} onClick={aggiungiVoce}>+ Aggiungi voce</button>
+        <label className={styles.sectionLabel} style={{ marginTop: 8 }}>URL foto sfondo</label>
+        <input className={styles.edInput} value={data.imageUrl || ''} placeholder="https://res.cloudinary.com/..." onChange={e => update('imageUrl', e.target.value)} />
+        <IndirizzoToggle data={data} update={update} />
+      </div>
+    )
+  }
 
   return null
 }
@@ -417,7 +590,7 @@ function PostCard({ post, onEdit, onElimina, onPubblica }) {
             </span>
             <span className={styles.postCardDate}>{formatData(post.dataProgrammata || post.dataCreazione)}</span>
             <span className={styles.postCardSlides}>{slides.length} slide</span>
-            {isStoria && <span style={{ fontSize: '0.72rem', color: '#9B91F0', fontWeight: 600 }}>◉ Story</span>}
+            <span className={isStoria ? styles.calChipStoria : styles.calChipPost}>{isStoria ? 'Storia' : 'Post'}</span>
           </div>
           {post.caption && (
             <div className={styles.postCardCaption}>{post.caption.slice(0, 100)}{post.caption.length > 100 ? '…' : ''}</div>
@@ -447,7 +620,10 @@ const CL_PRESET     = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
 function PostEditor({ postIniziale, onSalva, onAnnulla }) {
   const { appuntamenti, loading: loadingEventi } = useAppuntamenti()
   const { preset: presets, loading: loadingPresets, crea: creaPreset, aggiorna: aggiornaPreset, elimina: eliminaPreset } = usePresetSocial()
+  const { items: mediaItems } = useMedia()
+  const demoImageUrl = mediaItems.find(m => m.url)?.url || ''
 
+  const [tipoContenuto,   setTipoContenuto]   = useState(postIniziale?.tipoContenuto || 'post')
   const [slides,          setSlides]          = useState(() => { try { return JSON.parse(postIniziale?.slides || '[]') } catch { return [] } })
   const [selectedSlideId, setSelectedSlideId] = useState(null)
   const dragIndex = useRef(null)
@@ -466,6 +642,10 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
   const [sorgente,        setSorgente]        = useState('evento')
   const [recordSelId,     setRecordSelId]     = useState('')
   const [templateSel,     setTemplateSel]     = useState('cover')
+  const [ghostPickerOpen, setGhostPickerOpen] = useState(false)
+  const [programmaOpen,   setProgrammaOpen]   = useState(false)
+  const [programmaTemp,   setProgrammaTemp]   = useState('')
+  const dataSuggerita = postIniziale?.dataSuggerita || ''
   const [generando,       setGenerando]       = useState(false)
   const [catturando,      setCatturando]      = useState(false)
   const [salvando,        setSalvando]        = useState(false)
@@ -479,11 +659,13 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
     setSlides(prev => prev.map(s => s.id === updated.id ? updated : s))
   }
 
-  function handleAggiungiSlide() {
+  function handleAggiungiSlide(tpl) {
+    const t      = tpl || templateSel
     const record = recordSelId ? appuntamenti.find(a => a.id === recordSelId) : null
-    const nuova  = buildSlide(templateSel, 'evento', record)
+    const nuova  = buildSlide(t, 'evento', record)
     setSlides(prev => [...prev, nuova])
     setSelectedSlideId(nuova.id)
+    setGhostPickerOpen(false)
     setMsg(null)
   }
 
@@ -540,10 +722,11 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
     return aggiornate
   }
 
-  async function handleSalva(stato = 'Bozza') {
+  async function handleSalva(stato = 'Bozza', dataProgrammataOverride = null) {
     if (slides.length === 0) { setMsg({ tipo: 'err', testo: 'Aggiungi almeno una slide.' }); return }
     if (!titolo.trim()) { setMsg({ tipo: 'err', testo: 'Inserisci un titolo per il post.' }); return }
-    if (stato === 'Programmato' && !dataProgrammata) { setMsg({ tipo: 'err', testo: 'Seleziona data e ora di programmazione.' }); return }
+    const dataEffettiva = dataProgrammataOverride || dataProgrammata
+    if (stato === 'Programmato' && !dataEffettiva) { setMsg({ tipo: 'err', testo: 'Seleziona data e ora di programmazione.' }); return }
 
     setSalvando(true); setMsg(null)
     try {
@@ -551,7 +734,7 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
       const res  = await authFetch('/.netlify/functions/gestisci-social-posts', {
         method: postIniziale?.id ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: postIniziale?.id, titolo: titolo.trim(), stato, caption, slides: JSON.stringify(slides), piattaforme: piattaformeStr, dataProgrammata: stato === 'Programmato' ? dataProgrammata : '' }),
+        body: JSON.stringify({ id: postIniziale?.id, titolo: titolo.trim(), stato, caption, slides: JSON.stringify(slides), piattaforme: piattaformeStr, dataProgrammata: stato === 'Programmato' ? datetimeLocalToIso(dataEffettiva) : '', tipoContenuto }),
       })
       const json = await res.json()
       if (!json.success) throw new Error(json.error || 'Salvataggio fallito')
@@ -579,7 +762,7 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
       const saveRes  = await authFetch('/.netlify/functions/gestisci-social-posts', {
         method: postIniziale?.id ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: postIniziale?.id, titolo: titolo || 'Post carosello', stato: 'Bozza', caption, slides: JSON.stringify(slidesConUrl), piattaforme: piattaformeStr }),
+        body: JSON.stringify({ id: postIniziale?.id, titolo: titolo || 'Post carosello', stato: 'Bozza', caption, slides: JSON.stringify(slidesConUrl), piattaforme: piattaformeStr, tipoContenuto }),
       })
       const saveJson = await saveRes.json()
       const postId   = saveJson.post?.id
@@ -588,7 +771,12 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ caption, imageUrls, piattaforme: piattaformeAttive, postId, mediaType: isStoria ? 'STORIES' : 'CAROUSEL', linkUrls }),
       })
-      const json = await res.json()
+      let json
+      try { json = await res.json() } catch {
+        setMsg({ tipo: 'parziale', testo: 'Timeout — verifica direttamente su Instagram se il post è stato pubblicato' })
+        setTimeout(() => onSalva(), 2000)
+        return
+      }
       if (json.success) {
         setMsg({ tipo: 'ok', testo: `Pubblicato su ${piattaformeAttive.join(', ')}!` })
         setTimeout(() => onSalva(), 1500)
@@ -602,7 +790,7 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
     finally { setCatturando(false) }
   }
 
-  const piattaformeAttive = Object.entries(piattaforme).filter(([, v]) => v).map(([k]) => k)
+  const piattaformeAttive = Object.entries(piattaforme).filter(([k, v]) => v && !(k === 'facebook' && tipoContenuto === 'storia')).map(([k]) => k)
 
   async function handleSalvaPreset() {
     if (!nuovoNomePreset.trim()) return
@@ -643,9 +831,74 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
           <button className="btn-secondary" onClick={() => handleSalva('Bozza')} disabled={salvando || catturando}>
             <FloppyDisk size={14} /> Salva bozza
           </button>
-          <button className="btn-secondary" onClick={() => handleSalva('Programmato')} disabled={salvando || catturando || !dataProgrammata} title={!dataProgrammata ? 'Imposta prima la data di pubblicazione' : ''}>
-            <Clock size={14} /> Programma
-          </button>
+          <div style={{ position: 'relative' }}>
+            <button
+              className={dataProgrammata ? styles.btnProgrammato : 'btn-secondary'}
+              onClick={() => { setProgrammaTemp(isoToDatetimeLocal(dataProgrammata) || dataSuggerita); setProgrammaOpen(v => !v) }}
+              disabled={salvando || catturando}
+            >
+              <Clock size={14} />
+              {dataProgrammata
+                ? new Date(dataProgrammata).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+                : 'Programma'}
+            </button>
+            {programmaOpen && (
+              <>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setProgrammaOpen(false)} />
+                <div className={styles.programmaPopover}>
+                  <div className={styles.programmaPopoverLabel}>Data e ora di pubblicazione</div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      className={styles.input}
+                      type="date"
+                      value={programmaTemp ? programmaTemp.slice(0, 10) : ''}
+                      onChange={e => setProgrammaTemp(e.target.value + 'T' + (programmaTemp ? programmaTemp.slice(11, 13) : '12') + ':00')}
+                      autoFocus
+                    />
+                    <select
+                      className={styles.input}
+                      style={{ width: 'auto' }}
+                      value={programmaTemp ? programmaTemp.slice(11, 13) : '12'}
+                      onChange={e => {
+                        const datePart = programmaTemp?.slice(0, 10) || isoToLocalDateStr(new Date().toISOString())
+                        setProgrammaTemp(datePart + 'T' + e.target.value + ':00')
+                      }}
+                    >
+                      {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map(h => (
+                        <option key={h} value={h}>{h}:00</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className={styles.programmaPopoverActions}>
+                    {dataProgrammata ? (
+                      <>
+                        <button className="btn-secondary" style={{ fontSize: '0.8rem' }} onClick={() => { setDataProgrammata(''); setProgrammaOpen(false) }}>
+                          Rimuovi
+                        </button>
+                        <button
+                          className="btn-primary"
+                          style={{ fontSize: '0.8rem' }}
+                          disabled={!programmaTemp}
+                          onClick={() => { setDataProgrammata(programmaTemp); handleSalva('Programmato', programmaTemp); setProgrammaOpen(false) }}
+                        >
+                          <Clock size={13} /> Modifica
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        className="btn-primary"
+                        style={{ fontSize: '0.8rem' }}
+                        disabled={!programmaTemp}
+                        onClick={() => { setDataProgrammata(programmaTemp); handleSalva('Programmato', programmaTemp); setProgrammaOpen(false) }}
+                      >
+                        <Clock size={13} /> Conferma e programma
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
           <button className={styles.btnPubblicaOra} onClick={handlePubblica} disabled={salvando || catturando || piattaformeAttive.length === 0}>
             {catturando ? 'Cattura in corso…' : <><PaperPlaneTilt size={14} weight="fill" /> Pubblica ora</>}
           </button>
@@ -660,24 +913,35 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
         <div className={styles.colLeft}>
 
           <div className={styles.section}>
+            <div className={styles.sectionLabel}>Tipo contenuto</div>
+            <div className={styles.tipoToggle}>
+              {[['post', 'Post'], ['storia', 'Storia']].map(([v, l]) => (
+                <button key={v} className={`${styles.tipoBtn} ${tipoContenuto === v ? styles.tipoBtnActive : ''}`} onClick={() => setTipoContenuto(v)}>{l}</button>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.section}>
             <div className={styles.sectionLabel}>Titolo post</div>
             <input className={styles.input} value={titolo} onChange={e => setTitolo(e.target.value)} placeholder="Es. Serata Jazz — Carosello" />
           </div>
 
           <div className={styles.section}>
-            <div className={styles.sectionLabel}>Aggiungi slide</div>
+            <div className={styles.sectionLabel}>Evento collegato (opzionale)</div>
             <select className={styles.select} value={recordSelId} onChange={e => setRecordSelId(e.target.value)}>
-              <option value="">— Seleziona evento (opzionale) —</option>
+              <option value="">— Nessun evento —</option>
               {loadingEventi ? <option disabled>Caricamento…</option> : appuntamenti.map(a => (
                 <option key={a.id} value={a.id}>{a.title || a.titolo}{a.data ? ` (${formatData(a.data)})` : ''}</option>
               ))}
             </select>
+          </div>
 
-            <div className={styles.sectionLabel} style={{ marginTop: 10 }}>Template grafico</div>
+          <div className={styles.section}>
+            <div className={styles.sectionLabel}>Aggiungi slide</div>
             <div className={styles.templateGrid}>
-              {Object.entries(TEMPLATES).map(([key, { label, size }]) => (
+              {Object.entries(TEMPLATES).filter(([, { size }]) => tipoContenuto === 'storia' ? size === '9:16' : size !== '9:16').map(([key, { label, size }]) => (
                 <button key={key} className={`${styles.templateBtn} ${templateSel === key ? styles.templateBtnActive : ''}`} onClick={() => setTemplateSel(key)}>
-                  <TemplateThumbnailPreview templateKey={key} />
+                  <TemplateThumbnailPreview templateKey={key} demoImageUrl={demoImageUrl} />
                   <span>{label}</span>
                   {size === '4:5' && <span style={{ fontSize: '0.6rem', color: 'var(--text3)', fontWeight: 400 }}>4:5</span>}
             {size === '9:16' && <span style={{ fontSize: '0.6rem', color: '#9B91F0', fontWeight: 500 }}>Story</span>}
@@ -685,7 +949,7 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
               ))}
             </div>
 
-            <button className="btn-primary" style={{ width: '100%', marginTop: 8 }} onClick={handleAggiungiSlide}>
+            <button className="btn-primary" style={{ width: '100%', marginTop: 8 }} onClick={() => handleAggiungiSlide()}>
               <Plus size={14} /> Aggiungi slide
             </button>
           </div>
@@ -707,23 +971,21 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
           <div className={styles.section}>
             <div className={styles.sectionLabel}>Pubblica su</div>
             <div className={styles.piattaformeRow}>
-              {[{ key: 'instagram', Icon: InstagramLogo, label: 'Instagram', color: '#E1306C' }, { key: 'facebook', Icon: FacebookLogo, label: 'Facebook', color: '#1877F2' }].map(({ key, Icon, label, color }) => (
-                <button key={key} className={`${styles.piattBtn} ${piattaforme[key] ? styles.piattBtnActive : ''}`}
-                  style={piattaforme[key] ? { borderColor: color, color, background: `${color}18` } : {}}
-                  onClick={() => setPiattaforme(p => ({ ...p, [key]: !p[key] }))}>
-                  <Icon size={15} /> {label}
-                </button>
-              ))}
+              {[{ key: 'instagram', Icon: InstagramLogo, label: 'Instagram', color: '#E1306C' }, { key: 'facebook', Icon: FacebookLogo, label: 'Facebook', color: '#1877F2' }].map(({ key, Icon, label, color }) => {
+                const fbDisabled = key === 'facebook' && tipoContenuto === 'storia'
+                return (
+                  <button key={key}
+                    className={`${styles.piattBtn} ${piattaforme[key] && !fbDisabled ? styles.piattBtnActive : ''}`}
+                    style={fbDisabled ? { opacity: 0.3, cursor: 'not-allowed' } : piattaforme[key] ? { borderColor: color, color, background: `${color}18` } : {}}
+                    title={fbDisabled ? 'Le Storie non sono supportate su Facebook' : undefined}
+                    onClick={() => { if (!fbDisabled) setPiattaforme(p => ({ ...p, [key]: !p[key] })) }}>
+                    <Icon size={15} /> {label}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
-          <div className={styles.section}>
-            <div className={styles.sectionLabel}>Pubblica il (opzionale)</div>
-            <input className={styles.input} type="datetime-local" value={dataProgrammata} onChange={e => setDataProgrammata(e.target.value)} />
-            {dataProgrammata && (
-              <div className={styles.scheduleInfo}><Clock size={12} /> Cron ogni ora — tolleranza massima 60 minuti</div>
-            )}
-          </div>
         </div>
 
         {/* Colonna destra */}
@@ -766,6 +1028,26 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
                   </div>
                 )
               })}
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <button className={styles.carouselGhost} style={{ height: 220 }} onClick={() => setGhostPickerOpen(v => !v)} title="Aggiungi slide">
+                  <Plus size={22} weight="light" />
+                </button>
+                {ghostPickerOpen && (
+                  <>
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setGhostPickerOpen(false)} />
+                    <div className={styles.ghostPicker}>
+                      {Object.entries(TEMPLATES)
+                        .filter(([, { size }]) => tipoContenuto === 'storia' ? size === '9:16' : size !== '9:16')
+                        .map(([key, { label }]) => (
+                          <button key={key} className={styles.ghostPickerBtn} onClick={() => handleAggiungiSlide(key)}>
+                            <TemplateThumbnailPreview templateKey={key} demoImageUrl={demoImageUrl} />
+                            <span>{label}</span>
+                          </button>
+                        ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           ) : (
             <div className={styles.slideStrip}>
@@ -870,6 +1152,109 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
   )
 }
 
+// ─── FeedPreview ──────────────────────────────────────────────────────────────
+
+const STATO_COLORI_DOT = {
+  'Pubblicato':  '#27AE60',
+  'Programmato': '#c9a84c',
+  'Bozza':       '#7A6448',
+}
+
+function FeedCell({ post, onClick }) {
+  const slides = (() => { try { return JSON.parse(post.slides || '[]') } catch { return [] } })()
+  const firstSlide = slides[0]
+  const isStoria = slides.length > 0 && slides.every(s => TEMPLATES[s.template]?.size === '9:16')
+  const dotColor = STATO_COLORI_DOT[post.stato] || '#7A6448'
+
+  // Determine thumbnail content — imageUrl è dentro firstSlide.data
+  const firstImageUrl = firstSlide?.data?.imageUrl || ''
+  let thumb = null
+  if (firstSlide?.template && TEMPLATES[firstSlide.template]) {
+    const T = TEMPLATES[firstSlide.template]
+    const { w, h } = TEMPLATE_SIZES[T.size || '1:1']
+    const scale = 200 / w
+    thumb = (
+      <div className={styles.feedCellTemplate}>
+        <div style={{ position: 'absolute', top: 0, left: 0, width: w, height: h, transform: `scale(${scale})`, transformOrigin: 'top left', pointerEvents: 'none' }}>
+          <T.Component {...(firstSlide.data || {})} />
+        </div>
+      </div>
+    )
+  } else if (firstImageUrl) {
+    thumb = <img src={firstImageUrl} alt="" className={styles.feedCellThumb} />
+  } else {
+    thumb = (
+      <div style={{ width: '100%', height: '100%', background: 'var(--bg3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Slideshow size={28} weight="thin" style={{ opacity: 0.2 }} />
+      </div>
+    )
+  }
+
+  const dateLabel = post.dataProgrammata
+    ? new Date(post.dataProgrammata).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })
+    : post.dataCreazione
+      ? new Date(post.dataCreazione).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })
+      : ''
+
+  return (
+    <div className={styles.feedCell} onClick={() => onClick(post)}>
+      {thumb}
+      <div className={styles.feedCellDot} style={{ background: dotColor }} />
+      {isStoria && <span className={styles.feedCellStoria}>Storia</span>}
+      <div className={styles.feedOverlay}>
+        <div className={styles.feedOverlayTitolo}>{post.titolo}</div>
+        <div className={styles.feedOverlayMeta}>{post.stato}{dateLabel ? ` · ${dateLabel}` : ''}</div>
+      </div>
+    </div>
+  )
+}
+
+function FeedPreview({ posts, onEdit }) {
+  const [filtro, setFiltro] = useState('post')  // 'tutti' | 'post' | 'storia'
+
+  const sorted = [...posts]
+    .filter(p => {
+      const slides = (() => { try { return JSON.parse(p.slides || '[]') } catch { return [] } })()
+      const isStoria = slides.length > 0 && slides.every(s => TEMPLATES[s.template]?.size === '9:16')
+      if (filtro === 'post')   return !isStoria
+      if (filtro === 'storia') return isStoria
+      return true
+    })
+    .sort((a, b) => {
+      const da = a.dataProgrammata || a.dataCreazione || ''
+      const db = b.dataProgrammata || b.dataCreazione || ''
+      return db.localeCompare(da)  // più recente prima (come Instagram feed)
+    })
+
+  return (
+    <div className={styles.feedWrap}>
+      <div className={styles.feedToolbar}>
+        <span className={styles.feedToolbarLabel}>Mostra:</span>
+        {['tutti', 'post', 'storia'].map(f => (
+          <button
+            key={f}
+            className={filtro === f ? `${styles.tab} ${styles.tabActive}` : styles.tab}
+            onClick={() => setFiltro(f)}
+          >
+            {f === 'tutti' ? 'Tutti' : f === 'post' ? 'Post' : 'Storie'}
+          </button>
+        ))}
+        <span className={styles.feedToolbarLabel} style={{ marginLeft: 'auto' }}>
+          {sorted.length} contenuti
+        </span>
+      </div>
+      <div className={styles.feedGrid}>
+        {sorted.length === 0 && (
+          <div className={styles.feedEmpty}>Nessun contenuto</div>
+        )}
+        {sorted.map(p => (
+          <FeedCell key={p.id} post={p} onClick={onEdit} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ─── SocialCalendario ─────────────────────────────────────────────────────────
 
 function EventoContenuto({ info }) {
@@ -886,37 +1271,174 @@ function EventoContenuto({ info }) {
     )
   }
   if (isGhost) {
+    const tipoLabel = info.event.extendedProps.ghost?.template === 'storia_evento' ? 'Storia' : 'Post'
     return (
       <div style={{ border: '1.5px dashed #7A6448', borderRadius: '4px', padding: '2px 6px', width: '100%', cursor: 'pointer', overflow: 'hidden', background: 'rgba(122,100,72,0.08)' }}>
         <div style={{ fontWeight: 500, color: '#9a8060', fontSize: '0.72rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           ✦ {info.event.title}
         </div>
+        <span className={tipoLabel === 'Storia' ? styles.calChipStoria : styles.calChipPost}>{tipoLabel}</span>
       </div>
     )
   }
   const color = STATO_COLORI_POST[stato] || '#7A6448'
-  return (
-    <div style={{ background: color, borderRadius: '4px', padding: '2px 6px', width: '100%', cursor: 'pointer', overflow: 'hidden' }}>
-      <div style={{ fontWeight: 700, color: '#fff', fontSize: '0.78rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {info.event.title}
+  const { post } = info.event.extendedProps
+  const slides = (() => { try { return JSON.parse(post?.slides || '[]') } catch { return [] } })()
+  const firstSlide = slides[0]
+  const tipoLabel = (post?.tipoContenuto || 'post') === 'storia' ? 'Storia' : 'Post'
+  const oraStr = (() => {
+    const dp = post?.dataProgrammata || post?.dataPubblicata
+    if (!dp || !dp.includes('T')) return null
+    try { return new Date(dp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) } catch { return null }
+  })()
+  const CAL_THUMB_W = 28
+  const thumbContent = firstSlide?.template ? (() => {
+    const T = TEMPLATES[firstSlide.template]
+    if (!T) return null
+    const { w, h } = TEMPLATE_SIZES[T.size || '1:1']
+    const scale = CAL_THUMB_W / w
+    return (
+      <div style={{ width: CAL_THUMB_W, flexShrink: 0, borderRadius: 2, overflow: 'hidden', position: 'relative', alignSelf: 'stretch' }}>
+        <div style={{ position: 'absolute', top: '50%', left: 0, width: w, height: h, marginTop: -Math.round(h * scale / 2), transform: `scale(${scale})`, transformOrigin: 'top left', pointerEvents: 'none' }}>
+          <T.Component {...(firstSlide.data || {})} />
+        </div>
       </div>
-      <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.85)', marginTop: '1px' }}>{stato}</div>
+    )
+  })() : (firstSlide?.data?.imageUrl ? (
+    <img src={firstSlide.data.imageUrl} alt="" style={{ width: CAL_THUMB_W, alignSelf: 'stretch', objectFit: 'cover', objectPosition: 'top', borderRadius: 2, flexShrink: 0 }} />
+  ) : null)
+  return (
+    <div style={{ background: color, borderRadius: '4px', padding: '2px 4px', width: '100%', cursor: 'pointer', overflow: 'hidden', display: 'flex', alignItems: 'stretch', gap: 4 }}>
+      {thumbContent}
+      <div style={{ flex: 1, overflow: 'hidden', minWidth: 0 }}>
+        <span style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 3, padding: '0 4px', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.05em', color: '#fff', display: 'inline-block', marginBottom: '1px' }}>{tipoLabel}</span>
+        <div style={{ fontWeight: 700, color: '#fff', fontSize: '0.78rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>
+          {info.event.title}
+        </div>
+        <div style={{ fontSize: '0.66rem', color: 'rgba(255,255,255,0.8)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: 3 }}>
+          <span>{stato}</span>
+          {oraStr && <><span style={{ opacity: 0.4 }}>·</span><span>{oraStr}</span></>}
+        </div>
+      </div>
     </div>
   )
 }
 
-function SocialCalendario({ posts, onApriEditor, onApriEditorDaGhost }) {
+// ─── PostPreviewModal ─────────────────────────────────────────────────────────
+
+const MODAL_PREV_W = 300
+
+function PostPreviewModal({ post, onChiudi, onModifica }) {
+  const [slideIdx, setSlideIdx] = useState(0)
+  const slides = useMemo(() => { try { return JSON.parse(post?.slides || '[]') } catch { return [] } }, [post])
+
+  const slide = slides[slideIdx]
+  const T = slide ? TEMPLATES[slide.template] : null
+  let slideContent = null
+  if (T) {
+    const { w, h } = TEMPLATE_SIZES[T.size || '1:1']
+    const scale = MODAL_PREV_W / w
+    const prevH = Math.round(h * scale)
+    slideContent = (
+      <div style={{ width: MODAL_PREV_W, height: prevH, overflow: 'hidden', borderRadius: 8, flexShrink: 0 }}>
+        <div style={{ width: w, height: h, transform: `scale(${scale})`, transformOrigin: 'top left', pointerEvents: 'none' }}>
+          <T.Component {...(slide.data || {})} />
+        </div>
+      </div>
+    )
+  }
+
+  const dp = post?.dataProgrammata
+  const dataFmt = dp ? new Date(dp).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : null
+  const oraFmt  = dp ? new Date(dp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : null
+  const piattaforme = post?.piattaforme ? post.piattaforme.split(',').filter(Boolean) : []
+  const tipoLabel = (post?.tipoContenuto || 'post') === 'storia' ? 'Storia' : 'Post'
+  const color = STATO_COLORI_POST[post?.stato] || '#7A6448'
+
+  return (
+    <div className={styles.modalOverlay} onClick={onChiudi}>
+      <div className={styles.modalBox} onClick={e => e.stopPropagation()}>
+        <button className={styles.modalClose} onClick={onChiudi}><X size={18} /></button>
+
+        <div className={styles.modalHeader}>
+          <div className={styles.modalTitolo}>{post?.titolo}</div>
+          <div className={styles.modalBadges}>
+            <span className={styles.modalBadgeStato} style={{ background: color }}>{post?.stato}</span>
+            <span className={tipoLabel === 'Storia' ? styles.calChipStoria : styles.calChipPost}>{tipoLabel}</span>
+          </div>
+        </div>
+
+        <div className={styles.modalCarousel}>
+          {slides.length > 1 && (
+            <button className={styles.modalArrow} disabled={slideIdx === 0} onClick={() => setSlideIdx(i => i - 1)}>‹</button>
+          )}
+          <div className={styles.modalSlideWrap}>{slideContent}</div>
+          {slides.length > 1 && (
+            <button className={styles.modalArrow} disabled={slideIdx === slides.length - 1} onClick={() => setSlideIdx(i => i + 1)}>›</button>
+          )}
+        </div>
+
+        {slides.length > 1 && (
+          <div className={styles.modalDots}>
+            {slides.map((_, i) => (
+              <button key={i} className={`${styles.modalDot} ${i === slideIdx ? styles.modalDotActive : ''}`} onClick={() => setSlideIdx(i)} />
+            ))}
+          </div>
+        )}
+
+        <div className={styles.modalMeta}>
+          {dp && (
+            <div className={styles.modalMetaRow}>
+              <Clock size={14} />
+              <span>{dataFmt} alle {oraFmt}</span>
+            </div>
+          )}
+          {piattaforme.length > 0 && (
+            <div className={styles.modalMetaRow}>
+              {piattaforme.map(p => {
+                const cfg = PIATTAFORME_CONFIG.find(c => c.key === p)
+                return cfg ? <cfg.Icon key={p} size={15} style={{ color: cfg.color }} /> : null
+              })}
+              <span>{piattaforme.map(p => PIATTAFORME_CONFIG.find(c => c.key === p)?.label).filter(Boolean).join(', ')}</span>
+            </div>
+          )}
+        </div>
+
+        {post?.caption && (
+          <div className={styles.modalCaption}>
+            <div className={styles.modalCaptionLabel}>Caption</div>
+            <div className={styles.modalCaptionText}>{post.caption}</div>
+          </div>
+        )}
+
+        <div className={styles.modalFooter}>
+          <button className={styles.modalBtnEdit} onClick={() => { onChiudi(); onModifica(post) }}>
+            <IconEdit size={14} /> Modifica
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── SocialCalendario ─────────────────────────────────────────────────────────
+
+function SocialCalendario({ posts, onApriPreview, onApriEditorDaGhost, onApriEditorDaGiorno }) {
   const { appuntamenti } = useAppuntamenti()
+  const { orari } = useOrari()
   const calRef = useRef(null)
-  const agendaEvents = useMemo(() => buildAgendaEvents(appuntamenti), [appuntamenti])
-  const ghosts = useMemo(() => buildGhostSuggestions(appuntamenti, posts), [appuntamenti, posts])
+  const onGiornoRef = useRef(onApriEditorDaGiorno)
+  useEffect(() => { onGiornoRef.current = onApriEditorDaGiorno }, [onApriEditorDaGiorno])
+  const [mostraSuggerimenti, setMostraSuggerimenti] = useState(false)
+  const agendaEvents = useMemo(() => buildAgendaEvents(appuntamenti, orari), [appuntamenti, orari])
+  const ghosts = useMemo(() => buildGhostSuggestions(appuntamenti, posts, orari), [appuntamenti, posts, orari])
 
   const postEvents = useMemo(() => posts
     .filter(p => p.dataProgrammata || p.dataCreazione)
     .map(p => ({
       id:    `post-${p.id}`,
       title: p.titolo,
-      date:  (p.dataProgrammata || p.dataCreazione + 'T12:00').slice(0, 10),
+      date:  p.dataProgrammata ? isoToLocalDateStr(p.dataProgrammata) : p.dataCreazione.slice(0, 10),
       backgroundColor: 'transparent',
       borderColor:     'transparent',
       extendedProps: { isAgenda: false, isGhost: false, stato: p.stato, post: p },
@@ -933,17 +1455,21 @@ function SocialCalendario({ posts, onApriEditor, onApriEditorDaGhost }) {
 
   return (
     <div className={styles.calWrap}>
-      <div style={{ padding: '4px 16px 8px', fontSize: '0.72rem', color: 'var(--text3)', display: 'flex', alignItems: 'center', gap: 16 }}>
-        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#1565C0', marginRight: 4 }} />Post programmati</span>
-        <span><span style={{ display: 'inline-block', width: 8, height: 8, border: '1.5px dashed #7A6448', borderRadius: '50%', marginRight: 4 }} />Suggeriti (clicca per creare)</span>
-        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#c9a84c', marginRight: 4, opacity: 0.5 }} />Appuntamenti</span>
+      <div className={styles.calToolbar}>
+        <button
+          className={`${styles.calToggle} ${mostraSuggerimenti ? styles.calToggleOn : ''}`}
+          onClick={() => setMostraSuggerimenti(v => !v)}
+        >
+          <span className={styles.calToggleThumb} />
+          Suggerimenti AI
+        </button>
       </div>
       <FullCalendar
         ref={calRef}
         plugins={[dayGridPlugin, listPlugin, interactionPlugin]}
         initialView="dayGridMonth"
         locale="it"
-        events={[...agendaEvents, ...postEvents, ...ghostEvents]}
+        events={[...agendaEvents, ...postEvents, ...(mostraSuggerimenti ? ghostEvents : [])]}
         eventContent={(info) => <EventoContenuto info={info} />}
         eventClick={(info) => {
           if (info.event.extendedProps.isAgenda) return
@@ -951,7 +1477,20 @@ function SocialCalendario({ posts, onApriEditor, onApriEditorDaGhost }) {
             onApriEditorDaGhost(info.event.extendedProps.ghost)
             return
           }
-          onApriEditor(info.event.extendedProps.post)
+          onApriPreview(info.event.extendedProps.post)
+        }}
+        dayCellDidMount={(arg) => {
+          const frame = arg.el.querySelector('.fc-daygrid-day-frame')
+          if (!frame) return
+          const btn = document.createElement('button')
+          btn.className = 'social-day-add-btn'
+          btn.title = 'Nuovo post'
+          btn.innerHTML = '<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
+          btn.addEventListener('click', (e) => { e.stopPropagation(); onGiornoRef.current(arg.date) })
+          frame.appendChild(btn)
+        }}
+        dayCellWillUnmount={(arg) => {
+          arg.el.querySelector('.social-day-add-btn')?.remove()
         }}
         headerToolbar={{ left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' }}
         buttonText={{ today: 'Vai ad oggi', month: 'Mese', list: 'Lista' }}
@@ -1010,7 +1549,11 @@ function ComposerPost({ onClose }) {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ caption, imageUrl: fotoSelezionata?.url || '', piattaforme: piattaformeAttive, titolo: argomento || 'Boogie Bistrot', link: SITO_BASE }),
       })
-      const data = await res.json()
+      let data
+      try { data = await res.json() } catch {
+        setRisultato({ tipo: 'parziale', msg: 'Timeout — verifica direttamente su Instagram se il post è stato pubblicato' })
+        return
+      }
       setRisultato({ tipo: data.success ? 'ok' : 'parziale', data })
     } catch (e) { setRisultato({ tipo: 'err', msg: e.message }) }
     finally { setLoading(false) }
@@ -1151,7 +1694,11 @@ function CardSocial({ item, onAggiornato }) {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ caption, imageUrl, piattaforme: piattaformeAttive, titolo: item.titolo || item.title || '', link: linkPubblico }),
       })
-      const data = await res.json()
+      let data
+      try { data = await res.json() } catch {
+        setRisultato({ tipo: 'parziale', msg: 'Timeout — verifica direttamente su Instagram se il post è stato pubblicato' })
+        return
+      }
       setRisultato({ tipo: data.success ? 'ok' : 'parziale', data })
       if (data.success || Object.keys(data.risultati || {}).length > 0) {
         await aggiornaSuAirtable('pubblicato', caption)
@@ -1246,11 +1793,9 @@ function CardSocial({ item, onAggiornato }) {
 
 export default function SocialStudioPanel() {
   const { posts, loading: loadingPosts, carica, elimina } = useSocialPosts()
-  const [tab,           setTab]           = useState('calendario')
   const [editorAperto,  setEditorAperto]  = useState(false)
   const [postInEdit,    setPostInEdit]    = useState(null)
-  const [filtroStato,   setFiltroStato]   = useState('tutti')
-  const [pubblicando,   setPubblicando]   = useState(null)
+  const [postPreview,   setPostPreview]   = useState(null)
 
 
   function apriEditor(post = null) {
@@ -1273,44 +1818,16 @@ export default function SocialStudioPanel() {
     setEditorAperto(false)
     setPostInEdit(null)
     carica()
-    setTab('calendario')
   }
 
-  async function handleElimina(id) {
-    if (!window.confirm('Eliminare questo post?')) return
-    await elimina(id)
+  function apriEditorDaGiorno(date) {
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`
+    setPostInEdit({ dataSuggerita: dateStr + 'T12:00', stato: 'Bozza', piattaforme: 'instagram,facebook' })
+    setEditorAperto(true)
   }
 
-  async function handlePubblicaPost(post) {
-    const slides    = (() => { try { return JSON.parse(post.slides || '[]') } catch { return [] } })()
-    const imageUrls = slides.map(s => s.cloudinaryUrl).filter(Boolean)
-    const piattaforme = (post.piattaforme || 'instagram,facebook').split(',').filter(Boolean)
-    const isStoria = slides.length > 0 && slides.every(s => TEMPLATES[s.template]?.size === '9:16')
-    const linkUrls = isStoria ? slides.map(s => s.data?.linkUrl || '') : []
+  const [vistaAttiva, setVistaAttiva] = useState('calendario')  // 'calendario' | 'feed'
 
-    if (imageUrls.length === 0) { alert('Questo post non ha immagini caricate. Aprilo e usa "Pubblica ora" per catturare le slide.'); return }
-    if (!window.confirm(`Pubblicare su ${piattaforme.join(', ')}?`)) return
-
-    setPubblicando(post.id)
-    try {
-      const res  = await authFetch('/.netlify/functions/pubblica-social?action=pubblica-carosello', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ caption: post.caption, imageUrls, piattaforme, postId: post.id, mediaType: isStoria ? 'STORIES' : 'CAROUSEL', linkUrls }),
-      })
-      const json = await res.json()
-      if (json.success) { alert(`Pubblicato con successo su ${piattaforme.join(', ')}!`); carica() }
-      else {
-        const errs = json.errori && Object.keys(json.errori).length > 0
-          ? Object.entries(json.errori).map(([p, e]) => `${p}: ${e}`).join('\n')
-          : json.error || 'Errore sconosciuto — controlla i log Netlify'
-        alert('Pubblicazione parziale:\n' + errs)
-        carica()
-      }
-    } catch (e) { alert('Errore: ' + e.message) }
-    finally { setPubblicando(null) }
-  }
-
-  const postFiltrati  = filtroStato === 'tutti' ? posts : posts.filter(p => p.stato === filtroStato)
   const programmatiCount = posts.filter(p => p.stato === 'Programmato').length
 
   const coverageLabel = useMemo(() => {
@@ -1351,59 +1868,34 @@ export default function SocialStudioPanel() {
         </div>
       </div>
 
-      {/* Tab bar */}
       <div className={styles.tabBar}>
-        {[
-          ['builder',    'Post Builder'],
-          ['calendario', 'Calendario'],
-        ].map(([id, label]) => (
-          <button key={id} className={`${styles.tabBtn} ${tab === id ? styles.tabBtnActive : ''}`} onClick={() => setTab(id)}>
-            {label}
-          </button>
-        ))}
+        <button
+          className={vistaAttiva === 'calendario' ? `${styles.tab} ${styles.tabActive}` : styles.tab}
+          onClick={() => setVistaAttiva('calendario')}
+        >
+          Calendario
+        </button>
+        <button
+          className={vistaAttiva === 'feed' ? `${styles.tab} ${styles.tabActive}` : styles.tab}
+          onClick={() => setVistaAttiva('feed')}
+        >
+          Feed
+        </button>
       </div>
 
-      {/* ── Tab: Post Builder ── */}
-      {tab === 'builder' && (
-        <>
-          <div className={styles.filtriRow}>
-            {[['tutti','Tutti'],['Bozza','Bozze'],['Programmato','Programmati'],['Pubblicato','Pubblicati'],['Errore','Errori']].map(([v, l]) => (
-              <button key={v} className={`${styles.tab} ${filtroStato === v ? styles.tabActive : ''}`} onClick={() => setFiltroStato(v)}>{l}</button>
-            ))}
-          </div>
-
-          {loadingPosts ? (
-            <div className={styles.empty}>Caricamento post…</div>
-          ) : postFiltrati.length === 0 ? (
-            <div className={styles.emptyState}>
-              <Slideshow size={48} weight="thin" style={{ opacity: 0.25 }} />
-              <p className={styles.emptyTitolo}>Nessun post trovato</p>
-              <p className={styles.emptySub}>Clicca <strong>Nuovo post</strong> per creare il tuo primo carosello.</p>
-              <button className="btn-primary" onClick={() => apriEditor(null)}><Plus size={14} /> Crea il primo post</button>
-            </div>
-          ) : (
-            <div className={styles.postList}>
-              {postFiltrati.map(post => (
-                <PostCard key={post.id} post={post}
-                  onEdit={apriEditor}
-                  onElimina={handleElimina}
-                  onPubblica={handlePubblicaPost}
-                />
-              ))}
-            </div>
-          )}
-
-          <div className={styles.infoBox}>
-            <strong>Cron:</strong> <code>pubblica-social-schedulato</code> gira ogni ora. ·{' '}
-            <strong>Env:</strong> <code>AIRTABLE_SOCIAL_POSTS</code> ·{' '}
-            <strong>Dipendenza:</strong> <code>npm install html-to-image</code>
-          </div>
-        </>
+      {vistaAttiva === 'calendario' && (
+        <SocialCalendario posts={posts} onApriPreview={setPostPreview} onApriEditorDaGhost={apriEditorDaGhost} onApriEditorDaGiorno={apriEditorDaGiorno} />
       )}
 
-      {/* ── Tab: Calendario ── */}
-      {tab === 'calendario' && (
-        <SocialCalendario posts={posts} onApriEditor={apriEditor} onApriEditorDaGhost={apriEditorDaGhost} />
+      {postPreview && (
+        <PostPreviewModal
+          post={postPreview}
+          onChiudi={() => setPostPreview(null)}
+          onModifica={(p) => apriEditor(p)}
+        />
+      )}
+      {vistaAttiva === 'feed' && (
+        <FeedPreview posts={posts} onEdit={setPostPreview} />
       )}
 
     </div>

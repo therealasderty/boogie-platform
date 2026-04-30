@@ -140,8 +140,7 @@ export default function PopupManager() {
       style={{
         backgroundColor: `rgba(0,0,0,${animating ? 0.5 : 0})`,
         backdropFilter: `blur(${animating ? 4 : 0}px)`,
-        transitionProperty: 'background-color, backdrop-filter',
-        transitionDuration: '0.35s',
+        transition: 'background-color 0.35s, backdrop-filter 0.35s',
       }}
       onClick={chiudi}
     >
@@ -150,9 +149,7 @@ export default function PopupManager() {
         style={{
           opacity:   animating ? 1 : 0,
           transform: animating ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.97)',
-          transitionProperty: 'opacity, transform',
-          transitionDuration: '0.35s',
-          transitionTimingFunction: 'cubic-bezier(0.22,1,0.36,1)',
+          transition: 'opacity 0.35s cubic-bezier(0.22,1,0.36,1), transform 0.35s cubic-bezier(0.22,1,0.36,1)',
         }}
         onClick={e => e.stopPropagation()}
       >
@@ -235,7 +232,7 @@ export default function PopupManager() {
               className="bg-brand hover:bg-brand-hover text-black/80 font-semibold px-6 py-3 rounded-btn transition-colors"
               style={{ fontSize: 'var(--text-meta)' }}
             >
-              {isDormiente ? 'Rimani aggiornato' : 'Scopri di più'}
+              {isPassato ? 'Rimani aggiornato' : 'Scopri di più'}
             </Link>
             <button
               onClick={chiudi}

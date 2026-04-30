@@ -30,7 +30,7 @@ exports.handler = async (event) => {
       `AND(DATETIME_FORMAT({Data},'YYYY-MM-DD') >= "${dataInizio}", DATETIME_FORMAT({Data},'YYYY-MM-DD') <= "${dataFine}", {Stato} != "Cancellata")`
     )
 
-    const fields = ['Nome','Data','Ora','Persone','Stato','Note','Telefono','Preferenza']
+    const fields = ['Nome','Data','Ora','Persone','Stato','Note','Telefono','Preferenza','Evento']
       .map(f => `fields[]=${encodeURIComponent(f)}`).join('&')
 
     const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}?filterByFormula=${formula}&${fields}&sort[0][field]=Data&sort[0][direction]=asc&sort[1][field]=Ora&sort[1][direction]=asc`
@@ -53,6 +53,7 @@ exports.handler = async (event) => {
       note:       r.fields.Note || '',
       telefono:   r.fields.Telefono || '',
       preferenza: r.fields.Preferenza || '',
+      evento:     r.fields.Evento || '',
     }))
 
     // Raggruppa per data

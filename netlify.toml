@@ -27,6 +27,9 @@
 [functions.pubblica-social-schedulato]
   schedule = "0 * * * *"
 
+[functions."pubblica-social"]
+  timeout = 26
+
 # ── Redirect 301 dal sito vecchio ─────────────────────────────────────────────
 
 # Menu

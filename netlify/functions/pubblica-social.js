@@ -22,6 +22,8 @@ const GOOGLE_CLIENT_ID     = process.env.GOOGLE_CLIENT_ID
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET
 const GOOGLE_REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN
 const GOOGLE_LOCATION_NAME = process.env.GOOGLE_LOCATION_NAME
+const AIRTABLE_TOKEN       = process.env.AIRTABLE_TOKEN
+const AIRTABLE_BASE_ID     = process.env.AIRTABLE_BASE_ID
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -129,6 +131,75 @@ async function getGoogleAccessToken() {
   const data = await res.json()
   if (!data.access_token) throw new Error('Google: access_token non ricevuto')
   return data.access_token
+}
+
+// ── Meta: Instagram Stories (una per immagine) ────────────────────────────────
+
+async function pubblicaStorieInstagram(imageUrls, caption, linkUrls = []) {
+  if (!META_IG_USER_ID || !META_ACCESS_TOKEN) {
+    throw new Error('META_IG_USER_ID o META_ACCESS_TOKEN non configurati')
+  }
+
+  const ids = []
+  for (let i = 0; i < imageUrls.length; i++) {
+    const imageUrl = imageUrls[i]
+    const linkUrl  = linkUrls[i] || ''
+
+    // Step 1: container story (con link_url se disponibile, fallback senza)
+    const storyPayload = { image_url: imageUrl, media_type: 'STORIES', access_token: META_ACCESS_TOKEN }
+    if (linkUrl) storyPayload.link_url = linkUrl
+
+    let createRes = await fetch(
+      `https://graph.facebook.com/v19.0/${META_IG_USER_ID}/media`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(storyPayload) }
+    )
+    let createData = await createRes.json()
+
+    // Fallback: se link_url è stato rifiutato, riprova senza
+    if ((!createRes.ok || createData.error) && linkUrl) {
+      console.warn(`IG story: link_url rifiutato (${createData.error?.message}), riprovo senza link`)
+      const payloadSenzaLink = { image_url: imageUrl, media_type: 'STORIES', access_token: META_ACCESS_TOKEN }
+      createRes  = await fetch(
+        `https://graph.facebook.com/v19.0/${META_IG_USER_ID}/media`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadSenzaLink) }
+      )
+      createData = await createRes.json()
+    }
+
+    if (!createRes.ok || createData.error) {
+      throw new Error(createData.error?.message || `IG story container failed per: ${imageUrl}`)
+    }
+
+    // Step 2: attendi che il container sia pronto (polling status)
+    const containerId = createData.id
+    let statusOk = false
+    for (let attempt = 0; attempt < 8; attempt++) {
+      await new Promise(r => setTimeout(r, 2000))
+      const statusRes  = await fetch(
+        `https://graph.facebook.com/v19.0/${containerId}?fields=status_code&access_token=${META_ACCESS_TOKEN}`
+      )
+      const statusData = await statusRes.json()
+      if (statusData.status_code === 'FINISHED') { statusOk = true; break }
+      if (statusData.status_code === 'ERROR') throw new Error(`IG story container in errore per: ${imageUrl}`)
+    }
+    if (!statusOk) throw new Error(`IG story container non pronto dopo 16s per: ${imageUrl}`)
+
+    // Step 3: pubblica ogni story
+    const publishRes = await fetch(
+      `https://graph.facebook.com/v19.0/${META_IG_USER_ID}/media_publish`,
+      {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ creation_id: createData.id, access_token: META_ACCESS_TOKEN }),
+      }
+    )
+    const publishData = await publishRes.json()
+    if (!publishRes.ok || publishData.error) {
+      throw new Error(publishData.error?.message || `IG story publish failed (${publishRes.status})`)
+    }
+    ids.push(publishData.id)
+  }
+  return { stories: ids.length, ids }
 }
 
 // ── Meta: Instagram Carosello ────────────────────────────────────────────────
@@ -403,8 +474,9 @@ exports.handler = async (event) => {
 
   // ── Pubblica carosello ───────────────────────────────────────────────────
   if (action === 'pubblica-carosello') {
-    const { caption, imageUrls, piattaforme = [], postId } = body
-    if (!caption?.trim()) {
+    const { caption, imageUrls, piattaforme = [], postId, mediaType, linkUrls = [] } = body
+    const isStoria = mediaType === 'STORIES'
+    if (!isStoria && !caption?.trim()) {
       return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'caption obbligatoria' }) }
     }
     if (!Array.isArray(imageUrls) || imageUrls.length === 0) {
@@ -419,9 +491,13 @@ exports.handler = async (event) => {
 
     if (piattaforme.includes('instagram')) {
       try {
-        risultati.instagram = imageUrls.length === 1
-          ? await pubblicaSuInstagram(imageUrls[0], caption)
-          : await pubblicaCaroselloInstagram(imageUrls, caption)
+        if (isStoria) {
+          risultati.instagram = await pubblicaStorieInstagram(imageUrls, caption, linkUrls)
+        } else {
+          risultati.instagram = imageUrls.length === 1
+            ? await pubblicaSuInstagram(imageUrls[0], caption)
+            : await pubblicaCaroselloInstagram(imageUrls, caption)
+        }
       } catch (e) { errori.instagram = e.message }
     }
 

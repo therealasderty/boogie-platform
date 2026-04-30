@@ -15,6 +15,7 @@
 //   ErroreMsg         (Long text)
 //   DataCreazione     (Single line text — ISO string)
 //   DataPubblicata    (Single line text — ISO string)
+//   TipoContenuto     (Single select): post | storia
 //
 // GET    ?stato=Bozza    → lista post filtrata
 // POST                   → crea post
@@ -52,6 +53,7 @@ function mapRecord(r) {
     erroreMsg:               r.fields['ErroreMsg']               || '',
     dataCreazione:           r.fields['DataCreazione']           || '',
     dataPubblicata:          r.fields['DataPubblicata']          || '',
+    tipoContenuto:           r.fields['TipoContenuto']           || 'post',
   }
 }
 
@@ -104,6 +106,7 @@ exports.handler = async (event) => {
         'SorgenteId':      body.sorgenteId      || '',
         'SorgenteTitolo':  body.sorgenteTitolo  || '',
         'DataCreazione':   new Date().toISOString(),
+        'TipoContenuto':   body.tipoContenuto || 'post',
       }
       if (body.dataProgrammata) fields['DataProgrammata'] = body.dataProgrammata
 
@@ -140,8 +143,9 @@ exports.handler = async (event) => {
       if (body.dataProgrammata !== undefined) fields['DataProgrammata']         = body.dataProgrammata
       if (body.sorgenteId      !== undefined) fields['SorgenteId']              = body.sorgenteId
       if (body.sorgenteTitolo  !== undefined) fields['SorgenteTitolo']          = body.sorgenteTitolo
-      if (body.erroreMsg       !== undefined) fields['ErroreMsg']               = body.erroreMsg
-      if (body.dataPubblicata  !== undefined) fields['DataPubblicata']          = body.dataPubblicata
+      if (body.erroreMsg         !== undefined) fields['ErroreMsg']               = body.erroreMsg
+      if (body.dataPubblicata   !== undefined) fields['DataPubblicata']          = body.dataPubblicata
+      if (body.tipoContenuto   !== undefined) fields['TipoContenuto']           = body.tipoContenuto
       if (body.risultatiPubblicazione !== undefined) {
         fields['RisultatiPubblicazione'] = typeof body.risultatiPubblicazione === 'string'
           ? body.risultatiPubblicazione
