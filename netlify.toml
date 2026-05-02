@@ -25,7 +25,7 @@
   schedule = "0 23 * * 0"
 
 [functions.pubblica-social-schedulato]
-  schedule = "0 * * * *"
+  schedule = "*/30 * * * *"
 
 [functions."pubblica-social"]
   timeout = 26
