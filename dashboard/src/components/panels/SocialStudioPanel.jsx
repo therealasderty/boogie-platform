@@ -80,7 +80,8 @@ function isoToDatetimeLocal(isoStr) {
   try {
     const d = new Date(isoStr)
     const pad = n => String(n).padStart(2, '0')
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:00`
+    const mins = d.getMinutes() >= 30 ? '30' : '00'
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${mins}`
   } catch { return '' }
 }
 
@@ -877,15 +878,16 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
                     <select
                       className={styles.input}
                       style={{ width: 'auto' }}
-                      value={programmaTemp ? programmaTemp.slice(11, 13) : '12'}
+                      value={programmaTemp ? programmaTemp.slice(11, 16) : '12:00'}
                       onChange={e => {
                         const datePart = programmaTemp?.slice(0, 10) || isoToLocalDateStr(new Date().toISOString())
-                        setProgrammaTemp(datePart + 'T' + e.target.value + ':00')
+                        setProgrammaTemp(datePart + 'T' + e.target.value)
                       }}
                     >
-                      {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map(h => (
-                        <option key={h} value={h}>{h}:00</option>
-                      ))}
+                      {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).flatMap(h => [
+                        <option key={h + ':00'} value={h + ':00'}>{h}:00</option>,
+                        <option key={h + ':30'} value={h + ':30'}>{h}:30</option>,
+                      ])}
                     </select>
                   </div>
                   <div className={styles.programmaPopoverActions}>

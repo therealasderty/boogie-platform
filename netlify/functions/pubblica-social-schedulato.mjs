@@ -196,9 +196,11 @@ export default async () => {
 
     for (const record of records) {
       const f            = record.fields
-      const caption      = f['Caption']     || ''
-      const piattaforme  = (f['Piattaforme'] || '').split(',').map(p => p.trim()).filter(Boolean)
-      const slidesRaw    = f['Slides']       || '[]'
+      const caption        = f['Caption']       || ''
+      const tipoContenuto  = f['TipoContenuto'] || 'post'
+      const isStoria       = tipoContenuto === 'storia'
+      const piattaforme    = (f['Piattaforme'] || '').split(',').map(p => p.trim()).filter(Boolean).filter(p => !(p === 'facebook' && isStoria))
+      const slidesRaw      = f['Slides']       || '[]'
 
       let slides = []
       try { slides = JSON.parse(slidesRaw) } catch {}
