@@ -316,12 +316,12 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
                   <button type="button"
                     className={`${styles.tipoBtn} ${stato === 'attivo' ? styles.tipoBtnActive : ''}`}
                     style={stato === 'attivo' ? { background: '#16a34a', borderColor: '#16a34a' } : {}}
-                    onClick={() => setStato('attivo')}
+                    onClick={() => { setStato('attivo'); setDataTBD(false) }}
                   >✓ Attivo</button>
                   <button type="button"
                     className={`${styles.tipoBtn} ${stato === 'futuro' ? styles.tipoBtnActive : ''}`}
                     style={stato === 'futuro' ? { background: '#7c3aed', borderColor: '#7c3aed' } : {}}
-                    onClick={() => { setStato('futuro'); setMostraInNews(true) }}
+                    onClick={() => { setStato('futuro'); setMostraInNews(true); setDataVal(''); setOra(''); setOraFine('') }}
                   >Futuro</button>
                   <button type="button"
                     className={`${styles.tipoBtn} ${stato === 'passato' ? styles.tipoBtnActive : ''}`}

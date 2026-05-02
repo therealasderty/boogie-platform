@@ -107,7 +107,7 @@ function buildSlide(template, sorgente, record) {
 function buildAgendaEvents(appuntamenti, orari = []) {
   const aperti = orari.length > 0 ? new Set(orari.filter(o => o.attivo).map(o => o.giorno)) : null
   const BASE = { backgroundColor: 'transparent', borderColor: 'transparent', textColor: 'var(--text2)', editable: false }
-  return appuntamenti.flatMap(a => {
+  return appuntamenti.filter(a => a.stato !== 'futuro').flatMap(a => {
     const ricorrente = a.ricorrenza && a.ricorrenza !== 'nessuna'
     const base = { ...BASE, extendedProps: { isAgenda: true, ricorrente } }
     if (!ricorrente) return a.data ? [{ ...base, id: `ag-${a.id}`, title: a.title, date: a.data }] : []
@@ -696,19 +696,38 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
     return data.secure_url
   }
 
+  async function imgToDataUrl(url) {
+    if (!url || url.startsWith('data:')) return url
+    try {
+      const res  = await fetch(url, { cache: 'no-cache', mode: 'cors' })
+      const blob = await res.blob()
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload  = () => resolve(reader.result)
+        reader.onerror = reject
+        reader.readAsDataURL(blob)
+      })
+    } catch {
+      return url
+    }
+  }
+
   async function catturaTutteLeSlide(slidesInput) {
     const aggiornate = [...slidesInput]
     for (let i = 0; i < aggiornate.length; i++) {
       const slide = aggiornate[i]
-      if (slide.cloudinaryUrl) continue
-      setCaptureSlide(slide)
+      // Non saltare mai — ri-cattura sempre per garantire che le immagini siano incluse
+      // Pre-converti le immagini in data URL per evitare problemi CORS durante toPng
+      const dataPerCaptura = { ...slide.data }
+      if (dataPerCaptura.imageUrl) dataPerCaptura.imageUrl = await imgToDataUrl(dataPerCaptura.imageUrl)
+      setCaptureSlide({ ...slide, data: dataPerCaptura })
       await new Promise(r => setTimeout(r, 600))
       if (!captureRef.current) continue
       try {
         await document.fonts.ready
         const T = TEMPLATES[slide.template]
         const { w, h } = TEMPLATE_SIZES[(T?.size) || '1:1']
-        const dataUrl = await toPng(captureRef.current, { width: w, height: h, pixelRatio: 1, cacheBust: true })
+        const dataUrl = await toPng(captureRef.current, { width: w, height: h, pixelRatio: 1 })
         const blob = await (await fetch(dataUrl)).blob()
         const url  = await uploadBlob(blob)
         aggiornate[i] = { ...slide, cloudinaryUrl: url }
