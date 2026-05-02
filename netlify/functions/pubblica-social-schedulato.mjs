@@ -203,9 +203,9 @@ export default async () => {
       let slides = []
       try { slides = JSON.parse(slidesRaw) } catch {}
 
-      // Raccoglie URL Cloudinary delle slide (già caricate)
+      // Raccoglie URL delle slide: preferisce cloudinaryUrl (PNG renderizzata), fallback su data.imageUrl
       const imageUrls = slides
-        .map(s => s.cloudinaryUrl)
+        .map(s => s.cloudinaryUrl || s.data?.imageUrl)
         .filter(Boolean)
 
       const risultati = {}
