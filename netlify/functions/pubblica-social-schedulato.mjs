@@ -179,8 +179,9 @@ export default async () => {
     const ora = new Date().toISOString()
 
     // Cerca post programmati con data <= ora attuale
+    // IS_BEFORE è necessario per confrontare campi Date in Airtable
     const formula = encodeURIComponent(
-      `AND({Stato}='Programmato', {DataProgrammata}<='${ora}')`
+      `AND({Stato}='Programmato', NOT({DataProgrammata}=''), IS_BEFORE({DataProgrammata}, '${ora}'))`
     )
     const res  = await fetch(
       `${BASE_URL}?filterByFormula=${formula}&maxRecords=20`,
@@ -252,4 +253,4 @@ export default async () => {
   }
 }
 
-export const config = { schedule: '0 * * * *' }
+export const config = { schedule: '*/30 * * * *' }
