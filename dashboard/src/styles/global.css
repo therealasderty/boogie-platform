@@ -153,7 +153,8 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="
 
 /* ─── Button system ─────────────────────────────────────────────────────────
    Classi globali riutilizzabili in tutti i componenti.
-   Per cambiare lo stile di tutti i bottoni: modifica solo questo file.
+   Varianti: primary, secondary, accent, outline-accent, outline-success, danger,
+   icon (+ .danger), toggle, ghost, sm (combinabile con accent/primary/…).
 ────────────────────────────────────────────────────────────────────────────── */
 
 /* Primary — azione principale (salva, aggiungi, conferma) */
@@ -234,3 +235,59 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="
   cursor: pointer;
 }
 .btn-ghost:hover { color: var(--danger); }
+
+/* Compatto — usare insieme a .btn-accent, .btn-primary, ecc. */
+.btn-sm {
+  padding: 7px 16px;
+  font-size: 0.82rem;
+}
+
+/* Accent — CTA oro (pubblica ora, conferme social) */
+.btn-accent {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 22px;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 0.9rem; font-weight: 600;
+  transition: background 0.15s;
+  cursor: pointer;
+}
+.btn-accent:hover:not(:disabled) { background: var(--accent2); }
+.btn-accent:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Contorno oro — “Nuovo post”, “Crea post” */
+.btn-outline-accent {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: rgba(196,145,58,0.08);
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-outline-accent:hover { background: rgba(196,145,58,0.16); }
+
+/* Secondaria con enfasi verde al hover — “Segna come pubblicato”, annulla dialoghi conferma */
+.btn-outline-success {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 22px;
+  background: none; color: var(--text2);
+  border: var(--border-style); border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 0.9rem; font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-outline-success:hover:not(:disabled) {
+  border-color: var(--success);
+  color: var(--success);
+}
+.btn-outline-success:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-outline-success.btn-sm {
+  padding: 7px 14px;
+  font-size: 0.82rem;
+}

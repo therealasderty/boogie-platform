@@ -105,7 +105,7 @@ function SortableRow({ item, onEdit, onToggle, onDelete }) {
         <button className="btn-icon" onClick={() => onEdit(item)} title="Modifica">
           <IconEdit size={15} />
         </button>
-        <button className="btn-icon btn-icon-danger" onClick={() => onDelete(item)} title="Elimina">
+        <button className="btn-icon danger" onClick={() => onDelete(item)} title="Elimina">
           <IconTrash size={15} />
         </button>
       </div>

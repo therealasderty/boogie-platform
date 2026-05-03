@@ -1023,6 +1023,7 @@ export default function AgendaPanel() {
                 )
               }}
               dayMaxEvents={3}
+              allDayText=""
               listDayFormat={{ weekday: 'long', day: 'numeric', month: 'long' }}
               listDaySideFormat={false}
               noEventsText="Nessun evento"

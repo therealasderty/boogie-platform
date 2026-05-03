@@ -3,9 +3,7 @@
 // Controlla i SocialPosts con Stato=Programmato e DataProgrammata <= ora attuale,
 // li pubblica e aggiorna il record su Airtable.
 //
-// netlify.toml:
-//   [functions.pubblica-social-schedulato]
-//   schedule = "0 * * * *"
+// Schedulazione: vedi netlify.toml (es. ogni 30 minuti `*/30 * * * *`).
 //
 // Env vars richieste (stesse di pubblica-social.js):
 //   AIRTABLE_TOKEN, AIRTABLE_BASE_ID, AIRTABLE_SOCIAL_POSTS

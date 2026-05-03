@@ -81,13 +81,13 @@ function SortableRow({ piatto, onEdit, onToggle, onDelete, modificheAbilitate })
 
       {modificheAbilitate && (
         <div className={styles.rowActions}>
-          <button className={styles.btnIcon} onClick={() => onToggle(piatto)} title={piatto.attivo ? 'Nascondi' : 'Mostra'}>
+          <button type="button" className="btn-icon" onClick={() => onToggle(piatto)} title={piatto.attivo ? 'Nascondi' : 'Mostra'}>
             {piatto.attivo ? <IconEye size={15} /> : <IconEyeSlash size={15} />}
           </button>
-          <button className={styles.btnIcon} onClick={() => onEdit(piatto)} title="Modifica">
+          <button type="button" className="btn-icon" onClick={() => onEdit(piatto)} title="Modifica">
             <IconEdit size={15} />
           </button>
-          <button className={`${styles.btnIcon} ${styles.btnDelete}`} onClick={() => onDelete(piatto.id)} title="Elimina">
+          <button type="button" className="btn-icon danger" onClick={() => onDelete(piatto.id)} title="Elimina">
             <IconTrash size={15} />
           </button>
         </div>
@@ -129,7 +129,7 @@ function ModalPiatto({ piatto, onClose, onSave, defaultCategoria, defaultSottoca
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
         <div className={styles.modalHeader}>
           <span className={styles.modalTitolo}>{piatto ? 'Modifica piatto' : 'Nuovo piatto'}</span>
-          <button className={styles.btnIcon} onClick={onClose}><IconClose size={16} /></button>
+          <button type="button" className="btn-icon" onClick={onClose}><IconClose size={16} /></button>
         </div>
 
         <div className={styles.modalBody}>
@@ -260,8 +260,8 @@ function ModalPiatto({ piatto, onClose, onSave, defaultCategoria, defaultSottoca
         </div>
 
         <div className={styles.modalFooter}>
-          <button className={styles.btnSecondary} onClick={onClose}>Annulla</button>
-          <button className={styles.btnPrimary} onClick={handleSave} disabled={saving || !form.nome.trim()}>
+          <button type="button" className="btn-secondary" onClick={onClose}>Annulla</button>
+          <button type="button" className="btn-primary" onClick={handleSave} disabled={saving || !form.nome.trim()}>
             {saving ? 'Salvataggio…' : 'Salva'}
           </button>
         </div>
@@ -332,7 +332,7 @@ export default function MenuPanel() {
           Menu
         </div>
         <div className={styles.headerRight}>
-          <button className={styles.btnRefresh} onClick={carica} title="Ricarica"><IconRefresh size={15} /></button>
+          <button type="button" className="btn-icon" onClick={carica} title="Ricarica"><IconRefresh size={15} /></button>
           <button
             className={modificheAbilitate ? styles.btnAbilitaOn : styles.btnAbilita}
             onClick={() => setModificheAbilitate(v => !v)}
@@ -341,7 +341,7 @@ export default function MenuPanel() {
             {modificheAbilitate ? 'Modifiche attive' : 'Abilita modifiche'}
           </button>
           {modificheAbilitate && (
-            <button className={styles.btnPrimary} onClick={() => setModal('nuovo')}>
+            <button type="button" className="btn-accent btn-sm" onClick={() => setModal('nuovo')}>
               <IconPlus size={15} /> Aggiungi piatto
             </button>
           )}

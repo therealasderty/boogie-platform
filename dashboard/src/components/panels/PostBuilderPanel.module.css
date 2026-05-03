@@ -40,23 +40,6 @@
   border: 1px solid rgba(21,101,192,0.25);
 }
 
-.btnNuovo {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border: 1px solid var(--accent);
-  border-radius: var(--radius-sm);
-  background: rgba(196,145,58,0.08);
-  color: var(--accent);
-  font-size: 0.82rem;
-  font-weight: 600;
-  font-family: var(--font-body);
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.btnNuovo:hover { background: rgba(196,145,58,0.16); }
-
 /* ── Filtri ─────────────────────────────────────────────────────────────────── */
 .filtriRow { display: flex; gap: 6px; flex-wrap: wrap; }
 
@@ -109,24 +92,6 @@
   justify-content: flex-end;
 }
 
-.btnPubblicaNow {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 16px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: var(--accent);
-  color: #000;
-  font-size: 0.82rem;
-  font-weight: 700;
-  font-family: var(--font-body);
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-.btnPubblicaNow:hover:not(:disabled) { opacity: 0.85; }
-.btnPubblicaNow:disabled { opacity: 0.4; cursor: not-allowed; }
-
 /* ── Empty state ─────────────────────────────────────────────────────────────── */
 .empty { color: var(--text3); font-size: 0.9rem; padding: 20px 0; }
 
@@ -177,24 +142,6 @@
   flex-wrap: wrap;
 }
 .editorHeaderRight { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-
-.btnPubblicaOra {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 20px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: var(--accent);
-  color: #000;
-  font-size: 0.88rem;
-  font-weight: 700;
-  font-family: var(--font-body);
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-.btnPubblicaOra:hover:not(:disabled) { opacity: 0.85; }
-.btnPubblicaOra:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ── Messaggi ────────────────────────────────────────────────────────────────── */
 .msgOk   { padding: 10px 14px; border-radius: var(--radius-sm); background: rgba(39,174,96,0.1); color: #27AE60; font-size: 0.85rem; font-weight: 600; border: 1px solid rgba(39,174,96,0.25); }

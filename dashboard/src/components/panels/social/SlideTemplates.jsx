@@ -7,6 +7,7 @@
  *  - TemplateCover    — cover evento 4:5 (1080×1350)
  *  - TemplateFoto     — foto pura 1:1 / 4:5 / 9:16
  *  - TemplateStoriaEvento — story 9:16 (1080×1920)
+ *  - TemplateAgendaCover — teaser carosello agenda 4:5 (foto + copy, prima slide)
  */
 
 // ─── Costanti brand ────────────────────────────────────────────────────────────
@@ -189,6 +190,129 @@ export function TemplateCover({
           width:       '100%',
         }}>
           {descrizione || 'Descrizione evento...'}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Template Agenda Cover (4:5 — 1080×1350) ─────────────────────────────────
+// Prima slide del carosello “programma settimanale”: foto a scelta + titolo / periodo / CTA swipe.
+
+export function TemplateAgendaCover({
+  titolo         = 'Questa settimana',
+  labelPeriodo   = '',
+  sottotitolo    = '',
+  imageUrl       = '',
+  mostraIndirizzo = false,
+  indirizzo      = BRAND_ADDRESS,
+}) {
+  const titleSize = titolo.length > 28 ? 96 : titolo.length > 18 ? 120 : 148
+
+  return (
+    <div
+      style={{
+        position:        'relative',
+        width:           W_COVER,
+        height:          H_COVER,
+        backgroundColor: DARK_BG,
+        overflow:        'hidden',
+        fontFamily:      "'SofiaPro', 'Helvetica Neue', sans-serif",
+      }}
+    >
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          crossOrigin="anonymous"
+          alt=""
+          style={{
+            position:  'absolute',
+            inset:     0,
+            width:     '100%',
+            height:    '100%',
+            objectFit: 'cover',
+            display:   'block',
+          }}
+        />
+      ) : (
+        <div style={{
+          position:   'absolute',
+          inset:      0,
+          background: [
+            'radial-gradient(ellipse at 25% 35%, rgba(200,130,40,0.35) 0%, transparent 45%)',
+            'radial-gradient(ellipse at 75% 65%, rgba(160,80,20,0.28) 0%, transparent 42%)',
+            'linear-gradient(160deg, #2e1c08 0%, #1a0f06 45%, #080503 100%)',
+          ].join(', '),
+        }} />
+      )}
+
+      <div style={{
+        position:   'absolute',
+        inset:      0,
+        background: 'rgba(18,8,0,0.58)',
+      }} />
+
+      {/* Logo sopra il blocco testo (stesso stacking del TemplateCover) */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none' }}>
+        <LogoBlock top={88} logoW={140} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} />
+      </div>
+
+      {/* Centrato sull’intera area 1080×1350, non sulla fascia sotto il logo */}
+      <div style={{
+        position:       'absolute',
+        inset:          0,
+        paddingLeft:    60,
+        paddingRight:   60,
+        display:        'flex',
+        flexDirection:  'column',
+        alignItems:     'center',
+        justifyContent: 'center',
+        gap:            0,
+        zIndex:         1,
+      }}>
+        {labelPeriodo ? (
+          <div style={{
+            display:       'inline-block',
+            padding:       '12px 36px',
+            border:        '1.5px solid rgba(238,206,157,0.55)',
+            borderRadius:  999,
+            fontSize:      32,
+            fontWeight:    400,
+            color:         BRAND_GOLD,
+            marginBottom:  28,
+            whiteSpace:    'nowrap',
+            letterSpacing: 0.5,
+            maxWidth:      '100%',
+            overflow:      'hidden',
+            textOverflow:  'ellipsis',
+          }}>
+            {labelPeriodo}
+          </div>
+        ) : null}
+
+        <div style={{
+          fontFamily:    "'Alga', 'Georgia', serif",
+          fontSize:      titleSize,
+          fontWeight:    600,
+          lineHeight:    0.92,
+          color:         BRAND_GOLD,
+          textAlign:     'center',
+          wordBreak:     'break-word',
+          marginBottom:  36,
+          width:         '100%',
+        }}>
+          {titolo}
+        </div>
+
+        <div style={{
+          fontSize:    38,
+          fontWeight:  400,
+          lineHeight:  1.45,
+          color:       sottotitolo ? 'rgba(255,255,255,0.88)' : 'rgba(255,255,255,0.25)',
+          textAlign:   'center',
+          width:       '100%',
+        }}>
+          {sottotitolo || 'Scorri per il programma…'}
         </div>
       </div>
     </div>
@@ -775,9 +899,238 @@ export function TemplateChiusura({
   )
 }
 
+// ─── Template Agenda Settimana (4:5 — 1080×1350) ─────────────────────────────
+
+function formatAgendaData(dateStr) {
+  if (!dateStr) return ''
+  try {
+    return new Date(dateStr + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
+      .replace(/\b([a-z])/g, c => c.toUpperCase())
+  } catch { return dateStr }
+}
+
+export function TemplateAgendaSettimana({ eventi = [], labelSettimana = 'Questa settimana' }) {
+  const lista = eventi.slice(0, 6)
+  return (
+    <div style={{
+      position:        'relative',
+      width:           W_COVER,
+      height:          H_COVER,
+      backgroundColor: DARK_BG,
+      overflow:        'hidden',
+      fontFamily:      "'SofiaPro', 'Helvetica Neue', sans-serif",
+    }}>
+      {/* Sfondo radial */}
+      <div style={{
+        position:   'absolute', inset: 0,
+        background: [
+          'radial-gradient(ellipse at 20% 15%, rgba(180,110,30,0.28) 0%, transparent 50%)',
+          'radial-gradient(ellipse at 80% 80%, rgba(120,60,10,0.18) 0%, transparent 45%)',
+          'linear-gradient(160deg, #1e1208 0%, #13100a 55%, #0a0603 100%)',
+        ].join(', '),
+      }} />
+
+      {/* Logo */}
+      <LogoBlock top={72} logoW={120} />
+
+      {/* Intestazione */}
+      <div style={{
+        position:   'absolute',
+        top:        260,
+        left:       80,
+        right:      80,
+      }}>
+        <div style={{
+          fontSize:      36,
+          fontWeight:    400,
+          color:         'rgba(238,206,157,0.6)',
+          letterSpacing: 3,
+          textTransform: 'uppercase',
+          marginBottom:  16,
+        }}>
+          {labelSettimana}
+        </div>
+        <div style={{
+          fontFamily:   "'Alga', 'Georgia', serif",
+          fontSize:      96,
+          fontWeight:   600,
+          lineHeight:   1.0,
+          color:        '#ffffff',
+          marginBottom: 48,
+        }}>
+          Questa settimana
+        </div>
+
+        {/* Separatore */}
+        <div style={{ width: '100%', height: 1, background: 'rgba(238,206,157,0.25)', marginBottom: 48 }} />
+
+        {/* Lista eventi */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+          {lista.length === 0 ? (
+            <div style={{ fontSize: 38, color: 'rgba(255,255,255,0.35)' }}>Nessun evento questa settimana</div>
+          ) : lista.map((ev, i) => {
+            const isSpeciale = !ev.ricorrente
+            return (
+              <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingLeft: isSpeciale ? 0 : 0, opacity: isSpeciale ? 1 : 0.9 }}>
+                <div style={{
+                  fontSize:   isSpeciale ? 28 : 24,
+                  fontWeight: 500,
+                  color:      isSpeciale ? BRAND_GOLD : 'rgba(238,206,157,0.78)',
+                }}>
+                  {ev.ricorrente ? ev.giorniLabel : formatAgendaData(ev.data)}{ev.ora ? ` · ${ev.ora}` : ''}
+                </div>
+                <div style={{
+                  fontSize:      isSpeciale ? 50 : 36,
+                  fontWeight:    isSpeciale ? 700 : 500,
+                  color:         isSpeciale ? '#ffffff' : 'rgba(255,255,255,0.9)',
+                  lineHeight:    1.15,
+                  letterSpacing: isSpeciale ? 0 : 0.5,
+                }}>
+                  {ev.titolo}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div style={{
+        position:   'absolute',
+        bottom:     72,
+        left:       80,
+        right:      80,
+        fontSize:   30,
+        color:      'rgba(255,255,255,0.4)',
+        borderTop:  '1px solid rgba(238,206,157,0.15)',
+        paddingTop: 28,
+      }}>
+        Vedi tutta la programmazione aggiornata e prenota su <span style={{ color: 'rgba(238,206,157,0.6)' }}>boogiebistrot.com</span>
+      </div>
+    </div>
+  )
+}
+
+// ─── Template Agenda Settimana Storia (9:16 — 1080×1920) ─────────────────────
+
+export function TemplateAgendaSettimanaStoria({ eventi = [], labelSettimana = 'Questa settimana' }) {
+  const lista = eventi.slice(0, 5)
+  return (
+    <div style={{
+      position:        'relative',
+      width:           W_STORIA,
+      height:          H_STORIA,
+      backgroundColor: DARK_BG,
+      overflow:        'hidden',
+      fontFamily:      "'SofiaPro', 'Helvetica Neue', sans-serif",
+    }}>
+      {/* Sfondo radial */}
+      <div style={{
+        position:   'absolute', inset: 0,
+        background: [
+          'radial-gradient(ellipse at 20% 20%, rgba(180,110,30,0.3) 0%, transparent 50%)',
+          'radial-gradient(ellipse at 80% 75%, rgba(120,60,10,0.2) 0%, transparent 45%)',
+          'linear-gradient(160deg, #1e1208 0%, #13100a 55%, #0a0603 100%)',
+        ].join(', '),
+      }} />
+
+      {/* Logo */}
+      <LogoBlock top={100} logoW={130} />
+
+      {/* Contenuto centrato */}
+      <div style={{
+        position:      'absolute',
+        top:           360,
+        left:          90,
+        right:         90,
+      }}>
+        <div style={{
+          fontSize:      42,
+          fontWeight:    400,
+          color:         'rgba(238,206,157,0.6)',
+          letterSpacing: 4,
+          textTransform: 'uppercase',
+          marginBottom:  20,
+        }}>
+          {labelSettimana}
+        </div>
+        <div style={{
+          fontFamily:   "'Alga', 'Georgia', serif",
+          fontSize:      120,
+          fontWeight:   600,
+          lineHeight:   1.0,
+          color:        '#ffffff',
+          marginBottom: 60,
+        }}>
+          Questa settimana
+        </div>
+
+        <div style={{ width: '100%', height: 1, background: 'rgba(238,206,157,0.25)', marginBottom: 60 }} />
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+          {lista.length === 0 ? (
+            <div style={{ fontSize: 44, color: 'rgba(255,255,255,0.35)' }}>Nessun evento questa settimana</div>
+          ) : lista.map((ev, i) => {
+            const isSpeciale = !ev.ricorrente
+            return (
+              <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6, opacity: isSpeciale ? 1 : 0.9 }}>
+                <div style={{
+                  fontSize:   isSpeciale ? 34 : 28,
+                  fontWeight: 500,
+                  color:      isSpeciale ? BRAND_GOLD : 'rgba(238,206,157,0.78)',
+                }}>
+                  {ev.ricorrente ? ev.giorniLabel : formatAgendaData(ev.data)}{ev.ora ? ` · ${ev.ora}` : ''}
+                </div>
+                <div style={{
+                  fontSize:   isSpeciale ? 64 : 46,
+                  fontWeight: isSpeciale ? 700 : 500,
+                  color:      isSpeciale ? '#ffffff' : 'rgba(255,255,255,0.9)',
+                  lineHeight: 1.15,
+                }}>
+                  {ev.titolo}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div style={{
+        position:   'absolute',
+        bottom:     100,
+        left:       90,
+        right:      90,
+        fontSize:   36,
+        color:      'rgba(255,255,255,0.4)',
+        borderTop:  '1px solid rgba(238,206,157,0.15)',
+        paddingTop: 36,
+      }}>
+        Vedi tutta la programmazione aggiornata e prenota su <span style={{ color: 'rgba(238,206,157,0.6)' }}>boogiebistrot.com</span>
+      </div>
+    </div>
+  )
+}
+
 // ─── Mappa template ───────────────────────────────────────────────────────────
 
 export const TEMPLATES = {
+  agenda_cover: {
+    label: 'Cover agenda', Component: TemplateAgendaCover, bgDark: true, size: '4:5',
+    demoProps: {
+      titolo: 'Questa settimana',
+      labelPeriodo: '3 – 9 maggio',
+      sottotitolo: 'Scorri per il programma',
+    },
+  },
+  agenda_settimana: {
+    label: 'Agenda settimana', Component: TemplateAgendaSettimana, bgDark: true, size: '4:5',
+    demoProps: { eventi: [{ titolo: 'Serata Paella', data: '2026-05-06', ora: '20:00' }, { titolo: 'Aperitivo Jazz', data: '2026-05-08', ora: '19:30' }] },
+  },
+  agenda_settimana_storia: {
+    label: 'Agenda Story', Component: TemplateAgendaSettimanaStoria, bgDark: true, size: '9:16',
+    demoProps: { eventi: [{ titolo: 'Serata Paella', data: '2026-05-06', ora: '20:00' }, { titolo: 'Aperitivo Jazz', data: '2026-05-08', ora: '19:30' }] },
+  },
   cover: {
     label: 'Cover evento', Component: TemplateCover, bgDark: true, size: '4:5',
     demoProps: { titolo: 'Aperitivo Jazz', data: '2026-05-10', descrizione: 'Musica live e cocktail d\'autore' },

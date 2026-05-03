@@ -206,6 +206,7 @@ export default function CalendarioPanel() {
           firstDay={1}
           nowIndicator={true}
           dayMaxEvents={3}
+          allDayText=""
           listDayFormat={{ weekday: 'long', day: 'numeric', month: 'long' }}
           listDaySideFormat={false}
           noEventsText="Nessuna prenotazione"

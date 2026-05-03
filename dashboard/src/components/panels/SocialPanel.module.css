@@ -38,38 +38,6 @@
   border: 1px solid rgba(230,126,34,0.3);
 }
 
-.btnCreaPost {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border: 1px solid var(--accent);
-  border-radius: var(--radius-sm);
-  background: rgba(196,145,58,0.08);
-  color: var(--accent);
-  font-size: 0.82rem;
-  font-weight: 600;
-  font-family: var(--font-body);
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.btnCreaPost:hover { background: rgba(196,145,58,0.16); }
-
-.btnRefresh {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: var(--border-style);
-  border-radius: var(--radius-sm);
-  background: none;
-  color: var(--text3);
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
-}
-.btnRefresh:hover { border-color: var(--accent); color: var(--accent); }
-
 /* ── Filtri ─────────────────────────────────────────────────────────────────── */
 .filtriRow {
   display: flex;
@@ -342,35 +310,6 @@
   gap: 10px;
   padding: 12px 16px;
 }
-
-.btnSegna {
-  padding: 7px 14px;
-  border: var(--border-style);
-  border-radius: var(--radius-sm);
-  background: none;
-  color: var(--text2);
-  font-size: 0.82rem;
-  font-family: var(--font-body);
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
-}
-.btnSegna:hover:not(:disabled) { border-color: #27AE60; color: #27AE60; }
-.btnSegna:disabled { opacity: 0.4; cursor: not-allowed; }
-
-.btnPubblica {
-  padding: 8px 18px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: var(--accent);
-  color: #000;
-  font-size: 0.85rem;
-  font-weight: 700;
-  font-family: var(--font-body);
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-.btnPubblica:hover:not(:disabled) { opacity: 0.85; }
-.btnPubblica:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ── Empty state ─────────────────────────────────────────────────────────────── */
 .empty {

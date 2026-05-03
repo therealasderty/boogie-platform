@@ -579,8 +579,7 @@ export default function MediaPanel() {
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
               <button type="button" className="btn-secondary" onClick={() => setEliminaTagNome(null)}>Annulla</button>
-              <button type="button" className="btn-primary danger" onClick={handleEliminaTag} disabled={saving}
-                style={{ background: 'var(--danger, #f87171)', color: '#fff', border: 'none' }}>
+              <button type="button" className="btn-danger" onClick={handleEliminaTag} disabled={saving}>
                 {saving ? 'Rimozione…' : 'Elimina tag'}
               </button>
             </div>

@@ -234,7 +234,7 @@ export default function ModalPrenotazione({ prenotazione = null, onClose, onSucc
           {!confermaSlotPieno && <div className={styles.actions}>
             <button type="button" className="btn-secondary" onClick={onClose}>Annulla</button>
             {isEdit && (
-              <button type="button" style={{ background: '#C0392B', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '8px 16px', cursor: 'pointer', fontWeight: 600 }}
+              <button type="button" className="btn-danger"
                 disabled={submitting || form.stato === 'Cancellata'}
                 onClick={async () => {
                   setSubmitting(true)

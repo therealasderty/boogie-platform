@@ -227,9 +227,10 @@ function ComposerPost({ onClose }) {
 
       {/* Footer */}
       <div className={styles.composerFooter}>
-        <button className={styles.btnSegna} onClick={onClose}>Annulla</button>
+        <button type="button" className="btn-outline-success btn-sm" onClick={onClose}>Annulla</button>
         <button
-          className={styles.btnPubblica}
+          type="button"
+          className="btn-accent"
           onClick={handlePubblica}
           disabled={loading || piattaformeAttive.length === 0}
         >
@@ -443,7 +444,8 @@ function CardSocial({ item, onAggiornato }) {
       {/* Azioni */}
       <div className={styles.cardActions}>
         <button
-          className={styles.btnSegna}
+          type="button"
+          className="btn-outline-success btn-sm"
           onClick={handleSegnaManualmente}
           disabled={loading || item.statoSocial === 'pubblicato'}
           title="Segna come pubblicato senza usare l'integrazione API"
@@ -451,7 +453,8 @@ function CardSocial({ item, onAggiornato }) {
           ✓ Segna pubblicato
         </button>
         <button
-          className={styles.btnPubblica}
+          type="button"
+          className="btn-accent btn-sm"
           onClick={handlePubblica}
           disabled={loading || piattaformeAttive.length === 0}
         >
@@ -518,13 +521,14 @@ export default function SocialPanel() {
         </div>
         <div className={styles.headerRight}>
           <button
-            className={styles.btnCreaPost}
+            type="button"
+            className="btn-outline-accent"
             onClick={() => setComposerAperto(v => !v)}
           >
             <PlusCircle size={16} />
             {composerAperto ? 'Chiudi compositore' : 'Crea post'}
           </button>
-          <button className={styles.btnRefresh} onClick={() => setRefresh(r => r + 1)} title="Ricarica">
+          <button type="button" className="btn-icon" onClick={() => setRefresh(r => r + 1)} title="Ricarica">
             <IconRefresh size={16} />
           </button>
         </div>

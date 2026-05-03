@@ -403,7 +403,7 @@ function PostCard({ post, onEdit, onElimina, onPubblica }) {
       </div>
       {post.stato !== 'Pubblicato' && (
         <div className={styles.postCardFooter}>
-          <button className={styles.btnPubblicaNow} onClick={() => onPubblica(post)}>
+          <button type="button" className="btn-accent btn-sm" onClick={() => onPubblica(post)}>
             <PaperPlaneTilt size={13} weight="fill" /> Pubblica ora
           </button>
         </div>
@@ -605,17 +605,30 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
     setSalvando(true)
     setMsg(null)
     try {
+      let slidesPayload = slides
+      if (stato === 'Programmato') {
+        setCatturando(true)
+        try {
+          slidesPayload = await catturaTutteLeSlide(slides)
+        } finally {
+          setCatturando(false)
+        }
+      }
       const piattaformeStr = Object.entries(piattaforme)
         .filter(([, v]) => v).map(([k]) => k).join(',')
+
+      const dataIso = stato === 'Programmato' && dataProgrammata
+        ? (() => { try { return new Date(dataProgrammata).toISOString() } catch { return '' } })()
+        : ''
 
       const dati = {
         id:              postIniziale?.id,
         titolo:          titolo.trim(),
         stato,
         caption,
-        slides:          JSON.stringify(slides),
+        slides:          JSON.stringify(slidesPayload),
         piattaforme:     piattaformeStr,
-        dataProgrammata: stato === 'Programmato' ? dataProgrammata : '',
+        dataProgrammata: dataIso,
       }
 
       const res  = await authFetch(
@@ -629,7 +642,12 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
       const json = await res.json()
       if (!json.success) throw new Error(json.error || 'Salvataggio fallito')
 
-      setMsg({ tipo: 'ok', testo: stato === 'Programmato' ? 'Post programmato!' : 'Bozza salvata.' })
+      setMsg({
+        tipo: 'ok',
+        testo: stato === 'Programmato'
+          ? 'Post programmato: immagini salvate. Pubblicazione automatica quando la data è passata (Netlify).'
+          : 'Bozza salvata.',
+      })
       setTimeout(() => onSalva(), 1000)
     } catch (e) {
       setMsg({ tipo: 'err', testo: e.message })
@@ -723,7 +741,8 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
             <Clock size={14} /> Programma
           </button>
           <button
-            className={styles.btnPubblicaOra}
+            type="button"
+            className="btn-accent"
             onClick={handlePubblica}
             disabled={salvando || catturando || piattaformeAttive.length === 0}
           >
@@ -1083,7 +1102,7 @@ export default function PostBuilderPanel() {
           )}
         </div>
         <div className={styles.headerRight}>
-          <button className={styles.btnNuovo} onClick={apriNuovoPost}>
+          <button type="button" className="btn-outline-accent" onClick={apriNuovoPost}>
             <Plus size={15} /> Nuovo post
           </button>
           <button className="btn-icon" onClick={carica} title="Ricarica">

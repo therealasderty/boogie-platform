@@ -93,16 +93,25 @@ function datetimeLocalToIso(localStr) {
 
 function buildSlide(template, sorgente, record) {
   const id = uid()
-  if (template === 'cover') {
-    return { id, template, data: { titolo: record?.title || record?.titolo || '', data: record?.data || '', imageUrl: record?.fotoHero || '', descrizione: record?.descrizioneBreve || '' } }
-  }
+  const locked = !!record
   if (template === 'foto_11' || template === 'foto_45' || template === 'foto_916') {
     return { id, template, data: { imageUrl: '', mostraLogo: true } }
   }
-  if (template === 'storia_evento') {
-    return { id, template, data: { titolo: record?.title || record?.titolo || '', data: record?.data || '', ora: record?.ora || '', imageUrl: record?.fotoHero || '' } }
+  if (template === 'agenda_cover') {
+    return {
+      id,
+      template,
+      data: {
+        titolo:         'Questa settimana',
+        labelPeriodo:   '',
+        sottotitolo:    'Scorri per il programma',
+        imageUrl:       '',
+        mostraIndirizzo: false,
+      },
+    }
   }
-  return { id, template: template || 'cover', data: {} }
+  const data = record ? fillSlideDataFromEvento(template, record, {}) : {}
+  return { id, template: template || 'cover', eventoLocked: locked, data }
 }
 
 function buildAgendaEvents(appuntamenti, orari = []) {
@@ -350,7 +359,7 @@ function SlideEditorFoto({ slide, onChange }) {
 
 // ─── SlideEditorChiusura ──────────────────────────────────────────────────────
 
-function SlideEditorChiusura({ slide, onChange, appuntamenti }) {
+function SlideEditorChiusura({ slide, onChange, appuntamenti, eventoGlobaleId }) {
   const { items: mediaItems, loading: mediaLoading } = useMedia()
   const [tagFiltro, setTagFiltro] = useState('tutti')
   const { data = {} } = slide
@@ -362,11 +371,76 @@ function SlideEditorChiusura({ slide, onChange, appuntamenti }) {
 
   return (
     <div className={styles.slideEditor}>
-      <RecuperaEvento appuntamenti={appuntamenti} template="chiusura" slide={slide} onChange={onChange} />
+      <RecuperaEvento appuntamenti={appuntamenti} template="chiusura" slide={slide} onChange={onChange} eventoGlobaleId={eventoGlobaleId} />
       <label className={styles.sectionLabel}>Nome serata</label>
       <input className={styles.edInput} value={data.nomeSerata || ''} onChange={e => update('nomeSerata', e.target.value)} placeholder="Serata Paella" />
 
       <label className={styles.sectionLabel}>Foto dalla libreria</label>
+      <div className={styles.tagFiltri}>
+        {tuttiTag.map(t => (
+          <button key={t} className={`${styles.tagBtn} ${tagFiltro === t ? styles.tagBtnActive : ''}`} onClick={() => setTagFiltro(t)}>
+            {t}
+          </button>
+        ))}
+      </div>
+      {mediaLoading ? (
+        <div style={{ fontSize: '0.82rem', color: 'var(--text3)' }}>Caricamento galleria…</div>
+      ) : (
+        <div className={styles.fotoGrid}>
+          {fotoFiltrate.map(foto => (
+            <button
+              key={foto.id}
+              className={`${styles.fotoCell} ${data.imageUrl === foto.url ? styles.fotoCellSelected : ''}`}
+              onClick={() => update('imageUrl', data.imageUrl === foto.url ? '' : foto.url)}
+              title={foto.alt || foto.nome}
+            >
+              <img src={cloudinaryThumb(foto.url, 120)} alt={foto.alt || ''} className={styles.fotoImg} />
+              {data.imageUrl === foto.url && <div className={styles.fotoCheck}>✓</div>}
+            </button>
+          ))}
+        </div>
+      )}
+      {fotoAttuale && (
+        <div className={styles.fotoSelezionataWrap}>
+          <img src={cloudinaryThumb(fotoAttuale.url, 80)} alt="" className={styles.fotoSelezionataPreview} />
+          <div className={styles.fotoSelezionataInfo}>
+            <span>{fotoAttuale.alt || fotoAttuale.nome || 'Foto selezionata'}</span>
+            {fotoAttuale.tag?.length > 0 && <span className={styles.fotoTag}>{fotoAttuale.tag.join(', ')}</span>}
+          </div>
+          <button className={styles.fotoDeseleziona} onClick={() => update('imageUrl', '')}><X size={13} /></button>
+        </div>
+      )}
+      <IndirizzoToggle data={data} update={update} />
+    </div>
+  )
+}
+
+// ─── SlideEditorAgendaCover ─────────────────────────────────────────────────
+
+function SlideEditorAgendaCover({ slide, onChange }) {
+  const { items: mediaItems, loading: mediaLoading } = useMedia()
+  const [tagFiltro, setTagFiltro] = useState('tutti')
+  const { data = {} } = slide
+  function update(key, val) { onChange({ ...slide, data: { ...data, [key]: val } }) }
+
+  const tuttiTag     = ['tutti', ...new Set(mediaItems.flatMap(m => m.tag).filter(Boolean))]
+  const fotoFiltrate = tagFiltro === 'tutti' ? mediaItems : mediaItems.filter(m => m.tag.includes(tagFiltro))
+  const fotoAttuale  = data.imageUrl ? mediaItems.find(m => m.url === data.imageUrl) : null
+
+  return (
+    <div className={styles.slideEditor}>
+      <p style={{ fontSize: '0.8rem', color: 'var(--text3)', margin: '0 0 10px' }}>
+        Prima slide del carosello: scegli una foto dagli asset, poi aggiungi la slide «Agenda settimana».
+      </p>
+      <label className={styles.sectionLabel}>Titolo principale</label>
+      <textarea className={styles.edTextarea} rows={2} value={data.titolo || ''} onChange={e => update('titolo', e.target.value)} placeholder="Questa settimana" />
+      <label className={styles.sectionLabel}>Periodo (badge, opzionale)</label>
+      <input className={styles.edInput} value={data.labelPeriodo || ''} onChange={e => update('labelPeriodo', e.target.value)} placeholder="es. 3 – 9 maggio (come sulla slide agenda)" />
+      <label className={styles.sectionLabel}>Sottotitolo</label>
+      <input className={styles.edInput} value={data.sottotitolo || ''} onChange={e => update('sottotitolo', e.target.value)} placeholder="Scorri per il programma" />
+      <label className={styles.sectionLabel}>URL foto (opzionale, se non scegli dalla galleria)</label>
+      <input className={styles.edInput} value={data.imageUrl || ''} onChange={e => update('imageUrl', e.target.value)} placeholder="https://res.cloudinary.com/..." />
+      <label className={styles.sectionLabel}>Foto dalla libreria media</label>
       <div className={styles.tagFiltri}>
         {tuttiTag.map(t => (
           <button key={t} className={`${styles.tagBtn} ${tagFiltro === t ? styles.tagBtnActive : ''}`} onClick={() => setTagFiltro(t)}>
@@ -432,8 +506,30 @@ function fillSlideDataFromEvento(template, a, currentData) {
   return currentData
 }
 
-function RecuperaEvento({ appuntamenti, template, slide, onChange }) {
+function RecuperaEvento({ appuntamenti, template, slide, onChange, eventoGlobaleId }) {
   if (!appuntamenti?.length) return null
+
+  const isLocked = eventoGlobaleId && slide.eventoLocked !== false
+  const eventoGlobale = eventoGlobaleId ? appuntamenti.find(a => a.id === eventoGlobaleId) : null
+
+  if (isLocked && eventoGlobale) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, padding: '5px 8px', background: 'var(--bg3)', borderRadius: 6 }}>
+        <span style={{ fontSize: '0.78rem', color: 'var(--text2)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          🔗 {eventoGlobale.title || eventoGlobale.titolo}
+        </span>
+        <button
+          type="button"
+          style={{ fontSize: '0.72rem', color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: '2px 4px' }}
+          onClick={() => onChange({ ...slide, eventoLocked: false })}
+          title="Sblocca e usa evento diverso"
+        >
+          Sblocca
+        </button>
+      </div>
+    )
+  }
+
   return (
     <select
       className={styles.select}
@@ -441,7 +537,7 @@ function RecuperaEvento({ appuntamenti, template, slide, onChange }) {
       onChange={e => {
         const a = appuntamenti.find(a => a.id === e.target.value)
         if (!a) return
-        onChange({ ...slide, data: fillSlideDataFromEvento(template, a, slide.data || {}) })
+        onChange({ ...slide, data: fillSlideDataFromEvento(template, a, slide.data || {}), eventoLocked: false })
       }}
       style={{ marginBottom: 10 }}
     >
@@ -466,7 +562,7 @@ function IndirizzoToggle({ data, update }) {
   )
 }
 
-function SlideEditor({ slide, onChange, appuntamenti }) {
+function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) {
   if (!slide) return null
   const { template, data = {} } = slide
   function update(key, val) { onChange({ ...slide, data: { ...data, [key]: val } }) }
@@ -477,9 +573,17 @@ function SlideEditor({ slide, onChange, appuntamenti }) {
     return <SlideEditorFoto slide={slide} onChange={onChange} />
   }
 
+  if (template === 'agenda_settimana' || template === 'agenda_settimana_storia') {
+    return <SlideEditorAgenda slide={slide} onChange={onChange} appuntamenti={appuntamenti} orari={orari} />
+  }
+
+  if (template === 'agenda_cover') {
+    return <SlideEditorAgendaCover slide={slide} onChange={onChange} />
+  }
+
   if (template === 'cover') return (
     <div className={styles.slideEditor}>
-      <RecuperaEvento appuntamenti={appuntamenti} template={template} slide={slide} onChange={onChange} />
+      <RecuperaEvento appuntamenti={appuntamenti} template={template} slide={slide} onChange={onChange} eventoGlobaleId={eventoGlobaleId} />
       <label className={styles.sectionLabel}>Titolo</label>
       <textarea className={styles.edTextarea} rows={2} value={data.titolo || ''} onChange={e => update('titolo', e.target.value)} placeholder="Serata Paella" />
       <label className={styles.sectionLabel}>Data</label>
@@ -494,7 +598,7 @@ function SlideEditor({ slide, onChange, appuntamenti }) {
 
   if (template === 'storia_evento') return (
     <div className={styles.slideEditor}>
-      {usaEvento && <RecuperaEvento appuntamenti={appuntamenti} template={template} slide={slide} onChange={onChange} />}
+      {usaEvento && <RecuperaEvento appuntamenti={appuntamenti} template={template} slide={slide} onChange={onChange} eventoGlobaleId={eventoGlobaleId} />}
       <label className={styles.sectionLabel}>Titolo</label>
       <input className={styles.edInput} value={data.titolo || ''} onChange={e => update('titolo', e.target.value)} />
       <label className={styles.sectionLabel}>Data</label>
@@ -508,7 +612,7 @@ function SlideEditor({ slide, onChange, appuntamenti }) {
   )
 
   if (template === 'chiusura') return (
-    <SlideEditorChiusura slide={slide} onChange={onChange} appuntamenti={appuntamenti} />
+    <SlideEditorChiusura slide={slide} onChange={onChange} appuntamenti={appuntamenti} eventoGlobaleId={eventoGlobaleId} />
   )
 
   if (template === 'prezzo_evento' || template === 'prezzo_storia') {
@@ -520,7 +624,7 @@ function SlideEditor({ slide, onChange, appuntamenti }) {
     function rimuoviVoce(i) { update('voci', voci.filter((_, idx) => idx !== i)) }
     return (
       <div className={styles.slideEditor}>
-        <RecuperaEvento appuntamenti={appuntamenti} template={template} slide={slide} onChange={onChange} />
+        <RecuperaEvento appuntamenti={appuntamenti} template={template} slide={slide} onChange={onChange} eventoGlobaleId={eventoGlobaleId} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           <div>
             <label className={styles.sectionLabel}>Data</label>
@@ -557,6 +661,180 @@ function SlideEditor({ slide, onChange, appuntamenti }) {
   }
 
   return null
+}
+
+// ─── SlideEditorAgenda ───────────────────────────────────────────────────────
+
+const GIORNI_INTERI = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato']
+
+function localDateStr(d) {
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+function getWeekBounds(mondayStr) {
+  const monday = new Date(mondayStr + 'T12:00:00')
+  const sunday = new Date(monday)
+  sunday.setDate(sunday.getDate() + 6)
+  return { from: mondayStr, to: localDateStr(sunday) }
+}
+
+function getMondayOfWeek(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00')
+  const day = d.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  d.setDate(d.getDate() + diff)
+  return localDateStr(d)
+}
+
+function descriviGiorni(giorniNums) {
+  // Ordina lun–dom (0=dom va in fondo)
+  const ordered = [...giorniNums].sort((a, b) => (a === 0 ? 7 : a) - (b === 0 ? 7 : b))
+  if (ordered.length === 0) return ''
+  // Controlla se è un range continuo (es. lun–dom)
+  const tutti7 = [1,2,3,4,5,6,0]
+  const isContiguous = ordered.every((g, i) => {
+    if (i === 0) return true
+    const prev = ordered[i - 1]
+    const prevIdx = tutti7.indexOf(prev)
+    const curIdx  = tutti7.indexOf(g)
+    return curIdx === prevIdx + 1
+  })
+  const first = ordered[0]
+  const last  = ordered[ordered.length - 1]
+  const firstIdx = tutti7.indexOf(first)
+  const lastIdx = tutti7.indexOf(last)
+  const giorniNelRange = tutti7.slice(firstIdx, lastIdx + 1)
+  const mancantiNelRange = giorniNelRange.filter(g => !ordered.includes(g))
+
+  // Se mancano 1-2 giorni nel range visibile, usa "Da X a Y (Z escluso)"
+  if (mancantiNelRange.length <= 2 && mancantiNelRange.length > 0) {
+    const first = GIORNI_INTERI[ordered[0]]
+    const last  = GIORNI_INTERI[ordered[ordered.length - 1]]
+    const esclusi = mancantiNelRange.map(g => GIORNI_INTERI[g]).join(' e ')
+    return `Da ${first} a ${last} (${esclusi} escluso)`
+  }
+  if (isContiguous && ordered.length >= 3) {
+    return `Da ${GIORNI_INTERI[ordered[0]]} a ${GIORNI_INTERI[ordered[ordered.length - 1]]}`
+  }
+  return ordered.map(g => GIORNI_INTERI[g]).join(', ')
+}
+
+function SlideEditorAgenda({ slide, onChange, appuntamenti, orari }) {
+  const { data = {} } = slide
+  const oggi = localDateStr(new Date())
+  const [settimana, setSettimana] = useState(data.settimana || getMondayOfWeek(oggi))
+
+  function caricaSettimana() {
+    const { from, to } = getWeekBounds(settimana)
+    const risultati = []
+    // Giorni di apertura ordinaria (0=dom…6=sab); null = nessun filtro
+    const aperti = orari?.length > 0 ? new Set(orari.filter(o => o.attivo).map(o => o.giorno)) : null
+
+    for (const a of (appuntamenti || [])) {
+      if (a.stato === 'futuro' || a.stato === 'bozza') continue
+      const titolo = a.title || a.titolo || ''
+      const ricorrenza = a.ricorrenza || 'nessuna'
+      const startRecur = a.data || null
+      const endRecur   = a.dataFineRicorrenza || null
+
+      if (ricorrenza === 'nessuna') {
+        // Includi anche passato: il backend auto-archivia eventi con data < oggi
+        if ((a.stato === 'attivo' || a.stato === 'passato') && a.data && a.data >= from && a.data <= to) {
+          risultati.push({ titolo, data: a.data, ora: a.ora || '', ricorrente: false })
+        }
+      } else if (ricorrenza === 'settimanale') {
+        const giorni = a.giorniSettimana ? a.giorniSettimana.split(',').map(Number) : []
+        // Trova i giorni della settimana che cadono in questo range E sono attivi
+        const giorni_attivi_settimana = []
+        for (let d = new Date(from + 'T12:00:00'); localDateStr(d) <= to; d.setDate(d.getDate() + 1)) {
+          const ds = localDateStr(d)
+          if (!giorni.includes(d.getDay())) continue
+          if (aperti && !aperti.has(d.getDay())) continue
+          if (startRecur && ds < startRecur) continue
+          if (endRecur   && ds > endRecur)   continue
+          giorni_attivi_settimana.push(d.getDay())
+        }
+        if (giorni_attivi_settimana.length > 0) {
+          risultati.push({ titolo, data: null, ora: a.ora || '', ricorrente: true, giorniLabel: descriviGiorni(giorni_attivi_settimana) })
+        }
+      } else if (ricorrenza === 'giornaliera') {
+        const giorni_esclusi = a.giorniEsclusione ? a.giorniEsclusione.split(',').map(Number) : []
+        const giorni_attivi_settimana = []
+        for (let d = new Date(from + 'T12:00:00'); localDateStr(d) <= to; d.setDate(d.getDate() + 1)) {
+          const ds = localDateStr(d)
+          if (giorni_esclusi.includes(d.getDay())) continue
+          if (aperti && !aperti.has(d.getDay())) continue
+          if (startRecur && ds < startRecur) continue
+          if (endRecur   && ds > endRecur)   continue
+          giorni_attivi_settimana.push(d.getDay())
+        }
+        if (giorni_attivi_settimana.length > 0) {
+          risultati.push({ titolo, data: null, ora: a.ora || '', ricorrente: true, giorniLabel: descriviGiorni(giorni_attivi_settimana) })
+        }
+      } else if (ricorrenza === 'mensile' && a.data) {
+        const dayOfMonth = new Date(a.data + 'T12:00:00').getDate()
+        for (let d = new Date(from + 'T12:00:00'); localDateStr(d) <= to; d.setDate(d.getDate() + 1)) {
+          const ds = localDateStr(d)
+          if (d.getDate() !== dayOfMonth) continue
+          if (startRecur && ds < startRecur) continue
+          if (endRecur   && ds > endRecur)   continue
+          risultati.push({ titolo, data: ds, ora: a.ora || '', ricorrente: false })
+        }
+      }
+    }
+
+    // Singoli prima (per data), poi ricorrenti
+    risultati.sort((a, b) => {
+      if (!a.ricorrente && !b.ricorrente) return (a.data || '').localeCompare(b.data || '')
+      if (!a.ricorrente) return -1
+      if (!b.ricorrente) return 1
+      return (a.titolo || '').localeCompare(b.titolo || '')
+    })
+
+    const labelSettimana = `${new Date(from + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })} – ${new Date(to + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })}`
+    onChange({ ...slide, data: { ...data, eventi: risultati, settimana, labelSettimana } })
+  }
+
+  const eventi = Array.isArray(data.eventi) ? data.eventi : []
+
+  return (
+    <div className={styles.slideEditor}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+        <input
+          className={styles.edInput}
+          type="date"
+          value={settimana}
+          onChange={e => setSettimana(getMondayOfWeek(e.target.value))}
+          style={{ flex: 1 }}
+          title="Seleziona un giorno della settimana"
+        />
+        <button type="button" className="btn-secondary" style={{ flexShrink: 0, fontSize: '0.8rem' }} onClick={caricaSettimana}>
+          Carica settimana
+        </button>
+      </div>
+      <label className={styles.sectionLabel}>Label intestazione</label>
+      <input className={styles.edInput} value={data.labelSettimana || ''} onChange={e => onChange({ ...slide, data: { ...data, labelSettimana: e.target.value } })} placeholder="Questa settimana" />
+      {eventi.length > 0 && (
+        <>
+          <label className={styles.sectionLabel} style={{ marginTop: 8 }}>Eventi ({eventi.length})</label>
+          {eventi.map((ev, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              <span style={{ flex: 1, fontSize: '0.82rem', color: 'var(--text2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {ev.data} · {ev.titolo}{ev.ora ? ` · ${ev.ora}` : ''}
+              </span>
+              <button
+                type="button"
+                style={{ flexShrink: 0, fontSize: '0.72rem', color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px' }}
+                onClick={() => onChange({ ...slide, data: { ...data, eventi: eventi.filter((_, idx) => idx !== i) } })}
+              >✕</button>
+            </div>
+          ))}
+        </>
+      )}
+      {eventi.length === 0 && <div style={{ fontSize: '0.8rem', color: 'var(--text3)', marginTop: 4 }}>Seleziona una settimana e clicca "Carica settimana"</div>}
+    </div>
+  )
 }
 
 // ─── CaptureContainer ─────────────────────────────────────────────────────────
@@ -604,7 +882,7 @@ function PostCard({ post, onEdit, onElimina, onPubblica }) {
       </div>
       {post.stato !== 'Pubblicato' && (
         <div className={styles.postCardFooter}>
-          <button className={styles.btnPubblicaNow} onClick={() => onPubblica(post)}>
+          <button type="button" className="btn-accent btn-sm" onClick={() => onPubblica(post)}>
             <PaperPlaneTilt size={13} weight="fill" /> Pubblica ora
           </button>
         </div>
@@ -620,6 +898,7 @@ const CL_PRESET     = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
 
 function PostEditor({ postIniziale, onSalva, onAnnulla }) {
   const { appuntamenti, loading: loadingEventi } = useAppuntamenti()
+  const { orari } = useOrari()
   const { preset: presets, loading: loadingPresets, crea: creaPreset, aggiorna: aggiornaPreset, elimina: eliminaPreset } = usePresetSocial()
   const { items: mediaItems } = useMedia()
   const demoImageUrl = mediaItems.find(m => m.url)?.url || ''
@@ -750,15 +1029,31 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
 
     setSalvando(true); setMsg(null)
     try {
+      let slidesToSave = slides
+      // Il cron Netlify (pubblica-social-schedulato) usa solo cloudinaryUrl / imageUrl sulle slide.
+      // Senza cattura PNG le slide template non hanno URL pubblicabili → il post resta "Programmato" o va in Errore.
+      if (stato === 'Programmato') {
+        setCatturando(true)
+        try {
+          slidesToSave = await catturaTutteLeSlide(slides)
+        } finally {
+          setCatturando(false)
+        }
+      }
       const piattaformeStr = Object.entries(piattaforme).filter(([, v]) => v).map(([k]) => k).join(',')
       const res  = await authFetch('/.netlify/functions/gestisci-social-posts', {
         method: postIniziale?.id ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: postIniziale?.id, titolo: titolo.trim(), stato, caption, slides: JSON.stringify(slides), piattaforme: piattaformeStr, dataProgrammata: stato === 'Programmato' ? datetimeLocalToIso(dataEffettiva) : '', tipoContenuto }),
+        body: JSON.stringify({ id: postIniziale?.id, titolo: titolo.trim(), stato, caption, slides: JSON.stringify(slidesToSave), piattaforme: piattaformeStr, dataProgrammata: stato === 'Programmato' ? datetimeLocalToIso(dataEffettiva) : '', tipoContenuto }),
       })
       const json = await res.json()
       if (!json.success) throw new Error(json.error || 'Salvataggio fallito')
-      setMsg({ tipo: 'ok', testo: stato === 'Programmato' ? 'Post programmato!' : 'Bozza salvata.' })
+      setMsg({
+        tipo: 'ok',
+        testo: stato === 'Programmato'
+          ? 'Post programmato: immagini salvate. Sarà pubblicato quando la data sarà passata (job Netlify su Meta).'
+          : 'Bozza salvata.',
+      })
       setTimeout(() => onSalva(), 1000)
     } catch (e) { setMsg({ tipo: 'err', testo: e.message }) }
     finally { setSalvando(false) }
@@ -920,7 +1215,7 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
               </>
             )}
           </div>
-          <button className={styles.btnPubblicaOra} onClick={handlePubblica} disabled={salvando || catturando || piattaformeAttive.length === 0}>
+          <button type="button" className="btn-accent" onClick={handlePubblica} disabled={salvando || catturando || piattaformeAttive.length === 0}>
             {catturando ? 'Cattura in corso…' : <><PaperPlaneTilt size={14} weight="fill" /> Pubblica ora</>}
           </button>
         </div>
@@ -1007,6 +1302,12 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
             </div>
           </div>
 
+          <p style={{ fontSize: '0.72rem', color: 'var(--text3)', lineHeight: 1.5, margin: '8px 0 0' }}>
+            <strong>Programma</strong> genera le PNG delle slide (come «Pubblica ora») e le salva su Cloudinary; poi Netlify esegue{' '}
+            <code style={{ fontSize: '0.65rem' }}>pubblica-social-schedulato</code> circa ogni 30 minuti e pubblica su Instagram/Facebook quando la data/ora è passata.
+            Non compare subito sul social: controlla stato in lista o su Airtable (Pubblicato / Errore + messaggio).
+          </p>
+
         </div>
 
         {/* Colonna destra */}
@@ -1084,7 +1385,7 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
             {selectedSlide && (
               <div className={styles.slideEditorWrap}>
                 <div className={styles.sectionLabel}>Modifica dati slide</div>
-                <SlideEditor slide={selectedSlide} onChange={updateSelectedSlide} appuntamenti={appuntamenti} />
+                <SlideEditor slide={selectedSlide} onChange={updateSelectedSlide} appuntamenti={appuntamenti} eventoGlobaleId={recordSelId} orari={orari} />
               </div>
             )}
           </div>
@@ -1196,8 +1497,10 @@ function FeedCell({ post, onClick }) {
     const scale = 200 / w
     thumb = (
       <div className={styles.feedCellTemplate}>
-        <div style={{ position: 'absolute', top: 0, left: 0, width: w, height: h, transform: `scale(${scale})`, transformOrigin: 'top left', pointerEvents: 'none' }}>
-          <T.Component {...(firstSlide.data || {})} />
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+          <div style={{ width: w, height: h, transform: `scale(${scale})`, transformOrigin: 'center center', pointerEvents: 'none', flexShrink: 0 }}>
+            <T.Component {...(firstSlide.data || {})} />
+          </div>
         </div>
       </div>
     )
@@ -1428,7 +1731,7 @@ function PostPreviewModal({ post, onChiudi, onModifica }) {
         {post?.caption && (
           <div className={styles.modalCaption}>
             <div className={styles.modalCaptionLabel}>Caption</div>
-            <div className={styles.modalCaptionText}>{post.caption}</div>
+            <div className={styles.modalCaptionText} style={{ whiteSpace: 'pre-wrap' }}>{post.caption}</div>
           </div>
         )}
 
@@ -1459,7 +1762,7 @@ function SocialCalendario({ posts, onApriPreview, onApriEditorDaGhost, onApriEdi
     .map(p => ({
       id:    `post-${p.id}`,
       title: p.titolo,
-      date:  p.dataProgrammata ? isoToLocalDateStr(p.dataProgrammata) : p.dataCreazione.slice(0, 10),
+      start: p.dataProgrammata || p.dataCreazione.slice(0, 10),
       backgroundColor: 'transparent',
       borderColor:     'transparent',
       extendedProps: { isAgenda: false, isGhost: false, stato: p.stato, post: p },
@@ -1513,12 +1816,16 @@ function SocialCalendario({ posts, onApriPreview, onApriEditorDaGhost, onApriEdi
         dayCellWillUnmount={(arg) => {
           arg.el.querySelector('.social-day-add-btn')?.remove()
         }}
-        headerToolbar={{ left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' }}
+        initialView={window.innerWidth < 768 ? 'listMonth' : 'dayGridMonth'}
+        headerToolbar={window.innerWidth < 768
+          ? { left: 'prev,next', center: 'title', right: '' }
+          : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' }}
         buttonText={{ today: 'Vai ad oggi', month: 'Mese', list: 'Lista' }}
         height="auto"
         firstDay={1}
         nowIndicator={true}
         dayMaxEvents={4}
+        allDayText=""
         listDayFormat={{ weekday: 'long', day: 'numeric', month: 'long' }}
         listDaySideFormat={false}
         noEventsText="Nessun post programmato"
@@ -1662,7 +1969,7 @@ function ComposerPost({ onClose }) {
 
       <div className={styles.composerFooter}>
         <button className="btn-secondary" onClick={onClose}>Annulla</button>
-        <button className={styles.btnPubblica} onClick={handlePubblica} disabled={loading || piattaformeAttive.length === 0}>
+        <button type="button" className="btn-accent" onClick={handlePubblica} disabled={loading || piattaformeAttive.length === 0}>
           {loading ? 'Pubblicando...' : 'Pubblica ora →'}
         </button>
       </div>
@@ -1799,10 +2106,10 @@ function CardSocial({ item, onAggiornato }) {
       {risultato?.tipo === 'err' && <div style={{ margin: '0 16px' }} className={styles.risultatoErr}>{risultato.msg}</div>}
 
       <div className={styles.socialCardActions}>
-        <button className={styles.btnSegna} onClick={handleSegnaManualmente} disabled={loading || item.statoSocial === 'pubblicato'} title="Segna come pubblicato senza API">
+        <button type="button" className="btn-outline-success btn-sm" onClick={handleSegnaManualmente} disabled={loading || item.statoSocial === 'pubblicato'} title="Segna come pubblicato senza API">
           ✓ Segna pubblicato
         </button>
-        <button className={styles.btnPubblica} onClick={handlePubblica} disabled={loading || piattaformeAttive.length === 0}>
+        <button type="button" className="btn-accent btn-sm" onClick={handlePubblica} disabled={loading || piattaformeAttive.length === 0}>
           {loading ? 'Pubblicando...' : 'Pubblica ora →'}
         </button>
       </div>
