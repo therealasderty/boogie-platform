@@ -9,6 +9,15 @@ interface Foto {
   alt: string
 }
 
+const ASPECT_PATTERN = [
+  'aspect-[3/4]',
+  'aspect-square',
+  'aspect-[2/3]',
+  'aspect-[4/5]',
+  'aspect-square',
+  'aspect-[3/4]',
+]
+
 const FOTO_FALLBACK: Foto[] = [
   { src: '/images/hero/1.webp', alt: 'Il giardino' },
   { src: '/images/hero/2.avif', alt: 'La sala interna' },
@@ -52,7 +61,7 @@ export default function MosaicoFoto({ immagini }: { immagini?: { src: string; al
       <section className="py-16 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6 md:px-14">
           <motion.div
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
+            className="columns-2 md:columns-3 lg:columns-4 gap-2"
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
@@ -62,7 +71,7 @@ export default function MosaicoFoto({ immagini }: { immagini?: { src: string; al
               <button
                 key={i}
                 onClick={() => setAperta(i)}
-                className="group relative overflow-hidden rounded-card aspect-[4/5]"
+                className={`group relative overflow-hidden rounded-card w-full mb-2 ${ASPECT_PATTERN[i % ASPECT_PATTERN.length]}`}
               >
                 <Image
                   src={f.src}

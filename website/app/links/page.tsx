@@ -96,14 +96,14 @@ function Card({ href, titolo, meta, avatar, esterno = false, highlight = false }
       transition: 'all 0.2s',
     }}>
       {avatar && (
-        <div style={{ width: highlight ? 90 : 72, flexShrink: 0, position: 'relative', alignSelf: 'stretch' }}>
+        <div style={{ width: 90, flexShrink: 0, position: 'relative', alignSelf: 'stretch' }}>
           <Image src={avatar} alt={titolo} fill style={{ objectFit: 'cover' }} />
         </div>
       )}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 12, padding: highlight ? '18px 16px' : '14px 16px' }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 12, padding: '18px 16px' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: 0, fontSize: highlight ? '1.1rem' : '1rem', fontWeight: 600, color: '#fff', lineHeight: 1.3 }}>{titolo}</p>
-          {meta && <p style={{ margin: '4px 0 0', fontSize: highlight ? '0.88rem' : '0.85rem', fontWeight: 300, color: 'rgba(255,255,255,0.4)' }}>{meta}</p>}
+          <p style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: '#fff', lineHeight: 1.3 }}>{titolo}</p>
+          {meta && <p style={{ margin: '4px 0 0', fontSize: '0.85rem', fontWeight: 300, color: 'rgba(255,255,255,0.4)' }}>{meta}</p>}
         </div>
         <svg width="16" height="16" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, color: 'rgba(255,255,255,0.25)' }}>
           <path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -152,8 +152,8 @@ export default async function LinksPage() {
 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <Link href="/" style={{ display: 'inline-block', margin: '0 auto 20px' }}>
-            <Image src="/Logo-Gold.svg" alt="Boogie Bistrot" width={90} height={36} style={{ display: 'block' }} />
+          <Link href="/" style={{ display: 'inline-block', margin: '0 auto 24px' }}>
+            <Image src="/Logo-Gold.svg" alt="Boogie Bistrot" width={100} height={40} style={{ display: 'block' }} />
           </Link>
           <p style={{ margin: '0 0 6px' }}>
             <a href="https://maps.google.com/?q=Via+Europa+2+Colle+Brianza" target="_blank" rel="noopener noreferrer" style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.75)', fontWeight: 400, textDecoration: 'none' }}>
@@ -165,14 +165,28 @@ export default async function LinksPage() {
               {riga}
             </p>
           ))}
-          <p style={{ margin: '10px 0 0', display: 'flex', justifyContent: 'center', gap: 20 }}>
-            <a href="tel:+390399260568" style={{ fontSize: '1rem', color: 'var(--color-brand)', fontWeight: 500, textDecoration: 'none' }}>
-              +39 039 9260568
-            </a>
-            <a href="tel:+393465813309" style={{ fontSize: '1rem', color: 'var(--color-brand)', fontWeight: 500, textDecoration: 'none' }}>
-              +39 346 5813309
-            </a>
-          </p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+            {(['+39 039 9260568', '+39 346 5813309'] as const).map((num) => (
+              <a
+                key={num}
+                href={`tel:${num.replace(/\s/g, '')}`}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 7,
+                  background: 'rgba(238,206,157,0.08)',
+                  border: '1px solid rgba(238,206,157,0.22)',
+                  borderRadius: 999,
+                  padding: '8px 16px',
+                  color: 'var(--color-brand)', fontWeight: 500, fontSize: '0.9rem',
+                  textDecoration: 'none',
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.5 19.79 19.79 0 0 1 1.61 4.9 2 2 0 0 1 3.59 2.72h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.09a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 17.58z" />
+                </svg>
+                {num}
+              </a>
+            ))}
+          </div>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginTop: 16 }}>
             <a href="https://www.instagram.com/boogiebistrot" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none', fontSize: '0.85rem' }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -239,9 +253,6 @@ export default async function LinksPage() {
 
       </div>
 
-      {/* Calendario settimana */}
-      <Calendario orari={orari} chiusure={chiusure} />
-
       <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column', padding: '0 20px' }}>
 
         {/* Menù */}
@@ -263,11 +274,19 @@ export default async function LinksPage() {
           <Card href="/contattaci" titolo="Contattaci" />
         </div>
 
+        {/* Divisore */}
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '36px 0 0' }} />
+
+      </div>
+
+      {/* Calendario settimana — in fondo */}
+      <Calendario orari={orari} chiusure={chiusure} />
+
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 20px' }}>
         {/* Footer */}
-        <p style={{ textAlign: 'center', marginTop: 48, marginBottom: 80, fontSize: '0.72rem', color: 'rgba(255,255,255,0.2)', fontWeight: 300 }}>
+        <p style={{ textAlign: 'center', marginTop: 32, marginBottom: 80, fontSize: '0.72rem', color: 'rgba(255,255,255,0.2)', fontWeight: 300 }}>
           © {new Date().getFullYear()} Boogie Bistrot
         </p>
-
       </div>
 
       <LinksPrenotaSticky />

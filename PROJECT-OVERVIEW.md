@@ -196,7 +196,9 @@ Tutte usano `next: { revalidate: 30 }` (test) — portare a **300 in produzione*
 ### Social & Recensioni
 | Funzione | Auth | Scopo |
 |----------|------|-------|
-| `pubblica-social.js` | sì | Genera caption Gemini + pubblica su Meta (FB+IG) e Google Business Profile (Local Post) |
+| `pubblica-social.js` | sì | Genera caption Gemini + pubblica su Meta (FB+IG) e Google Business Profile. Actions: `genera-caption`, `pubblica` (singola immagine), `pubblica-carosello` (carosello o storie IG). Per le storie usa `mediaType: 'STORIES'` e chiama `media_type: 'STORIES'` sull'API Meta |
+| `pubblica-social-schedulato.mjs` | — | **CRON** ogni 30 min — legge `SocialPosts` con `Stato='Programmato'` e `DataProgrammata` passata. Marca subito `In pubblicazione` per prevenire doppia pubblicazione, poi pubblica e aggiorna con `Pubblicato`/`Errore`. Distingue storie da post leggendo `TipoContenuto` da Airtable |
+| `gestisci-social-posts.js` | sì | CRUD tabella `SocialPosts` Airtable |
 | `scraping-recensioni.js` | sì | Scraping Google Reviews |
 | `scraping-tripadvisor.js` | sì | Scraping TripAdvisor |
 
@@ -209,6 +211,7 @@ Tutte usano `next: { revalidate: 30 }` (test) — portare a **300 in produzione*
 
 | Tabella | Campi rilevanti |
 |---------|----------------|
+| `SocialPosts` | Titolo, Stato (Single select: Bozza/Programmato/**In pubblicazione**/Pubblicato/Errore), DataProgrammata, Caption, Slides (JSON array), Piattaforme (CSV: "instagram,facebook"), Sorgente, **TipoContenuto** (Single select: post/storia), RisultatiPubblicazione, ErroreMsg, DataCreazione, DataPubblicata |
 | `Agenda` | Titolo, Slug, Data, Ora, OraFine, Ricorrenza, GiorniSettimana, DescrizioneBreve, FotoHero, TitoloIntro, TestoIntro, TagFotoIntro, Blocchi (JSON), Stato, MetaTitle, MetaDescription, InPrimoPiano (checkbox) |
 | `Blog` | Titolo, Slug, Autore, DataPubblicazione, Categoria, DescrizioneBreve, FotoHero, Contenuto (HTML), MetaTitle, MetaDescription, Pubblicato, Ordine |
 | `FAQ` | Domanda, Risposta (HTML), Ordine, Attivo |
@@ -243,7 +246,9 @@ Tutte usano `next: { revalidate: 30 }` (test) — portare a **300 in produzione*
 | **ClientiPanel** | Database clienti fidelity con crediti e storico |
 | **AnalyticsPanel** | KPI settimanali (prenotazioni, coperti, cancellazioni, clienti unici, LTV). Grafici: bar giorni, pie fasce. Report AI Gemini |
 | **RecensioniSitoPanel** | Scraping + visualizzazione Google Reviews e TripAdvisor |
-| **SocialPanel** | Genera caption Gemini + pubblica su Meta (FB+IG) e Google Business Profile |
+| **SocialPanel** | Vecchio pannello: genera caption Gemini + pubblica post singoli su Meta (FB+IG+Google). Per storie/caroselli programmati usare SocialStudioPanel |
+| **SocialStudioPanel** | Editor post social con slide template (Fabric.js/canvas), cattura PNG, upload Cloudinary, programmazione. Tipi: `post` (16:9/4:5) e `storia` (9:16). Salva su `SocialPosts` Airtable. Il cron `pubblica-social-schedulato` pubblica automaticamente |
+| **PostBuilderPanel** | Editor post con cattura slide e upload Cloudinary |
 
 ### Hooks (`dashboard/src/hooks/`) — 20 hook
 `useAppuntamenti`, `useBlog`, `useCalendario`, `useChiusure`, `useFaq`, `useFidelity`, `useLocalita`, `useMedia`, `useMenu`, `useMeteo`, `useNote`, `useOrari`, `usePrenotazioni`, `usePrenotazioniGiornaliere`, `useRecensioni`, `useRecensioniSito`, `useTag`, `useAnalytics`, `useUmamiStats`, `useTheme`
@@ -293,10 +298,35 @@ Widget home: `AttesaWidget`, `MeteoWidget`, `RecensioniWidget`, `PrenotazioniWid
 - [ ] `/eventi-aziendali/[city]`: filtrare `generateStaticParams` per `ServiziAttivi`
 - [ ] Analisi Gemini in `AnalyticsPanel` su `RichiesteEventi` e `RichiesteContatti`
 - [ ] Aggiornare Privacy Policy (raccolta dati personali Airtable)
+- [ ] **BUG ATTIVO** — Storie programmate pubblicate come post su IG. Il cron legge `TipoContenuto='storia'` correttamente ma IG riceve chiamata senza `media_type: 'STORIES'`. Sospetto: nome campo Airtable con spazio/case, o timeout polling container. Aggiunto `console.log` su `TipoContenuto` per diagnostica. Aggiunto stato `In pubblicazione` per prevenire duplicati (richiede aggiunta opzione in Airtable)
 - [ ] Testare flow Social Automation end-to-end
 - [ ] Configurare dominio custom su Netlify
 - [ ] **Multilingua (futuro):** `next-intl`, prefisso `/en /fr /de /es`, campi Airtable `_EN/_FR/_DE/_ES`
 
 ---
 
-*Aggiornato: 23 Aprile 2026*
+---
+
+## Note tecniche importanti
+
+### Social Automation — storie IG via API
+- `pubblica ora` funziona: il frontend passa `mediaType: 'STORIES'` esplicitamente a `pubblica-social.js`
+- `programmato (cron)`: lo schedulatore legge `f['TipoContenuto']` da Airtable — se vale `'storia'` chiama `pubblicaIgStorie()` con `media_type: 'STORIES'`
+- Meta Graph API: le storie usano `/{IG_USER_ID}/media` con `media_type: 'STORIES'` + polling `status_code=FINISHED` + `media_publish`
+- **Differenza chiave rispetto ai post**: le storie non hanno `caption`, il container va creato con `media_type: 'STORIES'` — se questo campo manca, Meta pubblica come post normale senza errore
+- Il cron non gestisce Facebook Stories (escluso con `filter(p => !(p === 'facebook' && isStoria))`)
+
+### Cloudinary
+- Cloud: `boogie-bistrot`, preset upload: `boogie-upload` (Unsigned)
+- Usato SOLO nel dashboard per upload slide social — NON nel website
+- Il website usa Next.js `<Image>` con `remotePatterns` per ottimizzare immagini Airtable nativamente
+- `website/lib/cloudinary.ts` restituisce l'URL originale senza proxy (fix 2026-05-04 — piano era al 653%)
+
+### Meta / Social
+- `META_ACCESS_TOKEN` deve essere **Page Access Token** (NON User Token)
+- System User "Boogie Bot" in Meta Business Manager con token non-scadente
+- Per ottenere Page Token: `curl "https://graph.facebook.com/v19.0/{PAGE_ID}?fields=access_token&access_token={SYSTEM_USER_TOKEN}"`
+
+---
+
+*Aggiornato: 4 Maggio 2026*

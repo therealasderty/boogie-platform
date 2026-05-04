@@ -246,15 +246,21 @@ export default async () => {
     console.log(`Post da pubblicare: ${records.length}`)
 
     for (const record of records) {
+      // Marca subito come "In pubblicazione" per evitare duplicati se il cron gira di nuovo prima del completamento
+      await aggiornaRecord(record.id, { 'Stato': 'In pubblicazione' })
+
       const f            = record.fields
       const caption        = f['Caption']       || ''
-      const tipoContenuto  = f['TipoContenuto'] || 'post'
-      const isStoria       = tipoContenuto === 'storia'
-      const piattaforme    = (f['Piattaforme'] || '').split(',').map(p => p.trim()).filter(Boolean).filter(p => !(p === 'facebook' && isStoria))
-      const slidesRaw      = f['Slides']       || '[]'
-
-      let slides = []
-      try { slides = JSON.parse(slidesRaw) } catch {}
+      const tipoContenuto  = (f['TipoContenuto'] || '').toString().trim().toLowerCase()
+      const slidesRawCheck = f['Slides'] || '[]'
+      let slidesCheck = []
+      try { slidesCheck = JSON.parse(slidesRawCheck) } catch {}
+      const STORY_TEMPLATES = ['storia_evento', 'prezzo_storia', 'agenda_settimana_storia']
+      const isStoriaByTemplate = slidesCheck.length > 0 && slidesCheck.every(s => STORY_TEMPLATES.includes(s.template))
+      const isStoria = tipoContenuto === 'storia' || isStoriaByTemplate
+      console.log(`Record ${record.id}: TipoContenuto="${f['TipoContenuto']}" → normalizzato="${tipoContenuto}", isStoriaByTemplate=${isStoriaByTemplate}, isStoria=${isStoria}`)
+      const piattaforme = (f['Piattaforme'] || '').split(',').map(p => p.trim()).filter(Boolean).filter(p => !(p === 'facebook' && isStoria))
+      const slides = slidesCheck
 
       // Raccoglie URL delle slide: preferisce cloudinaryUrl (PNG renderizzata), fallback su data.imageUrl
       const imageUrls = slides
