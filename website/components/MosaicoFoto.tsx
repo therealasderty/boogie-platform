@@ -7,43 +7,25 @@ import Image from 'next/image'
 interface Foto {
   src: string
   alt: string
-  span?: 'wide' | 'tall' | 'big' | 'normal'
 }
 
 const FOTO_FALLBACK: Foto[] = [
-  { src: '/images/hero/1.webp', alt: 'Il giardino', span: 'wide' },
-  { src: '/images/hero/2.avif', alt: 'La sala interna', span: 'tall' },
-  { src: '/images/hero/1.webp', alt: 'I piatti', span: 'normal' },
-  { src: '/images/hero/2.avif', alt: 'La pizza', span: 'normal' },
-  { src: '/images/hero/1.webp', alt: 'Il forno a legna', span: 'big' },
-  { src: '/images/hero/2.avif', alt: 'Aperitivo in giardino', span: 'normal' },
-  { src: '/images/hero/1.webp', alt: 'I cocktail', span: 'normal' },
-  { src: '/images/hero/2.avif', alt: 'Il risotto', span: 'wide' },
+  { src: '/images/hero/1.webp', alt: 'Il giardino' },
+  { src: '/images/hero/2.avif', alt: 'La sala interna' },
+  { src: '/images/hero/1.webp', alt: 'I piatti' },
+  { src: '/images/hero/2.avif', alt: 'La pizza' },
+  { src: '/images/hero/1.webp', alt: 'Il forno a legna' },
+  { src: '/images/hero/2.avif', alt: 'Aperitivo in giardino' },
+  { src: '/images/hero/1.webp', alt: 'I cocktail' },
+  { src: '/images/hero/2.avif', alt: 'Il risotto' },
 ]
 
-// Pattern di span ripetuto per dare varietà al mosaico
-const SPAN_PATTERN: Foto['span'][] = ['wide', 'tall', 'normal', 'normal', 'big', 'normal', 'normal', 'wide', 'normal', 'tall', 'normal', 'normal']
-
-function spanClass(span?: string) {
-  switch (span) {
-    case 'wide': return 'md:col-span-2'
-    case 'tall': return 'md:row-span-2'
-    case 'big':  return 'md:col-span-2 md:row-span-2'
-    default:     return ''
-  }
-}
-
 export default function MosaicoFoto({ immagini }: { immagini?: { src: string; alt: string }[] }) {
-  const [foto, setFoto] = useState<Foto[]>(
-    immagini?.length
-      ? immagini.map((img, i) => ({ ...img, span: SPAN_PATTERN[i % SPAN_PATTERN.length] }))
-      : FOTO_FALLBACK
-  )
+  const [foto, setFoto] = useState<Foto[]>(immagini?.length ? immagini : FOTO_FALLBACK)
 
   useEffect(() => {
     if (!immagini?.length) return
-    const shuffled = [...immagini].sort(() => Math.random() - 0.5)
-    setFoto(shuffled.map((img, i) => ({ ...img, span: SPAN_PATTERN[i % SPAN_PATTERN.length] })))
+    setFoto([...immagini].sort(() => Math.random() - 0.5))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -70,7 +52,7 @@ export default function MosaicoFoto({ immagini }: { immagini?: { src: string; al
       <section className="py-16 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6 md:px-14">
           <motion.div
-            className="grid grid-cols-2 md:grid-cols-4 gap-3 auto-rows-[220px] grid-flow-dense"
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
@@ -80,18 +62,14 @@ export default function MosaicoFoto({ immagini }: { immagini?: { src: string; al
               <button
                 key={i}
                 onClick={() => setAperta(i)}
-                className={`group relative overflow-hidden rounded-card ${spanClass(f.span)}`}
+                className="group relative overflow-hidden rounded-card aspect-[4/5]"
               >
                 <Image
                   src={f.src}
                   alt={f.alt}
                   fill
                   className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                  sizes={
-                    f.span === 'big' || f.span === 'wide'
-                      ? '(max-width: 768px) 100vw, 50vw'
-                      : '(max-width: 768px) 50vw, 25vw'
-                  }
+                  sizes="(max-width: 768px) 50vw, 25vw"
                   quality={85}
                 />
                 <div
