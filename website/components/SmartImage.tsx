@@ -36,14 +36,13 @@ export default function SmartImage({
   alt,
   width,
   height,
-  cloudinaryWidth,
-  cloudinaryQuality,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  cloudinaryWidth: _cw,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  cloudinaryQuality: _cq,
   ...props
 }: SmartImageProps) {
-  const optimizedSrc = cloudinaryUrl(src, {
-    width: cloudinaryWidth ?? (typeof width === 'number' ? width * 2 : 1200),
-    quality: cloudinaryQuality ?? 80,
-  })
+  const optimizedSrc = cloudinaryUrl(src)
 
   // Per URL esterni usa placeholder shimmer; per path locali Next.js gestisce autonomamente
   const isExternal = src.startsWith('http')
