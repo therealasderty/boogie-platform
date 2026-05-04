@@ -37,6 +37,39 @@ async function aspettaContainerIg(containerId, { tentativi = 10, intervallo = 20
   throw new Error(`IG container non pronto dopo ${tentativi} tentativi (id: ${containerId})`)
 }
 
+// ── Pubblicazione Instagram Stories ─────────────────────────────────────────
+
+async function pubblicaIgStorie(imageUrls, caption) {
+  const ids = []
+  for (const imageUrl of imageUrls) {
+    const createRes  = await fetch(
+      `https://graph.facebook.com/v19.0/${META_IG_USER_ID}/media`,
+      {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ image_url: imageUrl, media_type: 'STORIES', access_token: META_ACCESS_TOKEN }),
+      }
+    )
+    const createData = await createRes.json()
+    if (!createRes.ok || createData.error) throw new Error(createData.error?.message || `IG story container failed per: ${imageUrl}`)
+
+    await aspettaContainerIg(createData.id)
+
+    const publishRes  = await fetch(
+      `https://graph.facebook.com/v19.0/${META_IG_USER_ID}/media_publish`,
+      {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ creation_id: createData.id, access_token: META_ACCESS_TOKEN }),
+      }
+    )
+    const publishData = await publishRes.json()
+    if (!publishRes.ok || publishData.error) throw new Error(publishData.error?.message || 'IG story publish failed')
+    ids.push(publishData.id)
+  }
+  return { ids }
+}
+
 // ── Pubblicazione Instagram (singola immagine) ───────────────────────────────
 
 async function pubblicaIgSingola(imageUrl, caption) {
@@ -233,12 +266,14 @@ export default async () => {
 
       if (piattaforme.includes('instagram') && META_IG_USER_ID && META_ACCESS_TOKEN) {
         try {
-          if (imageUrls.length > 1) {
-            risultati.instagram = await pubblicaIgCarosello(imageUrls, caption)
-          } else if (imageUrls.length === 1) {
-            risultati.instagram = await pubblicaIgSingola(imageUrls[0], caption)
-          } else {
+          if (imageUrls.length === 0) {
             errori.instagram = 'Nessuna immagine disponibile per Instagram'
+          } else if (isStoria) {
+            risultati.instagram = await pubblicaIgStorie(imageUrls, caption)
+          } else if (imageUrls.length > 1) {
+            risultati.instagram = await pubblicaIgCarosello(imageUrls, caption)
+          } else {
+            risultati.instagram = await pubblicaIgSingola(imageUrls[0], caption)
           }
         } catch (e) {
           errori.instagram = e.message
