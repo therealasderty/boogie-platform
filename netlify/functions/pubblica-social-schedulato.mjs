@@ -22,6 +22,21 @@ const META_PAGE_ID      = process.env.META_PAGE_ID
 const META_ACCESS_TOKEN = process.env.META_ACCESS_TOKEN
 const META_IG_USER_ID   = process.env.META_IG_USER_ID
 
+// ── Helper: attendi che un container IG sia FINISHED ─────────────────────────
+
+async function aspettaContainerIg(containerId, { tentativi = 10, intervallo = 2000 } = {}) {
+  for (let i = 0; i < tentativi; i++) {
+    await new Promise(r => setTimeout(r, intervallo))
+    const res  = await fetch(
+      `https://graph.facebook.com/v19.0/${containerId}?fields=status_code&access_token=${META_ACCESS_TOKEN}`
+    )
+    const data = await res.json()
+    if (data.status_code === 'FINISHED') return
+    if (data.status_code === 'ERROR') throw new Error(`IG container in errore (id: ${containerId})`)
+  }
+  throw new Error(`IG container non pronto dopo ${tentativi} tentativi (id: ${containerId})`)
+}
+
 // ── Pubblicazione Instagram (singola immagine) ───────────────────────────────
 
 async function pubblicaIgSingola(imageUrl, caption) {
@@ -35,6 +50,8 @@ async function pubblicaIgSingola(imageUrl, caption) {
   )
   const createData = await create.json()
   if (!create.ok || createData.error) throw new Error(createData.error?.message || 'IG media creation failed')
+
+  await aspettaContainerIg(createData.id)
 
   const publish = await fetch(
     `https://graph.facebook.com/v19.0/${META_IG_USER_ID}/media_publish`,
@@ -69,6 +86,7 @@ async function pubblicaIgCarosello(imageUrls, caption) {
     )
     const data = await res.json()
     if (!res.ok || data.error) throw new Error(data.error?.message || `IG child container failed per ${imageUrl}`)
+    await aspettaContainerIg(data.id)
     childIds.push(data.id)
   }
 
@@ -88,6 +106,7 @@ async function pubblicaIgCarosello(imageUrls, caption) {
   )
   const carouselData = await carousel.json()
   if (!carousel.ok || carouselData.error) throw new Error(carouselData.error?.message || 'IG carousel container failed')
+  await aspettaContainerIg(carouselData.id)
 
   // Step 3: pubblica
   const publish = await fetch(

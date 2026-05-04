@@ -133,6 +133,21 @@ async function getGoogleAccessToken() {
   return data.access_token
 }
 
+// ── Helper: attendi che un container IG sia FINISHED ─────────────────────────
+
+async function aspettaContainerIg(containerId, { tentativi = 10, intervallo = 2000 } = {}) {
+  for (let i = 0; i < tentativi; i++) {
+    await new Promise(r => setTimeout(r, intervallo))
+    const res  = await fetch(
+      `https://graph.facebook.com/v19.0/${containerId}?fields=status_code&access_token=${META_ACCESS_TOKEN}`
+    )
+    const data = await res.json()
+    if (data.status_code === 'FINISHED') return
+    if (data.status_code === 'ERROR') throw new Error(`IG container in errore (id: ${containerId})`)
+  }
+  throw new Error(`IG container non pronto dopo ${tentativi} tentativi (id: ${containerId})`)
+}
+
 // ── Meta: Instagram Stories (una per immagine) ────────────────────────────────
 
 async function pubblicaStorieInstagram(imageUrls, caption, linkUrls = []) {
@@ -231,6 +246,7 @@ async function pubblicaCaroselloInstagram(imageUrls, caption) {
     if (!res.ok || data.error) {
       throw new Error(data.error?.message || `IG child container fallito per: ${imageUrl}`)
     }
+    await aspettaContainerIg(data.id)
     childIds.push(data.id)
   }
 
@@ -252,6 +268,7 @@ async function pubblicaCaroselloInstagram(imageUrls, caption) {
   if (!carouselRes.ok || carouselData.error) {
     throw new Error(carouselData.error?.message || `IG carousel container failed (${carouselRes.status})`)
   }
+  await aspettaContainerIg(carouselData.id)
 
   // Step 3: pubblica
   const publishRes  = await fetch(
@@ -325,7 +342,10 @@ async function pubblicaSuInstagram(imageUrl, caption) {
     throw new Error(createData.error?.message || `Instagram media creation failed (${createRes.status})`)
   }
 
-  // Step 2: pubblica il container
+  // Step 2: attendi che il container sia pronto
+  await aspettaContainerIg(createData.id)
+
+  // Step 3: pubblica il container
   const publishRes = await fetch(
     `https://graph.facebook.com/v19.0/${META_IG_USER_ID}/media_publish`,
     {
