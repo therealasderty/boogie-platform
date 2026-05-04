@@ -22,6 +22,13 @@ const META_PAGE_ID      = process.env.META_PAGE_ID
 const META_ACCESS_TOKEN = process.env.META_ACCESS_TOKEN
 const META_IG_USER_ID   = process.env.META_IG_USER_ID
 
+function isStoryTemplateName(templateName = '') {
+  const t = templateName.toString().trim().toLowerCase()
+  if (!t) return false
+  // Copre template story espliciti e foto verticali (9:16).
+  return t === 'foto_916' || t.includes('storia') || t.endsWith('_story')
+}
+
 // ── Helper: attendi che un container IG sia FINISHED ─────────────────────────
 
 async function aspettaContainerIg(containerId, { tentativi = 10, intervallo = 2000 } = {}) {
@@ -228,12 +235,12 @@ export default async () => {
   }
 
   try {
-    const ora = new Date().toISOString()
+    const now = new Date()
+    const ora = now.toISOString()
 
-    // Cerca post programmati con data <= ora attuale
-    // IS_BEFORE è necessario per confrontare campi Date in Airtable
+    // Recupera i programmati e filtra in JS per gestire in modo robusto timezone/bordi temporali.
     const formula = encodeURIComponent(
-      `AND({Stato}='Programmato', NOT({DataProgrammata}=''), IS_BEFORE({DataProgrammata}, '${ora}'))`
+      `AND({Stato}='Programmato', NOT({DataProgrammata}=''))`
     )
     const res  = await fetch(
       `${BASE_URL}?filterByFormula=${formula}&maxRecords=20`,
@@ -242,7 +249,16 @@ export default async () => {
     if (!res.ok) throw new Error(await res.text())
     const json = await res.json()
 
-    const records = json.records || []
+    const records = (json.records || []).filter((r) => {
+      const raw = r.fields?.DataProgrammata
+      if (!raw) return false
+      const scheduledAt = new Date(raw)
+      if (Number.isNaN(scheduledAt.getTime())) {
+        console.warn(`Record ${r.id}: DataProgrammata non valida`, raw)
+        return false
+      }
+      return scheduledAt.getTime() <= now.getTime()
+    })
     console.log(`Post da pubblicare: ${records.length}`)
 
     for (const record of records) {
@@ -255,11 +271,14 @@ export default async () => {
       const slidesRawCheck = f['Slides'] || '[]'
       let slidesCheck = []
       try { slidesCheck = JSON.parse(slidesRawCheck) } catch {}
-      const STORY_TEMPLATES = ['storia_evento', 'prezzo_storia', 'agenda_settimana_storia']
-      const isStoriaByTemplate = slidesCheck.length > 0 && slidesCheck.every(s => STORY_TEMPLATES.includes(s.template))
+      const isStoriaByTemplate = slidesCheck.length > 0 && slidesCheck.every(s => isStoryTemplateName(s?.template))
       const isStoria = tipoContenuto === 'storia' || isStoriaByTemplate
       console.log(`Record ${record.id}: TipoContenuto="${f['TipoContenuto']}" → normalizzato="${tipoContenuto}", isStoriaByTemplate=${isStoriaByTemplate}, isStoria=${isStoria}`)
-      const piattaforme = (f['Piattaforme'] || '').split(',').map(p => p.trim()).filter(Boolean).filter(p => !(p === 'facebook' && isStoria))
+      const piattaforme = (f['Piattaforme'] || '')
+        .split(',')
+        .map(p => p.trim().toLowerCase())
+        .filter(Boolean)
+        .filter(p => !(p === 'facebook' && isStoria))
       const slides = slidesCheck
 
       // Raccoglie URL delle slide: preferisce cloudinaryUrl (PNG renderizzata), fallback su data.imageUrl
