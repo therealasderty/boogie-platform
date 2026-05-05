@@ -91,7 +91,7 @@ function datetimeLocalToIso(localStr) {
   try { return new Date(localStr).toISOString() } catch { return '' }
 }
 
-function buildSlide(template, sorgente, record) {
+function buildSlide(template, sorgente, record, orari = []) {
   const id = uid()
   const locked = !!record
   if (template === 'foto_11' || template === 'foto_45' || template === 'foto_916') {
@@ -110,7 +110,7 @@ function buildSlide(template, sorgente, record) {
       },
     }
   }
-  const data = record ? fillSlideDataFromEvento(template, record, {}) : {}
+  const data = record ? fillSlideDataFromEvento(template, record, {}, orari) : {}
   return { id, template: template || 'cover', eventoLocked: locked, data }
 }
 
@@ -359,7 +359,7 @@ function SlideEditorFoto({ slide, onChange }) {
 
 // ─── SlideEditorChiusura ──────────────────────────────────────────────────────
 
-function SlideEditorChiusura({ slide, onChange, appuntamenti, eventoGlobaleId }) {
+function SlideEditorChiusura({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) {
   const { items: mediaItems, loading: mediaLoading } = useMedia()
   const [tagFiltro, setTagFiltro] = useState('tutti')
   const { data = {} } = slide
@@ -371,7 +371,7 @@ function SlideEditorChiusura({ slide, onChange, appuntamenti, eventoGlobaleId })
 
   return (
     <div className={styles.slideEditor}>
-      <RecuperaEvento appuntamenti={appuntamenti} template="chiusura" slide={slide} onChange={onChange} eventoGlobaleId={eventoGlobaleId} />
+      <RecuperaEvento appuntamenti={appuntamenti} template="chiusura" slide={slide} onChange={onChange} eventoGlobaleId={eventoGlobaleId} orari={orari} />
       <label className={styles.sectionLabel}>Nome serata</label>
       <input className={styles.edInput} value={data.nomeSerata || ''} onChange={e => update('nomeSerata', e.target.value)} placeholder="Serata Paella" />
 
@@ -482,9 +482,86 @@ function SlideEditorAgendaCover({ slide, onChange }) {
 
 // ─── SlideEditor ─────────────────────────────────────────────────────────────
 
-function fillSlideDataFromEvento(template, a, currentData) {
-  if (template === 'cover') return { ...currentData, titolo: a.title || a.titolo || '', data: a.data || '', imageUrl: a.fotoHero || '', descrizione: a.descrizioneBreve || '' }
-  if (template === 'storia_evento') return { ...currentData, titolo: a.title || a.titolo || '', data: a.data || '', ora: a.ora || '', imageUrl: a.fotoHero || '' }
+const GIORNI_LUNGHI_SOCIAL = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato']
+const GIORNI_CORTI_SOCIAL  = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
+
+/** Etichetta tipo "Da Mar a Dom (Escluso Sabato)" — allineata a calendario + orari apertura. */
+function descriviGiorniPerSocial(giorniNums) {
+  const ordered = [...giorniNums].sort((a, b) => (a === 0 ? 7 : a) - (b === 0 ? 7 : b))
+  if (ordered.length === 0) return ''
+  const tutti7 = [1, 2, 3, 4, 5, 6, 0]
+  const isContiguous = ordered.every((g, i) => {
+    if (i === 0) return true
+    const prevIdx = tutti7.indexOf(ordered[i - 1])
+    const curIdx  = tutti7.indexOf(g)
+    return curIdx === prevIdx + 1
+  })
+  const firstIdx = tutti7.indexOf(ordered[0])
+  const lastIdx  = tutti7.indexOf(ordered[ordered.length - 1])
+  const giorniNelRange   = tutti7.slice(firstIdx, lastIdx + 1)
+  const mancantiNelRange = giorniNelRange.filter(g => !ordered.includes(g))
+
+  if (mancantiNelRange.length <= 2 && mancantiNelRange.length > 0) {
+    const esclusiStr = mancantiNelRange.map(g => GIORNI_LUNGHI_SOCIAL[g]).join(' e ')
+    const header = mancantiNelRange.length > 1 ? 'Esclusi' : 'Escluso'
+    return `Da ${GIORNI_CORTI_SOCIAL[ordered[0]]} a ${GIORNI_CORTI_SOCIAL[ordered[ordered.length - 1]]} (${header} ${esclusiStr})`
+  }
+  if (isContiguous && ordered.length >= 3) {
+    return `Da ${GIORNI_CORTI_SOCIAL[ordered[0]]} a ${GIORNI_CORTI_SOCIAL[ordered[ordered.length - 1]]}`
+  }
+  return ordered.map(g => GIORNI_CORTI_SOCIAL[g]).join(', ')
+}
+
+function giorniEffettiviRicorrenza(a, orari = []) {
+  const r = a.ricorrenza || 'nessuna'
+  if (r === 'nessuna' || r === 'mensile') return null
+  const aperti = orari?.length > 0 ? new Set(orari.filter(o => o.attivo).map(o => o.giorno)) : null
+  const esclusi = (a.giorniEsclusione || '').split(',').map(Number).filter(n => !isNaN(n))
+  if (r === 'giornaliera') {
+    return [0, 1, 2, 3, 4, 5, 6].filter(d => !esclusi.includes(d) && (!aperti || aperti.has(d)))
+  }
+  if (r === 'settimanale') {
+    const giorni = (a.giorniSettimana || '').split(',').map(Number).filter(n => !isNaN(n))
+    return giorni.filter(d => !esclusi.includes(d) && (!aperti || aperti.has(d)))
+  }
+  return null
+}
+
+function campiDataSlideDaEvento(a, orari = []) {
+  const r = a.ricorrenza || 'nessuna'
+  if (r === 'nessuna' || r === 'mensile') {
+    return { data: a.data || '', dataTesto: '' }
+  }
+  const giorni = giorniEffettiviRicorrenza(a, orari)
+  if (!giorni || giorni.length === 0) {
+    return { data: a.data || '', dataTesto: '' }
+  }
+  const uniq = [...new Set(giorni)].sort((x, y) => (x === 0 ? 7 : x) - (y === 0 ? 7 : y))
+  return { data: '', dataTesto: descriviGiorniPerSocial(uniq) }
+}
+
+function fillSlideDataFromEvento(template, a, currentData, orari = []) {
+  const { data, dataTesto } = campiDataSlideDaEvento(a, orari)
+  if (template === 'cover') {
+    return {
+      ...currentData,
+      titolo:       a.title || a.titolo || '',
+      data,
+      dataTesto,
+      imageUrl:     a.fotoHero || '',
+      descrizione:  a.descrizioneBreve || '',
+    }
+  }
+  if (template === 'storia_evento') {
+    return {
+      ...currentData,
+      titolo:    a.title || a.titolo || '',
+      data,
+      dataTesto,
+      ora:       a.ora || '',
+      imageUrl:  a.fotoHero || '',
+    }
+  }
   if (template === 'chiusura') {
     return { ...currentData, nomeSerata: a.title || a.titolo || '' }
   }
@@ -495,7 +572,8 @@ function fillSlideDataFromEvento(template, a, currentData) {
     return {
       ...currentData,
       titolo:        a.title || a.titolo || '',
-      data:          a.data || '',
+      data,
+      dataTesto,
       ora:           a.ora || '',
       imageUrl:      a.fotoHero || '',
       prezzoImporto: bPrezzo.importo || '',
@@ -506,7 +584,7 @@ function fillSlideDataFromEvento(template, a, currentData) {
   return currentData
 }
 
-function RecuperaEvento({ appuntamenti, template, slide, onChange, eventoGlobaleId }) {
+function RecuperaEvento({ appuntamenti, template, slide, onChange, eventoGlobaleId, orari = [] }) {
   if (!appuntamenti?.length) return null
 
   const isLocked = eventoGlobaleId && slide.eventoLocked !== false
@@ -537,7 +615,7 @@ function RecuperaEvento({ appuntamenti, template, slide, onChange, eventoGlobale
       onChange={e => {
         const a = appuntamenti.find(a => a.id === e.target.value)
         if (!a) return
-        onChange({ ...slide, data: fillSlideDataFromEvento(template, a, slide.data || {}), eventoLocked: false })
+        onChange({ ...slide, data: fillSlideDataFromEvento(template, a, slide.data || {}, orari), eventoLocked: false })
       }}
       style={{ marginBottom: 10 }}
     >
@@ -583,11 +661,17 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
 
   if (template === 'cover') return (
     <div className={styles.slideEditor}>
-      <RecuperaEvento appuntamenti={appuntamenti} template={template} slide={slide} onChange={onChange} eventoGlobaleId={eventoGlobaleId} />
+      <RecuperaEvento appuntamenti={appuntamenti} template={template} slide={slide} onChange={onChange} eventoGlobaleId={eventoGlobaleId} orari={orari} />
       <label className={styles.sectionLabel}>Titolo</label>
       <textarea className={styles.edTextarea} rows={2} value={data.titolo || ''} onChange={e => update('titolo', e.target.value)} placeholder="Serata Paella" />
       <label className={styles.sectionLabel}>Data</label>
-      <input className={styles.edInput} type="date" value={data.data || ''} onChange={e => update('data', e.target.value)} />
+      <input className={styles.edInput} type="date" value={data.data || ''} onChange={e => { update('data', e.target.value); if (e.target.value) update('dataTesto', '') }} />
+      {!!data.dataTesto && (
+        <>
+          <label className={styles.sectionLabel}>Periodo / ricorrenza (testo in slide)</label>
+          <input className={styles.edInput} value={data.dataTesto} onChange={e => update('dataTesto', e.target.value)} placeholder="es. Da Mar a Dom (Escluso Sabato)" />
+        </>
+      )}
       <label className={styles.sectionLabel}>Descrizione (opzionale)</label>
       <textarea className={styles.edTextarea} rows={3} value={data.descrizione || ''} onChange={e => update('descrizione', e.target.value)} placeholder="Goditi la nostra ricca Paella Mista..." />
       <label className={styles.sectionLabel}>URL foto sfondo</label>
@@ -598,11 +682,17 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
 
   if (template === 'storia_evento') return (
     <div className={styles.slideEditor}>
-      {usaEvento && <RecuperaEvento appuntamenti={appuntamenti} template={template} slide={slide} onChange={onChange} eventoGlobaleId={eventoGlobaleId} />}
+      {usaEvento && <RecuperaEvento appuntamenti={appuntamenti} template={template} slide={slide} onChange={onChange} eventoGlobaleId={eventoGlobaleId} orari={orari} />}
       <label className={styles.sectionLabel}>Titolo</label>
       <input className={styles.edInput} value={data.titolo || ''} onChange={e => update('titolo', e.target.value)} />
       <label className={styles.sectionLabel}>Data</label>
-      <input className={styles.edInput} type="date" value={data.data || ''} onChange={e => update('data', e.target.value)} />
+      <input className={styles.edInput} type="date" value={data.data || ''} onChange={e => { update('data', e.target.value); if (e.target.value) update('dataTesto', '') }} />
+      {!!data.dataTesto && (
+        <>
+          <label className={styles.sectionLabel}>Periodo / ricorrenza (testo in slide)</label>
+          <input className={styles.edInput} value={data.dataTesto} onChange={e => update('dataTesto', e.target.value)} />
+        </>
+      )}
       <label className={styles.sectionLabel}>Ora</label>
       <input className={styles.edInput} value={data.ora || ''} placeholder="es. 20:00" onChange={e => update('ora', e.target.value)} />
       <label className={styles.sectionLabel}>URL immagine sfondo</label>
@@ -612,7 +702,7 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
   )
 
   if (template === 'chiusura') return (
-    <SlideEditorChiusura slide={slide} onChange={onChange} appuntamenti={appuntamenti} eventoGlobaleId={eventoGlobaleId} />
+    <SlideEditorChiusura slide={slide} onChange={onChange} appuntamenti={appuntamenti} eventoGlobaleId={eventoGlobaleId} orari={orari} />
   )
 
   if (template === 'prezzo_evento' || template === 'prezzo_storia') {
@@ -624,11 +714,11 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
     function rimuoviVoce(i) { update('voci', voci.filter((_, idx) => idx !== i)) }
     return (
       <div className={styles.slideEditor}>
-        <RecuperaEvento appuntamenti={appuntamenti} template={template} slide={slide} onChange={onChange} eventoGlobaleId={eventoGlobaleId} />
+        <RecuperaEvento appuntamenti={appuntamenti} template={template} slide={slide} onChange={onChange} eventoGlobaleId={eventoGlobaleId} orari={orari} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           <div>
             <label className={styles.sectionLabel}>Data</label>
-            <input className={styles.edInput} type="date" value={data.data || ''} onChange={e => update('data', e.target.value)} />
+            <input className={styles.edInput} type="date" value={data.data || ''} onChange={e => { update('data', e.target.value); if (e.target.value) update('dataTesto', '') }} />
           </div>
           <div>
             <label className={styles.sectionLabel}>Ora</label>
@@ -645,6 +735,12 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
             <input className={styles.edInput} value={data.prezzoLabel || ''} placeholder="Menù Paella" onChange={e => update('prezzoLabel', e.target.value)} />
           </div>
         </div>
+        {!!data.dataTesto && (
+          <>
+            <label className={styles.sectionLabel}>Periodo / ricorrenza (testo in slide)</label>
+            <input className={styles.edInput} value={data.dataTesto} onChange={e => update('dataTesto', e.target.value)} />
+          </>
+        )}
         <label className={styles.sectionLabel}>Cosa è incluso</label>
         {voci.map((v, i) => (
           <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 6, marginBottom: 6 }}>
@@ -665,8 +761,6 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
 
 // ─── SlideEditorAgenda ───────────────────────────────────────────────────────
 
-const GIORNI_INTERI = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato']
-
 function localDateStr(d) {
   const pad = n => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
@@ -685,39 +779,6 @@ function getMondayOfWeek(dateStr) {
   const diff = day === 0 ? -6 : 1 - day
   d.setDate(d.getDate() + diff)
   return localDateStr(d)
-}
-
-function descriviGiorni(giorniNums) {
-  // Ordina lun–dom (0=dom va in fondo)
-  const ordered = [...giorniNums].sort((a, b) => (a === 0 ? 7 : a) - (b === 0 ? 7 : b))
-  if (ordered.length === 0) return ''
-  // Controlla se è un range continuo (es. lun–dom)
-  const tutti7 = [1,2,3,4,5,6,0]
-  const isContiguous = ordered.every((g, i) => {
-    if (i === 0) return true
-    const prev = ordered[i - 1]
-    const prevIdx = tutti7.indexOf(prev)
-    const curIdx  = tutti7.indexOf(g)
-    return curIdx === prevIdx + 1
-  })
-  const first = ordered[0]
-  const last  = ordered[ordered.length - 1]
-  const firstIdx = tutti7.indexOf(first)
-  const lastIdx = tutti7.indexOf(last)
-  const giorniNelRange = tutti7.slice(firstIdx, lastIdx + 1)
-  const mancantiNelRange = giorniNelRange.filter(g => !ordered.includes(g))
-
-  // Se mancano 1-2 giorni nel range visibile, usa "Da X a Y (Z escluso)"
-  if (mancantiNelRange.length <= 2 && mancantiNelRange.length > 0) {
-    const first = GIORNI_INTERI[ordered[0]]
-    const last  = GIORNI_INTERI[ordered[ordered.length - 1]]
-    const esclusi = mancantiNelRange.map(g => GIORNI_INTERI[g]).join(' e ')
-    return `Da ${first} a ${last} (${esclusi} escluso)`
-  }
-  if (isContiguous && ordered.length >= 3) {
-    return `Da ${GIORNI_INTERI[ordered[0]]} a ${GIORNI_INTERI[ordered[ordered.length - 1]]}`
-  }
-  return ordered.map(g => GIORNI_INTERI[g]).join(', ')
 }
 
 function SlideEditorAgenda({ slide, onChange, appuntamenti, orari }) {
@@ -745,18 +806,20 @@ function SlideEditorAgenda({ slide, onChange, appuntamenti, orari }) {
         }
       } else if (ricorrenza === 'settimanale') {
         const giorni = a.giorniSettimana ? a.giorniSettimana.split(',').map(Number) : []
+        const giorni_esclusi = a.giorniEsclusione ? a.giorniEsclusione.split(',').map(Number) : []
         // Trova i giorni della settimana che cadono in questo range E sono attivi
         const giorni_attivi_settimana = []
         for (let d = new Date(from + 'T12:00:00'); localDateStr(d) <= to; d.setDate(d.getDate() + 1)) {
           const ds = localDateStr(d)
           if (!giorni.includes(d.getDay())) continue
+          if (giorni_esclusi.includes(d.getDay())) continue
           if (aperti && !aperti.has(d.getDay())) continue
           if (startRecur && ds < startRecur) continue
           if (endRecur   && ds > endRecur)   continue
           giorni_attivi_settimana.push(d.getDay())
         }
         if (giorni_attivi_settimana.length > 0) {
-          risultati.push({ titolo, data: null, ora: a.ora || '', ricorrente: true, giorniLabel: descriviGiorni(giorni_attivi_settimana) })
+          risultati.push({ titolo, data: null, ora: a.ora || '', ricorrente: true, giorniLabel: descriviGiorniPerSocial(giorni_attivi_settimana) })
         }
       } else if (ricorrenza === 'giornaliera') {
         const giorni_esclusi = a.giorniEsclusione ? a.giorniEsclusione.split(',').map(Number) : []
@@ -770,7 +833,7 @@ function SlideEditorAgenda({ slide, onChange, appuntamenti, orari }) {
           giorni_attivi_settimana.push(d.getDay())
         }
         if (giorni_attivi_settimana.length > 0) {
-          risultati.push({ titolo, data: null, ora: a.ora || '', ricorrente: true, giorniLabel: descriviGiorni(giorni_attivi_settimana) })
+          risultati.push({ titolo, data: null, ora: a.ora || '', ricorrente: true, giorniLabel: descriviGiorniPerSocial(giorni_attivi_settimana) })
         }
       } else if (ricorrenza === 'mensile' && a.data) {
         const dayOfMonth = new Date(a.data + 'T12:00:00').getDate()
@@ -942,7 +1005,7 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
   function handleAggiungiSlide(tpl) {
     const t      = tpl || templateSel
     const record = recordSelId ? appuntamenti.find(a => a.id === recordSelId) : null
-    const nuova  = buildSlide(t, 'evento', record)
+    const nuova  = buildSlide(t, 'evento', record, orari)
     setSlides(prev => [...prev, nuova])
     setSelectedSlideId(nuova.id)
     setGhostPickerOpen(false)
@@ -2120,6 +2183,7 @@ function CardSocial({ item, onAggiornato }) {
 // ─── Pannello principale ──────────────────────────────────────────────────────
 
 export default function SocialStudioPanel() {
+  const { orari } = useOrari()
   const { posts, loading: loadingPosts, carica, elimina } = useSocialPosts()
   const [editorAperto,  setEditorAperto]  = useState(false)
   const [postInEdit,    setPostInEdit]    = useState(null)
@@ -2135,7 +2199,7 @@ export default function SocialStudioPanel() {
     setPostInEdit({
       titolo: ghost.titolo,
       dataProgrammata: ghost.date + 'T12:00',
-      slides: JSON.stringify([buildSlide(ghost.template, 'evento', ghost.evento)]),
+      slides: JSON.stringify([buildSlide(ghost.template, 'evento', ghost.evento, orari)]),
       piattaforme: 'instagram,facebook',
       stato: 'Bozza',
     })

@@ -223,7 +223,17 @@ async function aggiornaRecord(id, fields) {
     headers: AT_HEADERS,
     body:    JSON.stringify({ fields }),
   })
-  if (!res.ok) console.error('Airtable PATCH error:', await res.text())
+  if (!res.ok) {
+    console.error('Airtable PATCH error:', await res.text())
+    return false
+  }
+  return true
+}
+
+async function leggiRecord(id) {
+  const res = await fetch(`${BASE_URL}/${id}`, { headers: AT_HEADERS })
+  if (!res.ok) throw new Error(await res.text())
+  return await res.json()
 }
 
 // ── Handler principale (cron) ─────────────────────────────────────────────────
@@ -235,6 +245,7 @@ export default async () => {
   }
 
   try {
+    const runId = `cron-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     const now = new Date()
     const ora = now.toISOString()
 
@@ -262,8 +273,25 @@ export default async () => {
     console.log(`Post da pubblicare: ${records.length}`)
 
     for (const record of records) {
-      // Marca subito come "In pubblicazione" per evitare duplicati se il cron gira di nuovo prima del completamento
-      await aggiornaRecord(record.id, { 'Stato': 'In pubblicazione' })
+      // Claim ottimistico del record: previene doppie pubblicazioni in caso di run concorrenti.
+      const lockInfo = { lockRunId: runId, lockAt: new Date().toISOString() }
+      const lockOk = await aggiornaRecord(record.id, {
+        // Lock applicativo senza toccare single-select Stato (evita errori opzioni Airtable).
+        'RisultatiPubblicazione': JSON.stringify(lockInfo),
+      })
+      if (!lockOk) {
+        console.log(`Record ${record.id}: impossibile scrivere lock, salto`)
+        continue
+      }
+      const claimed = await leggiRecord(record.id)
+      let ownerRunId = ''
+      try {
+        ownerRunId = JSON.parse(claimed.fields?.RisultatiPubblicazione || '{}')?.lockRunId || ''
+      } catch {}
+      if (ownerRunId !== runId) {
+        console.log(`Record ${record.id}: lock perso, salto per evitare duplicato`)
+        continue
+      }
 
       const f            = record.fields
       const caption        = f['Caption']       || ''

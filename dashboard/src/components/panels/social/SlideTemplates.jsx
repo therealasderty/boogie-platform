@@ -79,6 +79,7 @@ const LOGO_URL = '/Logo-Gold.svg'
 export function TemplateCover({
   titolo          = 'Titolo Evento',
   data            = '',
+  dataTesto       = '',
   imageUrl        = '',
   descrizione     = '',
   mostraIndirizzo = false,
@@ -147,8 +148,8 @@ export function TemplateCover({
         justifyContent: 'center',
         gap:            0,
       }}>
-        {/* Badge data */}
-        {data && (
+        {/* Badge data / ricorrenza */}
+        {(dataTesto || data) && (
           <div style={{
             display:       'inline-block',
             padding:       '12px 36px',
@@ -161,7 +162,7 @@ export function TemplateCover({
             whiteSpace:    'nowrap',
             letterSpacing: 0.5,
           }}>
-            {formatDataIT(data)}
+            {dataTesto || formatDataIT(data)}
           </div>
         )}
 
@@ -392,6 +393,7 @@ export function TemplateFoto({ imageUrl = '', mostraLogo = true }) {
 export function TemplatePrezzoEvento({
   titolo          = 'Titolo Evento',
   data            = '',
+  dataTesto       = '',
   ora             = '',
   imageUrl        = '',
   prezzoImporto   = '26€',
@@ -402,7 +404,8 @@ export function TemplatePrezzoEvento({
 }) {
   const titleSize  = titolo.length > 22 ? 68 : titolo.length > 14 ? 82 : 96
   const prezzoSize = prezzoImporto.length > 5 ? 130 : prezzoImporto.length > 3 ? 158 : 188
-  const dataOra    = [formatDataIT(data), ora ? `ore ${ora}` : ''].filter(Boolean).join(' · ')
+  const dataPart   = dataTesto || (data ? formatDataIT(data) : '')
+  const dataOra    = [dataPart, ora ? `ore ${ora}` : ''].filter(Boolean).join(' · ')
 
   return (
     <div
@@ -541,7 +544,7 @@ export function TemplatePrezzoEvento({
 const W_STORIA = 1080
 const H_STORIA = 1920
 
-export function TemplateStoriaEvento({ titolo = 'Titolo Evento', data = '', ora = '', imageUrl = '', mostraIndirizzo = false, indirizzo = BRAND_ADDRESS }) {
+export function TemplateStoriaEvento({ titolo = 'Titolo Evento', data = '', dataTesto = '', ora = '', imageUrl = '', mostraIndirizzo = false, indirizzo = BRAND_ADDRESS }) {
   const titoloFontSize = titolo.length > 25 ? 88 : titolo.length > 15 ? 110 : 130
 
   return (
@@ -604,15 +607,15 @@ export function TemplateStoriaEvento({ titolo = 'Titolo Evento', data = '', ora 
         </div>
 
         {/* Data e ora */}
-        {(data || ora) && (
+        {(dataTesto || data || ora) && (
           <div style={{
             fontSize:      28,
             fontWeight:    500,
             color:         BRAND_GOLD,
             letterSpacing: 2,
-            textTransform: 'capitalize',
+            textTransform: dataTesto ? 'none' : 'capitalize',
           }}>
-            {formatDataIT(data)}{ora ? ` — ${ora}` : ''}
+            {dataTesto ? `${dataTesto}${ora ? ` — ${ora}` : ''}` : `${formatDataIT(data)}${ora ? ` — ${ora}` : ''}`}
           </div>
         )}
       </div>
@@ -645,6 +648,7 @@ export function TemplateStoriaEvento({ titolo = 'Titolo Evento', data = '', ora 
 export function TemplatePrezzoStoriaEvento({
   titolo          = 'Titolo Evento',
   data            = '',
+  dataTesto       = '',
   ora             = '',
   imageUrl        = '',
   prezzoImporto   = '26€',
@@ -655,7 +659,8 @@ export function TemplatePrezzoStoriaEvento({
 }) {
   const labelSize  = prezzoLabel.length > 22 ? 90 : prezzoLabel.length > 14 ? 112 : 130
   const prezzoSize = prezzoImporto.length > 5 ? 150 : prezzoImporto.length > 3 ? 180 : 210
-  const dataOra    = [formatDataIT(data), ora ? `ore ${ora}` : ''].filter(Boolean).join(' · ')
+  const dataPart   = dataTesto || (data ? formatDataIT(data) : '')
+  const dataOra    = [dataPart, ora ? `ore ${ora}` : ''].filter(Boolean).join(' · ')
 
   return (
     <div style={{
