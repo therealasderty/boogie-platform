@@ -236,6 +236,20 @@ async function leggiRecord(id) {
   return await res.json()
 }
 
+function leggiLock(fields = {}) {
+  try {
+    const parsed = JSON.parse(fields?.RisultatiPubblicazione || '{}')
+    const lockRunId = parsed?.lockRunId || ''
+    const lockAt    = parsed?.lockAt || ''
+    if (!lockRunId || !lockAt) return null
+    const ts = new Date(lockAt).getTime()
+    if (Number.isNaN(ts)) return null
+    return { lockRunId, lockAt, ts }
+  } catch {
+    return null
+  }
+}
+
 // ── Handler principale (cron) ─────────────────────────────────────────────────
 
 export default async () => {
@@ -246,6 +260,7 @@ export default async () => {
 
   try {
     const runId = `cron-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    const LOCK_TTL_MS = 20 * 60 * 1000
     const now = new Date()
     const ora = now.toISOString()
 
@@ -273,6 +288,14 @@ export default async () => {
     console.log(`Post da pubblicare: ${records.length}`)
 
     for (const record of records) {
+      // Pre-check: se un'altra run ha già lockato da poco, non toccare il record.
+      const fresh = await leggiRecord(record.id)
+      const lockEsistente = leggiLock(fresh.fields || {})
+      if (lockEsistente && (Date.now() - lockEsistente.ts) < LOCK_TTL_MS) {
+        console.log(`[LOCK_SKIPPED] record=${record.id} owner=${lockEsistente.lockRunId} lockAt=${lockEsistente.lockAt}`)
+        continue
+      }
+
       // Claim ottimistico del record: previene doppie pubblicazioni in caso di run concorrenti.
       const lockInfo = { lockRunId: runId, lockAt: new Date().toISOString() }
       const lockOk = await aggiornaRecord(record.id, {
@@ -280,16 +303,17 @@ export default async () => {
         'RisultatiPubblicazione': JSON.stringify(lockInfo),
       })
       if (!lockOk) {
-        console.log(`Record ${record.id}: impossibile scrivere lock, salto`)
+        console.log(`[LOCK_WRITE_FAILED] record=${record.id} runId=${runId}`)
         continue
       }
+      console.log(`[LOCK_ACQUIRED] record=${record.id} runId=${runId} lockAt=${lockInfo.lockAt}`)
       const claimed = await leggiRecord(record.id)
       let ownerRunId = ''
       try {
         ownerRunId = JSON.parse(claimed.fields?.RisultatiPubblicazione || '{}')?.lockRunId || ''
       } catch {}
       if (ownerRunId !== runId) {
-        console.log(`Record ${record.id}: lock perso, salto per evitare duplicato`)
+        console.log(`[LOCK_LOST] record=${record.id} expected=${runId} actual=${ownerRunId || 'none'}`)
         continue
       }
 

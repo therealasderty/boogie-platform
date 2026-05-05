@@ -197,7 +197,7 @@ Tutte usano `next: { revalidate: 30 }` (test) — portare a **300 in produzione*
 | Funzione | Auth | Scopo |
 |----------|------|-------|
 | `pubblica-social.js` | sì | Genera caption Gemini + pubblica su Meta (FB+IG) e Google Business Profile. Actions: `genera-caption`, `pubblica` (singola immagine), `pubblica-carosello` (carosello o storie IG). Per le storie usa `mediaType: 'STORIES'` e chiama `media_type: 'STORIES'` sull'API Meta |
-| `pubblica-social-schedulato.mjs` | — | **CRON** ogni 30 min — legge `SocialPosts` con `Stato='Programmato'` e `DataProgrammata` passata. Marca subito `In pubblicazione` per prevenire doppia pubblicazione, poi pubblica e aggiorna con `Pubblicato`/`Errore`. Distingue storie da post leggendo `TipoContenuto` da Airtable |
+| `pubblica-social-schedulato.mjs` | — | **CRON** ogni 30 min — legge `SocialPosts` con `Stato='Programmato'` e `DataProgrammata` passata (filtro robusto in JS, non solo `IS_BEFORE`). Lock anti-concorrenza via `RisultatiPubblicazione.lockRunId` per evitare doppie pubblicazioni su run simultanee. Distingue storie da post con `TipoContenuto` **o** template slide (incluso `foto_916`) |
 | `gestisci-social-posts.js` | sì | CRUD tabella `SocialPosts` Airtable |
 | `scraping-recensioni.js` | sì | Scraping Google Reviews |
 | `scraping-tripadvisor.js` | sì | Scraping TripAdvisor |
@@ -211,7 +211,7 @@ Tutte usano `next: { revalidate: 30 }` (test) — portare a **300 in produzione*
 
 | Tabella | Campi rilevanti |
 |---------|----------------|
-| `SocialPosts` | Titolo, Stato (Single select: Bozza/Programmato/**In pubblicazione**/Pubblicato/Errore), DataProgrammata, Caption, Slides (JSON array), Piattaforme (CSV: "instagram,facebook"), Sorgente, **TipoContenuto** (Single select: post/storia), RisultatiPubblicazione, ErroreMsg, DataCreazione, DataPubblicata |
+| `SocialPosts` | Titolo, Stato (Single select: Bozza/Programmato/Pubblicato/Errore), DataProgrammata, Caption, Slides (JSON array), Piattaforme (CSV: "instagram,facebook"), Sorgente, **TipoContenuto** (Single select: post/storia), RisultatiPubblicazione, ErroreMsg, DataCreazione, DataPubblicata |
 | `Agenda` | Titolo, Slug, Data, Ora, OraFine, Ricorrenza, GiorniSettimana, DescrizioneBreve, FotoHero, TitoloIntro, TestoIntro, TagFotoIntro, Blocchi (JSON), Stato, MetaTitle, MetaDescription, InPrimoPiano (checkbox) |
 | `Blog` | Titolo, Slug, Autore, DataPubblicazione, Categoria, DescrizioneBreve, FotoHero, Contenuto (HTML), MetaTitle, MetaDescription, Pubblicato, Ordine |
 | `FAQ` | Domanda, Risposta (HTML), Ordine, Attivo |
@@ -247,7 +247,7 @@ Tutte usano `next: { revalidate: 30 }` (test) — portare a **300 in produzione*
 | **AnalyticsPanel** | KPI settimanali (prenotazioni, coperti, cancellazioni, clienti unici, LTV). Grafici: bar giorni, pie fasce. Report AI Gemini |
 | **RecensioniSitoPanel** | Scraping + visualizzazione Google Reviews e TripAdvisor |
 | **SocialPanel** | Vecchio pannello: genera caption Gemini + pubblica post singoli su Meta (FB+IG+Google). Per storie/caroselli programmati usare SocialStudioPanel |
-| **SocialStudioPanel** | Editor post social con slide template (Fabric.js/canvas), cattura PNG, upload Cloudinary, programmazione. Tipi: `post` (16:9/4:5) e `storia` (9:16). Salva su `SocialPosts` Airtable. Il cron `pubblica-social-schedulato` pubblica automaticamente |
+| **SocialStudioPanel** | Editor post social con slide template, cattura PNG, upload Cloudinary, programmazione. Tipi: `post` e `storia` (9:16). Per eventi ricorrenti, quando fai "Recupera dati da evento" compila `dataTesto` con etichette tipo `Da Mar a Dom (Escluso Sabato)` calcolate da `GiorniEsclusione` + `Orari` attivi, evitando date singole errate |
 | **PostBuilderPanel** | Editor post con cattura slide e upload Cloudinary |
 
 ### Hooks (`dashboard/src/hooks/`) — 20 hook
@@ -298,7 +298,9 @@ Widget home: `AttesaWidget`, `MeteoWidget`, `RecensioniWidget`, `PrenotazioniWid
 - [ ] `/eventi-aziendali/[city]`: filtrare `generateStaticParams` per `ServiziAttivi`
 - [ ] Analisi Gemini in `AnalyticsPanel` su `RichiesteEventi` e `RichiesteContatti`
 - [ ] Aggiornare Privacy Policy (raccolta dati personali Airtable)
-- [ ] **BUG ATTIVO** — Storie programmate pubblicate come post su IG. Il cron legge `TipoContenuto='storia'` correttamente ma IG riceve chiamata senza `media_type: 'STORIES'`. Sospetto: nome campo Airtable con spazio/case, o timeout polling container. Aggiunto `console.log` su `TipoContenuto` per diagnostica. Aggiunto stato `In pubblicazione` per prevenire duplicati (richiede aggiunta opzione in Airtable)
+- [x] **Risolto (2026-05-05)** — Storie programmate ora riconosciute correttamente anche con template verticali (`foto_916`, `*_storia`, `*_story`) e pubblicate come `STORIES`
+- [x] **Risolto (2026-05-05)** — Doppia pubblicazione da cron concorrenti: introdotto lock per-record su `RisultatiPubblicazione.lockRunId` senza usare `Stato='In pubblicazione'` (evita errore Airtable `INVALID_MULTIPLE_CHOICE_OPTIONS`)
+- [x] **Risolto (2026-05-05)** — Social Studio su eventi ricorrenti: popolamento testo periodo (es. `Da Mar a Dom (Escluso Sabato)`) usando `giorniEsclusione` + giorni di apertura da `Orari`
 - [ ] Testare flow Social Automation end-to-end
 - [ ] Configurare dominio custom su Netlify
 - [ ] **Multilingua (futuro):** `next-intl`, prefisso `/en /fr /de /es`, campi Airtable `_EN/_FR/_DE/_ES`
@@ -312,9 +314,11 @@ Widget home: `AttesaWidget`, `MeteoWidget`, `RecensioniWidget`, `PrenotazioniWid
 ### Social Automation — storie IG via API
 - `pubblica ora` funziona: il frontend passa `mediaType: 'STORIES'` esplicitamente a `pubblica-social.js`
 - `programmato (cron)`: lo schedulatore legge `f['TipoContenuto']` da Airtable — se vale `'storia'` chiama `pubblicaIgStorie()` con `media_type: 'STORIES'`
+- fallback template scheduler: se `TipoContenuto` manca/è incoerente, il cron riconosce storie dai template (`foto_916`, nomi contenenti `storia`, suffisso `_story`)
 - Meta Graph API: le storie usano `/{IG_USER_ID}/media` con `media_type: 'STORIES'` + polling `status_code=FINISHED` + `media_publish`
 - **Differenza chiave rispetto ai post**: le storie non hanno `caption`, il container va creato con `media_type: 'STORIES'` — se questo campo manca, Meta pubblica come post normale senza errore
 - Il cron non gestisce Facebook Stories (escluso con `filter(p => !(p === 'facebook' && isStoria))`)
+- anti-duplicato cron: lock ottimistico per record via `RisultatiPubblicazione` + verifica ownership lock prima della pubblicazione effettiva
 
 ### Cloudinary
 - Cloud: `boogie-bistrot`, preset upload: `boogie-upload` (Unsigned)
@@ -329,4 +333,4 @@ Widget home: `AttesaWidget`, `MeteoWidget`, `RecensioniWidget`, `PrenotazioniWid
 
 ---
 
-*Aggiornato: 4 Maggio 2026*
+*Aggiornato: 5 Maggio 2026*
