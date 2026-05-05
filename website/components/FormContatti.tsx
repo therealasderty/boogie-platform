@@ -5,12 +5,19 @@ import { inputClass, labelClass } from '@/lib/form-classes'
 
 export default function FormContatti() {
   const [stato, setStato] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle')
+  const [loadedAt] = useState(() => Date.now())
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setStato('loading')
 
     const fd = new FormData(e.currentTarget)
+
+    // Anti-spam: honeypot deve essere vuoto, e devono essere passati almeno 3s
+    if (fd.get('website') || Date.now() - loadedAt < 3000) {
+      setStato('ok') // risposta silenziosa: il bot crede di aver avuto successo
+      return
+    }
 
     const payload = {
       nome:               fd.get('nome'),
@@ -20,6 +27,7 @@ export default function FormContatti() {
       messaggio:          fd.get('messaggio'),
       consenso_privacy:   fd.get('consenso_privacy') === 'on',
       consenso_marketing: fd.get('consenso_marketing') === 'on',
+      website:            fd.get('website'), // honeypot
     }
 
     try {
@@ -54,6 +62,12 @@ export default function FormContatti() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+
+      {/* Honeypot anti-spam — nascosto agli utenti, visibile ai bot */}
+      <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none', tabIndex: -1 }}>
+        <label>Non compilare questo campo</label>
+        <input name="website" type="text" autoComplete="off" tabIndex={-1} />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="flex flex-col gap-2">

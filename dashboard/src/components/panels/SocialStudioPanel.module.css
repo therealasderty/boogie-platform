@@ -34,11 +34,6 @@
   background: rgba(21,101,192,0.1); color: #1565C0;
   border: 1px solid rgba(21,101,192,0.25);
 }
-.coverageLabel {
-  font-size: 0.72rem; font-weight: 600; padding: 3px 10px; border-radius: 999px;
-  background: rgba(122,100,72,0.1); color: var(--text2);
-  border: 1px solid rgba(122,100,72,0.25);
-}
 .badgePronte {
   font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 999px;
   background: rgba(230,126,34,0.12); color: #E67E22;
@@ -650,7 +645,7 @@
 
 .feedCell {
   position: relative;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 4 / 5;
   background: var(--bg2);
   overflow: hidden;
   cursor: pointer;

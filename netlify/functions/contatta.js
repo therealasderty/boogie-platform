@@ -1,5 +1,17 @@
 // netlify/functions/contatta.js
 
+// Rate limiting in-memory: max 3 invii per IP ogni 10 minuti
+const ipLog = new Map();
+function isRateLimited(ip) {
+  const now = Date.now();
+  const windowMs = 10 * 60 * 1000;
+  const maxRequests = 3;
+  const timestamps = (ipLog.get(ip) || []).filter(t => now - t < windowMs);
+  if (timestamps.length >= maxRequests) return true;
+  ipLog.set(ip, [...timestamps, now]);
+  return false;
+}
+
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -9,6 +21,12 @@ exports.handler = async (event) => {
 
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers, body: '' };
   if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: 'Method Not Allowed' };
+
+  // Rate limit per IP
+  const ip = event.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
+  if (isRateLimited(ip)) {
+    return { statusCode: 429, headers, body: 'Troppe richieste. Riprova tra qualche minuto.' };
+  }
 
   const BREVO_API_KEY    = process.env.BREVO_API_KEY;
   const EMAIL_RISTORANTE = process.env.EMAIL_RISTORANTE;
@@ -24,7 +42,12 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers, body: 'Invalid JSON' };
   }
 
-  const { nome, cognome, telefono, email, messaggio, consenso_privacy, consenso_marketing } = data;
+  const { nome, cognome, telefono, email, messaggio, consenso_privacy, consenso_marketing, website } = data;
+
+  // Anti-spam: honeypot deve essere vuoto
+  if (website) {
+    return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
+  }
 
   if (!nome || !email || !messaggio || !consenso_privacy) {
     return { statusCode: 400, headers, body: 'Campi obbligatori mancanti' };

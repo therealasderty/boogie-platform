@@ -71,7 +71,7 @@ export default function App() {
         </main>
       </div>
 
-      <FloatingButton onClick={() => setModalOpen(true)} />
+      {view !== 'social-studio' && <FloatingButton onClick={() => setModalOpen(true)} />}
 
       {modalOpen && (
         <ModalPrenotazione

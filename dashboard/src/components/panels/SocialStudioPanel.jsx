@@ -2249,8 +2249,9 @@ export default function SocialStudioPanel() {
             <ShareNetwork size={20} weight="light" />
             Social Studio
           </div>
-          {programmatiCount > 0 && <span className={styles.badgeProgrammati}>{programmatiCount} programmati</span>}
-          {coverageLabel && <span className={styles.coverageLabel}>Programmato fino al {coverageLabel}</span>}
+          {programmatiCount > 0 && coverageLabel && (
+            <span className={styles.badgeProgrammati}>{programmatiCount} post programmati fino al {coverageLabel}</span>
+          )}
         </div>
         <div className={styles.headerRight}>
           <button className="btn-primary" style={{ gap: 6, padding: '8px 16px', fontSize: '0.85rem' }} onClick={() => apriEditor(null)}>

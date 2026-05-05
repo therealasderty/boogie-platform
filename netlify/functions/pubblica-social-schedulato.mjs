@@ -250,6 +250,12 @@ function leggiLock(fields = {}) {
   }
 }
 
+async function possiedeLock(recordId, runId) {
+  const fresh = await leggiRecord(recordId)
+  const lock = leggiLock(fresh.fields || {})
+  return lock?.lockRunId === runId
+}
+
 // ── Handler principale (cron) ─────────────────────────────────────────────────
 
 export default async () => {
@@ -316,6 +322,14 @@ export default async () => {
         console.log(`[LOCK_LOST] record=${record.id} expected=${runId} actual=${ownerRunId || 'none'}`)
         continue
       }
+      // Finestra di stabilizzazione: se due run lockano quasi insieme, dopo pochi istanti
+      // ne deve rimanere solo una owner prima della pubblicazione verso Meta.
+      await new Promise(r => setTimeout(r, 1200))
+      const stillOwner = await possiedeLock(record.id, runId)
+      if (!stillOwner) {
+        console.log(`[LOCK_LOST] record=${record.id} expected=${runId} actual=changed-after-delay`)
+        continue
+      }
 
       const f            = record.fields
       const caption        = f['Caption']       || ''
@@ -340,6 +354,12 @@ export default async () => {
 
       const risultati = {}
       const errori    = {}
+
+      const ownerBeforePublish = await possiedeLock(record.id, runId)
+      if (!ownerBeforePublish) {
+        console.log(`[LOCK_LOST] record=${record.id} expected=${runId} actual=changed-before-publish`)
+        continue
+      }
 
       if (piattaforme.includes('instagram') && META_IG_USER_ID && META_ACCESS_TOKEN) {
         try {
