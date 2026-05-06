@@ -23,9 +23,7 @@ import { IconRefresh, IconTrash, IconEdit } from '../../icons/index.jsx'
 import { TemplateEvento, TemplateMenu, TemplateRecensione, TEMPLATES } from './social/SlideTemplates.jsx'
 import styles from './PostBuilderPanel.module.css'
 
-// ─── Config Cloudinary (stessa di MediaPanel) ─────────────────────────────────
-const CL_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
-const CL_PRESET     = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+import { uploadToImageKit, imagekitThumb } from '../../lib/imagekit.js'
 
 // ─── Dimensioni per template ────────────────────────────────────────────────
 const TEMPLATE_SIZES = {
@@ -42,10 +40,7 @@ function uid() {
   return Math.random().toString(36).slice(2, 9)
 }
 
-function cloudinaryThumb(url, w = 120) {
-  if (!url || !url.includes('/upload/')) return url
-  return url.replace('/upload/', `/upload/w_${w},c_fill,q_auto,f_auto/`)
-}
+function cloudinaryThumb(url, w = 120) { return imagekitThumb(url, w) }
 
 function formatData(dateStr) {
   if (!dateStr) return ''
@@ -546,15 +541,8 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
   // Renderizza ogni slide nel div nascosto, cattura con html-to-image, carica su Cloudinary.
 
   async function uploadBlob(blob) {
-    if (!CL_CLOUD_NAME || !CL_PRESET) throw new Error('Cloudinary non configurato (VITE_CLOUDINARY_CLOUD_NAME / VITE_CLOUDINARY_UPLOAD_PRESET)')
-    const fd = new FormData()
-    fd.append('file', blob, 'slide.png')
-    fd.append('upload_preset', CL_PRESET)
-    fd.append('folder', 'social_posts')
-    const res  = await fetch(`https://api.cloudinary.com/v1_1/${CL_CLOUD_NAME}/image/upload`, { method: 'POST', body: fd })
-    const data = await res.json()
-    if (!data.secure_url) throw new Error(data.error?.message || 'Upload Cloudinary fallito')
-    return data.secure_url
+    const file = new File([blob], `slide-${Date.now()}.png`, { type: 'image/png' })
+    return uploadToImageKit(file, 'social_posts')
   }
 
   async function catturaTutteLeSlide(slidesInput) {

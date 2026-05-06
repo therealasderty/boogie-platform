@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'cdn.prod.website-files.com' },
+      // ImageKit CDN (sostituisce Cloudinary)
+      { protocol: 'https', hostname: 'ik.imagekit.io' },
       // Cloudinary (ottimizzazione immagini)
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       // Airtable attachments

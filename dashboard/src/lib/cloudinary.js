@@ -1,8 +1,9 @@
 /**
- * Utility Cloudinary condivisa — usata da SocialStudioPanel e MediaPanel.
- * Genera URL ridimensionato/ottimizzato da un URL Cloudinary originale.
+ * Migrato a ImageKit — cloudinaryThumb ora delega a imagekitThumb.
+ * Le vecchie URL Cloudinary vengono restituite invariate (account sospeso).
  */
+import { imagekitThumb } from './imagekit.js'
+
 export function cloudinaryThumb(url, width = 200) {
-  if (!url || !url.includes('/upload/')) return url
-  return url.replace('/upload/', `/upload/w_${width},c_fill,q_auto,f_auto/`)
+  return imagekitThumb(url, width)
 }

@@ -19,6 +19,7 @@ import {
 } from '@phosphor-icons/react'
 import { authFetch }         from '../../lib/authFetch'
 import { cloudinaryThumb }   from '../../lib/cloudinary'
+import { uploadToImageKit }  from '../../lib/imagekit.js'
 import { useSocialPosts }    from '../../hooks/useSocialPosts'
 import { usePresetSocial }  from '../../hooks/usePresetSocial'
 import { useAppuntamenti }   from '../../hooks/useAppuntamenti'
@@ -956,9 +957,6 @@ function PostCard({ post, onEdit, onElimina, onPubblica }) {
 
 // ─── PostEditor ───────────────────────────────────────────────────────────────
 
-const CL_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
-const CL_PRESET     = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
-
 function PostEditor({ postIniziale, onSalva, onAnnulla }) {
   const { appuntamenti, loading: loadingEventi } = useAppuntamenti()
   const { orari } = useOrari()
@@ -1028,15 +1026,8 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
   }
 
   async function uploadBlob(blob) {
-    if (!CL_CLOUD_NAME || !CL_PRESET) throw new Error('Cloudinary non configurato')
-    const fd = new FormData()
-    fd.append('file', blob, 'slide.png')
-    fd.append('upload_preset', CL_PRESET)
-    fd.append('folder', 'social_posts')
-    const res  = await fetch(`https://api.cloudinary.com/v1_1/${CL_CLOUD_NAME}/image/upload`, { method: 'POST', body: fd })
-    const data = await res.json()
-    if (!data.secure_url) throw new Error(data.error?.message || 'Upload Cloudinary fallito')
-    return data.secure_url
+    const file = new File([blob], `slide-${Date.now()}.png`, { type: 'image/png' })
+    return uploadToImageKit(file, 'social_posts')
   }
 
   async function imgToDataUrl(url) {

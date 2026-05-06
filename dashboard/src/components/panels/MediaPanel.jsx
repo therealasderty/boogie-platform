@@ -5,12 +5,12 @@ import { CSS } from '@dnd-kit/utilities'
 import { useMedia } from '../../hooks/useMedia'
 import { IconImages, IconPlus, IconTrash, IconEdit, IconRefresh, IconClose, IconCheck } from '../../icons/index.jsx'
 
+import { uploadToImageKit } from '../../lib/imagekit.js'
+
 const AIRTABLE_TOKEN   = import.meta.env.VITE_AIRTABLE_TOKEN
 const AIRTABLE_BASE_ID = import.meta.env.VITE_AIRTABLE_BASE_ID
-const CL_CLOUD_NAME    = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
-const CL_PRESET        = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
 
-function useCloudinaryUpload(onUpload, onError) {
+function useImageKitUpload(onUpload, onError) {
   const inputRef = useRef(null)
   const [uploading, setUploading] = useState(false)
   const onUploadRef = useRef(onUpload)
@@ -25,19 +25,8 @@ function useCloudinaryUpload(onUpload, onError) {
     if (!file) return
     setUploading(true)
     try {
-      if (!CL_CLOUD_NAME || !CL_PRESET) throw new Error('Env VITE_CLOUDINARY_CLOUD_NAME o VITE_CLOUDINARY_UPLOAD_PRESET non configurate')
-      const fd = new FormData()
-      fd.append('file', file)
-      fd.append('upload_preset', CL_PRESET)
-      const res  = await fetch(`https://api.cloudinary.com/v1_1/${CL_CLOUD_NAME}/image/upload`, { method: 'POST', body: fd })
-      const data = await res.json()
-      if (data.secure_url) {
-        onUploadRef.current(data.secure_url)
-      } else {
-        const msg = data.error?.message || JSON.stringify(data)
-        onErrorRef.current?.(msg)
-        console.error('Cloudinary error:', data)
-      }
+      const url = await uploadToImageKit(file, 'media')
+      onUploadRef.current(url)
     } catch (err) {
       onErrorRef.current?.(err.message)
       console.error('Upload error:', err)
@@ -71,7 +60,7 @@ function MediaModal({ item, onClose, onSave, tagEsistenti = [] }) {
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState(null)
 
-  const { open: openWidget, input: cloudinaryInput, uploading } = useCloudinaryUpload(
+  const { open: openWidget, input: cloudinaryInput, uploading } = useImageKitUpload(
     url => { setForm(f => ({ ...f, url })); setError(null) },
     msg => setError(`Upload fallito: ${msg}`)
   )
@@ -143,7 +132,7 @@ function MediaModal({ item, onClose, onSave, tagEsistenti = [] }) {
           <div>
             <label style={{ fontSize: '0.75rem', color: 'var(--text3)', display: 'block', marginBottom: 4 }}>Immagine *</label>
             <div style={{ display: 'flex', gap: 6 }}>
-              <input style={{ ...inputStyle, flex: 1 }} value={form.url} onChange={e => set('url', e.target.value)} placeholder="https://res.cloudinary.com/boogie-bistrot/..." />
+              <input style={{ ...inputStyle, flex: 1 }} value={form.url} onChange={e => set('url', e.target.value)} placeholder="https://ik.imagekit.io/ntd5nq5ml/..." />
               {cloudinaryInput}
               <button type="button" className="btn-secondary" onClick={openWidget} disabled={uploading} style={{ whiteSpace: 'nowrap', fontSize: '0.8rem', opacity: uploading ? 0.6 : 1 }}>
                 {uploading ? 'Caricamento…' : '↑ Carica'}
