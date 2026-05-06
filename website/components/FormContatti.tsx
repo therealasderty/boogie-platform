@@ -64,7 +64,7 @@ export default function FormContatti() {
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
       {/* Honeypot anti-spam — nascosto agli utenti, visibile ai bot */}
-      <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none', tabIndex: -1 }}>
+      <div aria-hidden="true" tabIndex={-1} style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none' }}>
         <label>Non compilare questo campo</label>
         <input name="website" type="text" autoComplete="off" tabIndex={-1} />
       </div>
