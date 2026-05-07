@@ -19,7 +19,7 @@ import {
 } from '@phosphor-icons/react'
 import { authFetch }         from '../../lib/authFetch'
 import { cloudinaryThumb }   from '../../lib/cloudinary'
-import { uploadToImageKit }  from '../../lib/imagekit.js'
+import { uploadToR2 }        from '../../lib/r2.js'
 import { useSocialPosts }    from '../../hooks/useSocialPosts'
 import { usePresetSocial }  from '../../hooks/usePresetSocial'
 import { useAppuntamenti }   from '../../hooks/useAppuntamenti'
@@ -1027,7 +1027,7 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
 
   async function uploadBlob(blob) {
     const file = new File([blob], `slide-${Date.now()}.png`, { type: 'image/png' })
-    return uploadToImageKit(file, 'social_posts')
+    return uploadToR2(file)
   }
 
   async function imgToDataUrl(url) {

@@ -23,7 +23,8 @@ import { IconRefresh, IconTrash, IconEdit } from '../../icons/index.jsx'
 import { TemplateEvento, TemplateMenu, TemplateRecensione, TEMPLATES } from './social/SlideTemplates.jsx'
 import styles from './PostBuilderPanel.module.css'
 
-import { uploadToImageKit, imagekitThumb } from '../../lib/imagekit.js'
+import { imagekitThumb } from '../../lib/imagekit.js'
+import { uploadToR2 }   from '../../lib/r2.js'
 
 // ─── Dimensioni per template ────────────────────────────────────────────────
 const TEMPLATE_SIZES = {
@@ -537,12 +538,12 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
     }
   }
 
-  // ── Cattura slide e upload Cloudinary ─────────────────────────────────────
-  // Renderizza ogni slide nel div nascosto, cattura con html-to-image, carica su Cloudinary.
+  // ── Cattura slide e upload R2 ──────────────────────────────────────────────
+  // Renderizza ogni slide nel div nascosto, cattura con html-to-image, carica su R2.
 
   async function uploadBlob(blob) {
     const file = new File([blob], `slide-${Date.now()}.png`, { type: 'image/png' })
-    return uploadToImageKit(file, 'social_posts')
+    return uploadToR2(file)
   }
 
   async function catturaTutteLeSlide(slidesInput) {
