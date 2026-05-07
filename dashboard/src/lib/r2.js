@@ -16,9 +16,15 @@ const UPLOAD_ENDPOINT = '/.netlify/functions/upload-slide'
 export async function uploadToR2(file) {
   const fileName = file.name || `slide-${Date.now()}.png`
 
-  // Converti in base64
+  // Converti in base64 a chunk per evitare stack overflow su file grandi
   const arrayBuffer = await file.arrayBuffer()
-  const fileBase64  = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+  const bytes       = new Uint8Array(arrayBuffer)
+  let binary = ''
+  const chunkSize = 0x8000
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
+  }
+  const fileBase64 = btoa(binary)
 
   const res = await fetch(UPLOAD_ENDPOINT, {
     method:  'POST',
