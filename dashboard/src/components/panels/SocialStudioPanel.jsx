@@ -1046,22 +1046,47 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
     }
   }
 
+function isCorsLikeCaptureError(err) {
+  const msg = String(err?.message || '').toLowerCase()
+  return (
+    msg.includes('tainted') ||
+    msg.includes('cors') ||
+    msg.includes('cross-origin') ||
+    msg.includes('failed to fetch')
+  )
+}
+
+async function renderSlideToPng(captureRef, slide, templateSizes) {
+  const T = TEMPLATES[slide.template]
+  const { w, h } = templateSizes[(T?.size) || '1:1']
+  return toPng(captureRef.current, { width: w, height: h, pixelRatio: 1 })
+}
+
   async function catturaTutteLeSlide(slidesInput) {
     const aggiornate = [...slidesInput]
     for (let i = 0; i < aggiornate.length; i++) {
       const slide = aggiornate[i]
-      // Non saltare mai — ri-cattura sempre per garantire che le immagini siano incluse
-      // Pre-converti le immagini in data URL per evitare problemi CORS durante toPng
-      const dataPerCaptura = { ...slide.data }
-      if (dataPerCaptura.imageUrl) dataPerCaptura.imageUrl = await imgToDataUrl(dataPerCaptura.imageUrl)
-      setCaptureSlide({ ...slide, data: dataPerCaptura })
+    // Non saltare mai — ri-cattura sempre per garantire che le immagini siano incluse
+    // Primo tentativo: URL originale (piu' stabile con html-to-image).
+    // Fallback: converte in data URL solo per errori CORS/canvas tainted.
+    setCaptureSlide(slide)
       await new Promise(r => setTimeout(r, 600))
       if (!captureRef.current) continue
       try {
         await document.fonts.ready
-        const T = TEMPLATES[slide.template]
-        const { w, h } = TEMPLATE_SIZES[(T?.size) || '1:1']
-        const dataUrl = await toPng(captureRef.current, { width: w, height: h, pixelRatio: 1 })
+      let dataUrl
+      try {
+        dataUrl = await renderSlideToPng(captureRef, slide, TEMPLATE_SIZES)
+      } catch (firstErr) {
+        if (!isCorsLikeCaptureError(firstErr) || !slide?.data?.imageUrl) throw firstErr
+        const fallbackData = {
+          ...(slide.data || {}),
+          imageUrl: await imgToDataUrl(slide.data.imageUrl),
+        }
+        setCaptureSlide({ ...slide, data: fallbackData })
+        await new Promise(r => setTimeout(r, 350))
+        dataUrl = await renderSlideToPng(captureRef, slide, TEMPLATE_SIZES)
+      }
         const blob = await (await fetch(dataUrl)).blob()
         const url  = await uploadBlob(blob)
         aggiornate[i] = { ...slide, cloudinaryUrl: url }
