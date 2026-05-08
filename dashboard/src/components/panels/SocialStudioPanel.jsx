@@ -561,6 +561,7 @@ function fillSlideDataFromEvento(template, a, currentData, orari = []) {
       dataTesto,
       ora:       a.ora || '',
       imageUrl:  a.fotoHero || '',
+      stasera:   currentData.stasera ?? false,
     }
   }
   if (template === 'chiusura') {
@@ -698,6 +699,14 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
       <input className={styles.edInput} value={data.ora || ''} placeholder="es. 20:00" onChange={e => update('ora', e.target.value)} />
       <label className={styles.sectionLabel}>URL immagine sfondo</label>
       <input className={styles.edInput} value={data.imageUrl || ''} placeholder="https://res.cloudinary.com/..." onChange={e => update('imageUrl', e.target.value)} />
+      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginTop: 6 }}>
+        <input
+          type="checkbox"
+          checked={!!data.stasera}
+          onChange={e => update('stasera', e.target.checked)}
+        />
+        <span style={{ fontSize: '0.82rem', color: 'var(--text2)' }}>Mostra "Stasera" al posto della data</span>
+      </label>
       <IndirizzoToggle data={data} update={update} />
     </div>
   )
@@ -1870,7 +1879,6 @@ function SocialCalendario({ posts, onApriPreview, onApriEditorDaGhost, onApriEdi
       <FullCalendar
         ref={calRef}
         plugins={[dayGridPlugin, listPlugin, interactionPlugin]}
-        initialView="dayGridMonth"
         locale="it"
         events={[...agendaEvents, ...postEvents, ...(mostraSuggerimenti ? ghostEvents : [])]}
         eventContent={(info) => <EventoContenuto info={info} />}

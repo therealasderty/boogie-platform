@@ -544,7 +544,7 @@ export function TemplatePrezzoEvento({
 const W_STORIA = 1080
 const H_STORIA = 1920
 
-export function TemplateStoriaEvento({ titolo = 'Titolo Evento', data = '', dataTesto = '', ora = '', imageUrl = '', mostraIndirizzo = false, indirizzo = BRAND_ADDRESS }) {
+export function TemplateStoriaEvento({ titolo = 'Titolo Evento', data = '', dataTesto = '', ora = '', imageUrl = '', mostraIndirizzo = false, indirizzo = BRAND_ADDRESS, stasera = false }) {
   const titoloFontSize = titolo.length > 25 ? 88 : titolo.length > 15 ? 110 : 130
 
   return (
@@ -578,21 +578,39 @@ export function TemplateStoriaEvento({ titolo = 'Titolo Evento', data = '', data
 
       {/* Contenuto in basso */}
       <div style={{ position: 'absolute', bottom: 220, left: 90, right: 90 }}>
-        {/* Badge */}
-        <div style={{
-          display:       'inline-block',
-          padding:       '8px 26px',
-          border:        `1px solid ${BRAND_GOLD}`,
-          borderRadius:  999,
-          fontSize:       22,
-          fontWeight:    600,
-          letterSpacing: 5,
-          textTransform: 'uppercase',
-          color:         BRAND_GOLD,
-          marginBottom:  44,
-        }}>
-          Evento
-        </div>
+
+        {/* Badge — "STASERA" riempito (modalità stasera) oppure "EVENTO" outline */}
+        {stasera ? (
+          <div style={{
+            display:         'inline-block',
+            padding:         '18px 56px',
+            backgroundColor: BRAND_GOLD,
+            borderRadius:    999,
+            fontSize:        42,
+            fontWeight:      700,
+            letterSpacing:   8,
+            textTransform:   'uppercase',
+            color:           DARK_BG,
+            marginBottom:    52,
+          }}>
+            Stasera
+          </div>
+        ) : (
+          <div style={{
+            display:       'inline-block',
+            padding:       '8px 26px',
+            border:        `1px solid ${BRAND_GOLD}`,
+            borderRadius:  999,
+            fontSize:       22,
+            fontWeight:    600,
+            letterSpacing: 5,
+            textTransform: 'uppercase',
+            color:         BRAND_GOLD,
+            marginBottom:  44,
+          }}>
+            Evento
+          </div>
+        )}
 
         {/* Titolo */}
         <div style={{
@@ -606,17 +624,30 @@ export function TemplateStoriaEvento({ titolo = 'Titolo Evento', data = '', data
           {titolo}
         </div>
 
-        {/* Data e ora */}
-        {(dataTesto || data || ora) && (
-          <div style={{
-            fontSize:      28,
-            fontWeight:    500,
-            color:         BRAND_GOLD,
-            letterSpacing: 2,
-            textTransform: dataTesto ? 'none' : 'capitalize',
-          }}>
-            {dataTesto ? `${dataTesto}${ora ? ` — ${ora}` : ''}` : `${formatDataIT(data)}${ora ? ` — ${ora}` : ''}`}
-          </div>
+        {/* Data e ora — in modalità stasera mostra solo l'ora */}
+        {stasera ? (
+          ora && (
+            <div style={{
+              fontSize:      36,
+              fontWeight:    600,
+              color:         BRAND_GOLD,
+              letterSpacing: 2,
+            }}>
+              ore {ora}
+            </div>
+          )
+        ) : (
+          (dataTesto || data || ora) && (
+            <div style={{
+              fontSize:      28,
+              fontWeight:    500,
+              color:         BRAND_GOLD,
+              letterSpacing: 2,
+              textTransform: dataTesto ? 'none' : 'capitalize',
+            }}>
+              {dataTesto ? `${dataTesto}${ora ? ` — ${ora}` : ''}` : `${formatDataIT(data)}${ora ? ` — ${ora}` : ''}`}
+            </div>
+          )
         )}
       </div>
 

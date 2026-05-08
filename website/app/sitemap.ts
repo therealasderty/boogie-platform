@@ -49,7 +49,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch {}
 
   // Pagine local SEO
-  let localitaEntries: MetadataRoute.Sitemap = []
+  const localitaEntries: MetadataRoute.Sitemap = []
   try {
     const localita = await fetchLocalita()
     for (const l of localita) {

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { getDayStatus, type OrarioRecord, type ChiusuraRecord } from '@/lib/orari'
 
 
@@ -234,9 +235,9 @@ function EventCard({ ev }: { ev: CalEvent }) {
 function MenuLink() {
   return (
     <div className="px-2 py-1.5 text-[11px] text-white/20 leading-relaxed">
-      <a href="/#menu" className="underline decoration-white/15 hover:text-white/40 hover:decoration-white/30 transition-colors">
+      <Link href="/#menu" className="underline decoration-white/15 hover:text-white/40 hover:decoration-white/30 transition-colors">
         Carta e pizze
-      </a>
+      </Link>
     </div>
   )
 }

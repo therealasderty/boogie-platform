@@ -31,13 +31,12 @@ export default async function ViniPage() {
     fetchMedia('vino'),
   ])
 
-  const immagini = (mediaVini.length > 0
+  const immagini = mediaVini.length > 0
     ? mediaVini.map(m => ({ src: m.url, alt: m.alt || m.nome }))
     : [
         { src: '/images/hero/2.avif', alt: 'Carta dei vini Boogie Bistrot' },
         { src: '/images/hero/1.webp', alt: 'La cantina' },
       ]
-  ).sort(() => Math.random() - 0.5)
 
   return (
     <main>

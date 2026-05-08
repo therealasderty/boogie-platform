@@ -69,15 +69,12 @@ function CardEventoUnico({ evento, variante = 'prossimo' }: { evento: EventoAgen
       ? (evento.blocchi.find(b => b.tipo === 'immagine') as {url:string}).url
       : null)
 
-  const Wrapper = href
-    ? ({ children }: { children: React.ReactNode }) => <Link href={href}>{children}</Link>
-    : ({ children }: { children: React.ReactNode }) => <>{children}</>
-
   const ctaLabel = variante === 'prossimo' ? 'Scopri di più →' : 'Rimani aggiornato →'
 
   return (
-    <Wrapper>
-    <article className={`border rounded-card overflow-hidden transition-colors ${variante === 'passato' ? 'border-white/5 opacity-70' : 'border-white/10'} ${href ? 'hover:border-brand/30 cursor-pointer' : ''}`}>
+    href ? (
+    <Link href={href}>
+    <article className={`border rounded-card overflow-hidden transition-colors ${variante === 'passato' ? 'border-white/5 opacity-70' : 'border-white/10'} hover:border-brand/30 cursor-pointer`}>
 
       {imgUrl && (
         <div className="overflow-hidden">
@@ -124,7 +121,48 @@ function CardEventoUnico({ evento, variante = 'prossimo' }: { evento: EventoAgen
         </div>
       </div>
     </article>
-    </Wrapper>
+    </Link>
+    ) : (
+    <article className={`border rounded-card overflow-hidden transition-colors ${variante === 'passato' ? 'border-white/5 opacity-70' : 'border-white/10'}`}>
+      {imgUrl && (
+        <div className="overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={imgUrl} alt={evento.titolo} className="w-full h-48 object-cover" style={variante === 'passato' ? { filter: 'grayscale(30%)' } : {}} />
+        </div>
+      )}
+      <div className="flex gap-5 p-5">
+        {variante === 'futuro' ? (
+          <div className="flex-shrink-0 flex flex-col items-center justify-center w-16 h-16 rounded-btn border border-brand/30 bg-brand/5">
+            <span className="text-brand/60 uppercase font-medium text-center leading-tight" style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}>Data da<br/>definire</span>
+          </div>
+        ) : data ? (
+          <div className={`flex-shrink-0 flex flex-col items-center justify-center w-16 h-16 rounded-btn border ${variante === 'passato' ? 'border-white/10 bg-white/5' : 'border-brand/40 bg-brand/10'}`}>
+            <span className={`font-ivy font-normal leading-none ${variante === 'passato' ? 'text-text-faint' : 'text-brand'}`} style={{ fontSize: '1.5rem' }}>
+              {data.giorno}
+            </span>
+            <span className={`uppercase font-medium ${variante === 'passato' ? 'text-text-faint/60' : 'text-brand/70'}`} style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}>
+              {data.mese}
+            </span>
+          </div>
+        ) : null}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-raleway font-normal text-white leading-tight" style={{ fontSize: 'var(--text-section)' }}>
+            {evento.titolo}
+          </h3>
+          {variante !== 'futuro' && evento.orario && (
+            <p className="text-text-faint mt-1" style={{ fontSize: 'var(--text-meta)' }}>
+              ore {evento.orario}{evento.orarioFine ? `–${evento.orarioFine}` : ''}
+            </p>
+          )}
+          {evento.descrizione && (
+            <p className="text-text-muted mt-2 leading-relaxed" style={{ fontSize: 'var(--text-meta)' }}>
+              {evento.descrizione}
+            </p>
+          )}
+        </div>
+      </div>
+    </article>
+    )
   )
 }
 
@@ -140,13 +178,10 @@ function CardEventoRicorrente({ evento, giorniAperti }: { evento: EventoAgenda; 
     ? `ore ${evento.orario}${evento.orarioFine ? `–${evento.orarioFine}` : ''}`
     : null
 
-  const Wrapper = href
-    ? ({ children }: { children: React.ReactNode }) => <Link href={href}>{children}</Link>
-    : ({ children }: { children: React.ReactNode }) => <>{children}</>
-
   return (
-    <Wrapper>
-    <article className={`relative border border-white/10 rounded-card p-6 overflow-hidden transition-colors ${href ? 'hover:border-brand/30 cursor-pointer' : 'hover:border-brand/30'}`}>
+    href ? (
+    <Link href={href}>
+    <article className="relative border border-white/10 rounded-card p-6 overflow-hidden transition-colors hover:border-brand/30 cursor-pointer">
 
       {imgUrl && (
         <div className="mb-5 -mx-6 -mt-6 overflow-hidden rounded-t-card">
@@ -182,7 +217,38 @@ function CardEventoRicorrente({ evento, giorniAperti }: { evento: EventoAgenda; 
         )}
       </div>
     </article>
-    </Wrapper>
+    </Link>
+    ) : (
+    <article className="relative border border-white/10 rounded-card p-6 overflow-hidden transition-colors hover:border-brand/30">
+      {imgUrl && (
+        <div className="mb-5 -mx-6 -mt-6 overflow-hidden rounded-t-card">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={imgUrl} alt={evento.titolo} className="w-full h-48 object-cover" />
+        </div>
+      )}
+      <div className="relative">
+        <div
+          className="inline-block px-3 py-1 rounded-pill bg-brand/15 text-brand uppercase font-medium mb-4"
+          style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
+        >
+          {schedaLabel}
+        </div>
+        <h3 className="font-raleway font-normal text-white" style={{ fontSize: 'var(--text-section)' }}>
+          {evento.titolo}
+        </h3>
+        {orarioLabel && (
+          <p className="text-text-faint mt-1" style={{ fontSize: 'var(--text-meta)' }}>
+            {orarioLabel}
+          </p>
+        )}
+        {evento.descrizione && (
+          <p className="text-text-muted mt-3 leading-relaxed" style={{ fontSize: 'var(--text-meta)' }}>
+            {evento.descrizione}
+          </p>
+        )}
+      </div>
+    </article>
+    )
   )
 }
 

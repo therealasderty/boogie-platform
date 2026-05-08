@@ -57,7 +57,7 @@ export default async function CityPage({ params }: { params: Promise<{ city: str
   if (!localita) notFound()
 
   const heroImage = fotoCarta.length > 0
-    ? fotoCarta[Math.floor(Math.random() * fotoCarta.length)].url
+    ? fotoCarta[0].url
     : '/images/hero/1.webp'
 
   const serviziEventi = localita

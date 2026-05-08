@@ -15,8 +15,8 @@ type NewsItem = {
 
 
 const HERO_FALLBACK = [
-  { src: '/images/hero/1.webp', alt: 'Boogie Bistrot' },
-  { src: '/images/hero/2.avif', alt: 'Il giardino del Boogie Bistrot' },
+  { src: '/images/hero/sala-boogie-bistrot-colle-brianza.webp', alt: 'Sala del Boogie Bistrot, ristorante con giardino a Colle Brianza' },
+  { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Giardino esterno del Boogie Bistrot illuminato la sera a Colle Brianza' },
 ]
 
 export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsItems: newsItemsProp }: { orariDisplay?: { righe: string[]; avvisoSettimana: boolean }; heroImages?: { src: string; alt: string }[]; newsItems?: NewsItem[] }) {
@@ -24,8 +24,7 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
   const newsItems = newsItemsProp ?? []
   // Clone first item at end for infinite loop effect
   const clonedNews = useMemo(() => newsItems.length > 1 ? [...newsItems, newsItems[0]] : newsItems, [newsItems])
-  const [heroImages, setHeroImages] = useState(rawImages)
-  const [mounted, setMounted] = useState(false)
+  const [heroImages] = useState(rawImages)
   const [current, setCurrent] = useState(0)
   const [locked, setLocked] = useState(false)
   const [news, setNews] = useState(0)
@@ -33,11 +32,6 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
   const [newsTransition, setNewsTransition] = useState(true)
   const heroTouchX = useRef(0)
   const newsTouchX = useRef(0)
-
-  useEffect(() => {
-    setMounted(true)
-    setHeroImages(imgs => [...imgs].sort(() => Math.random() - 0.5))
-  }, [])
 
   const goTo = useCallback(
     (index: number) => {
@@ -49,8 +43,8 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
     [locked]
   )
 
-  const next = useCallback(() => goTo((current + 1) % heroImages.length), [current, goTo])
-  const prev = useCallback(() => goTo((current - 1 + heroImages.length) % heroImages.length), [current, goTo])
+  const next = useCallback(() => goTo((current + 1) % heroImages.length), [current, goTo, heroImages.length])
+  const prev = useCallback(() => goTo((current - 1 + heroImages.length) % heroImages.length), [current, goTo, heroImages.length])
 
   const goToNews = useCallback(
     (index: number) => {
@@ -144,15 +138,15 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
             <div
               className="flex flex-col gap-5"
               style={{
-                opacity: mounted ? 1 : 0,
-                transform: mounted ? 'translateX(0)' : 'translateX(-48px)',
-                transition: mounted ? 'opacity 1.2s ease, transform 1.4s cubic-bezier(0.16, 1, 0.3, 1)' : 'none',
-                transitionDelay: mounted ? '0s' : '0s',
+                opacity: 1,
+                transform: 'translateX(0)',
+                transition: 'opacity 1.2s ease, transform 1.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                transitionDelay: '0s',
               }}
             >
               <Image
                 src="/logo-white.svg"
-                alt="Boogie"
+                alt="Boogie Bistrot"
                 width={110}
                 height={44}
                 priority
@@ -184,10 +178,10 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
           <div
             className="flex flex-col gap-4"
             style={{
-              opacity: mounted ? 1 : 0,
-              transform: mounted ? 'translateY(0)' : 'translateY(32px)',
-              transition: mounted ? 'opacity 1.2s ease, transform 1.4s cubic-bezier(0.16, 1, 0.3, 1)' : 'none',
-              transitionDelay: mounted ? '0.6s' : '0s',
+              opacity: 1,
+              transform: 'translateY(0)',
+              transition: 'opacity 1.2s ease, transform 1.4s cubic-bezier(0.16, 1, 0.3, 1)',
+              transitionDelay: '0.6s',
             }}
           >
             <div className="hidden md:flex flex-wrap gap-x-8 gap-y-3">

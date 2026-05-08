@@ -31,18 +31,23 @@ async function fetchCategoria(categoria: string): Promise<AirtableRecord[]> {
   const filter = encodeURIComponent(`AND({Categoria}="${categoria}", {Attivo}=TRUE())`)
   const url = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(table)}?filterByFormula=${filter}&sort[0][field]=Sottocategoria&sort[0][direction]=asc&sort[1][field]=Ordine&sort[1][direction]=asc&pageSize=100`
 
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` },
-    next: { revalidate: 300 },
-  })
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+      next: { revalidate: 300 },
+    })
 
-  if (!res.ok) {
-    console.error(`[menu] Airtable error ${res.status} per categoria "${categoria}":`, await res.text())
+    if (!res.ok) {
+      console.error(`[menu] Airtable error ${res.status} per categoria "${categoria}":`, await res.text())
+      return []
+    }
+    const json = await res.json()
+    console.log(`[menu] "${categoria}": ${json.records?.length ?? 0} record`)
+    return json.records || []
+  } catch (error) {
+    console.error(`[menu] Airtable fetch failed per categoria "${categoria}":`, error)
     return []
   }
-  const json = await res.json()
-  console.log(`[menu] "${categoria}": ${json.records?.length ?? 0} record`)
-  return json.records || []
 }
 
 function toVoce(r: AirtableRecord): VoceMenu {

@@ -31,13 +31,12 @@ export default async function PizzaPage() {
     fetchMedia('pizza'),
   ])
 
-  const immagini = (mediaPizza.length > 0
+  const immagini = mediaPizza.length > 0
     ? mediaPizza.map(m => ({ src: m.url, alt: m.alt || m.nome }))
     : [
         { src: '/images/hero/2.avif', alt: 'La pizza di Boogie Bistrot' },
         { src: '/images/hero/1.webp', alt: 'Il forno a legna' },
       ]
-  ).sort(() => Math.random() - 0.5)
 
   return (
     <main>

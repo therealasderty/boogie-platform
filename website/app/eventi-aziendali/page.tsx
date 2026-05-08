@@ -7,7 +7,7 @@ import GrigliaFotoLocation from '@/components/GrigliaFotoLocation'
 import { fetchMedia } from '@/lib/media'
 
 function shuffle<T>(arr: T[]): T[] {
-  return [...arr].sort(() => Math.random() - 0.5)
+  return [...arr]
 }
 
 export const revalidate = 300

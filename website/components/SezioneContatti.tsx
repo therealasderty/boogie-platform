@@ -8,7 +8,7 @@ export default async function SezioneContatti() {
   try {
     const foto = await fetchMedia('location')
     if (foto.length > 0) {
-      const scelta = foto[Math.floor(Math.random() * foto.length)]
+      const scelta = foto[0]
       fotoSrc = scelta.url
       fotoAlt = scelta.alt || 'Boogie Bistrot'
     }

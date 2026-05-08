@@ -26,13 +26,12 @@ function salvaConsent(p: Preferenze) {
 }
 
 export default function CookieBanner() {
-  const [visibile, setVisibile] = useState(false)
+  const [visibile, setVisibile] = useState(() => !leggiConsent())
   const [personalizza, setPersonalizza] = useState(false)
   const [analitici, setAnalitici] = useState(false)
   const [marketing, setMarketing] = useState(false)
 
   useEffect(() => {
-    if (!leggiConsent()) setVisibile(true)
     const reset = () => { setPersonalizza(false); setVisibile(true) }
     window.addEventListener('boogie_reset_cookie', reset)
     return () => window.removeEventListener('boogie_reset_cookie', reset)

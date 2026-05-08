@@ -7,7 +7,6 @@ import Image from 'next/image'
 import type { EventoAgenda } from '@/lib/agenda'
 import { usePageContext } from '@/lib/page-context'
 
-const MESI_SHORT = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic']
 const MESI_FULL  = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre']
 const GIORNI_BREVI = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab']
 const GIORNI_LABEL = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
@@ -126,7 +125,6 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
   const prenotaBottomLabel = prenotaLabel
   const showPrenotaBtn = !isPrenotaPage
 
-  const [mounted, setMounted] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [menuScrolled, setMenuScrolled] = useState(false)
@@ -136,8 +134,6 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
 
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80)
@@ -153,9 +149,11 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
 
   // Chiudi menu e torna in cima quando si naviga
   useEffect(() => {
-    setMobileOpen(false)
-    setMenuScrolled(false)
-    setPrenotaVisible(false)
+    requestAnimationFrame(() => {
+      setMobileOpen(false)
+      setMenuScrolled(false)
+      setPrenotaVisible(false)
+    })
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [pathname])
 
@@ -171,7 +169,6 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
     return () => obs.disconnect()
   }, [pathname])
 
-  const showLogoAndPrenota = !isHome || scrolled
   const isTopHome = isHome && !scrolled
 
   function openDropdown(name: string) {
@@ -259,9 +256,9 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
         <nav
           className="hidden lg:block absolute top-0 left-0 right-0 z-50"
           style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? 'translateY(0)' : 'translateY(-32px)',
-            transition: mounted ? 'opacity 1s ease 0.3s, transform 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.3s' : 'none',
+            opacity: 1,
+            transform: 'translateY(0)',
+            transition: 'opacity 1s ease 0.3s, transform 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.3s',
           }}
         >
           <div className="w-full px-14 pt-12 pb-4">
@@ -275,7 +272,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
         <nav className="hidden lg:block absolute top-0 left-0 right-0 z-50">
           <div className="max-w-7xl mx-auto px-14 w-full pt-12 pb-4 flex items-center justify-between">
             <Link href="/" className="flex-shrink-0 inline-block">
-              <Image src="/logo-white.svg" alt="Boogie" width={96} height={40} className="h-10 w-auto" priority />
+              <Image src="/logo-white.svg" alt="Boogie Bistrot" width={96} height={40} className="h-10 w-auto" priority />
             </Link>
             <ul className="flex items-center gap-8">{desktopNav}</ul>
             <Link href={prenotaHref} className={`flex-shrink-0 bg-brand hover:bg-brand-hover text-sm font-semibold text-black px-6 py-3 rounded-btn transition-colors whitespace-nowrap${!showPrenotaBtn ? ' invisible pointer-events-none' : ''}`} data-umami-event="prenota" data-umami-event-source="navbar">
@@ -297,7 +294,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
       >
         <div className="max-w-7xl mx-auto px-14 w-full h-20 flex items-center justify-between">
           <Link href="/" className="flex-shrink-0 inline-block">
-            <Image src="/logo-white.svg" alt="Boogie" width={96} height={40} className="h-10 w-auto" priority />
+            <Image src="/logo-white.svg" alt="Boogie Bistrot" width={96} height={40} className="h-10 w-auto" priority />
           </Link>
           <ul className="flex items-center gap-8">{desktopNav}</ul>
           <Link href={prenotaHref} className={`flex-shrink-0 bg-brand hover:bg-brand-hover text-sm font-semibold text-black px-6 py-3 rounded-btn transition-colors whitespace-nowrap${!showPrenotaBtn ? ' invisible pointer-events-none' : ''}`}>
@@ -318,7 +315,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
             transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease',
           }}
         >
-          <Image src="/logo-white.svg" alt="Boogie" width={100} height={40} className="h-10 w-auto" />
+          <Image src="/logo-white.svg" alt="Boogie Bistrot" width={100} height={40} className="h-10 w-auto" />
         </Link>
       )}
       <button

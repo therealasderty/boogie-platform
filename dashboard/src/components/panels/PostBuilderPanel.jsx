@@ -65,6 +65,18 @@ function buildSlide(template, sorgente, record) {
       },
     }
   }
+  if (template === 'storia_evento' && record) {
+    return {
+      id, template,
+      data: {
+        titolo:   record.title || record.titolo || '',
+        data:     record.data  || '',
+        ora:      record.ora   || '',
+        imageUrl: record.fotoHero || '',
+        stasera:  false,
+      },
+    }
+  }
   if (template === 'menu') {
     const piatti = (record || []).slice(0, 4).map(p => ({
       nome:        p.nome,
@@ -332,6 +344,27 @@ function SlideEditor({ slide, onChange }) {
       <input className={styles.edInput} value={data.imageUrl || ''} onChange={e => update('imageUrl', e.target.value)} placeholder="https://res.cloudinary.com/..." />
       <label className={styles.edLabel}>Indirizzo (opzionale)</label>
       <input className={styles.edInput} value={data.indirizzo || ''} onChange={e => update('indirizzo', e.target.value)} placeholder="Via Colle Brianza, Lecco" />
+    </div>
+  )
+
+  if (template === 'storia_evento') return (
+    <div className={styles.slideEditor}>
+      <label className={styles.edLabel}>Titolo</label>
+      <input className={styles.edInput} value={data.titolo || ''} onChange={e => update('titolo', e.target.value)} />
+      <label className={styles.edLabel}>Data</label>
+      <input className={styles.edInput} type="date" value={data.data || ''} onChange={e => update('data', e.target.value)} />
+      <label className={styles.edLabel}>Ora</label>
+      <input className={styles.edInput} value={data.ora || ''} placeholder="es. 20:00" onChange={e => update('ora', e.target.value)} />
+      <label className={styles.edLabel}>URL immagine sfondo</label>
+      <input className={styles.edInput} value={data.imageUrl || ''} placeholder="https://..." onChange={e => update('imageUrl', e.target.value)} />
+      <label className={styles.edLabel} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+        <input
+          type="checkbox"
+          checked={!!data.stasera}
+          onChange={e => update('stasera', e.target.checked)}
+        />
+        Mostra "Stasera" al posto della data
+      </label>
     </div>
   )
 

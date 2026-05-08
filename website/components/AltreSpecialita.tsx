@@ -15,7 +15,7 @@ export default async function AltreSpecialita({ escludi }: { escludi?: string })
   const immagini = await Promise.all(
     visibili.map(async (s) => {
       const media = await fetchMedia(s.tag)
-      const foto = media.length > 0 ? media[Math.floor(Math.random() * media.length)] : null
+      const foto = media.length > 0 ? media[0] : null
       return { ...s, image: foto ? foto.url : s.fallback, alt: foto?.alt || s.titolo }
     })
   )

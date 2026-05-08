@@ -31,13 +31,12 @@ export default async function CocktailsPage() {
     fetchMedia('cocktail'),
   ])
 
-  const immagini = (mediaCocktails.length > 0
+  const immagini = mediaCocktails.length > 0
     ? mediaCocktails.map(m => ({ src: m.url, alt: m.alt || m.nome }))
     : [
         { src: '/images/hero/1.webp', alt: 'Cocktails Boogie Bistrot' },
         { src: '/images/hero/2.avif', alt: 'Il bar di Boogie' },
       ]
-  ).sort(() => Math.random() - 0.5)
 
   return (
     <main>

@@ -32,8 +32,8 @@ function includiSezione(titolo: string) {
   return CATEGORIE_INCLUSE.some(c => t.includes(c))
 }
 
-function pickRandom<T>(arr: T[], n: number): T[] {
-  return [...arr].sort(() => Math.random() - 0.5).slice(0, n)
+function pickFirst<T>(arr: T[], n: number): T[] {
+  return arr.slice(0, n)
 }
 
 export default async function SpecialitaAllaCartaPage() {
@@ -42,18 +42,17 @@ export default async function SpecialitaAllaCartaPage() {
     fetchMedia('carta'),
   ])
 
-  const immaginiCarta = (mediaCarta.length > 0
+  const immaginiCarta = mediaCarta.length > 0
     ? mediaCarta.map(m => ({ src: m.url, alt: m.alt || m.nome }))
     : [
         { src: '/images/hero/1.webp', alt: 'Specialità alla carta' },
         { src: '/images/hero/2.avif', alt: 'Cucina Boogie Bistrot' },
       ]
-  ).sort(() => Math.random() - 0.5)
 
   const vociPerIntro = sezioni
     .filter(s => includiSezione(s.titolo))
     .flatMap(s => s.voci)
-  const campioni = pickRandom(vociPerIntro, 3)
+  const campioni = pickFirst(vociPerIntro, 3)
   const nomiPiatti = campioni.length > 0
     ? campioni.map(v => `<strong>${v.nome}</strong>`).join(', ')
     : '<strong>antipasti, primi e secondi</strong>'
