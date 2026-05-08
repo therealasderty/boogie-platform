@@ -56,7 +56,7 @@ export default function CookieBanner() {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-50 md:bottom-6 md:left-6 md:right-auto md:max-w-md"
+      className="fixed bottom-0 left-0 right-0 z-[300] md:bottom-6 md:left-6 md:right-auto md:max-w-md"
       style={{ padding: '0' }}
     >
       <div
