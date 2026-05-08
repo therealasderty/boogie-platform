@@ -10,19 +10,41 @@ type Preferenze = {
 }
 
 const STORAGE_KEY = 'boogie_cookie_consent'
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365 // 1 year
 
 function leggiConsent(): Preferenze | null {
   if (typeof window === 'undefined') return null
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : null
+    if (raw) return JSON.parse(raw)
+  } catch {
+    // Fall through to cookie storage.
+  }
+
+  try {
+    const cookie = document.cookie
+      .split('; ')
+      .find((c) => c.startsWith(`${STORAGE_KEY}=`))
+    if (!cookie) return null
+    const value = decodeURIComponent(cookie.split('=').slice(1).join('='))
+    return value ? JSON.parse(value) : null
   } catch {
     return null
   }
 }
 
 function salvaConsent(p: Preferenze) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(p))
+  const serialized = JSON.stringify(p)
+  try {
+    localStorage.setItem(STORAGE_KEY, serialized)
+  } catch {
+    // Ignore localStorage errors and keep fallback below.
+  }
+  try {
+    document.cookie = `${STORAGE_KEY}=${encodeURIComponent(serialized)}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`
+  } catch {
+    // Ignore cookie write errors; the banner should still close.
+  }
 }
 
 export default function CookieBanner() {

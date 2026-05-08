@@ -3,6 +3,7 @@
 export default function GestisciCookieButton() {
   function apri() {
     localStorage.removeItem('boogie_cookie_consent')
+    document.cookie = 'boogie_cookie_consent=; path=/; max-age=0; SameSite=Lax'
     window.dispatchEvent(new Event('boogie_reset_cookie'))
   }
 
