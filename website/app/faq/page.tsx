@@ -4,8 +4,9 @@ import SezioneContatti from '@/components/SezioneContatti'
 import Footer from '@/components/Footer'
 import SezioneFAQAccordion from '@/components/SezioneFAQAccordion'
 import { fetchFaq } from '@/lib/faq'
+import { fetchMedia } from '@/lib/media'
 
-export const revalidate = 300
+export const revalidate = 86400
 
 export const metadata: Metadata = {
   title: 'Domande frequenti | Boogie Bistrot',
@@ -13,14 +14,15 @@ export const metadata: Metadata = {
 }
 
 export default async function FaqPage() {
-  const faq = await fetchFaq()
+  const [faq, media] = await Promise.all([fetchFaq(), fetchMedia('location')])
+  const heroImage = media[0]?.url || '/images/hero/sala-boogie-bistrot-colle-brianza.webp'
 
   return (
     <main>
       <PaginaHero
         titolo="Domande frequenti"
         sottotitolo="FAQ"
-        image="/images/hero/1.webp"
+        image={heroImage}
       />
 
       <section className="py-20 md:py-28" style={{ backgroundColor: '#1a1a1a' }}>
