@@ -15,7 +15,7 @@ export async function fetchRecensioni(): Promise<RecensioneItem[]> {
     const filter = encodeURIComponent(`{Attivo}=TRUE()`)
     const res = await fetch(
       `https://api.airtable.com/v0/${base}/RecensioniSito?filterByFormula=${filter}&sort[0][field]=Ordine&sort[0][direction]=asc`,
-      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 300 } }
+      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 86400 } }
     )
     if (!res.ok) return []
     const json = await res.json()

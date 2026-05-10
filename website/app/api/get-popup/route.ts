@@ -16,7 +16,7 @@ export async function GET() {
   try {
     const res = await fetch(
       `https://api.airtable.com/v0/${base}/${encodeURIComponent(TABLE)}?filterByFormula={Stato}="attivo"&sort[0][field]=Data&sort[0][direction]=asc&maxRecords=50`,
-      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 60 } }
+      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 3600 } }
     )
     if (!res.ok) throw new Error(await res.text())
 

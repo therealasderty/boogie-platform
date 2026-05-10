@@ -10,6 +10,7 @@ const EMAIL_FROM       = process.env.EMAIL_FROM
 const TELEGRAM_TOKEN   = process.env.TELEGRAM_TOKEN
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID
 const SITO_URL         = process.env.SITO_URL || 'https://boogiebistrot.com'
+const NETLIFY_URL      = process.env.NETLIFY_URL || process.env.URL || SITO_URL
 
 export async function POST(req: NextRequest) {
   let body: Record<string, unknown>
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
             'Consenso Privacy':   consenso_privacy,
             'Consenso Marketing': consenso_marketing,
             'Timestamp':          new Date().toISOString(),
-            'Stato':              'In attesa',
+            'Stato':              'Confermata',
           },
         }),
       }
@@ -66,12 +67,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Errore connessione' }, { status: 500 })
   }
 
-  const linkConferma = `${SITO_URL}/conferma-prenotazione?id=${recordId}`
-
   // ── 2. Telegram ──────────────────────────────────────────────────
   if (TELEGRAM_TOKEN && TELEGRAM_CHAT_ID) {
     const testo =
-      `🔔 *Nuova richiesta di prenotazione!*\n\n` +
+      `✅ *Nuova prenotazione confermata!*\n\n` +
       (evento ? `🎉 *Evento:* ${evento}\n` : '') +
       `👤 *Nome:* ${nomeCompleto}\n` +
       `📅 *Data:* ${dataFormattata}\n` +
@@ -79,8 +78,7 @@ export async function POST(req: NextRequest) {
       `👥 *Persone:* ${persone}\n` +
       `📞 *Telefono:* ${telefono}\n` +
       `📧 *Email:* ${email}` +
-      (note ? `\n📝 *Note:* ${note}` : '') +
-      `\n\n✅ [Conferma prenotazione](${linkConferma})`
+      (note ? `\n📝 *Note:* ${note}` : '')
     fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -102,23 +100,47 @@ export async function POST(req: NextRequest) {
     }).catch(e => console.error('Brevo contact error:', e))
   }
 
-  // ── 4. Email utente ──────────────────────────────────────────────
+  // ── 4. Email conferma definitiva al cliente ──────────────────────
   if (BREVO_API_KEY && EMAIL_FROM) {
+    // Link Google Calendar
+    let googleCalLink = ''
+    if (data && ora) {
+      const [anno, mese, giorno] = String(data).split('-')
+      const [ore, minuti] = String(ora).split(':')
+      const dtStart = `${anno}${mese}${giorno}T${ore}${minuti}00`
+      const oraFine = parseInt(ore) + 2
+      const dtEnd = `${anno}${mese}${giorno}T${String(oraFine).padStart(2, '0')}${minuti}00`
+      const titolo   = encodeURIComponent('Cena al Boogie Bistrot')
+      const luogo    = encodeURIComponent('Via Europa 2, 23886 Colle Brianza LC')
+      const dettagli = encodeURIComponent(`Prenotazione per ${persone} ${parseInt(String(persone)) === 1 ? 'persona' : 'persone'} alle ${ora}.`)
+      googleCalLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${titolo}&dates=${dtStart}/${dtEnd}&location=${luogo}&details=${dettagli}&ctz=Europe/Rome`
+    }
+    const icsLink = `${NETLIFY_URL}/.netlify/functions/ics?data=${data}&ora=${encodeURIComponent(String(ora))}&nome=${encodeURIComponent(nomeCompleto)}&persone=${persone}`
+
     const htmlUtente = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#F5F0E8;font-family:'Georgia',serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
 <tr><td align="center"><table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid #C4913A;">
 <tr><td style="padding:40px 40px 20px;">
 <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Boogie Bistrot${evento ? ' · ' + evento : ''}</p>
-<h1 style="font-size:26px;color:#1A1610;margin:0 0 24px;font-weight:400;">Richiesta ricevuta ✓</h1>
-<p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 24px;">Ciao <strong>${nome}</strong>,<br>abbiamo ricevuto la tua richiesta. Riceverai entro pochi minuti una <strong>conferma definitiva</strong>.</p>
+<h1 style="font-size:26px;color:#1A1610;margin:0 0 8px;font-weight:400;">Prenotazione confermata! 🎉</h1>
+<p style="font-size:13px;color:#8B6F47;margin:0 0 24px;">Il tuo tavolo è riservato.</p>
+<p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 24px;">Ciao <strong>${nome}</strong>,<br>siamo lieti di confermarti la prenotazione. Non vediamo l'ora di accoglierti!</p>
 <table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin-bottom:28px;"><tr><td style="padding:20px 24px;">
 ${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Evento</span><strong>${evento}</strong></p>` : ''}
 <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Data</span><strong>${dataFormattata}</strong></p>
 <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ora</span><strong>${ora}</strong></p>
 <p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ospiti</span><strong>${persone} ${parseInt(String(persone)) === 1 ? 'persona' : 'persone'}</strong></p>
 </td></tr></table>
-<p style="font-size:13px;color:#8B6F47;">Per informazioni: <a href="mailto:${EMAIL_RISTORANTE}" style="color:#C4913A;">${EMAIL_RISTORANTE}</a></p>
+<p style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Aggiungi al calendario</p>
+<table cellpadding="0" cellspacing="0" style="margin-bottom:28px;"><tr>
+<td style="padding-right:10px;"><a href="${googleCalLink}" target="_blank" style="display:inline-block;background:#1A1610;color:white;text-decoration:none;padding:10px 18px;font-family:Arial,sans-serif;font-size:12px;font-weight:bold;letter-spacing:0.05em;">📅 Google Calendar</a></td>
+<td><a href="${icsLink}" style="display:inline-block;background:#F5F0E8;color:#1A1610;text-decoration:none;padding:10px 18px;font-family:Arial,sans-serif;font-size:12px;font-weight:bold;letter-spacing:0.05em;border:1px solid #D4C9B0;">🍎 Apple Calendar</a></td>
+</tr></table>
+<p style="font-size:13px;color:#8B6F47;line-height:1.6;">Per modifiche o disdette: <a href="mailto:${EMAIL_RISTORANTE}" style="color:#C4913A;">${EMAIL_RISTORANTE}</a></p>
+</td></tr>
+<tr><td style="padding:20px 40px 30px;border-top:1px solid #D4C9B0;">
+<p style="font-size:11px;color:#B0A898;margin:0;">Boogie Bistrot — Via Europa, 2, Colle Brianza (LC)</p>
 </td></tr></table></td></tr></table></body></html>`
 
     await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -128,21 +150,22 @@ ${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F4
         sender: { name: 'Boogie Bistrot', email: EMAIL_FROM },
         to: [{ email, name: nomeCompleto }],
         subject: evento
-          ? `Richiesta ricevuta — ${evento} · ${dataFormattata} ore ${ora}`
-          : `Richiesta di prenotazione ricevuta — ${dataFormattata} ore ${ora}`,
+          ? `Prenotazione confermata! — ${evento} · ${dataFormattata} ore ${ora}`
+          : `Prenotazione confermata! — ${dataFormattata} ore ${ora}`,
         htmlContent: htmlUtente,
       }),
-    }).catch(e => console.error('Brevo email error:', e))
+    }).catch(e => console.error('Brevo email utente error:', e))
 
-    // Notifica ristorante
+    // ── 5. Notifica ristorante (informativa) ─────────────────────────
     if (EMAIL_RISTORANTE) {
       const htmlRist = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#F5F0E8;font-family:'Georgia',serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
 <tr><td align="center"><table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid #C4913A;">
 <tr><td style="padding:40px 40px 20px;">
-<h1 style="font-size:22px;color:#1A1610;margin:0 0 6px;font-weight:400;">🔔 Nuova richiesta di prenotazione</h1>
-<table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin:20px 0;"><tr><td style="padding:20px 24px;">
+<h1 style="font-size:22px;color:#1A1610;margin:0 0 6px;font-weight:400;">✅ Nuova prenotazione confermata</h1>
+<p style="font-size:13px;color:#8B6F47;margin:0 0 24px;">Confermata automaticamente dal sito</p>
+<table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin-bottom:28px;"><tr><td style="padding:20px 24px;">
 ${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Evento</span><strong>🎉 ${evento}</strong></p>` : ''}
 <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Nome</span><strong>${nomeCompleto}</strong></p>
 <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Data</span><strong>${dataFormattata}</strong></p>
@@ -150,8 +173,11 @@ ${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F4
 <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Persone</span><strong>${persone}</strong></p>
 <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Email</span><strong>${email}</strong></p>
 <p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Telefono</span><strong>${telefono}</strong></p>
+${note ? `<p style="margin:10px 0 0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Note</span><strong>${note}</strong></p>` : ''}
 </td></tr></table>
-<a href="${linkConferma}" style="display:inline-block;background:#1A1610;color:white;text-decoration:none;padding:14px 32px;font-size:14px;font-weight:bold;">✓ CONFERMA PRENOTAZIONE</a>
+</td></tr>
+<tr><td style="padding:16px 40px 24px;border-top:1px solid #D4C9B0;">
+<p style="font-size:11px;color:#B0A898;margin:0;">Boogie Bistrot — Sistema prenotazioni automatico</p>
 </td></tr></table></td></tr></table></body></html>`
 
       await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -161,8 +187,8 @@ ${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F4
           sender: { name: 'Sistema Prenotazioni', email: EMAIL_FROM },
           to: [{ email: EMAIL_RISTORANTE }],
           subject: evento
-            ? `🎉 ${evento} — ${nomeCompleto} · ${dataFormattata} ore ${ora} (${persone} pers.)`
-            : `🔔 Nuova richiesta: ${nomeCompleto} — ${dataFormattata} ore ${ora} (${persone} pers.)`,
+            ? `✅ ${evento} — ${nomeCompleto} · ${dataFormattata} ore ${ora} (${persone} pers.)`
+            : `✅ Nuova prenotazione: ${nomeCompleto} — ${dataFormattata} ore ${ora} (${persone} pers.)`,
           htmlContent: htmlRist,
         }),
       }).catch(e => console.error('Brevo ristorante error:', e))

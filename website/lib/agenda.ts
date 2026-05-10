@@ -44,7 +44,7 @@ export async function fetchEventi(): Promise<EventoAgenda[]> {
   try {
     const res = await fetch(
       `https://api.airtable.com/v0/${base}/${encodeURIComponent(table)}?sort[0][field]=Data&sort[0][direction]=asc&maxRecords=200`,
-      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 300 } }
+      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 3600 } }
     )
     if (!res.ok) return []
 

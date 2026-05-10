@@ -34,7 +34,7 @@ async function fetchCategoria(categoria: string): Promise<AirtableRecord[]> {
   try {
     const res = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
-      next: { revalidate: 300 },
+      next: { revalidate: 86400 },
     })
 
     if (!res.ok) {

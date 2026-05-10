@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-export const revalidate = 300
+export const revalidate = 3600
 
 const NOMI_GIORNI = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato']
 
@@ -25,7 +25,7 @@ export async function GET() {
   try {
     const res = await fetch(
       `https://api.airtable.com/v0/${base}/${encodeURIComponent(table)}?sort[0][field]=Data&sort[0][direction]=asc&maxRecords=200`,
-      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 300 } }
+      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 3600 } }
     )
     if (!res.ok) return NextResponse.json({ success: false }, { status: 500 })
 

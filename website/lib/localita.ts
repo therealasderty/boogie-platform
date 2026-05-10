@@ -21,7 +21,7 @@ export async function fetchLocalita(): Promise<LocalitaItem[]> {
   try {
     const res = await fetch(
       `https://api.airtable.com/v0/${base}/${encodeURIComponent(table)}?sort[0][field]=Ordine&sort[0][direction]=asc&maxRecords=200`,
-      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 300 } }
+      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 86400 } }
     )
     if (!res.ok) return []
 
@@ -61,7 +61,7 @@ export async function fetchIntroServizio(cittaSlug: string, eventoSlug: string):
     const formula = encodeURIComponent(`AND({CittaSlug}="${cittaSlug}", {EventoSlug}="${eventoSlug}", {Attiva}=1)`)
     const res = await fetch(
       `https://api.airtable.com/v0/${base}/${encodeURIComponent(table)}?filterByFormula=${formula}&fields[]=IntroText&maxRecords=1`,
-      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 300 } }
+      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 86400 } }
     )
     if (!res.ok) return ''
     const json = await res.json()
