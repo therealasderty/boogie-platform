@@ -75,9 +75,17 @@ exports.handler = async (event) => {
   const compleanni = tuttiContatti.filter(c => {
     const dob = c.attributes?.DATE_OF_BIRTH;
     if (!dob) return false;
-    // Brevo restituisce DATE_OF_BIRTH come "YYYY-MM-DD"
-    const mmdd = String(dob).slice(5, 10); // "MM-DD"
-    return giorniSettimana.has(mmdd);
+    // Brevo può restituire DATE_OF_BIRTH come timestamp Unix (number) o stringa "YYYY-MM-DD"
+    let d;
+    if (typeof dob === 'number') {
+      d = new Date(dob * 1000);
+    } else {
+      d = new Date(String(dob) + 'T12:00:00Z');
+    }
+    if (isNaN(d.getTime())) return false;
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    return giorniSettimana.has(`${mm}-${dd}`);
   });
 
   console.log(`Contatti totali: ${tuttiContatti.length} | Compleanni settimana prossima: ${compleanni.length}`);

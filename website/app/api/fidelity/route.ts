@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
         ISCRITTO_FIDELITY: true,
         PUNTI_FIDELITY: 0,
         DATA_ISCRIZIONE_FIDELITY: new Date().toISOString().split('T')[0],
-        ...(data_nascita ? { DATE_OF_BIRTH: data_nascita } : {}),
+        ...(data_nascita ? { DATE_OF_BIRTH: Math.floor(new Date(String(data_nascita) + 'T12:00:00Z').getTime() / 1000) } : {}),
         CONSENSO_MARKETING: !!consenso_marketing,
       },
       listIds: [BREVO_LIST_ID],

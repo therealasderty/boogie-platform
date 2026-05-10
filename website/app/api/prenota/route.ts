@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
       headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'api-key': BREVO_API_KEY },
       body: JSON.stringify({
         email,
-        attributes: { FIRSTNAME: nome, LASTNAME: cognome || '', SMS: telefono || '', CONSENSO_MARKETING: !!consenso_marketing, ...(data_nascita ? { DATE_OF_BIRTH: data_nascita } : {}) },
+        attributes: { FIRSTNAME: nome, LASTNAME: cognome || '', SMS: telefono || '', CONSENSO_MARKETING: !!consenso_marketing, ...(data_nascita ? { DATE_OF_BIRTH: Math.floor(new Date(String(data_nascita) + 'T12:00:00Z').getTime() / 1000) } : {}) },
         listIds: [BREVO_LIST_ID],
         updateEnabled: true,
       }),
