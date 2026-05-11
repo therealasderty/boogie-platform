@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 const BREVO_API_KEY = process.env.BREVO_API_KEY
 const BREVO_LIST_ID = parseInt(process.env.BREVO_LIST_ID || '3')
 const EMAIL_FROM    = process.env.EMAIL_FROM
+const BREVO_DEBUG_LOGS = process.env.BREVO_DEBUG_LOGS === '1'
 
 const brevoHeaders = () => ({
   'Accept': 'application/json',
@@ -39,28 +40,43 @@ export async function POST(req: NextRequest) {
   } catch { /* contatto non trovato, procedi */ }
 
   // Crea o aggiorna contatto su Brevo
+  const brevoPayload = {
+    email,
+    attributes: {
+      FIRSTNAME: nome,
+      LASTNAME: cognome || '',
+      SMS: telefono || '',
+      ISCRITTO_FIDELITY: true,
+      PUNTI_FIDELITY: 0,
+      DATA_ISCRIZIONE_FIDELITY: new Date().toISOString().split('T')[0],
+      ...(data_nascita ? { BIRTHDAY: String(data_nascita) } : {}),
+      CONSENSO_MARKETING: !!consenso_marketing,
+    },
+    listIds: [BREVO_LIST_ID],
+    updateEnabled: true,
+  }
+
+  if (BREVO_DEBUG_LOGS) {
+    console.log('[Brevo] upsert contact (fidelity):', {
+      email,
+      attributes: brevoPayload.attributes,
+      listIds: brevoPayload.listIds,
+    })
+  }
+
   const upsertRes = await fetch('https://api.brevo.com/v3/contacts', {
     method: 'POST',
     headers: brevoHeaders(),
-    body: JSON.stringify({
-      email,
-      attributes: {
-        FIRSTNAME: nome,
-        LASTNAME: cognome || '',
-        SMS: telefono || '',
-        ISCRITTO_FIDELITY: true,
-        PUNTI_FIDELITY: 0,
-        DATA_ISCRIZIONE_FIDELITY: new Date().toISOString().split('T')[0],
-        ...(data_nascita ? { BIRTHDAY: String(data_nascita) } : {}),
-        CONSENSO_MARKETING: !!consenso_marketing,
-      },
-      listIds: [BREVO_LIST_ID],
-      updateEnabled: true,
-    }),
+    body: JSON.stringify(brevoPayload),
   })
 
+  const upsertText = await upsertRes.text().catch(() => '')
+  if (BREVO_DEBUG_LOGS || !upsertRes.ok) {
+    console.log('[Brevo] response (fidelity):', { status: upsertRes.status, ok: upsertRes.ok, body: upsertText })
+  }
+
   if (!upsertRes.ok) {
-    const upsertBody = await upsertRes.json().catch(() => ({}))
+    const upsertBody = (() => { try { return JSON.parse(upsertText || '{}') } catch { return {} } })()
     if (upsertRes.status !== 400 || upsertBody.code !== 'duplicate_parameter') {
       return NextResponse.json({ success: false }, { status: 500 })
     }

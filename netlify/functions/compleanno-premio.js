@@ -73,9 +73,9 @@ exports.handler = async (event) => {
 
   // ── Filtra chi compie gli anni nella settimana prossima ──────────
   const compleanni = tuttiContatti.filter(c => {
-    const dob = c.attributes?.DATE_OF_BIRTH;
+    const dob = c.attributes?.BIRTHDAY ?? c.attributes?.DATE_OF_BIRTH;
     if (!dob) return false;
-    // Brevo può restituire DATE_OF_BIRTH come timestamp Unix (number) o stringa "YYYY-MM-DD"
+    // Brevo può restituire BIRTHDAY/DATE_OF_BIRTH come timestamp Unix (number) o stringa "YYYY-MM-DD"
     let d;
     if (typeof dob === 'number') {
       d = new Date(dob * 1000);

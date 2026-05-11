@@ -12,11 +12,12 @@ exports.handler = async (event) => {
 
   const BREVO_API_KEY = process.env.BREVO_API_KEY;
   const BREVO_LIST_ID = parseInt(process.env.BREVO_LIST_ID) || 3;
+  const BREVO_DEBUG_LOGS = process.env.BREVO_DEBUG_LOGS === '1';
 
   let data;
   try { data = JSON.parse(event.body); } catch { return { statusCode: 400, headers, body: 'Invalid JSON' }; }
 
-  const { nome, cognome, email, telefono, consenso_privacy, consenso_marketing } = data;
+  const { nome, cognome, email, telefono, data_nascita, consenso_privacy, consenso_marketing } = data;
   if (!nome || !email || !consenso_privacy) {
     return { statusCode: 400, headers, body: 'Campi obbligatori mancanti' };
   }
@@ -41,24 +42,40 @@ exports.handler = async (event) => {
   } catch (err) { /* contatto non trovato, procedi */ }
 
   // Crea o aggiorna contatto su Brevo
+  const brevoPayload = {
+    email,
+    attributes: {
+      FIRSTNAME: nome,
+      LASTNAME: cognome || '',
+      SMS: telefono || '',
+      ISCRITTO_FIDELITY: true,
+      PUNTI_FIDELITY: 0,
+      DATA_ISCRIZIONE_FIDELITY: new Date().toISOString().split('T')[0],
+      ...(data_nascita ? { BIRTHDAY: String(data_nascita) } : {}),
+      CONSENSO_MARKETING: consenso_marketing ? true : false,
+    },
+    listIds: [BREVO_LIST_ID],
+    updateEnabled: true,
+  };
+
+  if (BREVO_DEBUG_LOGS) {
+    console.log('[Brevo] upsert contact (fidelity-iscrizione-fn):', {
+      email,
+      attributes: brevoPayload.attributes,
+      listIds: brevoPayload.listIds,
+    });
+  }
+
   const upsertRes = await fetch('https://api.brevo.com/v3/contacts', {
     method: 'POST',
     headers: brevoHeaders,
-    body: JSON.stringify({
-      email,
-      attributes: {
-        FIRSTNAME: nome,
-        LASTNAME: cognome || '',
-        SMS: telefono || '',
-        ISCRITTO_FIDELITY: true,
-        PUNTI_FIDELITY: 0,
-        DATA_ISCRIZIONE_FIDELITY: new Date().toISOString().split('T')[0],
-        CONSENSO_MARKETING: consenso_marketing ? true : false,
-      },
-      listIds: [BREVO_LIST_ID],
-      updateEnabled: true,
-    })
+    body: JSON.stringify(brevoPayload)
   });
+
+  if (BREVO_DEBUG_LOGS || !upsertRes.ok) {
+    const text = await upsertRes.text().catch(() => '');
+    console.log('[Brevo] response (fidelity-iscrizione-fn):', { status: upsertRes.status, ok: upsertRes.ok, body: text });
+  }
 
   if (!upsertRes.ok) {
     const upsertBody = await upsertRes.json().catch(() => ({}));

@@ -11,6 +11,7 @@ const TELEGRAM_TOKEN   = process.env.TELEGRAM_TOKEN
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID
 const SITO_URL         = process.env.SITO_URL || 'https://boogiebistrot.com'
 const NETLIFY_URL      = process.env.NETLIFY_URL || process.env.URL || SITO_URL
+const BREVO_DEBUG_LOGS = process.env.BREVO_DEBUG_LOGS === '1'
 
 export async function POST(req: NextRequest) {
   let body: Record<string, unknown>
@@ -88,16 +89,42 @@ export async function POST(req: NextRequest) {
 
   // ── 3. Brevo contatto ────────────────────────────────────────────
   if (BREVO_API_KEY) {
-    await fetch('https://api.brevo.com/v3/contacts', {
+    const brevoPayload = {
+      email,
+      attributes: {
+        FIRSTNAME: nome,
+        LASTNAME: cognome || '',
+        SMS: telefono || '',
+        CONSENSO_MARKETING: !!consenso_marketing,
+        ...(data_nascita ? { BIRTHDAY: String(data_nascita) } : {}),
+      },
+      listIds: [BREVO_LIST_ID],
+      updateEnabled: true,
+    }
+
+    if (BREVO_DEBUG_LOGS) {
+      console.log('[Brevo] upsert contact (prenota):', {
+        email,
+        attributes: brevoPayload.attributes,
+        listIds: brevoPayload.listIds,
+      })
+    }
+
+    const brevoRes = await fetch('https://api.brevo.com/v3/contacts', {
       method: 'POST',
       headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'api-key': BREVO_API_KEY },
-      body: JSON.stringify({
-        email,
-        attributes: { FIRSTNAME: nome, LASTNAME: cognome || '', SMS: telefono || '', CONSENSO_MARKETING: !!consenso_marketing, ...(data_nascita ? { DATE_OF_BIRTH: Math.floor(new Date(String(data_nascita) + 'T12:00:00Z').getTime() / 1000) } : {}) },
-        listIds: [BREVO_LIST_ID],
-        updateEnabled: true,
-      }),
-    }).catch(e => console.error('Brevo contact error:', e))
+      body: JSON.stringify(brevoPayload),
+    }).catch(e => {
+      console.error('Brevo contact error:', e)
+      return null
+    })
+
+    if (brevoRes) {
+      const brevoText = await brevoRes.text().catch(() => '')
+      if (BREVO_DEBUG_LOGS || !brevoRes.ok) {
+        console.log('[Brevo] response (prenota):', { status: brevoRes.status, ok: brevoRes.ok, body: brevoText })
+      }
+    }
   }
 
   // ── 4. Email conferma definitiva al cliente ──────────────────────

@@ -6,6 +6,7 @@ const EMAIL_FROM       = process.env.EMAIL_FROM
 const AIRTABLE_TOKEN   = process.env.AIRTABLE_TOKEN
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID
 const SITO_BASE        = 'https://boogiebistrot.com'
+const BREVO_DEBUG_LOGS = process.env.BREVO_DEBUG_LOGS === '1'
 
 export async function POST(req: NextRequest) {
   if (!BREVO_API_KEY || !BREVO_LIST_ID) {
@@ -19,23 +20,37 @@ export async function POST(req: NextRequest) {
   }
 
   const attributes: Record<string, string> = {
-    NOME:    nome,
-    COGNOME: cognome || '',
-    SMS:     telefono || '',
-    EVENTO:  eventoTitolo || '',
+    // Manteniamo anche NOME/COGNOME/EVENTO per compatibilità con attributi custom esistenti,
+    // ma aggiungiamo gli standard Brevo per evitare "campi che non si popolano".
+    NOME:      nome,
+    COGNOME:   cognome || '',
+    EVENTO:    eventoTitolo || '',
+    FIRSTNAME: nome,
+    LASTNAME:  cognome || '',
+    SMS:       telefono || '',
   }
   if (dataNascita) attributes.BIRTHDAY = dataNascita
 
   try {
+    const brevoPayload = {
+      email,
+      attributes,
+      listIds: [parseInt(BREVO_LIST_ID)],
+      updateEnabled: true,
+    }
+
+    if (BREVO_DEBUG_LOGS) {
+      console.log('[Brevo] upsert contact (iscriviti-aggiornamenti):', {
+        email,
+        attributes: brevoPayload.attributes,
+        listIds: brevoPayload.listIds,
+      })
+    }
+
     const res = await fetch('https://api.brevo.com/v3/contacts', {
       method: 'POST',
       headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email,
-        attributes,
-        listIds: [parseInt(BREVO_LIST_ID)],
-        updateEnabled: true,
-      }),
+      body: JSON.stringify(brevoPayload),
     })
 
     // 201 = creato, 204 = già esistente aggiornato — entrambi ok
@@ -43,6 +58,11 @@ export async function POST(req: NextRequest) {
       const err = await res.text()
       console.error('Brevo error:', err)
       return NextResponse.json({ error: 'Errore Brevo' }, { status: 500 })
+    }
+
+    if (BREVO_DEBUG_LOGS) {
+      const text = await res.text().catch(() => '')
+      console.log('[Brevo] response (iscriviti-aggiornamenti):', { status: res.status, ok: res.ok, body: text })
     }
 
     // Salva su Airtable ListaAttesa

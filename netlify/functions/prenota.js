@@ -20,6 +20,7 @@ exports.handler = async (event) => {
   const TELEGRAM_TOKEN   = process.env.TELEGRAM_TOKEN;
   const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
   const SITO_URL         = process.env.SITO_URL || 'https://boogiebistrot.com';
+  const BREVO_DEBUG_LOGS = process.env.BREVO_DEBUG_LOGS === '1';
 
   let data;
   try {
@@ -81,24 +82,36 @@ exports.handler = async (event) => {
 
   // ── 2. Aggiungi/aggiorna contatto su Brevo ──────────────────────
   try {
+    const brevoPayload = {
+      email,
+      attributes: {
+        FIRSTNAME: nome,
+        LASTNAME: cognome || '',
+        SMS: telefono || '',
+        BIRTHDAY: data_nascita || undefined,
+        CONSENSO_MARKETING: consenso_marketing ? true : false,
+      },
+      listIds: [BREVO_LIST_ID],
+      updateEnabled: true,
+    };
+
+    if (BREVO_DEBUG_LOGS) {
+      console.log('[Brevo] upsert contact (prenota-fn):', {
+        email,
+        attributes: brevoPayload.attributes,
+        listIds: brevoPayload.listIds,
+      });
+    }
+
     const brevoContactRes = await fetch('https://api.brevo.com/v3/contacts', {
       method: 'POST',
       headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'api-key': BREVO_API_KEY },
-      body: JSON.stringify({
-        email,
-        attributes: {
-          FIRSTNAME: nome,
-          LASTNAME: cognome || '',
-          SMS: telefono || '',
-          BIRTHDAY: data_nascita || undefined,
-          CONSENSO_MARKETING: consenso_marketing ? true : false,
-        },
-        listIds: [BREVO_LIST_ID],
-        updateEnabled: true,
-      })
+      body: JSON.stringify(brevoPayload)
     });
-    const brevoContactBody = await brevoContactRes.json();
-    console.log('Brevo contact status:', brevoContactRes.status, JSON.stringify(brevoContactBody));
+    const brevoContactText = await brevoContactRes.text().catch(() => '');
+    if (BREVO_DEBUG_LOGS || !brevoContactRes.ok) {
+      console.log('[Brevo] response (prenota-fn):', { status: brevoContactRes.status, ok: brevoContactRes.ok, body: brevoContactText });
+    }
   } catch (err) {
     console.error('Brevo contact error:', err);
   }

@@ -34,6 +34,7 @@ exports.handler = async (event) => {
   const BREVO_LIST_ID    = parseInt(process.env.BREVO_LIST_ID) || 3;
   const AIRTABLE_TOKEN   = process.env.AIRTABLE_TOKEN;
   const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
+  const BREVO_DEBUG_LOGS = process.env.BREVO_DEBUG_LOGS === '1';
 
   let data;
   try {
@@ -88,22 +89,37 @@ exports.handler = async (event) => {
 
   // ── 1. Aggiungi/aggiorna contatto su Brevo ───────────────────────
   try {
-    await fetch('https://api.brevo.com/v3/contacts', {
+    const brevoPayload = {
+      email,
+      attributes: {
+        FIRSTNAME: nome,
+        LASTNAME: cognome || '',
+        SMS: telefono || '',
+        BIRTHDAY: data_nascita || undefined,
+        CONSENSO_MARKETING: consenso_marketing ? true : false,
+      },
+      listIds: [BREVO_LIST_ID],
+      updateEnabled: true,
+    };
+
+    if (BREVO_DEBUG_LOGS) {
+      console.log('[Brevo] upsert contact (contatta):', {
+        email,
+        attributes: brevoPayload.attributes,
+        listIds: brevoPayload.listIds,
+      });
+    }
+
+    const brevoRes = await fetch('https://api.brevo.com/v3/contacts', {
       method: 'POST',
       headers: brevoHeaders,
-      body: JSON.stringify({
-        email,
-        attributes: {
-          FIRSTNAME: nome,
-          LASTNAME: cognome || '',
-          SMS: telefono || '',
-          BIRTHDAY: data_nascita || undefined,
-          CONSENSO_MARKETING: consenso_marketing ? true : false,
-        },
-        listIds: [BREVO_LIST_ID],
-        updateEnabled: true,
-      })
+      body: JSON.stringify(brevoPayload)
     });
+
+    if (BREVO_DEBUG_LOGS || !brevoRes.ok) {
+      const brevoText = await brevoRes.text().catch(() => '');
+      console.log('[Brevo] response (contatta):', { status: brevoRes.status, ok: brevoRes.ok, body: brevoText });
+    }
   } catch (err) {
     console.error('Brevo contact error:', err);
   }
