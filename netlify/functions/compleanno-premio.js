@@ -37,6 +37,16 @@ exports.handler = async (event) => {
   // ── Calcola i giorni della settimana prossima (Lun-Dom) ──────────
   // Esecuzione: domenica. Prossima settimana: domani (lunedì) → +7 giorni (domenica)
   const oggi = new Date();
+  const inizioValidita = new Date(oggi);
+  inizioValidita.setDate(oggi.getDate() + 1);
+  const fineValidita = new Date(oggi);
+  fineValidita.setDate(oggi.getDate() + 7);
+  const validitaDal = inizioValidita.toLocaleDateString('it-IT', {
+    weekday: 'long', day: 'numeric', month: 'long'
+  });
+  const validitaAl = fineValidita.toLocaleDateString('it-IT', {
+    weekday: 'long', day: 'numeric', month: 'long'
+  });
   const giorniSettimana = new Set();
   for (let i = 1; i <= 7; i++) {
     const d = new Date(oggi);
@@ -107,8 +117,8 @@ exports.handler = async (event) => {
       <table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid #C4913A;">
         <tr><td style="padding:40px 40px 20px;">
           <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Boogie Bistrot — Un regalo per te</p>
-          <h1 style="font-size:26px;color:#1A1610;margin:0 0 8px;font-weight:400;">Tanti auguri, ${nome}! 🎂</h1>
-          <p style="font-size:13px;color:#8B6F47;margin:0 0 24px;">Il tuo compleanno merita qualcosa di speciale.</p>
+          <h1 style="font-size:26px;color:#1A1610;margin:0 0 8px;font-weight:400;">Il tuo compleanno sta arrivando, ${nome}! 🎂</h1>
+          <p style="font-size:13px;color:#8B6F47;margin:0 0 24px;">Ti inviamo in anticipo il tuo regalo per la settimana del compleanno.</p>
           <p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 24px;">
             In occasione del tuo compleanno vogliamo offrirti un piccolo omaggio:<br>
             <strong>un drink a scelta dalla nostra lista</strong>, tutto per te.
@@ -117,7 +127,7 @@ exports.handler = async (event) => {
             <tr><td style="padding:20px 24px;">
               <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8B6F47;">Il tuo regalo</p>
               <p style="margin:0;font-size:16px;color:#1A1610;font-weight:bold;">🥂 Un drink a scelta dalla nostra lista</p>
-              <p style="margin:8px 0 0;font-size:12px;color:#8B6F47;line-height:1.6;">Valido entro il mese del tuo compleanno. Mostra questa email al nostro staff al momento dell'arrivo.</p>
+              <p style="margin:8px 0 0;font-size:12px;color:#8B6F47;line-height:1.6;">Valido nella settimana del tuo compleanno, da <strong>${validitaDal}</strong> a <strong>${validitaAl}</strong>. Mostra questa email al nostro staff al momento dell'arrivo.</p>
             </td></tr>
           </table>
           <p style="font-size:14px;color:#4A4030;line-height:1.7;margin:0 0 24px;">
@@ -145,7 +155,7 @@ exports.handler = async (event) => {
         body: JSON.stringify({
           sender: { name: 'Boogie Bistrot', email: EMAIL_FROM },
           to: [{ email, name: nome }],
-          subject: `🎂 Tanti auguri ${nome}! Un drink ti aspetta al Boogie Bistrot`,
+          subject: `🎂 Il tuo compleanno sta arrivando, ${nome}: c'è un drink per te`,
           htmlContent: emailHtml,
         }),
       });
