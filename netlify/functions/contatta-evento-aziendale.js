@@ -1,5 +1,19 @@
 // netlify/functions/contatta-evento-aziendale.js
 
+function normalizePhoneForBrevo(raw) {
+  const input = String(raw || '').trim()
+  if (!input) return null
+
+  let cleaned = input.replace(/[^\d+]/g, '')
+  if (cleaned.startsWith('00')) cleaned = `+${cleaned.slice(2)}`
+  if (!cleaned.startsWith('+')) {
+    cleaned = cleaned.startsWith('0') ? `+39${cleaned.slice(1)}` : `+39${cleaned}`
+  }
+
+  if (!/^\+\d{8,15}$/.test(cleaned)) return null
+  return cleaned
+}
+
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -78,6 +92,7 @@ exports.handler = async (event) => {
 
   // ── Salva/aggiorna contatto su Brevo ────────────────────────────
   try {
+    const normalizedPhone = normalizePhoneForBrevo(telefono)
     await fetch('https://api.brevo.com/v3/contacts', {
       method: 'POST',
       headers: brevoHeaders,
@@ -86,7 +101,7 @@ exports.handler = async (event) => {
         attributes: {
           FIRSTNAME: nome,
           LASTNAME: cognome || '',
-          SMS: telefono || '',
+          ...(normalizedPhone ? { SMS: normalizedPhone } : {}),
           CONSENSO_MARKETING: consenso_marketing ? true : false,
         },
         listIds: [BREVO_LIST_ID],

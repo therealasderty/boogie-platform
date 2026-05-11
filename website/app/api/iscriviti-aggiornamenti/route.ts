@@ -8,6 +8,20 @@ const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID
 const SITO_BASE        = 'https://boogiebistrot.com'
 const BREVO_DEBUG_LOGS = process.env.BREVO_DEBUG_LOGS === '1'
 
+function normalizePhoneForBrevo(raw: unknown): string | null {
+  const input = String(raw || '').trim()
+  if (!input) return null
+
+  let cleaned = input.replace(/[^\d+]/g, '')
+  if (cleaned.startsWith('00')) cleaned = `+${cleaned.slice(2)}`
+  if (!cleaned.startsWith('+')) {
+    cleaned = cleaned.startsWith('0') ? `+39${cleaned.slice(1)}` : `+39${cleaned}`
+  }
+
+  if (!/^\+\d{8,15}$/.test(cleaned)) return null
+  return cleaned
+}
+
 export async function POST(req: NextRequest) {
   if (!BREVO_API_KEY || !BREVO_LIST_ID) {
     return NextResponse.json({ error: 'Configurazione Brevo mancante' }, { status: 500 })
@@ -19,6 +33,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Email e nome sono obbligatori' }, { status: 400 })
   }
 
+  const normalizedPhone = normalizePhoneForBrevo(telefono)
   const attributes: Record<string, string> = {
     // Manteniamo anche NOME/COGNOME/EVENTO per compatibilità con attributi custom esistenti,
     // ma aggiungiamo gli standard Brevo per evitare "campi che non si popolano".
@@ -27,7 +42,7 @@ export async function POST(req: NextRequest) {
     EVENTO:    eventoTitolo || '',
     FIRSTNAME: nome,
     LASTNAME:  cognome || '',
-    SMS:       telefono || '',
+    ...(normalizedPhone ? { SMS: normalizedPhone } : {}),
   }
   if (dataNascita) attributes.BIRTHDAY = dataNascita
 
@@ -42,6 +57,7 @@ export async function POST(req: NextRequest) {
     if (BREVO_DEBUG_LOGS) {
       console.log('[Brevo] upsert contact (iscriviti-aggiornamenti):', {
         email,
+        normalizedPhone,
         attributes: brevoPayload.attributes,
         listIds: brevoPayload.listIds,
       })

@@ -1,5 +1,19 @@
 // netlify/functions/fidelity-iscrizione.js
 
+function normalizePhoneForBrevo(raw) {
+  const input = String(raw || '').trim();
+  if (!input) return null;
+
+  let cleaned = input.replace(/[^\d+]/g, '');
+  if (cleaned.startsWith('00')) cleaned = `+${cleaned.slice(2)}`;
+  if (!cleaned.startsWith('+')) {
+    cleaned = cleaned.startsWith('0') ? `+39${cleaned.slice(1)}` : `+39${cleaned}`;
+  }
+
+  if (!/^\+\d{8,15}$/.test(cleaned)) return null;
+  return cleaned;
+}
+
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -42,12 +56,13 @@ exports.handler = async (event) => {
   } catch (err) { /* contatto non trovato, procedi */ }
 
   // Crea o aggiorna contatto su Brevo
+  const normalizedPhone = normalizePhoneForBrevo(telefono);
   const brevoPayload = {
     email,
     attributes: {
       FIRSTNAME: nome,
       LASTNAME: cognome || '',
-      SMS: telefono || '',
+      ...(normalizedPhone ? { SMS: normalizedPhone } : {}),
       ISCRITTO_FIDELITY: true,
       PUNTI_FIDELITY: 0,
       DATA_ISCRIZIONE_FIDELITY: new Date().toISOString().split('T')[0],
@@ -61,6 +76,7 @@ exports.handler = async (event) => {
   if (BREVO_DEBUG_LOGS) {
     console.log('[Brevo] upsert contact (fidelity-iscrizione-fn):', {
       email,
+      normalizedPhone,
       attributes: brevoPayload.attributes,
       listIds: brevoPayload.listIds,
     });

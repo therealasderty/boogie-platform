@@ -13,6 +13,23 @@ const SITO_URL         = process.env.SITO_URL || 'https://boogiebistrot.com'
 const NETLIFY_URL      = process.env.NETLIFY_URL || process.env.URL || SITO_URL
 const BREVO_DEBUG_LOGS = process.env.BREVO_DEBUG_LOGS === '1'
 
+function normalizePhoneForBrevo(raw: unknown): string | null {
+  const input = String(raw || '').trim()
+  if (!input) return null
+
+  // Mantiene solo cifre e + iniziale, poi converte in formato E.164 base.
+  let cleaned = input.replace(/[^\d+]/g, '')
+  if (cleaned.startsWith('00')) cleaned = `+${cleaned.slice(2)}`
+  if (!cleaned.startsWith('+')) {
+    // Default Italia per numeri nazionali
+    cleaned = cleaned.startsWith('0') ? `+39${cleaned.slice(1)}` : `+39${cleaned}`
+  }
+
+  // E.164: + seguito da 8-15 cifre
+  if (!/^\+\d{8,15}$/.test(cleaned)) return null
+  return cleaned
+}
+
 export async function POST(req: NextRequest) {
   let body: Record<string, unknown>
   try { body = await req.json() } catch { return NextResponse.json({ success: false }, { status: 400 }) }
@@ -89,14 +106,15 @@ export async function POST(req: NextRequest) {
 
   // ── 3. Brevo contatto ────────────────────────────────────────────
   if (BREVO_API_KEY) {
-    const brevoPayload = {
+    const normalizedPhone = normalizePhoneForBrevo(telefono)
+    const brevoPayload: Record<string, unknown> = {
       email,
       attributes: {
         FIRSTNAME: nome,
         LASTNAME: cognome || '',
-        SMS: telefono || '',
         CONSENSO_MARKETING: !!consenso_marketing,
         ...(data_nascita ? { BIRTHDAY: String(data_nascita) } : {}),
+        ...(normalizedPhone ? { SMS: normalizedPhone } : {}),
       },
       listIds: [BREVO_LIST_ID],
       updateEnabled: true,
@@ -105,6 +123,7 @@ export async function POST(req: NextRequest) {
     if (BREVO_DEBUG_LOGS) {
       console.log('[Brevo] upsert contact (prenota):', {
         email,
+        normalizedPhone,
         attributes: brevoPayload.attributes,
         listIds: brevoPayload.listIds,
       })
@@ -121,10 +140,34 @@ export async function POST(req: NextRequest) {
 
     if (brevoRes) {
       const brevoText = await brevoRes.text().catch(() => '')
-      if (BREVO_DEBUG_LOGS || !brevoRes.ok) {
+      const brevoBody = (() => { try { return JSON.parse(brevoText || '{}') } catch { return {} } })() as Record<string, unknown>
+
+      if (!brevoRes.ok && brevoRes.status === 400 && brevoBody.code === 'duplicate_parameter') {
+        // Fallback: Brevo rifiuta SMS duplicato, ma salviamo comunque il contatto.
+        if (BREVO_DEBUG_LOGS) {
+          console.warn('[Brevo] duplicate_parameter on SMS, retrying without SMS')
+        }
+        const attrs = { ...(brevoPayload.attributes as Record<string, unknown>) }
+        delete attrs.SMS
+        const retryPayload = { ...brevoPayload, attributes: attrs }
+        const retryRes = await fetch('https://api.brevo.com/v3/contacts', {
+          method: 'POST',
+          headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'api-key': BREVO_API_KEY },
+          body: JSON.stringify(retryPayload),
+        }).catch(e => {
+          console.error('Brevo retry contact error:', e)
+          return null
+        })
+        if (retryRes) {
+          const retryText = await retryRes.text().catch(() => '')
+          console.log('[Brevo] retry response (prenota):', { status: retryRes.status, ok: retryRes.ok, body: retryText })
+        }
+      } else if (BREVO_DEBUG_LOGS || !brevoRes.ok) {
         console.log('[Brevo] response (prenota):', { status: brevoRes.status, ok: brevoRes.ok, body: brevoText })
       }
     }
+  } else {
+    console.warn('[Brevo] BREVO_API_KEY missing in /api/prenota')
   }
 
   // ── 4. Email conferma definitiva al cliente ──────────────────────

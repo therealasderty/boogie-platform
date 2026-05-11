@@ -5,6 +5,20 @@ const BREVO_LIST_ID = parseInt(process.env.BREVO_LIST_ID || '3')
 const EMAIL_FROM    = process.env.EMAIL_FROM
 const BREVO_DEBUG_LOGS = process.env.BREVO_DEBUG_LOGS === '1'
 
+function normalizePhoneForBrevo(raw: unknown): string | null {
+  const input = String(raw || '').trim()
+  if (!input) return null
+
+  let cleaned = input.replace(/[^\d+]/g, '')
+  if (cleaned.startsWith('00')) cleaned = `+${cleaned.slice(2)}`
+  if (!cleaned.startsWith('+')) {
+    cleaned = cleaned.startsWith('0') ? `+39${cleaned.slice(1)}` : `+39${cleaned}`
+  }
+
+  if (!/^\+\d{8,15}$/.test(cleaned)) return null
+  return cleaned
+}
+
 const brevoHeaders = () => ({
   'Accept': 'application/json',
   'Content-Type': 'application/json',
@@ -40,12 +54,13 @@ export async function POST(req: NextRequest) {
   } catch { /* contatto non trovato, procedi */ }
 
   // Crea o aggiorna contatto su Brevo
+  const normalizedPhone = normalizePhoneForBrevo(telefono)
   const brevoPayload = {
     email,
     attributes: {
       FIRSTNAME: nome,
       LASTNAME: cognome || '',
-      SMS: telefono || '',
+      ...(normalizedPhone ? { SMS: normalizedPhone } : {}),
       ISCRITTO_FIDELITY: true,
       PUNTI_FIDELITY: 0,
       DATA_ISCRIZIONE_FIDELITY: new Date().toISOString().split('T')[0],
@@ -59,6 +74,7 @@ export async function POST(req: NextRequest) {
   if (BREVO_DEBUG_LOGS) {
     console.log('[Brevo] upsert contact (fidelity):', {
       email,
+      normalizedPhone,
       attributes: brevoPayload.attributes,
       listIds: brevoPayload.listIds,
     })
