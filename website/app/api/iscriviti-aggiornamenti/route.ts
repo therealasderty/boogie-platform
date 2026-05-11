@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     SMS:     telefono || '',
     EVENTO:  eventoTitolo || '',
   }
-  if (dataNascita) attributes.DATE_NAISSANCE = dataNascita
+  if (dataNascita) attributes.BIRTHDAY = dataNascita
 
   try {
     const res = await fetch('https://api.brevo.com/v3/contacts', {

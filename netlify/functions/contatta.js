@@ -42,7 +42,7 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers, body: 'Invalid JSON' };
   }
 
-  const { nome, cognome, telefono, email, messaggio, consenso_privacy, consenso_marketing, website } = data;
+  const { nome, cognome, telefono, email, messaggio, data_nascita, consenso_privacy, consenso_marketing, website } = data;
 
   // Anti-spam: honeypot deve essere vuoto
   if (website) {
@@ -74,6 +74,7 @@ exports.handler = async (event) => {
               Email:             email,
               Telefono:          telefono || '',
               Messaggio:         messaggio,
+              'Data Nascita':    data_nascita || '',
               ConsensoMarketing: consenso_marketing ? true : false,
               DataRichiesta:     new Date().toISOString(),
             },
@@ -96,6 +97,7 @@ exports.handler = async (event) => {
           FIRSTNAME: nome,
           LASTNAME: cognome || '',
           SMS: telefono || '',
+          BIRTHDAY: data_nascita || undefined,
           CONSENSO_MARKETING: consenso_marketing ? true : false,
         },
         listIds: [BREVO_LIST_ID],

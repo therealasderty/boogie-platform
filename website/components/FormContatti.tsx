@@ -25,6 +25,7 @@ export default function FormContatti() {
       telefono:           fd.get('telefono'),
       email:              fd.get('email'),
       messaggio:          fd.get('messaggio'),
+      data_nascita:       fd.get('data_nascita') || null,
       consenso_privacy:   fd.get('consenso_privacy') === 'on',
       consenso_marketing: fd.get('consenso_marketing') === 'on',
       website:            fd.get('website'), // honeypot

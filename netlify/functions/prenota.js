@@ -28,7 +28,7 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers, body: 'Invalid JSON' };
   }
 
-  const { nome, cognome, data: dataPrenotazione, ora, persone, email, telefono, note, preferenza, evento, consenso_privacy, consenso_marketing } = data;
+  const { nome, cognome, data: dataPrenotazione, ora, persone, email, telefono, note, preferenza, evento, data_nascita, consenso_privacy, consenso_marketing } = data;
 
   if (!nome || !dataPrenotazione || !ora || !persone || !email || !telefono || !consenso_privacy) {
     return { statusCode: 400, headers, body: 'Campi obbligatori mancanti' };
@@ -58,6 +58,7 @@ exports.handler = async (event) => {
           'Preferenza':         preferenza || '',
           'Evento':             evento || '',
           'Canale':             'Sito web',
+          'Data Nascita':       data_nascita || '',
           'Consenso Privacy':   consenso_privacy,
           'Consenso Marketing': consenso_marketing,
           'Timestamp':          new Date().toISOString(),
@@ -89,6 +90,7 @@ exports.handler = async (event) => {
           FIRSTNAME: nome,
           LASTNAME: cognome || '',
           SMS: telefono || '',
+          BIRTHDAY: data_nascita || undefined,
           CONSENSO_MARKETING: consenso_marketing ? true : false,
         },
         listIds: [BREVO_LIST_ID],
