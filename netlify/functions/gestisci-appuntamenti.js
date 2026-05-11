@@ -168,7 +168,7 @@ exports.handler = async (event) => {
 
       const fields = {
         'Titolo':              body.title,
-        'Data':                body.data,
+        'Data':                body.data || null,
         'Ora':                 body.ora || '',
         'OraFine':             body.oraFine || '',
         'Tipo':                body.visibilita || 'promozione',
