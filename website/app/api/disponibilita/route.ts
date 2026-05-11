@@ -8,9 +8,8 @@ const AIRTABLE_TABLE    = process.env.AIRTABLE_TABLE    || 'Prenotazioni'
 const AIRTABLE_CHIUSURE = process.env.AIRTABLE_CHIUSURE || 'Chiusure'
 const AIRTABLE_ORARI    = process.env.AIRTABLE_ORARI    || 'Orari'
 const AIRTABLE_AGENDA   = process.env.AIRTABLE_AGENDA   || 'Agenda'
-/** Cache in-memory solo per alleggerire Airtable; TTL breve per ridurre slot “stale”. */
+/** Cache in-memory solo per orari/chiusure (tabelle config, non per-data). */
 const STATIC_TABLES_TTL_MS = 15 * 1000
-const RESPONSE_TTL_MS = 8 * 1000
 
 const AT = (table: string) =>
   `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(table)}`
@@ -20,7 +19,6 @@ type CacheEntry<T> = { expiresAt: number; value: T }
 type JsonValue = Record<string, unknown>
 
 const staticTableCache = new Map<string, CacheEntry<JsonValue>>()
-const responseCache = new Map<string, CacheEntry<Response>>()
 
 function cacheHit<T>(entry: CacheEntry<T> | undefined): T | null {
   if (!entry) return null
@@ -67,11 +65,6 @@ export async function GET(req: NextRequest) {
   const data = req.nextUrl.searchParams.get('data')
   if (!data) return NextResponse.json({ chiuso: true, fasce: [] }, { status: 400 })
 
-  const cachedResponse = cacheHit(responseCache.get(data))
-  if (cachedResponse) {
-    return cachedResponse.clone()
-  }
-
   const giornoSettimana = new Date(data + 'T12:00:00').getDay()
 
   try {
@@ -107,11 +100,9 @@ export async function GET(req: NextRequest) {
             eventoTitolo: (f['Titolo'] as string) || '',
             eventoSlug:   (f['Slug'] as string) || '',
           }
-          const response = NextResponse.json(payload, {
-            headers: { 'Cache-Control': 'public, s-maxage=15, stale-while-revalidate=30' },
+          return NextResponse.json(payload, {
+            headers: { 'Cache-Control': 'no-store' },
           })
-          responseCache.set(data, { expiresAt: Date.now() + RESPONSE_TTL_MS, value: response.clone() })
-          return response
         }
         const fotoRaw = f['FotoHero']
         const foto = typeof fotoRaw === 'string'
@@ -182,11 +173,9 @@ export async function GET(req: NextRequest) {
     }
 
     if (tuttoChiuso) {
-      const response = NextResponse.json({ chiuso: true, fasce: [] }, {
-        headers: { 'Cache-Control': 'public, s-maxage=15, stale-while-revalidate=30' },
+      return NextResponse.json({ chiuso: true, fasce: [] }, {
+        headers: { 'Cache-Control': 'no-store' },
       })
-      responseCache.set(data, { expiresAt: Date.now() + RESPONSE_TTL_MS, value: response.clone() })
-      return response
     }
 
     // ── 2. Orari e generazione slot ──────────────────────────────────
@@ -256,11 +245,9 @@ export async function GET(req: NextRequest) {
     }
 
     if (tuttiSlots.length === 0) {
-      const response = NextResponse.json({ chiuso: true, fasce: [] }, {
-        headers: { 'Cache-Control': 'public, s-maxage=15, stale-while-revalidate=30' },
+      return NextResponse.json({ chiuso: true, fasce: [] }, {
+        headers: { 'Cache-Control': 'no-store' },
       })
-      responseCache.set(data, { expiresAt: Date.now() + RESPONSE_TTL_MS, value: response.clone() })
-      return response
     }
 
     // ── 3. Prenotazioni esistenti ────────────────────────────────────
@@ -305,11 +292,9 @@ export async function GET(req: NextRequest) {
         })),
       }))
 
-    const response = NextResponse.json({ chiuso: false, fasce, eventiDelGiorno }, {
-      headers: { 'Cache-Control': 'public, s-maxage=15, stale-while-revalidate=30' },
+    return NextResponse.json({ chiuso: false, fasce, eventiDelGiorno }, {
+      headers: { 'Cache-Control': 'no-store' },
     })
-    responseCache.set(data, { expiresAt: Date.now() + RESPONSE_TTL_MS, value: response.clone() })
-    return response
   } catch (err) {
     console.error('disponibilita error:', err)
     return NextResponse.json({ chiuso: true, fasce: [] }, { status: 500 })

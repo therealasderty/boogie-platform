@@ -326,18 +326,22 @@ export default function FormPrenotazioneEvento({
                   required
                 >
                   <option value="" disabled>Seleziona un orario</option>
-                  {(() => {
-                    const visti = new Set<string>()
-                    return fasce.flatMap(fascia =>
-                      fascia.slots
-                        .filter(slot => { if (visti.has(slot.ora)) return false; visti.add(slot.ora); return true })
-                        .map(slot => (
-                          <option key={slot.ora} value={slot.ora} disabled={slot.pieno}>
-                            {slot.ora}{slot.pieno ? ' — esaurito' : ''}
-                          </option>
-                        ))
-                    )
-                  })()}
+                  {fasce.length === 1
+                    ? fasce[0].slots.map(slot => (
+                        <option key={slot.ora} value={slot.ora} disabled={slot.pieno}>
+                          {slot.ora}{slot.pieno ? ' — esaurito' : ''}
+                        </option>
+                      ))
+                    : fasce.map(fascia => (
+                        <optgroup key={fascia.fascia} label={fascia.fascia}>
+                          {fascia.slots.map(slot => (
+                            <option key={slot.ora} value={slot.ora} disabled={slot.pieno}>
+                              {slot.ora}{slot.pieno ? ' — esaurito' : ''}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))
+                  }
                 </select>
               </SelectWrapper>
               {slotsDisponibili.length === 0 && (

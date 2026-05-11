@@ -559,15 +559,18 @@ export default function FormPrenotazioneMultiStep({
                         Nessun orario disponibile per questa data.
                       </p>
                     ) : (
-                      <div className="flex flex-wrap gap-2">
-                        {(() => {
-                          const visti = new Set<string>()
-                          return fasce.flatMap(fascia =>
-                            fascia.slots
-                              .filter(slot => { if (visti.has(slot.ora)) return false; visti.add(slot.ora); return true })
-                              .map(slot => (
+                      <div className="flex flex-col gap-3">
+                        {fasce.map((fascia, fi) => (
+                          <div key={fascia.fascia}>
+                            {fasce.length > 1 && (
+                              <p className="text-neutral-400 font-medium mb-2" style={{ fontSize: 'var(--text-meta)' }}>
+                                {fascia.fascia}
+                              </p>
+                            )}
+                            <div className="flex flex-wrap gap-2">
+                              {fascia.slots.map(slot => (
                                 <button
-                                  key={slot.ora}
+                                  key={`${fi}-${slot.ora}`}
                                   type="button"
                                   disabled={slot.pieno}
                                   onClick={() => setOraSelezionata(slot.ora)}
@@ -582,9 +585,10 @@ export default function FormPrenotazioneMultiStep({
                                 >
                                   {slot.ora}{slot.pieno ? ' — esaurito' : ''}
                                 </button>
-                              ))
-                          )
-                        })()}
+                              ))}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
