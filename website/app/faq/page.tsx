@@ -15,7 +15,9 @@ export const metadata: Metadata = {
 
 export default async function FaqPage() {
   const [faq, media] = await Promise.all([fetchFaq(), fetchMedia('location')])
-  const heroImage = media[0]?.url || '/images/hero/sala-boogie-bistrot-colle-brianza.webp'
+  const heroImage = media.length > 0
+    ? media[Math.floor(Math.random() * media.length)].url
+    : '/images/hero/sala-boogie-bistrot-colle-brianza.webp'
 
   return (
     <main>
