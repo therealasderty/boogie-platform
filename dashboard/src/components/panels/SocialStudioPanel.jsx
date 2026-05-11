@@ -26,7 +26,7 @@ import { useAppuntamenti }   from '../../hooks/useAppuntamenti'
 import { useOrari }          from '../../hooks/useOrari'
 import { useMedia }          from '../../hooks/useMedia'
 import { IconRefresh, IconTrash, IconEdit } from '../../icons/index.jsx'
-import { TEMPLATES } from './social/SlideTemplates.jsx'
+import { TEMPLATES, OFFERTE_LABELS } from './social/SlideTemplates.jsx'
 import styles from './SocialStudioPanel.module.css'
 
 // ─── Costanti ─────────────────────────────────────────────────────────────────
@@ -583,6 +583,21 @@ function fillSlideDataFromEvento(template, a, currentData, orari = []) {
       voci:          Array.isArray(bPrezzo.voci) ? bPrezzo.voci.filter(v => typeof v === 'string' && v) : [],
     }
   }
+  if (template === 'offerta_serata' || template === 'offerta_serata_storia') {
+    let blocchi = []
+    try { blocchi = JSON.parse(a.blocchi || '[]') } catch {}
+    const bOfferte = blocchi.find(b => b.tipo === 'card-offerte') || {}
+    return {
+      ...currentData,
+      titolo:      a.title || a.titolo || '',
+      sottotitolo: bOfferte.titolo || 'Cosa troverai questa sera',
+      voci:        Array.isArray(bOfferte.voci) ? bOfferte.voci : [],
+      data,
+      dataTesto,
+      ora:         a.ora || '',
+      imageUrl:    a.fotoHero || '',
+    }
+  }
   return currentData
 }
 
@@ -647,7 +662,7 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
   const { template, data = {} } = slide
   function update(key, val) { onChange({ ...slide, data: { ...data, [key]: val } }) }
 
-  const usaEvento = ['cover', 'storia_evento', 'prezzo_evento', 'prezzo_storia', 'chiusura'].includes(template)
+  const usaEvento = ['cover', 'storia_evento', 'prezzo_evento', 'prezzo_storia', 'chiusura', 'offerta_serata', 'offerta_serata_storia'].includes(template)
 
   if (template === 'foto_11' || template === 'foto_45' || template === 'foto_916') {
     return <SlideEditorFoto slide={slide} onChange={onChange} />
@@ -760,6 +775,65 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
         ))}
         <button className="btn-secondary" style={{ fontSize: '0.8rem', marginTop: 2 }} onClick={aggiungiVoce}>+ Aggiungi voce</button>
         <label className={styles.sectionLabel} style={{ marginTop: 8 }}>URL foto sfondo</label>
+        <input className={styles.edInput} value={data.imageUrl || ''} placeholder="https://res.cloudinary.com/..." onChange={e => update('imageUrl', e.target.value)} />
+        <IndirizzoToggle data={data} update={update} />
+      </div>
+    )
+  }
+
+  if (template === 'offerta_serata' || template === 'offerta_serata_storia') {
+    const voci = Array.isArray(data.voci) ? data.voci : []
+    function toggleVoce(key) {
+      const next = voci.includes(key) ? voci.filter(k => k !== key) : [...voci, key]
+      update('voci', next)
+    }
+    return (
+      <div className={styles.slideEditor}>
+        <RecuperaEvento appuntamenti={appuntamenti} template={template} slide={slide} onChange={onChange} eventoGlobaleId={eventoGlobaleId} orari={orari} />
+        <label className={styles.sectionLabel}>Titolo evento</label>
+        <input className={styles.edInput} value={data.titolo || ''} onChange={e => update('titolo', e.target.value)} placeholder="Serata Latina" />
+        <label className={styles.sectionLabel}>Sottotitolo</label>
+        <input className={styles.edInput} value={data.sottotitolo || ''} onChange={e => update('sottotitolo', e.target.value)} placeholder="Cosa troverai questa sera" />
+        <label className={styles.sectionLabel}>Offerte (seleziona quelle attive)</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 4 }}>
+          {Object.entries(OFFERTE_LABELS).map(([key, label]) => {
+            const attivo = voci.includes(key)
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => toggleVoce(key)}
+                style={{
+                  fontSize: '0.8rem', padding: '5px 12px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: `1px solid ${attivo ? 'var(--accent)' : 'var(--border)'}`,
+                  background: attivo ? 'var(--accent)' : 'var(--bg)',
+                  color: attivo ? '#fff' : 'var(--text2)',
+                  cursor: 'pointer', transition: 'all 0.15s',
+                }}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div>
+            <label className={styles.sectionLabel}>Data</label>
+            <input className={styles.edInput} type="date" value={data.data || ''} onChange={e => { update('data', e.target.value); if (e.target.value) update('dataTesto', '') }} />
+          </div>
+          <div>
+            <label className={styles.sectionLabel}>Ora</label>
+            <input className={styles.edInput} value={data.ora || ''} placeholder="20:00" onChange={e => update('ora', e.target.value)} />
+          </div>
+        </div>
+        {!!data.dataTesto && (
+          <>
+            <label className={styles.sectionLabel}>Periodo / ricorrenza</label>
+            <input className={styles.edInput} value={data.dataTesto} onChange={e => update('dataTesto', e.target.value)} />
+          </>
+        )}
+        <label className={styles.sectionLabel}>URL foto sfondo</label>
         <input className={styles.edInput} value={data.imageUrl || ''} placeholder="https://res.cloudinary.com/..." onChange={e => update('imageUrl', e.target.value)} />
         <IndirizzoToggle data={data} update={update} />
       </div>

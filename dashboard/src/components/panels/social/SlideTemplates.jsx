@@ -1148,6 +1148,303 @@ export function TemplateAgendaSettimanaStoria({ eventi = [], labelSettimana = 'Q
   )
 }
 
+// ─── Template Offerta Serata (4:5 — 1080×1350) ───────────────────────────────
+// Mostra le categorie di offerta di una serata (carta, pizza, aperitivo, birre, vini, cocktail)
+// come pill in stile brand su sfondo foto.
+
+const OFFERTE_LABELS = {
+  carta:     'Specialità alla carta',
+  pizza:     'Pizza',
+  aperitivo: 'Apericena del Boogie',
+  birre:     'Birre',
+  vini:      'Carta dei Vini',
+  cocktails: 'Cocktail',
+}
+
+export function TemplateOffertaSerata({
+  titolo          = 'Serata Latina',
+  sottotitolo     = 'Cosa troverai questa sera',
+  voci            = ['carta', 'pizza', 'aperitivo', 'birre', 'cocktails'],
+  data            = '',
+  dataTesto       = '',
+  ora             = '',
+  imageUrl        = '',
+  mostraIndirizzo = false,
+  indirizzo       = BRAND_ADDRESS,
+}) {
+  const titleSize = titolo.length > 22 ? 68 : titolo.length > 14 ? 82 : 96
+  const dataPart  = dataTesto || (data ? formatDataIT(data) : '')
+  const dataOra   = [dataPart, ora ? `ore ${ora}` : ''].filter(Boolean).join(' · ')
+
+  return (
+    <div style={{
+      position:        'relative',
+      width:           W_COVER,
+      height:          H_COVER,
+      backgroundColor: DARK_BG,
+      overflow:        'hidden',
+      fontFamily:      "'SofiaPro', 'Helvetica Neue', sans-serif",
+    }}>
+      {/* Foto sfondo */}
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          crossOrigin="anonymous"
+          alt=""
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        />
+      ) : (
+        <div style={{
+          position:   'absolute',
+          inset:      0,
+          background: [
+            'radial-gradient(ellipse at 25% 35%, rgba(200,130,40,0.35) 0%, transparent 45%)',
+            'radial-gradient(ellipse at 75% 65%, rgba(160,80,20,0.28) 0%, transparent 42%)',
+            'linear-gradient(160deg, #2e1c08 0%, #1a0f06 45%, #080503 100%)',
+          ].join(', '),
+        }} />
+      )}
+
+      {/* Overlay scuro */}
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(12,6,0,0.72)' }} />
+
+      <LogoBlock top={80} logoW={130} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} />
+
+      {/* Contenuto centrato */}
+      <div style={{
+        position:       'absolute',
+        top:            210,
+        left:           64,
+        right:          64,
+        bottom:         dataOra ? 140 : 80,
+        display:        'flex',
+        flexDirection:  'column',
+        alignItems:     'flex-start',
+        justifyContent: 'center',
+        gap:            0,
+      }}>
+        {/* Titolo evento */}
+        <div style={{
+          fontFamily:   "'Alga', 'Georgia', serif",
+          fontSize:      titleSize,
+          fontWeight:   600,
+          lineHeight:   0.95,
+          color:        BRAND_GOLD,
+          wordBreak:    'break-word',
+          marginBottom: 36,
+          width:        '100%',
+        }}>
+          {titolo}
+        </div>
+
+        {/* Separatore */}
+        <div style={{ width: '100%', height: 1, background: 'rgba(238,206,157,0.25)', marginBottom: 36 }} />
+
+        {/* Sottotitolo */}
+        {sottotitolo && (
+          <div style={{
+            fontSize:      28,
+            fontWeight:    600,
+            letterSpacing: 4,
+            textTransform: 'uppercase',
+            color:         'rgba(238,206,157,0.7)',
+            marginBottom:  32,
+          }}>
+            {sottotitolo}
+          </div>
+        )}
+
+        {/* Pill offerte — una per riga */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18, width: '100%' }}>
+          {voci.map((key, i) => {
+            const label = OFFERTE_LABELS[key] || key
+            return (
+              <div key={i} style={{
+                display:       'inline-block',
+                padding:       '18px 44px',
+                border:        `1.5px solid rgba(238,206,157,0.6)`,
+                borderRadius:  999,
+                fontSize:      40,
+                fontWeight:    400,
+                color:         BRAND_GOLD,
+                whiteSpace:    'nowrap',
+                letterSpacing: 0.3,
+                alignSelf:     'flex-start',
+              }}>
+                {label}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Data + ora in basso */}
+      {dataOra && (
+        <div style={{ position: 'absolute', bottom: 60, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
+          <div style={{
+            display:       'inline-block',
+            padding:       '10px 34px',
+            border:        `1.5px solid rgba(238,206,157,0.4)`,
+            borderRadius:  999,
+            fontSize:      30,
+            fontWeight:    400,
+            color:         BRAND_GOLD,
+            letterSpacing: 0.4,
+            whiteSpace:    'nowrap',
+          }}>
+            {dataOra}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Template Offerta Serata Story (9:16 — 1080×1920) ────────────────────────
+
+export function TemplateOffertaSerataStoria({
+  titolo          = 'Serata Latina',
+  sottotitolo     = 'Cosa troverai questa sera',
+  voci            = ['carta', 'pizza', 'aperitivo', 'birre', 'cocktails'],
+  data            = '',
+  dataTesto       = '',
+  ora             = '',
+  imageUrl        = '',
+  mostraIndirizzo = false,
+  indirizzo       = BRAND_ADDRESS,
+}) {
+  const titleSize = titolo.length > 22 ? 80 : titolo.length > 14 ? 96 : 112
+  const dataPart  = dataTesto || (data ? formatDataIT(data) : '')
+  const dataOra   = [dataPart, ora ? `ore ${ora}` : ''].filter(Boolean).join(' · ')
+
+  return (
+    <div style={{
+      position:        'relative',
+      width:           W_STORIA,
+      height:          H_STORIA,
+      backgroundColor: DARK_BG,
+      overflow:        'hidden',
+      fontFamily:      "'SofiaPro', 'Helvetica Neue', sans-serif",
+    }}>
+      {/* Foto sfondo */}
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          crossOrigin="anonymous"
+          alt=""
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        />
+      ) : (
+        <div style={{
+          position:   'absolute',
+          inset:      0,
+          background: [
+            'radial-gradient(ellipse at 25% 30%, rgba(200,130,40,0.32) 0%, transparent 45%)',
+            'radial-gradient(ellipse at 75% 55%, rgba(140,70,15,0.25) 0%, transparent 42%)',
+            'linear-gradient(160deg, #2e1c08 0%, #1a0f06 45%, #080503 100%)',
+          ].join(', '),
+        }} />
+      )}
+
+      {/* Gradient: trasparente in alto, scuro in basso */}
+      <div style={{
+        position:   'absolute',
+        inset:      0,
+        background: 'linear-gradient(to bottom, rgba(12,6,0,0.15) 0%, rgba(12,6,0,0.2) 35%, rgba(12,6,0,0.70) 55%, rgba(12,6,0,0.88) 75%, rgba(12,6,0,0.94) 100%)',
+      }} />
+
+      <LogoBlock top={110} logoW={130} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} />
+
+      {/* Contenuto nella metà inferiore */}
+      <div style={{
+        position:      'absolute',
+        top:           H_STORIA * 0.42,
+        left:          90,
+        right:         90,
+        bottom:        dataOra ? 160 : 100,
+        display:       'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+      }}>
+        {/* Titolo */}
+        <div style={{
+          fontFamily:   "'Alga', 'Georgia', serif",
+          fontSize:      titleSize,
+          fontWeight:   600,
+          lineHeight:   0.95,
+          color:        BRAND_GOLD,
+          wordBreak:    'break-word',
+          marginBottom: 44,
+        }}>
+          {titolo}
+        </div>
+
+        {/* Separatore */}
+        <div style={{ width: '100%', height: 1, background: 'rgba(238,206,157,0.25)', marginBottom: 36 }} />
+
+        {/* Sottotitolo */}
+        {sottotitolo && (
+          <div style={{
+            fontSize:      28,
+            fontWeight:    600,
+            letterSpacing: 4,
+            textTransform: 'uppercase',
+            color:         'rgba(238,206,157,0.7)',
+            marginBottom:  28,
+          }}>
+            {sottotitolo}
+          </div>
+        )}
+
+        {/* Pill offerte — una per riga */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {voci.map((key, i) => {
+            const label = OFFERTE_LABELS[key] || key
+            return (
+              <div key={i} style={{
+                display:       'inline-block',
+                padding:       '16px 44px',
+                border:        `1.5px solid rgba(238,206,157,0.6)`,
+                borderRadius:  999,
+                fontSize:      38,
+                fontWeight:    400,
+                color:         BRAND_GOLD,
+                whiteSpace:    'nowrap',
+                letterSpacing: 0.3,
+                alignSelf:     'flex-start',
+              }}>
+                {label}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Data + ora in basso */}
+      {dataOra && (
+        <div style={{ position: 'absolute', bottom: 56, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
+          <div style={{
+            display:       'inline-block',
+            padding:       '10px 36px',
+            border:        `1.5px solid rgba(238,206,157,0.4)`,
+            borderRadius:  999,
+            fontSize:      32,
+            fontWeight:    400,
+            color:         BRAND_GOLD,
+            letterSpacing: 0.4,
+            whiteSpace:    'nowrap',
+          }}>
+            {dataOra}
+          </div>
+        </div>
+      )}
+
+      {/* Linea brand */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 6, backgroundColor: BRAND_GOLD }} />
+    </div>
+  )
+}
+
 // ─── Mappa template ───────────────────────────────────────────────────────────
 
 export const TEMPLATES = {
@@ -1208,7 +1505,29 @@ export const TEMPLATES = {
       voci:          ['Stuzzichini misti', 'Primo dello chef', 'Drink a scelta'],
     },
   },
+  offerta_serata: {
+    label: 'Offerta serata', Component: TemplateOffertaSerata, bgDark: true, size: '4:5',
+    demoProps: {
+      titolo:      'Serata Latina',
+      sottotitolo: 'Cosa troverai questa sera',
+      voci:        ['carta', 'pizza', 'aperitivo', 'birre', 'cocktails'],
+      data:        '2026-05-10',
+      ora:         '20:00',
+    },
+  },
+  offerta_serata_storia: {
+    label: 'Offerta serata Story', Component: TemplateOffertaSerataStoria, bgDark: true, size: '9:16',
+    demoProps: {
+      titolo:      'Serata Latina',
+      sottotitolo: 'Cosa troverai questa sera',
+      voci:        ['carta', 'pizza', 'aperitivo', 'birre', 'cocktails'],
+      data:        '2026-05-10',
+      ora:         '20:00',
+    },
+  },
 }
+
+export { OFFERTE_LABELS }
 
 // ─── Componente generico che sceglie il template giusto ────────────────────────
 

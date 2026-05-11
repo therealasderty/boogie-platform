@@ -935,7 +935,7 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
             />
             {dataProgrammata && (
               <div className={styles.scheduleInfo}>
-                <Clock size={12} /> Cron ogni ora — tolleranza massima 60 minuti
+                <Clock size={12} /> Cron ogni 4 ore — tolleranza massima 4 ore
               </div>
             )}
           </div>
@@ -1182,7 +1182,7 @@ export default function PostBuilderPanel() {
 
       {/* Info tecnica */}
       <div className={styles.infoBox}>
-        <strong>Cron:</strong> <code>pubblica-social-schedulato</code> gira ogni ora e pubblica automaticamente i post programmati. ·{' '}
+        <strong>Cron:</strong> <code>pubblica-social-schedulato</code> gira ogni 4 ore e pubblica automaticamente i post programmati. ·{' '}
         <strong>Env:</strong> <code>AIRTABLE_SOCIAL_POSTS</code> (nome tabella, default "SocialPosts") ·{' '}
         <strong>Dipendenza:</strong> <code>npm install html-to-image</code> nella cartella dashboard.
       </div>

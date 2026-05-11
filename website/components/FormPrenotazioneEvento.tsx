@@ -36,6 +36,7 @@ function oggi() { return localDateStr(new Date()) }
 function traUnMese() { const d = new Date(); d.setMonth(d.getMonth() + 3); return localDateStr(d) }
 
 const GIORNI_NOMI = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato']
+const AUTO_ADVANCE_MAX_STEPS = 3
 
 function prossimaDataValida(fromIso: string, giorniConsentiti: number[]): string {
   const d = new Date(fromIso + 'T00:00:00')
@@ -119,7 +120,7 @@ export default function FormPrenotazioneEvento({
         const chiuso = json.chiuso || !json.fasce?.length
 
         // Auto-advance: se chiuso e ricorrente e l'utente non ha cambiato data manualmente
-        if (chiuso && ricorrente && !userChangedDate.current && autoAdvanceRef.current < 14) {
+        if (chiuso && ricorrente && !userChangedDate.current && autoAdvanceRef.current < AUTO_ADVANCE_MAX_STEPS) {
           autoAdvanceRef.current += 1
           setData(nextDay(data))
           return
@@ -139,7 +140,7 @@ export default function FormPrenotazioneEvento({
         })).filter((f: Fascia) => f.slots.length > 0)
 
         if (fasceFiltrate.length === 0) {
-          if (ricorrente && !userChangedDate.current && autoAdvanceRef.current < 14) {
+          if (ricorrente && !userChangedDate.current && autoAdvanceRef.current < AUTO_ADVANCE_MAX_STEPS) {
             autoAdvanceRef.current += 1
             setData(nextDay(data))
             return

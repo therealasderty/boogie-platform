@@ -242,7 +242,7 @@ export async function fetchChiusure(): Promise<ChiusuraRecord[]> {
   try {
     const res = await fetch(
       `https://api.airtable.com/v0/${base}/${encodeURIComponent(table)}`,
-      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 300 } }
+      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 3600 } }
     )
     if (!res.ok) return []
     const json = await res.json()

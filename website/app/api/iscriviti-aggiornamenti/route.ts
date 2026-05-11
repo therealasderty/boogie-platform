@@ -23,87 +23,81 @@ function normalizePhoneForBrevo(raw: unknown): string | null {
 }
 
 export async function POST(req: NextRequest) {
-  if (!BREVO_API_KEY || !BREVO_LIST_ID) {
-    return NextResponse.json({ error: 'Configurazione Brevo mancante' }, { status: 500 })
-  }
-
   const { nome, cognome, email, telefono, dataNascita, eventoTitolo } = await req.json()
 
   if (!email || !nome) {
     return NextResponse.json({ error: 'Email e nome sono obbligatori' }, { status: 400 })
   }
 
-  const normalizedPhone = normalizePhoneForBrevo(telefono)
-  const attributes: Record<string, string> = {
-    // Manteniamo anche NOME/COGNOME/EVENTO per compatibilità con attributi custom esistenti,
-    // ma aggiungiamo gli standard Brevo per evitare "campi che non si popolano".
-    NOME:      nome,
-    COGNOME:   cognome || '',
-    EVENTO:    eventoTitolo || '',
-    FIRSTNAME: nome,
-    LASTNAME:  cognome || '',
-    ...(normalizedPhone ? { SMS: normalizedPhone } : {}),
+  // Salva su Airtable ListaAttesa (priorità: funziona sempre indipendentemente da Brevo)
+  if (AIRTABLE_TOKEN && AIRTABLE_BASE_ID) {
+    fetch(
+      `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent('ListaAttesa')}`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fields: {
+            Nome:   `${nome}${cognome ? ' ' + cognome : ''}`,
+            Email:  email,
+            Evento: eventoTitolo,
+            Data:   new Date().toISOString().split('T')[0],
+          },
+        }),
+      }
+    ).catch(e => console.error('Airtable ListaAttesa error:', e))
   }
-  if (dataNascita) attributes.BIRTHDAY = dataNascita
 
-  try {
-    const brevoPayload = {
-      email,
-      attributes,
-      listIds: [parseInt(BREVO_LIST_ID)],
-      updateEnabled: true,
-    }
+  // Brevo: opzionale — se mancante o in errore, logga e prosegui
+  if (BREVO_API_KEY && BREVO_LIST_ID) {
+    try {
+      const normalizedPhone = normalizePhoneForBrevo(telefono)
+      const attributes: Record<string, string> = {
+        NOME:      nome,
+        COGNOME:   cognome || '',
+        EVENTO:    eventoTitolo || '',
+        FIRSTNAME: nome,
+        LASTNAME:  cognome || '',
+        ...(normalizedPhone ? { SMS: normalizedPhone } : {}),
+      }
+      if (dataNascita) attributes.BIRTHDAY = dataNascita
 
-    if (BREVO_DEBUG_LOGS) {
-      console.log('[Brevo] upsert contact (iscriviti-aggiornamenti):', {
+      const brevoPayload = {
         email,
-        normalizedPhone,
-        attributes: brevoPayload.attributes,
-        listIds: brevoPayload.listIds,
+        attributes,
+        listIds: [parseInt(BREVO_LIST_ID)],
+        updateEnabled: true,
+      }
+
+      if (BREVO_DEBUG_LOGS) {
+        console.log('[Brevo] upsert contact (iscriviti-aggiornamenti):', {
+          email,
+          normalizedPhone,
+          attributes: brevoPayload.attributes,
+          listIds: brevoPayload.listIds,
+        })
+      }
+
+      const res = await fetch('https://api.brevo.com/v3/contacts', {
+        method: 'POST',
+        headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify(brevoPayload),
       })
-    }
 
-    const res = await fetch('https://api.brevo.com/v3/contacts', {
-      method: 'POST',
-      headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify(brevoPayload),
-    })
-
-    // 201 = creato, 204 = già esistente aggiornato — entrambi ok
-    if (!res.ok && res.status !== 204) {
-      const err = await res.text()
-      console.error('Brevo error:', err)
-      return NextResponse.json({ error: 'Errore Brevo' }, { status: 500 })
-    }
-
-    if (BREVO_DEBUG_LOGS) {
-      const text = await res.text().catch(() => '')
-      console.log('[Brevo] response (iscriviti-aggiornamenti):', { status: res.status, ok: res.ok, body: text })
-    }
-
-    // Salva su Airtable ListaAttesa
-    if (AIRTABLE_TOKEN && AIRTABLE_BASE_ID) {
-      fetch(
-        `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent('ListaAttesa')}`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fields: {
-              Nome:  `${nome}${cognome ? ' ' + cognome : ''}`,
-              Email: email,
-              Evento: eventoTitolo,
-              Data:  new Date().toISOString().split('T')[0],
-            },
-          }),
+      // 201 = creato, 204 = già esistente aggiornato — entrambi ok
+      if (!res.ok && res.status !== 204) {
+        const err = await res.text()
+        console.error('[Brevo] errore aggiunta contatto:', err)
+      } else {
+        if (BREVO_DEBUG_LOGS) {
+          const text = await res.text().catch(() => '')
+          console.log('[Brevo] response (iscriviti-aggiornamenti):', { status: res.status, ok: res.ok, body: text })
         }
-      ).catch(e => console.error('Airtable ListaAttesa error:', e))
-    }
 
-    // Email di conferma iscrizione
-    if (EMAIL_FROM) {
-      const eventoLink = `${SITO_BASE}/eventi-speciali`
-      const html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"></head>
+        // Email di conferma — solo se Brevo ha accettato il contatto
+        if (EMAIL_FROM) {
+          const eventoLink = `${SITO_BASE}/eventi-speciali`
+          const html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#F5F0E8;font-family:'Georgia',serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
 <tr><td align="center"><table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid #C4913A;">
@@ -115,21 +109,24 @@ export async function POST(req: NextRequest) {
 <p style="font-size:12px;color:#8B6F47;margin:32px 0 0;">Boogie Bistrot · Colle Brianza</p>
 </td></tr></table></td></tr></table></body></html>`
 
-      fetch('https://api.brevo.com/v3/smtp/email', {
-        method: 'POST',
-        headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sender: { name: 'Boogie Bistrot', email: EMAIL_FROM },
-          to: [{ email, name: `${nome}${cognome ? ' ' + cognome : ''}` }],
-          subject: `Sei nella lista — ${eventoTitolo}`,
-          htmlContent: html,
-        }),
-      }).catch(e => console.error('Brevo conferma error:', e))
+          fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sender: { name: 'Boogie Bistrot', email: EMAIL_FROM },
+              to: [{ email, name: `${nome}${cognome ? ' ' + cognome : ''}` }],
+              subject: `Sei nella lista — ${eventoTitolo}`,
+              htmlContent: html,
+            }),
+          }).catch(e => console.error('Brevo conferma error:', e))
+        }
+      }
+    } catch (e) {
+      console.error('[Brevo] fetch error:', e)
     }
-
-    return NextResponse.json({ success: true })
-  } catch (e) {
-    console.error('Brevo fetch error:', e)
-    return NextResponse.json({ error: 'Errore di rete' }, { status: 500 })
+  } else {
+    console.warn('[iscriviti-aggiornamenti] BREVO_API_KEY o BREVO_LIST_ID_EVENTI non configurati — skip Brevo')
   }
+
+  return NextResponse.json({ success: true })
 }
