@@ -114,7 +114,7 @@ export default function FormPrenotazioneEvento({
     if (orario && !orarioFine) return  // orario fisso, niente fetch
     setStato('loading')
     setOraSelezionata('')
-    fetch(`/api/disponibilita?data=${data}`)
+    fetch(`/api/disponibilita?data=${data}`, { cache: 'no-store' })
       .then(r => r.json())
       .then(json => {
         const chiuso = json.chiuso || !json.fasce?.length

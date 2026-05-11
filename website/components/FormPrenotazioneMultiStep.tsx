@@ -239,7 +239,7 @@ export default function FormPrenotazioneMultiStep({
     setOraSelezionata('')
     setFasceSelezionate([])
 
-    fetch(`/api/disponibilita?data=${data}`)
+    fetch(`/api/disponibilita?data=${data}`, { cache: 'no-store' })
       .then(r => r.json())
       .then(json => {
         const chiuso = json.chiuso || !json.fasce?.length

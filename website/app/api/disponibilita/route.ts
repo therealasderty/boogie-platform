@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 const AIRTABLE_TOKEN    = process.env.AIRTABLE_TOKEN
 const AIRTABLE_BASE_ID  = process.env.AIRTABLE_BASE_ID
 const AIRTABLE_TABLE    = process.env.AIRTABLE_TABLE    || 'Prenotazioni'
 const AIRTABLE_CHIUSURE = process.env.AIRTABLE_CHIUSURE || 'Chiusure'
 const AIRTABLE_ORARI    = process.env.AIRTABLE_ORARI    || 'Orari'
 const AIRTABLE_AGENDA   = process.env.AIRTABLE_AGENDA   || 'Agenda'
-const STATIC_TABLES_TTL_MS = 60 * 1000
-const RESPONSE_TTL_MS = 15 * 1000
+/** Cache in-memory solo per alleggerire Airtable; TTL breve per ridurre slot “stale”. */
+const STATIC_TABLES_TTL_MS = 15 * 1000
+const RESPONSE_TTL_MS = 8 * 1000
 
 const AT = (table: string) =>
   `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(table)}`
@@ -25,14 +28,39 @@ function cacheHit<T>(entry: CacheEntry<T> | undefined): T | null {
   return entry.value
 }
 
-async function fetchStaticTable(key: string, url: string): Promise<JsonValue | null> {
+/** Airtable può restituire 1, "1" o "01" nel campo Giorni — includes(String) falliva con numeri. */
+function giorniContiene(giorniRaw: unknown, giornoSettimana: number): boolean {
+  if (!Array.isArray(giorniRaw) || giorniRaw.length === 0) return false
+  return giorniRaw.some((g) => {
+    const n = typeof g === 'number' && Number.isFinite(g) ? Math.trunc(g) : parseInt(String(g).trim(), 10)
+    return Number.isFinite(n) && n === giornoSettimana
+  })
+}
+
+/** Tutte le pagine Airtable (max 100/pagina) — evita orari/chiusure incompleti. */
+async function fetchStaticTableAllRecords(key: string, baseUrl: string): Promise<JsonValue | null> {
   const cached = cacheHit(staticTableCache.get(key))
   if (cached) return cached
-  const res = await fetch(url, { headers: atHeaders })
-  if (!res.ok) return null
-  const json = (await res.json()) as JsonValue
-  staticTableCache.set(key, { expiresAt: Date.now() + STATIC_TABLES_TTL_MS, value: json })
-  return json
+
+  const allRecords: unknown[] = []
+  let url: string | null = baseUrl
+  try {
+    while (url) {
+      const res = await fetch(url, { headers: atHeaders, cache: 'no-store' })
+      if (!res.ok) return null
+      const json = (await res.json()) as { records?: unknown[]; offset?: string }
+      allRecords.push(...(json.records ?? []))
+      const off = json.offset
+      if (!off) break
+      const sep = baseUrl.includes('?') ? '&' : '?'
+      url = `${baseUrl}${sep}offset=${encodeURIComponent(off)}`
+    }
+    const merged: JsonValue = { records: allRecords }
+    staticTableCache.set(key, { expiresAt: Date.now() + STATIC_TABLES_TTL_MS, value: merged })
+    return merged
+  } catch {
+    return null
+  }
 }
 
 export async function GET(req: NextRequest) {
@@ -49,7 +77,7 @@ export async function GET(req: NextRequest) {
   try {
     // ── 0. Controlla appuntamenti del giorno (bloccaGiorno + banner info) ──
     const agendaFormula = encodeURIComponent(`AND({Stato}='attivo',{Slug}!='')`)
-    const agendaJson = await fetchStaticTable(
+    const agendaJson = await fetchStaticTableAllRecords(
       `agenda:${AIRTABLE_AGENDA}`,
       `${AT(AIRTABLE_AGENDA)}?filterByFormula=${agendaFormula}` +
       `&fields[]=Titolo&fields[]=Slug&fields[]=BloccaGiorno&fields[]=Data` +
@@ -100,7 +128,7 @@ export async function GET(req: NextRequest) {
     }
 
     // ── 1. Chiusure / aperture straordinarie ─────────────────────────
-    const chiusureJson = await fetchStaticTable(
+    const chiusureJson = await fetchStaticTableAllRecords(
       `chiusure:${AIRTABLE_CHIUSURE}`,
       AT(AIRTABLE_CHIUSURE)
     )
@@ -162,7 +190,7 @@ export async function GET(req: NextRequest) {
     }
 
     // ── 2. Orari e generazione slot ──────────────────────────────────
-    const orariJson = await fetchStaticTable(
+    const orariJson = await fetchStaticTableAllRecords(
       `orari:${AIRTABLE_ORARI}`,
       AT(AIRTABLE_ORARI)
     )
@@ -178,16 +206,21 @@ export async function GET(req: NextRequest) {
 
       for (const r of orari) {
         const f         = r.fields
-        const giorni    = (f['Giorni'] as string[]) || []
+        const giorni    = f['Giorni']
         const oraInizio = f['Ora inizio'] as string
         const oraFine   = f['Ora fine'] as string
         const intervallo = parseInt(f['Intervallo minuti'] as string) || 15
         const fascia    = (f['Fascia'] as string) || 'Cena'
 
         if (aperturaStaordinaria) {
-          if (fasceAperte.size > 0 && !fasceAperte.has(fascia)) continue
+          if (fasceAperte.size > 0) {
+            if (!fasceAperte.has(fascia)) continue
+          } else if (!giorniContiene(giorni, giornoSettimana)) {
+            // Apertura straordinaria senza elenco fasce: non mostrare tutti gli orari di tutti i giorni
+            continue
+          }
         } else {
-          if (!giorni.includes(String(giornoSettimana))) continue
+          if (!giorniContiene(giorni, giornoSettimana)) continue
           if (fasceChiuse.has(fascia)) continue
         }
 
@@ -235,23 +268,30 @@ export async function GET(req: NextRequest) {
     const formula = encodeURIComponent(
       `AND(DATETIME_FORMAT({Data},'YYYY-MM-DD')="${data}", {Stato}!="Cancellata")`
     )
-    const prenRes = await fetch(
-      `${AT(AIRTABLE_TABLE)}?filterByFormula=${formula}&fields[]=Ora&fields[]=Persone`,
-      { headers: atHeaders }
-    )
+    const prenBase =
+      `${AT(AIRTABLE_TABLE)}?filterByFormula=${formula}&fields[]=Ora&fields[]=Persone`
+    const prenRecords: { fields: Record<string, unknown> }[] = []
+    let prenUrl: string | null = prenBase
+    while (prenUrl) {
+      const prenRes = await fetch(prenUrl, { headers: atHeaders, cache: 'no-store' })
+      if (!prenRes.ok) break
+      const prenJson = (await prenRes.json()) as {
+        records?: { fields: Record<string, unknown> }[]
+        offset?: string
+      }
+      prenRecords.push(...(prenJson.records ?? []))
+      if (!prenJson.offset) break
+      prenUrl = `${prenBase}&offset=${encodeURIComponent(prenJson.offset)}`
+    }
 
     const occupazione: Record<string, number> = {}
     tuttiSlots.forEach(s => (occupazione[s] = 0))
 
-    if (prenRes.ok) {
-      const records: { fields: Record<string, unknown> }[] =
-        ((await prenRes.json()).records ?? [])
-      records.forEach(r => {
-        const ora = r.fields['Ora'] as string
-        const persone = Number(r.fields['Persone']) || 0
-        if (ora && occupazione[ora] !== undefined) occupazione[ora] += persone
-      })
-    }
+    prenRecords.forEach(r => {
+      const ora = r.fields['Ora'] as string
+      const persone = Number(r.fields['Persone']) || 0
+      if (ora && occupazione[ora] !== undefined) occupazione[ora] += persone
+    })
 
     const fasce = ordine
       .filter(f => fasceSlots[f])

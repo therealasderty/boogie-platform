@@ -74,7 +74,7 @@ export default function FormPrenotazione() {
     setOraSelezionata('')
     setFasceSelezionate([])
     setAccordionAperto(false)
-    fetch(`/api/disponibilita?data=${data}`)
+    fetch(`/api/disponibilita?data=${data}`, { cache: 'no-store' })
       .then(r => r.json())
       .then(json => {
         if (json.bloccatoDaEvento) {
