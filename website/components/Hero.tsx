@@ -120,7 +120,8 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
                 fill
                 className="object-cover"
                 priority={i === 0}
-                quality={72}
+                fetchPriority={i === 0 ? 'high' : 'low'}
+                quality={i === 0 ? 70 : 65}
                 sizes="(max-width: 767px) 100vw, (max-width: 1535px) 80vw, 1200px"
               />
             </div>
@@ -252,6 +253,9 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
                   fill
                   className="object-cover object-center"
                   sizes="100vw"
+                  quality={65}
+                  priority={idx === 0}
+                  fetchPriority={idx === 0 ? 'high' : 'low'}
                 />
                 <div
                   className="absolute inset-0"
@@ -266,7 +270,10 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
                   alt={item.titolo}
                   fill
                   className="object-cover"
-                  sizes="20vw"
+                  sizes="(max-width: 1535px) 30vw, 360px"
+                  quality={65}
+                  priority={idx === 0}
+                  fetchPriority={idx === 0 ? 'high' : 'low'}
                 />
                 <div
                   className="absolute inset-0"

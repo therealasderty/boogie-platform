@@ -6,7 +6,8 @@ import Footer from '@/components/Footer'
 import FadeIn from '@/components/FadeIn'
 import { fetchArticoli } from '@/lib/blog'
 
-export const revalidate = 300
+/** 3 giorni — deve essere letterale per Next (vedi invalid-page-config) */
+export const revalidate = 259_200
 
 export const metadata: Metadata = {
   title: 'Blog | Boogie Bistrot Colle Brianza',

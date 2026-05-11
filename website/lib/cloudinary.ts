@@ -1,6 +1,6 @@
-// Le immagini del sito vengono ottimizzate nativamente da Next.js <Image>
-// tramite remotePatterns in next.config.ts — nessun proxy Cloudinary necessario.
-// Cloudinary è usato solo nel dashboard per l'upload delle slide social.
+// Le immagini esterne passano da `next/image` con loader globale (`image-loader.ts`):
+// su ImageKit si applicano trasformazioni nel path (meno banda). Cloudinary resta
+// solo nel dashboard per le slide social.
 
 export function optimizeHeroImageSrc(src: string): string {
   return src ?? ''

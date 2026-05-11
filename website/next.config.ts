@@ -2,6 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    loader: 'custom',
+    loaderFile: './image-loader.ts',
+    formats: ['image/avif', 'image/webp'],
+    qualities: [60, 62, 64, 65, 68, 70, 75, 80],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     remotePatterns: [
       { protocol: 'https', hostname: 'cdn.prod.website-files.com' },
       // ImageKit CDN (sostituisce Cloudinary)

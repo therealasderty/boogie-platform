@@ -2,10 +2,10 @@ import type { MetadataRoute } from 'next'
 import { fetchEventi } from '@/lib/agenda'
 import { fetchLocalita } from '@/lib/localita'
 import { fetchArticoli } from '@/lib/blog'
-
 const BASE_URL = process.env.SITO_URL || 'https://boogiebistrot.com'
 
-export const revalidate = 300
+/** 3 giorni — letterale richiesto da Next */
+export const revalidate = 259_200
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Pagine statiche

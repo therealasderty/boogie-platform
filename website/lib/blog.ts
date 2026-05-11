@@ -1,3 +1,5 @@
+import { REVALIDATE_BLOG_S } from '@/lib/revalidate'
+
 export type ArticoloBlog = {
   id:               string
   titolo:           string
@@ -24,7 +26,7 @@ export async function fetchArticoli(): Promise<ArticoloBlog[]> {
   try {
     const res = await fetch(
       `https://api.airtable.com/v0/${base}/${encodeURIComponent(table)}?sort[0][field]=Ordine&sort[0][direction]=asc&maxRecords=200`,
-      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 86400 } }
+      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: REVALIDATE_BLOG_S } }
     )
     if (!res.ok) return []
 

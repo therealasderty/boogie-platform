@@ -14,8 +14,8 @@ import FormPrenotazioneMultiStep from '@/components/FormPrenotazioneMultiStep'
 import FormIscrizioneEvento from '@/components/FormIscrizioneEvento'
 import SetEventoTitolo from '@/components/SetEventoTitolo'
 import AltriAppuntamenti from '@/components/AltriAppuntamenti'
-
-export const revalidate = 300
+/** 1 giorno — letterale richiesto da Next */
+export const revalidate = 86_400
 
 export async function generateStaticParams() {
   try {

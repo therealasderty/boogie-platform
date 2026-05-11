@@ -10,6 +10,7 @@ import type { EventoAgenda } from "@/lib/agenda";
 import { PageContextProvider } from "@/lib/page-context"
 import PopupManager from "@/components/PopupManager";
 import { fetchMedia } from "@/lib/media";
+import { openGraphImageUrl } from "@/lib/imagekit-delivery";
 
 const raleway = Raleway({
   variable: "--font-raleway",
@@ -19,7 +20,7 @@ const raleway = Raleway({
 
 export async function generateMetadata(): Promise<Metadata> {
   const media = await fetchMedia('og-image')
-  const ogImage = media[0]?.url ?? '/og-image.jpg'
+  const ogImage = openGraphImageUrl(media[0]?.url ?? '/og-image.jpg')
   return {
     title: "Boogie Bistrot",
     description: "Ristorante con giardino a Colle Brianza",

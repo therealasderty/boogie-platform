@@ -9,7 +9,8 @@ import Footer from '@/components/Footer'
 import FadeIn from '@/components/FadeIn'
 import { fetchArticoli, fetchArticoloBySlug } from '@/lib/blog'
 
-export const revalidate = 300
+/** 3 giorni — letterale richiesto da Next */
+export const revalidate = 259_200
 
 export async function generateStaticParams() {
   try {

@@ -8,10 +8,11 @@ import SezioneContatti from '@/components/SezioneContatti'
 import Footer from '@/components/Footer'
 import { fetchMenuSpecialita } from '@/lib/menu'
 import { fetchMedia } from '@/lib/media'
+import { openGraphImageUrl } from '@/lib/imagekit-delivery'
 
 export async function generateMetadata(): Promise<Metadata> {
   const media = await fetchMedia('carta')
-  const ogImage = media[0]?.url ?? '/og-image.jpg'
+  const ogImage = openGraphImageUrl(media[0]?.url ?? '/og-image.jpg')
   return {
     title: 'Specialità della Cucina Brianzola | Boogie Bistrot Colle Brianza',
     description: 'Menu alla carta del Boogie Bistrot: scopri i piatti della tradizione brianzola rivisitati con creatività. Cucina di qualità in location con giardino.',

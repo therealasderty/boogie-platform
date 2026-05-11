@@ -6,7 +6,8 @@ import SezioneFAQAccordion from '@/components/SezioneFAQAccordion'
 import { fetchFaq } from '@/lib/faq'
 import { fetchMedia } from '@/lib/media'
 
-export const revalidate = 86400
+/** 3 giorni — letterale richiesto da Next */
+export const revalidate = 259_200
 
 export const metadata: Metadata = {
   title: 'Domande frequenti | Boogie Bistrot',

@@ -63,7 +63,9 @@ export default function SezioneIntro({ immagini = [], label, titolo, testo, inve
             fill
             className="object-cover"
             priority={i === 0}
-            sizes="50vw"
+            fetchPriority={i === 0 ? 'high' : 'low'}
+            quality={i === 0 ? 68 : 64}
+            sizes="(max-width: 767px) 100vw, 50vw"
           />
         </div>
       ))}

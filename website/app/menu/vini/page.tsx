@@ -8,10 +8,11 @@ import SezioneContatti from '@/components/SezioneContatti'
 import Footer from '@/components/Footer'
 import { fetchMenuVini } from '@/lib/menu'
 import { fetchMedia } from '@/lib/media'
+import { openGraphImageUrl } from '@/lib/imagekit-delivery'
 
 export async function generateMetadata(): Promise<Metadata> {
   const media = await fetchMedia('vino')
-  const ogImage = media[0]?.url ?? '/og-image.jpg'
+  const ogImage = openGraphImageUrl(media[0]?.url ?? '/og-image.jpg')
   return {
     title: 'Carta dei Vini | Boogie Bistrot Colle Brianza | Vini Italiani Selezionati',
     description: 'Esplora la carta dei vini del Boogie Bistrot di Colle Brianza: una selezione curata di etichette italiane e internazionali per accompagnare ogni piatto della tradizione brianzola.',

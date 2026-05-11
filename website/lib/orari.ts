@@ -1,3 +1,5 @@
+import { REVALIDATE_AGENDA_S } from '@/lib/revalidate'
+
 export interface ChiusuraRecord {
   tipoApertura: string   // 'Chiusura' | 'Apertura straordinaria'
   tipo: string           // 'Data specifica' | 'Giorno della settimana'
@@ -242,7 +244,7 @@ export async function fetchChiusure(): Promise<ChiusuraRecord[]> {
   try {
     const res = await fetch(
       `https://api.airtable.com/v0/${base}/${encodeURIComponent(table)}`,
-      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 3600 } }
+      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: REVALIDATE_AGENDA_S } }
     )
     if (!res.ok) return []
     const json = await res.json()
@@ -267,7 +269,7 @@ export async function fetchGiorniAperti(): Promise<Set<number>> {
   try {
     const res = await fetch(
       `https://api.airtable.com/v0/${base}/${encodeURIComponent(table)}?fields[]=Giorni&fields[]=Attivo`,
-      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 3600 } }
+      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: REVALIDATE_AGENDA_S } }
     )
     if (!res.ok) return new Set()
     const json = await res.json()
@@ -295,7 +297,7 @@ export async function fetchOrari(): Promise<OrarioRecord[]> {
       `https://api.airtable.com/v0/${base}/${encodeURIComponent(table)}`,
       {
         headers: { Authorization: `Bearer ${token}` },
-        next: { revalidate: 3600 },
+        next: { revalidate: REVALIDATE_AGENDA_S },
       }
     )
     if (!res.ok) return []

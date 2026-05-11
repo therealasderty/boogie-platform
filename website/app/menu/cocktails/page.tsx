@@ -8,10 +8,11 @@ import SezioneContatti from '@/components/SezioneContatti'
 import Footer from '@/components/Footer'
 import { fetchMenuCocktails } from '@/lib/menu'
 import { fetchMedia } from '@/lib/media'
+import { openGraphImageUrl } from '@/lib/imagekit-delivery'
 
 export async function generateMetadata(): Promise<Metadata> {
   const media = await fetchMedia('cocktail')
-  const ogImage = media[0]?.url ?? '/og-image.jpg'
+  const ogImage = openGraphImageUrl(media[0]?.url ?? '/og-image.jpg')
   return {
     title: 'Cocktail e Aperitivi | Boogie Bistrot Colle Brianza',
     description: 'Aperitivi, long drink e signature cocktail preparati al momento al Boogie Bistrot di Colle Brianza. Scopri la nostra selezione di drink e vieni a trovarci.',

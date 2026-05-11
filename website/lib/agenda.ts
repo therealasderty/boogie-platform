@@ -1,3 +1,5 @@
+import { REVALIDATE_AGENDA_S } from '@/lib/revalidate'
+
 export type BloccoTesto        = { id: string; tipo: 'testo'; titolo?: string; contenuto: string }
 export type BloccoImmagine     = { id: string; tipo: 'immagine'; url: string; alt?: string }
 export type BloccoMenuVoce     = { nome: string; descrizione?: string; prezzo?: string }
@@ -44,7 +46,7 @@ export async function fetchEventi(): Promise<EventoAgenda[]> {
   try {
     const res = await fetch(
       `https://api.airtable.com/v0/${base}/${encodeURIComponent(table)}?sort[0][field]=Data&sort[0][direction]=asc&maxRecords=200`,
-      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 86400 } }
+      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: REVALIDATE_AGENDA_S } }
     )
     if (!res.ok) return []
 

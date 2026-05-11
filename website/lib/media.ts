@@ -1,3 +1,5 @@
+import { REVALIDATE_3_GIORNI_S } from '@/lib/revalidate'
+
 export type MediaItem = {
   id:         string
   nome:       string
@@ -21,7 +23,7 @@ export async function fetchMedia(tag?: string): Promise<MediaItem[]> {
 
     const res = await fetch(
       `https://api.airtable.com/v0/${base}/Media?fields[]=Nome&fields[]=URL&fields[]=Alt%20text&fields[]=Tag&fields[]=Ordine&fields[]=Solo%20Mobile&sort[0][field]=Ordine&sort[0][direction]=asc${formula}`,
-      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 86400 } }
+      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: REVALIDATE_3_GIORNI_S } }
     )
     if (!res.ok) return []
     const json = await res.json()
@@ -48,7 +50,7 @@ export async function fetchMediaById(id: string): Promise<MediaItem | null> {
   try {
     const res = await fetch(
       `https://api.airtable.com/v0/${base}/Media/${id}`,
-      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 86400 } }
+      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: REVALIDATE_3_GIORNI_S } }
     )
     if (!res.ok) return null
     const r = await res.json()

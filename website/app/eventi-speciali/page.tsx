@@ -7,7 +7,8 @@ import FadeIn from '@/components/FadeIn'
 import { fetchEventi, EventoAgenda } from '@/lib/agenda'
 import { fetchGiorniAperti } from '@/lib/orari'
 
-export const revalidate = 300
+/** 1 giorno — letterale richiesto da Next */
+export const revalidate = 86_400
 
 export const metadata: Metadata = {
   title: 'Eventi Speciali | Boogie Bistrot',

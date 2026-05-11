@@ -8,10 +8,11 @@ import SezioneContatti from '@/components/SezioneContatti'
 import Footer from '@/components/Footer'
 import { fetchMenuPizza } from '@/lib/menu'
 import { fetchMedia } from '@/lib/media'
+import { openGraphImageUrl } from '@/lib/imagekit-delivery'
 
 export async function generateMetadata(): Promise<Metadata> {
   const media = await fetchMedia('pizza')
-  const ogImage = media[0]?.url ?? '/og-image.jpg'
+  const ogImage = openGraphImageUrl(media[0]?.url ?? '/og-image.jpg')
   return {
     title: 'Pizza Artigianale a Lunga Lievitazione | Boogie Bistrot Colle Brianza',
     description: 'Pizza artigianale al Boogie Bistrot di Colle Brianza: impasto a lunga lievitazione, forno a legna e ingredienti freschi selezionati. Prenota un tavolo!',

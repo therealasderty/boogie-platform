@@ -1,3 +1,5 @@
+import { REVALIDATE_3_GIORNI_S } from '@/lib/revalidate'
+
 export interface RecensioneItem {
   id:          string
   nome:        string
@@ -15,7 +17,7 @@ export async function fetchRecensioni(): Promise<RecensioneItem[]> {
     const filter = encodeURIComponent(`{Attivo}=TRUE()`)
     const res = await fetch(
       `https://api.airtable.com/v0/${base}/RecensioniSito?filterByFormula=${filter}&sort[0][field]=Ordine&sort[0][direction]=asc`,
-      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 86400 } }
+      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: REVALIDATE_3_GIORNI_S } }
     )
     if (!res.ok) return []
     const json = await res.json()

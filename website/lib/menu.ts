@@ -1,3 +1,5 @@
+import { REVALIDATE_AGENDA_S } from '@/lib/revalidate'
+
 export interface VoceMenu {
   nome: string
   descrizione?: string
@@ -34,7 +36,7 @@ async function fetchCategoria(categoria: string): Promise<AirtableRecord[]> {
   try {
     const res = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
-      next: { revalidate: 86400 },
+      next: { revalidate: REVALIDATE_AGENDA_S },
     })
 
     if (!res.ok) {

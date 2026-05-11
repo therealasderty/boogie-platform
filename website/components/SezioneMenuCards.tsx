@@ -42,7 +42,13 @@ function Card({ v, priority = false }: { v: MenuCard; priority?: boolean }) {
           fill
           className="object-cover"
           priority={priority}
-          sizes={v.mezza ? '50vw' : '100vw'}
+          fetchPriority={priority ? 'high' : 'low'}
+          quality={priority ? 68 : 65}
+          sizes={
+            v.mezza
+              ? '(max-width: 767px) 100vw, (max-width: 1535px) 45vw, 560px'
+              : '(max-width: 767px) 100vw, (max-width: 1535px) 80vw, 1200px'
+          }
         />
       </div>
       <div
@@ -89,12 +95,16 @@ export default function SezioneMenuCards({ voci: vociProp }: { voci: MenuCardCon
 
   useEffect(() => {
     const isDesktop = window.innerWidth >= 1024
-    setVoci(vociProp.map(v => {
+    setVoci(vociProp.map((v, idx) => {
       const disponibili = v.images.filter(m => !isDesktop || !m.soloMobile)
       const pool = disponibili.length > 0 ? disponibili : v.images
-      const image = pool.length > 0
-        ? pool[Math.floor(Math.random() * pool.length)].url
-        : v.fallback
+      // Prima card (LCP su home): stessa immagine del SSR → priority/fetchPriority restano efficaci
+      const image =
+        pool.length > 0
+          ? idx === 0
+            ? pool[0].url
+            : pool[Math.floor(Math.random() * pool.length)].url
+          : v.fallback
       return { titolo: v.titolo, descrizione: v.descrizione, image, href: v.href, ctaLabel: v.ctaLabel, mezza: v.mezza }
     }))
   // eslint-disable-next-line react-hooks/exhaustive-deps

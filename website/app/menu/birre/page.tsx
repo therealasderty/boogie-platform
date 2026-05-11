@@ -8,10 +8,11 @@ import SezioneContatti from '@/components/SezioneContatti'
 import Footer from '@/components/Footer'
 import { fetchMenuBirre } from '@/lib/menu'
 import { fetchMedia } from '@/lib/media'
+import { openGraphImageUrl } from '@/lib/imagekit-delivery'
 
 export async function generateMetadata(): Promise<Metadata> {
   const media = await fetchMedia('birra')
-  const ogImage = media[0]?.url ?? '/og-image.jpg'
+  const ogImage = openGraphImageUrl(media[0]?.url ?? '/og-image.jpg')
   return {
     title: 'Birre Artigianali | Boogie Bistrot Colle Brianza | Selezione di Microbirrifici Locali',
     description: 'Scopri la selezione di birre artigianali del Boogie Bistrot a Colle Brianza: microbirrifici locali e internazionali scelti per accompagnare i nostri piatti tradizionali e le pizze a lunga lievitazione.',
