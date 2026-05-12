@@ -359,7 +359,8 @@ function SortableRow({ articolo, onEdit, onToggle }) {
       <div className={styles.itemActions}>
         <button
           type="button"
-          className={`${styles.toggleBtn} ${articolo.pubblicato ? styles.toggleOn : styles.toggleOff}`}
+          className="btn-icon"
+          style={articolo.pubblicato ? { color: '#2E7D32', background: 'rgba(46,125,50,0.1)', borderColor: 'rgba(46,125,50,0.25)' } : {}}
           onClick={() => onToggle(articolo)}
           title={articolo.pubblicato ? 'Nascondi' : 'Pubblica'}
         >

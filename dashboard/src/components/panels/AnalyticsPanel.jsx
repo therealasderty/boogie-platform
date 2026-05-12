@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useAnalytics } from '../../hooks/useAnalytics'
 import { useUmamiStats } from '../../hooks/useUmamiStats'
 import { IconAnalytics } from '../../icons/index.jsx'
@@ -224,7 +224,6 @@ function vsMedia(value, media) {
 }
 
 // — Vista settimana singola
-const GIORNI_NOME_FULL = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato']
 // Mappa da nome abbreviato (Mon-first) al nome completo
 const GIORNI_TO_NOME = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
 
@@ -320,50 +319,63 @@ function VistaSettimana({ s, medie, umami, umamiLoading }) {
 function VistaGlobale({ settimane, umami, umamiLoading }) {
   const n = settimane.length
 
-  const mediaPrenotazioni = avg(settimane.map(s => s.prenotazioni))
-  const mediaCoperti      = avg(settimane.map(s => s.persone))
-  const mediaCancellaz    = avg(settimane.map(s => s.tassoCancellazione))
-  const mediaLeadTime     = avg(settimane.map(s => s.leadTime))
-  const mediaDimGruppo    = avg(settimane.map(s => s.dimGruppo))
-  const mediaClienti        = avg(settimane.map(s => s.clientiUnici))
-  const mediaClientiRitorno = avg(settimane.map(s => s.clientiDiRitorno))
+  const stats = useMemo(() => {
+    const mediaPrenotazioni = avg(settimane.map(s => s.prenotazioni))
+    const mediaCoperti      = avg(settimane.map(s => s.persone))
+    const mediaCancellaz    = avg(settimane.map(s => s.tassoCancellazione))
+    const mediaLeadTime     = avg(settimane.map(s => s.leadTime))
+    const mediaDimGruppo    = avg(settimane.map(s => s.dimGruppo))
+    const mediaClienti        = avg(settimane.map(s => s.clientiUnici))
+    const mediaClientiRitorno = avg(settimane.map(s => s.clientiDiRitorno))
 
-  const totPrenSito = sum(settimane.map(s => s.prenotazioniSito))
-  const totPrenTel  = sum(settimane.map(s => s.prenotazioniTel))
-  const totEventi   = sum(settimane.map(s => s.prenotazioniEventi))
+    const totPrenSito = sum(settimane.map(s => s.prenotazioniSito))
+    const totPrenTel  = sum(settimane.map(s => s.prenotazioniTel))
+    const totEventi   = sum(settimane.map(s => s.prenotazioniEventi))
 
-  const totPranzo    = sum(settimane.map(s => s.copertipranzo))
-  const totAperitivo = sum(settimane.map(s => s.copertiAperitivo))
-  const totCena      = sum(settimane.map(s => s.copertiCena))
-  const totCoperti   = totPranzo + totAperitivo + totCena
+    const totPranzo    = sum(settimane.map(s => s.copertipranzo))
+    const totAperitivo = sum(settimane.map(s => s.copertiAperitivo))
+    const totCena      = sum(settimane.map(s => s.copertiCena))
+    const totCoperti   = totPranzo + totAperitivo + totCena
 
-  // Media per giorno ponderata: esclude le settimane in cui quel giorno era chiuso
-  const mediaGiorni = GIORNI.map((label, i) => {
-    const nomeCompleto = GIORNI_TO_NOME[i]
-    const settimaneAperte = settimane.filter(s => !s.giorniChiusi?.split(', ').includes(nomeCompleto))
+    const mediaGiorni = GIORNI.map((label, i) => {
+      const nomeCompleto = GIORNI_TO_NOME[i]
+      const settimaneAperte = settimane.filter(s => !s.giorniChiusi?.split(', ').includes(nomeCompleto))
+      return { label, value: avg(settimaneAperte.map(s => s[GIORNI_KEYS[i]])) }
+    })
+
+    const normalizzaGiorno = v => v ? v.replace(/\s*\(.*\)/, '').trim() : v
+    const giornoFrequente     = mode(settimane.map(s => normalizzaGiorno(s.giornopiuPieno)))
+    const giornoVuoto         = mode(settimane.map(s => normalizzaGiorno(s.giornopiuVuoto)))
+    const slotFrequente       = mode(settimane.map(s => s.slotPiu))
+    const fasciaPocoRichiesta = mode(settimane.map(s => s.fasciaMenoRichiesta))
+    const mediaLastMinute     = avg(settimane.map(s => s.lastMinute))
+
+    const canaliPie = [
+      { label: 'Sito web', value: totPrenSito },
+      { label: 'Telefono', value: totPrenTel },
+    ]
+    const fasceBarre = [
+      { label: 'Pranzo',    value: totPranzo },
+      { label: 'Aperitivo', value: totAperitivo },
+      { label: 'Cena',      value: totCena, accent: true },
+    ]
+
     return {
-      label,
-      value: avg(settimaneAperte.map(s => s[GIORNI_KEYS[i]])),
+      mediaPrenotazioni, mediaCoperti, mediaCancellaz, mediaLeadTime, mediaDimGruppo,
+      mediaClienti, mediaClientiRitorno, totPrenSito, totPrenTel, totEventi,
+      totPranzo, totAperitivo, totCena, totCoperti, mediaGiorni,
+      giornoFrequente, giornoVuoto, slotFrequente, fasciaPocoRichiesta,
+      mediaLastMinute, canaliPie, fasceBarre,
     }
-  })
+  }, [settimane])
 
-  // Normalizza il giorno rimuovendo eventuale festività tra parentesi per il mode
-  const normalizzaGiorno = v => v ? v.replace(/\s*\(.*\)/, '').trim() : v
-  const giornoFrequente     = mode(settimane.map(s => normalizzaGiorno(s.giornopiuPieno)))
-  const giornoVuoto         = mode(settimane.map(s => normalizzaGiorno(s.giornopiuVuoto)))
-  const slotFrequente       = mode(settimane.map(s => s.slotPiu))
-  const fasciaPocoRichiesta = mode(settimane.map(s => s.fasciaMenoRichiesta))
-  const mediaLastMinute     = avg(settimane.map(s => s.lastMinute))
-
-  const canaliPie = [
-    { label: 'Sito web',  value: totPrenSito },
-    { label: 'Telefono',  value: totPrenTel },
-  ]
-  const fasceBarre = [
-    { label: 'Pranzo',    value: totPranzo },
-    { label: 'Aperitivo', value: totAperitivo },
-    { label: 'Cena',      value: totCena, accent: true },
-  ]
+  const {
+    mediaPrenotazioni, mediaCoperti, mediaCancellaz, mediaLeadTime, mediaDimGruppo,
+    mediaClienti, mediaClientiRitorno, totPrenSito, totPrenTel, totEventi,
+    totPranzo, totAperitivo, totCena, totCoperti, mediaGiorni,
+    giornoFrequente, giornoVuoto, slotFrequente, fasciaPocoRichiesta,
+    mediaLastMinute, canaliPie, fasceBarre,
+  } = stats
 
   return (
     <>

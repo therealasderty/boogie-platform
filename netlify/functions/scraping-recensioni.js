@@ -31,7 +31,6 @@ exports.handler = async (event) => {
     const placesRes = await fetch(placesUrl);
     const placesData = await placesRes.json();
 
-    console.log('Places API response:', JSON.stringify(placesData));
 
     if (placesData.status !== 'OK') {
       return {

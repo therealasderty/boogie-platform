@@ -44,7 +44,6 @@ async function fetchCategoria(categoria: string): Promise<AirtableRecord[]> {
       return []
     }
     const json = await res.json()
-    console.log(`[menu] "${categoria}": ${json.records?.length ?? 0} record`)
     return json.records || []
   } catch (error) {
     console.error(`[menu] Airtable fetch failed per categoria "${categoria}":`, error)

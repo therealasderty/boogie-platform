@@ -137,12 +137,21 @@ export default async function LinksPage() {
     .map(c => c.giorno as number)
   const giorniChiusi = [...new Set([...chiusiOrdinari, ...chiusiSettimanali])]
 
-  const eventiAttivi = eventi.filter(e => {
-    if (e.stato !== 'attivo') return false
-    if (e.ricorrente) return true
-    if (!e.data) return false
-    return e.data >= oggi
-  })
+  const eventiAttivi = eventi
+    .filter(e => {
+      if (e.stato !== 'attivo') return false
+      if (e.ricorrente) return true
+      if (!e.data) return false
+      return e.data >= oggi
+    })
+    .sort((a, b) => {
+      const aNonRic = !a.ricorrente && !!a.data
+      const bNonRic = !b.ricorrente && !!b.data
+      if (aNonRic && !bNonRic) return -1
+      if (!aNonRic && bNonRic) return 1
+      if (aNonRic && bNonRic) return (a.data as string).localeCompare(b.data as string)
+      return 0
+    })
 
   const eventiFuturi = eventi.filter(e => e.stato === 'futuro' && !!e.slug)
 

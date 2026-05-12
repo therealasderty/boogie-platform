@@ -88,11 +88,19 @@ export default function MenuCarta({ sezioni }: MenuCartaProps) {
                           {p.descrizione}
                         </span>
                       )}
-                      {p.note && (
-                        <span className="text-neutral-300 font-light" style={{ fontSize: 'var(--text-label)' }}>
-                          {p.note}
-                        </span>
-                      )}
+                      {(() => {
+                        if (!p.note) return null
+                        let note = p.note
+                        if (p.senzaGlutine) note = note.replace(/senza\s+glutine/gi, '')
+                        if (p.senzaLattosio) note = note.replace(/senza\s+lattosio/gi, '')
+                        const cleaned = note.replace(/^[\s,;.·\-]+|[\s,;.·\-]+$/g, '').trim()
+                        if (!cleaned) return null
+                        return (
+                          <span className="text-neutral-300 font-light" style={{ fontSize: 'var(--text-label)' }}>
+                            {cleaned}
+                          </span>
+                        )
+                      })()}
                     </div>
                     <span className="font-medium text-neutral-700 flex-shrink-0" style={{ fontSize: 'var(--text-lead)' }}>
                       €{p.prezzo}

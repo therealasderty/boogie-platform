@@ -47,11 +47,12 @@ function IconClock() {
 }
 
 export default async function ContattaciPage() {
-  const [orari, chiusure, mediaLocation] = await Promise.all([fetchOrari(), fetchChiusure(), fetchMedia('location')])
+  const [orari, chiusure, mediaLocation, mediaChiSiamo] = await Promise.all([
+    fetchOrari(), fetchChiusure(), fetchMedia('location'), fetchMedia('chi-siamo'),
+  ])
   const orariDisplay = buildOrariLines(orari, chiusure)
-  const heroImage = mediaLocation.length > 0
-    ? mediaLocation[Math.floor(Math.random() * mediaLocation.length)].url
-    : '/images/hero/1.webp'
+  const mediaPool = [...mediaChiSiamo, ...mediaLocation]
+  const heroImage = mediaPool[0]?.url ?? '/images/hero/1.webp'
 
   return (
     <main>

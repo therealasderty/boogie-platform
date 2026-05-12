@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -375,13 +375,13 @@ export default function MediaPanel() {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
-  const tuttiTag = [...new Set(items.flatMap(m => m.tag))].sort()
+  const tuttiTag = useMemo(() => [...new Set(items.flatMap(m => m.tag))].sort(), [items])
 
-  const filtrati = items.filter(m => {
+  const filtrati = useMemo(() => items.filter(m => {
     const matchTag   = !tagAttivo || m.tag.includes(tagAttivo)
     const matchCerca = !cerca || m.nome.toLowerCase().includes(cerca.toLowerCase()) || m.alt.toLowerCase().includes(cerca.toLowerCase())
     return matchTag && matchCerca
-  })
+  }), [items, tagAttivo, cerca])
 
   async function handleDragEnd(event) {
     const { active, over } = event
@@ -393,29 +393,16 @@ export default function MediaPanel() {
     setSaving(true)
     try {
       // Salva il nuovo ordine su Airtable (massimo 10 record per chiamata)
-      const chunks = []
-      for (let i = 0; i < riordinati.length; i += 10)
-        chunks.push(riordinati.slice(i, i + 10))
-      for (const chunk of chunks) {
+      for (let i = 0; i < riordinati.length; i += 10) {
+        const chunk = riordinati.slice(i, i + 10)
         await fetch(`${BASE}/Media`, {
           method: 'PATCH',
           headers: AT_HEADERS,
           body: JSON.stringify({
-            records: chunk.map((m, idx) => ({
-              id: m.id,
-              fields: { 'Ordine': filtrati.indexOf(m) === -1 ? m.ordine : (riordinati.indexOf(m) + 1) },
-            })),
+            records: chunk.map((m, j) => ({ id: m.id, fields: { 'Ordine': i + j + 1 } })),
           }),
         })
       }
-      // Patch più preciso: assegna ordine 1,2,3... ai riordinati
-      await fetch(`${BASE}/Media`, {
-        method: 'PATCH',
-        headers: AT_HEADERS,
-        body: JSON.stringify({
-          records: riordinati.map((m, idx) => ({ id: m.id, fields: { 'Ordine': idx + 1 } })),
-        }),
-      })
       await refetch()
     } catch (e) {
       console.error(e)

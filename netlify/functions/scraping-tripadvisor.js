@@ -28,9 +28,6 @@ exports.handler = async (event) => {
     const res = await fetch(scraperUrl, { timeout: 25000 });
     const html = await res.text();
 
-    console.log('HTML length:', html.length);
-    console.log('HTML snippet:', html.substring(0, 500));
-
     let recensioni = null;
     let rating = null;
 
@@ -69,35 +66,22 @@ exports.handler = async (event) => {
       }
     }
 
-    console.log('Parsed recensioni:', recensioni, 'rating:', rating);
-
     if (!recensioni) {
       return { statusCode: 200, headers, body: JSON.stringify({ success: false, error: 'Dati non trovati' }) };
     }
 
     const oggi = new Date().toISOString().split('T')[0];
 
-    // ── 2. Debug: vedi formato date esistenti ────────────────────────
-    const allRes = await fetch(
-      `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_RECENSIONI)}?maxRecords=5`,
-      { headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` } }
-    );
-    const allData = await allRes.json();
-    console.log('Data oggi:', oggi);
-    console.log('Records esistenti:', JSON.stringify(allData.records.map(r => ({ id: r.id, data: r.fields['Data'] }))));
-
-    // ── 3. Cerca record di oggi con DATETIME_FORMAT ──────────────────
+    // ── 2. Cerca record di oggi ──────────────────────────────────────
     const filterFormula = encodeURIComponent(`DATETIME_FORMAT({Data},'YYYY-MM-DD')="${oggi}"`);
     const searchRes = await fetch(
       `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_RECENSIONI)}?filterByFormula=${filterFormula}&maxRecords=1`,
       { headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` } }
     );
     const searchData = await searchRes.json();
-    console.log('Search result:', JSON.stringify(searchData));
     const existing = searchData.records && searchData.records[0];
 
     if (existing) {
-      console.log('Aggiorno record esistente:', existing.id);
       await fetch(
         `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_RECENSIONI)}/${existing.id}`,
         {
@@ -112,7 +96,6 @@ exports.handler = async (event) => {
         }
       );
     } else {
-      console.log('Creo nuovo record');
       await fetch(
         `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_RECENSIONI)}`,
         {

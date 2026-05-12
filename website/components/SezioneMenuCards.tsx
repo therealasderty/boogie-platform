@@ -114,7 +114,7 @@ export default function SezioneMenuCards({ voci: vociProp }: { voci: MenuCardCon
   const mezze  = voci.filter(v => v.mezza)
 
   return (
-    <section className="py-16 md:py-20 bg-surface-warm">
+    <section id="menu" className="py-16 md:py-20 bg-surface-warm">
       <div className="max-w-screen-2xl mx-auto px-6 md:px-14 flex flex-col gap-4">
         {intere.map((v, i) => (
           <FadeIn key={v.titolo} delay={i * 0.1}>

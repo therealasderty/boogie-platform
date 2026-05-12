@@ -223,10 +223,20 @@ const THUMB_H = 80
 function TemplateThumbnailPreview({ templateKey, demoImageUrl = '' }) {
   const T = TEMPLATES[templateKey]
   if (!T) return null
-  const { Component, size, demoProps } = T
+  const { Component, size, demoProps, bgDark } = T
   const { w, h } = TEMPLATE_SIZES[size || '1:1']
   const scale = THUMB_H / h
   const prevW = Math.round(w * scale)
+
+  // Template foto senza demoProps: mostra placeholder statico leggibile
+  if (!demoProps && !demoImageUrl) {
+    return (
+      <div style={{ width: prevW, height: THUMB_H, flexShrink: 0, borderRadius: 4, background: '#1A1208', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontSize: 22, opacity: 0.5 }}>🖼</span>
+      </div>
+    )
+  }
+
   const props = demoImageUrl
     ? { ...(demoProps || {}), imageUrl: demoImageUrl }
     : (demoProps || {})
@@ -1038,6 +1048,55 @@ function PostCard({ post, onEdit, onElimina, onPubblica }) {
   )
 }
 
+// ─── SlidePickerModal ─────────────────────────────────────────────────────────
+// Modale di selezione slide: tab Template + tab Galleria media.
+// onSeleziona(key, imageUrl?) — key = template key, imageUrl = URL foto se da galleria
+
+function SlidePickerModal({ open, onChiudi, onSeleziona, tipoContenuto }) {
+  if (!open) return null
+
+  const templatesFiltrati = Object.entries(TEMPLATES).filter(([, { size }]) =>
+    tipoContenuto === 'storia' ? size === '9:16' : size !== '9:16'
+  )
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }} onClick={onChiudi} />
+      <div style={{
+        position: 'relative', zIndex: 1, background: 'var(--bg)',
+        border: 'var(--border-style)', borderTop: '3px solid var(--accent)',
+        borderRadius: 'var(--radius)', width: 560, maxWidth: '95vw', maxHeight: '80vh',
+        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        boxShadow: 'var(--shadow-md)',
+      }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px 14px', borderBottom: 'var(--border-style)' }}>
+          <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>Aggiungi slide</span>
+          <button className="btn-icon" onClick={onChiudi}><X size={16} /></button>
+        </div>
+
+        {/* Griglia template */}
+        <div style={{ flex: 1, overflow: 'auto', padding: 18 }}>
+          <div className={styles.templateGrid}>
+            {templatesFiltrati.map(([key, { label, size }]) => (
+              <button key={key}
+                className={styles.templateBtn}
+                onClick={() => { onSeleziona(key); onChiudi() }}
+              >
+                <TemplateThumbnailPreview templateKey={key} demoImageUrl={null} />
+                <span>{label}</span>
+                {size === '4:5' && <span style={{ fontSize: '0.6rem', color: 'var(--text3)', fontWeight: 400 }}>4:5</span>}
+                {size === '1:1' && <span style={{ fontSize: '0.6rem', color: 'var(--text3)', fontWeight: 400 }}>1:1</span>}
+                {size === '9:16' && <span style={{ fontSize: '0.6rem', color: 'var(--accent)', fontWeight: 500 }}>Story</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── PostEditor ───────────────────────────────────────────────────────────────
 
 function PostEditor({ postIniziale, onSalva, onAnnulla }) {
@@ -1065,8 +1124,8 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
   const [rinominaNome,      setRinominaNome]      = useState('')
   const [sorgente,        setSorgente]        = useState('evento')
   const [recordSelId,     setRecordSelId]     = useState('')
-  const [templateSel,     setTemplateSel]     = useState('cover')
-  const [ghostPickerOpen, setGhostPickerOpen] = useState(false)
+  const [templateSel] = useState('cover')
+  const [slideModalOpen, setSlideModalOpen]   = useState(false)
   const [programmaOpen,   setProgrammaOpen]   = useState(false)
   const [programmaTemp,   setProgrammaTemp]   = useState('')
   const dataSuggerita = postIniziale?.dataSuggerita || ''
@@ -1341,10 +1400,9 @@ async function renderSlideToPng(captureRef, slide, templateSizes) {
                         setProgrammaTemp(datePart + 'T' + e.target.value)
                       }}
                     >
-                      {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).flatMap(h => [
-                        <option key={h + ':00'} value={h + ':00'}>{h}:00</option>,
-                        <option key={h + ':30'} value={h + ':30'}>{h}:30</option>,
-                      ])}
+                      {[0, 4, 8, 12, 16, 20].map(h => (
+                        <option key={h} value={String(h).padStart(2, '0') + ':00'}>{String(h).padStart(2, '0')}:00</option>
+                      ))}
                     </select>
                   </div>
                   <div className={styles.programmaPopoverActions}>
@@ -1414,23 +1472,18 @@ async function renderSlideToPng(captureRef, slide, templateSizes) {
             </select>
           </div>
 
-          <div className={styles.section}>
-            <div className={styles.sectionLabel}>Aggiungi slide</div>
-            <div className={styles.templateGrid}>
-              {Object.entries(TEMPLATES).filter(([, { size }]) => tipoContenuto === 'storia' ? size === '9:16' : size !== '9:16').map(([key, { label, size }]) => (
-                <button key={key} className={`${styles.templateBtn} ${templateSel === key ? styles.templateBtnActive : ''}`} onClick={() => setTemplateSel(key)}>
-                  <TemplateThumbnailPreview templateKey={key} demoImageUrl={demoImageUrl} />
-                  <span>{label}</span>
-                  {size === '4:5' && <span style={{ fontSize: '0.6rem', color: 'var(--text3)', fontWeight: 400 }}>4:5</span>}
-            {size === '9:16' && <span style={{ fontSize: '0.6rem', color: '#9B91F0', fontWeight: 500 }}>Story</span>}
-                </button>
-              ))}
-            </div>
-
-            <button className="btn-primary" style={{ width: '100%', marginTop: 8 }} onClick={() => handleAggiungiSlide()}>
-              <Plus size={14} /> Aggiungi slide
-            </button>
-          </div>
+          <SlidePickerModal
+            open={slideModalOpen}
+            onChiudi={() => setSlideModalOpen(false)}
+            tipoContenuto={tipoContenuto}
+            onSeleziona={(tpl, imageUrl) => {
+              const record = recordSelId ? appuntamenti.find(a => a.id === recordSelId) : null
+              const nuova = buildSlide(tpl, 'evento', record, orari)
+              if (imageUrl) nuova.data = { ...nuova.data, imageUrl }
+              setSlides(prev => [...prev, nuova])
+              setSelectedSlideId(nuova.id)
+            }}
+          />
 
           <div className={styles.section}>
             <div className={styles.sectionLabel}>Caption</div>
@@ -1465,8 +1518,8 @@ async function renderSlideToPng(captureRef, slide, templateSizes) {
           </div>
 
           <p style={{ fontSize: '0.72rem', color: 'var(--text3)', lineHeight: 1.5, margin: '8px 0 0' }}>
-            <strong>Programma</strong> genera le PNG delle slide (come «Pubblica ora») e le salva su Cloudinary; poi Netlify esegue{' '}
-            <code style={{ fontSize: '0.65rem' }}>pubblica-social-schedulato</code> circa ogni 30 minuti e pubblica su Instagram/Facebook quando la data/ora è passata.
+            <strong>Programma</strong> genera le PNG delle slide (come «Pubblica ora») e le salva su R2; poi Netlify esegue{' '}
+            <code style={{ fontSize: '0.65rem' }}>pubblica-social-schedulato</code> ogni 4 ore (00:00, 04:00, 08:00, 12:00, 16:00, 20:00) e pubblica su Instagram/Facebook quando la data/ora è passata.
             Non compare subito sul social: controlla stato in lista o su Airtable (Pubblicato / Errore + messaggio).
           </p>
 
@@ -1513,32 +1566,16 @@ async function renderSlideToPng(captureRef, slide, templateSizes) {
                 )
               })}
               <div style={{ position: 'relative', flexShrink: 0 }}>
-                <button className={styles.carouselGhost} style={{ height: 220 }} onClick={() => setGhostPickerOpen(v => !v)} title="Aggiungi slide">
+                <button className={styles.carouselGhost} style={{ height: 220 }} onClick={() => setSlideModalOpen(true)} title="Aggiungi slide">
                   <Plus size={22} weight="light" />
                 </button>
-                {ghostPickerOpen && (
-                  <>
-                    <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setGhostPickerOpen(false)} />
-                    <div className={styles.ghostPicker}>
-                      {Object.entries(TEMPLATES)
-                        .filter(([, { size }]) => tipoContenuto === 'storia' ? size === '9:16' : size !== '9:16')
-                        .map(([key, { label }]) => (
-                          <button key={key} className={styles.ghostPickerBtn} onClick={() => handleAggiungiSlide(key)}>
-                            <TemplateThumbnailPreview templateKey={key} demoImageUrl={demoImageUrl} />
-                            <span>{label}</span>
-                          </button>
-                        ))}
-                    </div>
-                  </>
-                )}
               </div>
             </div>
           ) : (
-            <div className={styles.slideStrip}>
-              <div className={styles.stripEmpty}>
-                <Slideshow size={28} weight="thin" style={{ opacity: 0.3 }} />
-                <span>Nessuna slide</span>
-              </div>
+            <div className={styles.carouselPreview}>
+              <button className={styles.carouselGhost} style={{ height: 220, width: 140 }} onClick={() => setSlideModalOpen(true)} title="Aggiungi slide">
+                <Plus size={22} weight="light" />
+              </button>
             </div>
           )}
 
@@ -1562,7 +1599,7 @@ async function renderSlideToPng(captureRef, slide, templateSizes) {
       {presetDrawerOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', justifyContent: 'flex-end' }}>
           <div style={{ flex: 1, background: 'rgba(0,0,0,0.35)' }} onClick={() => { setPresetDrawerOpen(false); setSalvaPresetMode(false); setRinominaId(null) }} />
-          <div style={{ width: 320, background: 'var(--bg1)', borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
+          <div style={{ width: 320, background: 'var(--bg)', borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 12px', borderBottom: '1px solid var(--border)' }}>
               <strong style={{ fontSize: '0.9rem' }}>Preset slide</strong>
               <button className="btn-icon" onClick={() => { setPresetDrawerOpen(false); setSalvaPresetMode(false); setRinominaId(null) }}><X size={16} /></button>
@@ -1696,15 +1733,11 @@ function FeedCell({ post, onClick }) {
 }
 
 function FeedPreview({ posts, onEdit }) {
-  const [filtro, setFiltro] = useState('post')  // 'tutti' | 'post' | 'storia'
-
   const sorted = [...posts]
     .filter(p => {
       const slides = (() => { try { return JSON.parse(p.slides || '[]') } catch { return [] } })()
       const isStoria = slides.length > 0 && slides.every(s => TEMPLATES[s.template]?.size === '9:16')
-      if (filtro === 'post')   return !isStoria
-      if (filtro === 'storia') return isStoria
-      return true
+      return !isStoria
     })
     .sort((a, b) => {
       const da = a.dataProgrammata || a.dataCreazione || ''
@@ -1715,16 +1748,6 @@ function FeedPreview({ posts, onEdit }) {
   return (
     <div className={styles.feedWrap}>
       <div className={styles.feedToolbar}>
-        <span className={styles.feedToolbarLabel}>Mostra:</span>
-        {['tutti', 'post', 'storia'].map(f => (
-          <button
-            key={f}
-            className={filtro === f ? `${styles.tab} ${styles.tabActive}` : styles.tab}
-            onClick={() => setFiltro(f)}
-          >
-            {f === 'tutti' ? 'Tutti' : f === 'post' ? 'Post' : 'Storie'}
-          </button>
-        ))}
         <span className={styles.feedToolbarLabel} style={{ marginLeft: 'auto' }}>
           {sorted.length} contenuti
         </span>
@@ -1909,13 +1932,12 @@ function PostPreviewModal({ post, onChiudi, onModifica }) {
 
 // ─── SocialCalendario ─────────────────────────────────────────────────────────
 
-function SocialCalendario({ posts, onApriPreview, onApriEditorDaGhost, onApriEditorDaGiorno }) {
+function SocialCalendario({ posts, onApriPreview, onApriEditorDaGhost, onApriEditorDaGiorno, mostraSuggerimenti }) {
   const { appuntamenti } = useAppuntamenti()
   const { orari } = useOrari()
   const calRef = useRef(null)
   const onGiornoRef = useRef(onApriEditorDaGiorno)
   useEffect(() => { onGiornoRef.current = onApriEditorDaGiorno }, [onApriEditorDaGiorno])
-  const [mostraSuggerimenti, setMostraSuggerimenti] = useState(false)
   const agendaEvents = useMemo(() => buildAgendaEvents(appuntamenti, orari), [appuntamenti, orari])
   const ghosts = useMemo(() => buildGhostSuggestions(appuntamenti, posts, orari), [appuntamenti, posts, orari])
 
@@ -1941,15 +1963,6 @@ function SocialCalendario({ posts, onApriPreview, onApriEditorDaGhost, onApriEdi
 
   return (
     <div className={styles.calWrap}>
-      <div className={styles.calToolbar}>
-        <button
-          className={`${styles.calToggle} ${mostraSuggerimenti ? styles.calToggleOn : ''}`}
-          onClick={() => setMostraSuggerimenti(v => !v)}
-        >
-          <span className={styles.calToggleThumb} />
-          Suggerimenti AI
-        </button>
-      </div>
       <FullCalendar
         ref={calRef}
         plugins={[dayGridPlugin, listPlugin, interactionPlugin]}
@@ -2317,6 +2330,7 @@ export default function SocialStudioPanel() {
   }
 
   const [vistaAttiva, setVistaAttiva] = useState('calendario')  // 'calendario' | 'feed'
+  const [mostraSuggerimenti, setMostraSuggerimenti] = useState(false)
 
   const programmatiCount = posts.filter(p => p.stato === 'Programmato').length
 
@@ -2372,10 +2386,20 @@ export default function SocialStudioPanel() {
         >
           Feed
         </button>
+        {vistaAttiva === 'calendario' && (
+          <button
+            className={`${styles.calToggle} ${mostraSuggerimenti ? styles.calToggleOn : ''}`}
+            style={{ marginLeft: 'auto' }}
+            onClick={() => setMostraSuggerimenti(v => !v)}
+          >
+            <span className={styles.calToggleThumb} />
+            Suggerimenti AI
+          </button>
+        )}
       </div>
 
       {vistaAttiva === 'calendario' && (
-        <SocialCalendario posts={posts} onApriPreview={setPostPreview} onApriEditorDaGhost={apriEditorDaGhost} onApriEditorDaGiorno={apriEditorDaGiorno} />
+        <SocialCalendario posts={posts} onApriPreview={setPostPreview} onApriEditorDaGhost={apriEditorDaGhost} onApriEditorDaGiorno={apriEditorDaGiorno} mostraSuggerimenti={mostraSuggerimenti} />
       )}
 
       {postPreview && (

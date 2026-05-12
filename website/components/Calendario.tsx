@@ -63,11 +63,9 @@ function parseDate(raw: string): Date | null {
   const parts = str.split(/[\/\-\.]/)
   if (parts.length === 3) {
     const [a, b, c] = parts.map(Number)
-    // ISO format YYYY-MM-DD (first part is year, 4 digits)
     if (parts[0].length === 4) {
       return new Date(a, b - 1, c)
     }
-    // Legacy m/d/y format
     const year = c < 100 ? c + 2000 : c
     return new Date(year, a - 1, b)
   }
@@ -82,7 +80,7 @@ function getEventsForDay(date: Date, allEvents: CalEvent[], status?: ReturnType<
 
   for (const ev of allEvents) {
     if (ev.ricorrente) {
-      if (isClosed) continue  // eventi ricorrenti non appaiono nei giorni chiusi
+      if (isClosed) continue
       const giorni = ev.giornoSettimana.toLowerCase()
       if (giorni === 'tutti' || giorni.split(',').map(g => g.trim()).includes(dayName.toLowerCase())) {
         events.push(ev)
@@ -98,7 +96,6 @@ function getEventsForDay(date: Date, allEvents: CalEvent[], status?: ReturnType<
 
   const override = events.find(e => e.nascondiAltri)
   if (override) return [override]
-  // Sort by orario first, then one-time before recurring as tiebreaker
   return [...events].sort((a, b) => {
     const aTime = a.orario || '00:00'
     const bTime = b.orario || '00:00'
@@ -150,9 +147,6 @@ function getEventFascia(ev: CalEvent, hasPranzo: boolean, hasCena: boolean): 'pr
 
 // ── EventCard ─────────────────────────────────────────────────────────────────
 
-// Tier 1: one-time → brand gold, max prominence
-// Tier 2: ricorrente 1 giorno/settimana → bianco medio
-// Tier 3: ricorrente più giorni / tutti → bianco molto attenuato
 function getRicorrenteType(ev: CalEvent): 'single' | 'multi' {
   const g = ev.giornoSettimana?.toLowerCase() || ''
   if (g === 'tutti' || g.includes(',')) return 'multi'
@@ -170,33 +164,33 @@ function EventCard({ ev }: { ev: CalEvent }) {
   let showBadge = false
 
   if (isChiuso) {
-    borderColor = 'border-white/10'
+    borderColor = 'border-neutral-200'
     bgColor     = 'bg-transparent'
-    titleColor  = 'text-white/25'
-    metaColor   = 'text-white/15'
+    titleColor  = 'text-neutral-400'
+    metaColor   = 'text-neutral-400'
     hoverBg     = ''
   } else if (!ev.ricorrente) {
     // Tier 1 — evento speciale una tantum
-    borderColor = 'border-brand'
-    bgColor     = 'bg-brand/10'
-    titleColor  = 'text-brand'
-    metaColor   = 'text-brand/60'
-    hoverBg     = 'hover:bg-brand/20'
+    borderColor = 'border-amber-400'
+    bgColor     = 'bg-amber-50'
+    titleColor  = 'text-amber-800'
+    metaColor   = 'text-amber-700'
+    hoverBg     = 'hover:bg-amber-100'
   } else if (getRicorrenteType(ev) === 'single') {
     // Tier 2 — ricorrente fisso 1 giorno
-    borderColor = 'border-white/35'
-    bgColor     = 'bg-white/[0.06]'
-    titleColor  = 'text-white/75'
-    metaColor   = 'text-white/40'
-    hoverBg     = 'hover:bg-white/[0.10]'
+    borderColor = 'border-neutral-300'
+    bgColor     = 'bg-neutral-50'
+    titleColor  = 'text-neutral-700'
+    metaColor   = 'text-neutral-500'
+    hoverBg     = 'hover:bg-neutral-100'
     showBadge   = true
   } else {
     // Tier 3 — ricorrente multi-giorno / quotidiano
-    borderColor = 'border-white/15'
+    borderColor = 'border-neutral-200'
     bgColor     = 'bg-transparent'
-    titleColor  = 'text-white/40'
-    metaColor   = 'text-white/25'
-    hoverBg     = 'hover:bg-white/[0.04]'
+    titleColor  = 'text-neutral-600'
+    metaColor   = 'text-neutral-500'
+    hoverBg     = 'hover:bg-neutral-50'
   }
 
   const giornoLabel = ev.giornoSettimana
@@ -206,16 +200,16 @@ function EventCard({ ev }: { ev: CalEvent }) {
   const inner = (
     <div className={`border-l-2 ${borderColor} ${bgColor} rounded-btn px-3 py-2.5 text-left transition-colors ${ev.link && !isChiuso ? hoverBg : ''}`}>
       {ev.orario && (
-        <div className={`text-xs ${metaColor} mb-1 font-medium`}>
+        <div className={`${metaColor} mb-1 font-medium`} style={{ fontSize: 'var(--text-label)' }}>
           {ev.orario}{ev.orarioFine ? `–${ev.orarioFine}` : ''}
         </div>
       )}
-      <div className={`text-sm font-semibold leading-snug ${titleColor}`}>{ev.titolo}</div>
+      <div className={`font-semibold leading-snug ${titleColor}`} style={{ fontSize: 'var(--text-meta)' }}>{ev.titolo}</div>
       {ev.descrizione && !isChiuso && (
-        <div className="text-xs text-neutral-500 mt-1 leading-relaxed">{ev.descrizione}</div>
+        <div className="text-neutral-500 mt-1 leading-relaxed" style={{ fontSize: 'var(--text-label)' }}>{ev.descrizione}</div>
       )}
       {showBadge && giornoLabel && (
-        <span className={`inline-block mt-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-pill ${ev.evidenza ? 'bg-brand/15 text-brand/80' : 'bg-white/8 text-white/30'}`}>
+        <span className="inline-block mt-1.5 px-2 py-0.5 rounded-pill bg-neutral-100 text-neutral-400" style={{ fontSize: '0.65rem', fontWeight: 500 }}>
           ogni {giornoLabel}
         </span>
       )}
@@ -234,20 +228,20 @@ function EventCard({ ev }: { ev: CalEvent }) {
 
 function MenuLink() {
   return (
-    <div className="px-2 py-1.5 text-[11px] text-white/20 leading-relaxed">
-      <Link href="/#menu" className="underline decoration-white/15 hover:text-white/40 hover:decoration-white/30 transition-colors">
+    <div className="px-2 py-1.5 text-neutral-500 leading-relaxed" style={{ fontSize: 'var(--text-label)' }}>
+      <Link href="/#menu" className="underline decoration-neutral-300 hover:text-neutral-700 hover:decoration-neutral-400 transition-colors">
         Carta e pizze
       </Link>
     </div>
   )
 }
 
-function FasciaHeader({ label, slots }: { label: string; slots: FasciaSlot[] }) {
+function FasciaHeader({ label, slots, borderTop = true }: { label: string; slots: FasciaSlot[]; borderTop?: boolean }) {
   return (
-    <div className="flex items-center gap-2 border-t border-neutral-700/60 pt-2 mt-1">
-      <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-500">{label}</span>
+    <div className={`flex items-center gap-2 px-2 py-1.5 rounded-btn bg-neutral-100 ${borderTop ? 'mt-1' : ''}`}>
+      <span className="uppercase tracking-widest font-bold text-neutral-500" style={{ fontSize: '0.65rem' }}>{label}</span>
       {slots.length > 0 && (
-        <span className="text-[10px] text-neutral-600">{formatSlots(slots)}</span>
+        <span className="text-neutral-500" style={{ fontSize: 'var(--text-label)' }}>{formatSlots(slots)}</span>
       )}
     </div>
   )
@@ -265,7 +259,6 @@ function DayColumn({ date, events, isToday, status, orari }: {
   const isClosed = status === 'chiuso' || status === 'chiusura-straordinaria'
   const { pranzo: pranzoSlots, cena: cenaSlots, hasFasce } = getFasceForDay(date, orari)
 
-  // Categorize events by fascia
   const hasPranzo = pranzoSlots.length > 0
   const hasCena   = cenaSlots.length > 0
 
@@ -274,42 +267,40 @@ function DayColumn({ date, events, isToday, status, orari }: {
   const anyEvents    = hasFasce ? events.filter(ev => getEventFascia(ev, hasPranzo, hasCena) === 'any')    : events
 
   return (
-    <div className="flex flex-col min-h-48 border-r border-neutral-800 last:border-r-0">
-      <div className={`px-3 py-3 text-center border-b border-neutral-800 flex flex-col items-center justify-center h-[72px] ${isToday ? 'bg-brand' : 'bg-neutral-900'}`}>
-        <div className={`text-[10px] uppercase tracking-widest font-semibold leading-none ${isToday ? 'text-black/50' : 'text-neutral-500'}`}>
+    <div className="flex flex-col min-h-48 border-r border-neutral-100 last:border-r-0">
+      {/* Header giorno */}
+      <div className={`px-3 py-3 text-center border-b border-neutral-100 flex flex-col items-center justify-center h-[72px] ${isToday ? 'bg-neutral-800' : 'bg-neutral-50'}`}>
+        <div className={`uppercase tracking-widest font-semibold leading-none ${isToday ? 'text-white/50' : 'text-neutral-500'}`} style={{ fontSize: '0.65rem' }}>
           {DAY_NAMES[date.getDay()]}
         </div>
-        <div className={`text-2xl font-bold leading-none mt-1.5 ${isToday ? 'text-black' : isClosed ? 'text-neutral-600' : 'text-white'}`}>
+        <div className={`text-2xl font-bold leading-none mt-1.5 ${isToday ? 'text-white' : isClosed ? 'text-neutral-400' : 'text-neutral-800'}`}>
           {date.getDate()}
         </div>
-        {(isClosed) && (
-          <div className="h-4 flex items-center justify-center mt-1">
-            <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-semibold uppercase tracking-wide ${status === 'chiusura-straordinaria' ? 'bg-red-900/60 text-red-400' : 'bg-neutral-700 text-neutral-400'}`}>
+      </div>
+      {/* Corpo giorno */}
+      <div className={`flex flex-col gap-2 p-2.5 flex-1 bg-white ${isToday ? 'border-x border-b border-neutral-800/20 rounded-b-card' : ''}`}>
+        {isClosed && (
+          <div className="flex justify-center pt-1">
+            <span className={`inline-block px-1.5 py-0.5 rounded font-semibold uppercase tracking-wide ${status === 'chiusura-straordinaria' ? 'bg-red-50 text-red-400' : 'bg-neutral-100 text-neutral-400'}`} style={{ fontSize: '0.6rem' }}>
               Chiuso
             </span>
           </div>
         )}
-      </div>
-      <div className={`flex flex-col gap-2 p-2.5 flex-1 bg-neutral-800 ${isToday ? 'border-x border-b border-brand/40 rounded-b-card' : ''}`}>
-        {isClosed && events.length === 0 && (
-          <div className="text-xs text-neutral-300 text-center mt-3">—</div>
-        )}
 
-        {/* Uncategorized events (no orario) always at top */}
         {anyEvents.map((ev, i) => <EventCard key={`any-${i}`} ev={ev} />)}
 
         {!isClosed && hasFasce ? (
           <>
             {hasPranzo && (
               <>
-                <FasciaHeader label="Pranzo" slots={pranzoSlots} />
+                <FasciaHeader label="Pranzo" slots={pranzoSlots} borderTop={false} />
                 {pranzoEvents.map((ev, i) => <EventCard key={`p-${i}`} ev={ev} />)}
                 <MenuLink />
               </>
             )}
             {hasCena && (
               <>
-                <FasciaHeader label="Cena" slots={cenaSlots} />
+                <FasciaHeader label="Cena" slots={cenaSlots} borderTop={hasPranzo} />
                 {cenaEvents.map((ev, i) => <EventCard key={`c-${i}`} ev={ev} />)}
                 <MenuLink />
               </>
@@ -317,7 +308,7 @@ function DayColumn({ date, events, isToday, status, orari }: {
           </>
         ) : !isClosed ? (
           <>
-            {events.length > 0 && <div className="border-t border-neutral-700/50 mt-1 pt-1" />}
+            {events.length > 0 && <div className="border-t border-neutral-100 mt-1 pt-1" />}
             <MenuLink />
           </>
         ) : null}
@@ -368,7 +359,7 @@ function MonthPicker({
 
         <div className="grid grid-cols-7 mb-1">
           {['L', 'M', 'M', 'G', 'V', 'S', 'D'].map((d, i) => (
-            <div key={i} className="text-center text-[11px] text-neutral-400 py-1 font-medium">{d}</div>
+            <div key={i} className="text-center text-neutral-400 py-1 font-medium" style={{ fontSize: 'var(--text-label)' }}>{d}</div>
           ))}
         </div>
 
@@ -382,19 +373,20 @@ function MonthPicker({
               <button
                 key={i}
                 onClick={() => { onSelect(d); onClose() }}
-                className={`aspect-square flex flex-col items-center justify-center rounded-pill text-sm relative
-                  ${isToday ? 'bg-brand text-black font-bold' : 'text-neutral-700 hover:bg-neutral-100'}`}
+                className={`aspect-square flex flex-col items-center justify-center rounded-pill relative
+                  ${isToday ? 'bg-neutral-800 text-white font-bold' : 'text-neutral-700 hover:bg-neutral-100'}`}
+                style={{ fontSize: 'var(--text-meta)' }}
               >
                 {i + 1}
                 {hasEv && (
-                  <span className={`absolute bottom-1 w-1 h-1 rounded-pill ${isToday ? 'bg-black/30' : 'bg-brand'}`} />
+                  <span className={`absolute bottom-1 w-1 h-1 rounded-pill ${isToday ? 'bg-white/40' : 'bg-brand'}`} />
                 )}
               </button>
             )
           })}
         </div>
 
-        <button onClick={onClose} className="w-full mt-4 py-2.5 bg-neutral-100 text-neutral-500 text-sm rounded-btn hover:bg-neutral-200 transition-colors">
+        <button onClick={onClose} className="w-full mt-4 py-2.5 bg-neutral-100 text-neutral-500 rounded-btn hover:bg-neutral-200 transition-colors" style={{ fontSize: 'var(--text-meta)' }}>
           Chiudi
         </button>
       </div>
@@ -458,34 +450,38 @@ export default function Calendario({ orari = [], chiusure = [] }: { orari?: Orar
   const mobileDateLabel = `${DAY_NAMES[mobileDate.getDay()]} ${mobileDate.getDate()} ${MONTH_NAMES[mobileDate.getMonth()]} ${mobileDate.getFullYear()}`
 
   return (
-    <section id="calendario" className="bg-neutral-800 py-16 md:py-20">
+    <section id="calendario" className="py-16 md:py-20" style={{ backgroundColor: 'var(--color-surface-warm)' }}>
       <div className="max-w-7xl mx-auto px-6">
 
-        <h2 className="text-white mb-10" style={{ fontSize: 'var(--text-section)' }}>
+        <h2 className="text-neutral-900 mb-10" style={{ fontSize: 'var(--text-section)' }}>
           {isMobile ? 'Appuntamenti del giorno' : 'Gli appuntamenti della settimana'}
         </h2>
 
-        <div className="rounded-card overflow-hidden border border-neutral-800 shadow-[0_4px_20px_rgba(0,0,0,0.25)]">
+        <div className="rounded-card overflow-hidden border border-neutral-100 shadow-[0_4px_20px_rgba(0,0,0,0.06)]">
 
           {/* Navigation bar */}
-          <div className="bg-neutral-900 border-b border-neutral-800 px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <span className="text-sm text-neutral-300 font-medium">
-              {isMobile ? mobileDateLabel : weekLabel}
-            </span>
+          <div className="bg-white border-b border-neutral-100 px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            {!isMobile && (
+              <span className="text-neutral-600 font-medium" style={{ fontSize: 'var(--text-meta)' }}>
+                {weekLabel}
+              </span>
+            )}
             <div className="flex items-center gap-2">
               <button
                 onClick={() => isMobile
                   ? setMobileDate(d => { const n = new Date(d); n.setDate(n.getDate() - 1); return n })
                   : setWeekOffset(o => o - 1)
                 }
-                className="h-9 px-4 rounded-btn bg-neutral-800 text-white/70 text-xs font-medium hover:bg-neutral-700 transition-colors"
+                className="h-9 px-4 rounded-btn bg-neutral-100 text-neutral-600 font-medium hover:bg-neutral-200 transition-colors"
+                style={{ fontSize: 'var(--text-label)' }}
               >
                 ←
               </button>
 
               <button
                 onClick={() => { setWeekOffset(0); setMobileDate(new Date()) }}
-                className="h-9 px-4 rounded-btn bg-neutral-800 text-white/70 text-xs font-medium hover:bg-neutral-700 transition-colors"
+                className="h-9 px-4 rounded-btn bg-neutral-100 text-neutral-600 font-medium hover:bg-neutral-200 transition-colors"
+                style={{ fontSize: 'var(--text-label)' }}
               >
                 Oggi
               </button>
@@ -495,7 +491,8 @@ export default function Calendario({ orari = [], chiusure = [] }: { orari?: Orar
                   ? setMobileDate(d => { const n = new Date(d); n.setDate(n.getDate() + 1); return n })
                   : setWeekOffset(o => o + 1)
                 }
-                className="h-9 px-4 rounded-btn bg-neutral-800 text-white/70 text-xs font-medium hover:bg-neutral-700 transition-colors"
+                className="h-9 px-4 rounded-btn bg-neutral-100 text-neutral-600 font-medium hover:bg-neutral-200 transition-colors"
+                style={{ fontSize: 'var(--text-label)' }}
               >
                 →
               </button>
@@ -503,7 +500,7 @@ export default function Calendario({ orari = [], chiusure = [] }: { orari?: Orar
               {isMobile && (
                 <button
                   onClick={() => setShowMonthPicker(true)}
-                  className="h-9 w-9 rounded-btn bg-neutral-800 text-white/70 flex items-center justify-center hover:bg-neutral-700 transition-colors"
+                  className="h-9 w-9 rounded-btn bg-neutral-100 text-neutral-600 flex items-center justify-center hover:bg-neutral-200 transition-colors"
                   aria-label="Apri calendario"
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -516,13 +513,13 @@ export default function Calendario({ orari = [], chiusure = [] }: { orari?: Orar
           </div>
 
           {status === 'loading' && (
-            <div className="bg-neutral-900 py-16 text-center text-neutral-500 text-sm">
+            <div className="bg-white py-16 text-center text-neutral-400" style={{ fontSize: 'var(--text-meta)' }}>
               Caricamento eventi...
             </div>
           )}
 
           {status === 'error' && (
-            <div className="bg-neutral-900 py-16 text-center text-rose-400 text-sm">
+            <div className="bg-white py-16 text-center text-red-400" style={{ fontSize: 'var(--text-meta)' }}>
               Errore nel caricamento degli eventi.
             </div>
           )}

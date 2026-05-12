@@ -5,6 +5,7 @@ import SezioneContatti from '@/components/SezioneContatti'
 import Footer from '@/components/Footer'
 import FadeIn from '@/components/FadeIn'
 import { fetchArticoli } from '@/lib/blog'
+import { fetchMedia } from '@/lib/media'
 
 /** 3 giorni — deve essere letterale per Next (vedi invalid-page-config) */
 export const revalidate = 259_200
@@ -23,7 +24,8 @@ export const metadata: Metadata = {
 const MESI = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre']
 
 export default async function BlogPage() {
-  const articoli = await fetchArticoli()
+  const [articoli, mediaChiSiamo] = await Promise.all([fetchArticoli(), fetchMedia('chi-siamo')])
+  const heroImage = mediaChiSiamo[0]?.url ?? '/images/hero/2.avif'
 
   return (
     <main>
@@ -31,7 +33,7 @@ export default async function BlogPage() {
         titolo="Storie e sapori"
         sottotitolo="Blog"
         tagline="Racconti dalla cucina, dalla cantina e dal giardino."
-        image="/images/hero/2.avif"
+        image={heroImage}
       />
 
       <section className="py-20 md:py-28" style={{ backgroundColor: '#1a1a1a' }}>

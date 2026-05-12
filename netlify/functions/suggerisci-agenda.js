@@ -28,7 +28,7 @@ exports.handler = async (event) => {
   ultimaChiamata = ora
 
   const GEMINI_API_KEY = process.env.MY_NEW_GEMINI_KEY_2026
-  console.log('Chiave API caricata:', GEMINI_API_KEY ? `SÌ (inizia con ${GEMINI_API_KEY.substring(0, 8)})` : 'NO — VARIABILE MANCANTE')
+  if (!GEMINI_API_KEY) console.error('ERRORE: MY_NEW_GEMINI_KEY_2026 non configurata')
 
   if (!GEMINI_API_KEY) {
     return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: 'Chiave API non configurata.' }) }
@@ -74,10 +74,9 @@ exports.handler = async (event) => {
         generationConfig: { temperature: 0.7 },
       })
     })
-    console.log(`STATUS GOOGLE (${modello}):`, res.status)
     json = await res.json()
     if (res.ok) break
-    console.error(`ERRORE GOOGLE (${modello}):`, res.status, JSON.stringify(json?.error))
+    console.error(`ERRORE GOOGLE (${modello}):`, res.status, json?.error?.code)
   }
 
   if (!res.ok) {
@@ -87,7 +86,6 @@ exports.handler = async (event) => {
   }
 
   const raw = json.candidates?.[0]?.content?.parts?.[0]?.text || ''
-  console.log('Testo grezzo da Google:', raw)
 
   const consigli = raw.split('|').map(s => s.trim()).filter(Boolean)
 

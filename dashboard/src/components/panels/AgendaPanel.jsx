@@ -861,7 +861,7 @@ export default function AgendaPanel() {
     editable: false,
   }))
 
-  const appEvents = appuntamenti.flatMap(a => {
+  const appEvents = useMemo(() => appuntamenti.flatMap(a => {
     const isRicorrente = a.ricorrenza && a.ricorrenza !== 'nessuna'
     const isPassato = a.stato === 'passato'
     const isFuturo  = a.stato === 'futuro'
@@ -934,7 +934,7 @@ export default function AgendaPanel() {
     }
 
     return [{ ...base, id: a.id, date: a.data }]
-  })
+  }), [appuntamenti, giorniChiusi])
 
   function handleDateClick(info) {
     setModal({ data: info.dateStr, appuntamento: null })

@@ -96,7 +96,8 @@ function SortableRow({ item, onEdit, onToggle, onDelete }) {
 
       <div className={styles.itemActions}>
         <button
-          className={`${styles.toggleBtn} ${item.attivo ? styles.toggleOn : styles.toggleOff}`}
+          className="btn-icon"
+          style={item.attivo ? { color: '#2E7D32', background: 'rgba(46,125,50,0.1)', borderColor: 'rgba(46,125,50,0.25)' } : {}}
           onClick={() => onToggle(item)}
           title={item.attivo ? 'Visibile — clicca per nascondere' : 'Nascosta — clicca per mostrare'}
         >

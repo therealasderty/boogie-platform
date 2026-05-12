@@ -152,40 +152,8 @@ export default async function Home() {
     { label: 'I nostri menù', titolo: 'Cocktails',             descrizione: 'Aperitivi, long drink e signature cocktail preparati al momento.',                    href: '/menu/cocktails',  ctaLabel: 'Scopri', image: mediaCocktail[0]?.url ?? '/images/hero/1.webp' },
   ] : []
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Restaurant',
-    name: 'Boogie Bistrot',
-    url: 'https://boogiebistrot.com',
-    telephone: ['+390399260568', '+393465813309'],
-    address: {
-      '@type': 'PostalAddress',
-      streetAddress: 'Via Europa, 2',
-      addressLocality: 'Colle Brianza',
-      addressRegion: 'LC',
-      postalCode: '23886',
-      addressCountry: 'IT',
-    },
-    geo: {
-      '@type': 'GeoCoordinates',
-      latitude: 45.7593,
-      longitude: 9.3620,
-    },
-    servesCuisine: ['Italiana', 'Brianzola', 'Pizza'],
-    priceRange: '€€',
-    hasMap: 'https://maps.google.com/?cid=6154073069839278986',
-    sameAs: [
-      'https://www.facebook.com/boogiebistrot',
-      'https://www.instagram.com/boogiebistrot',
-    ],
-  }
-
   return (
     <main>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
       <Hero orariDisplay={orariDisplay} heroImages={heroImages} newsItems={heroNews.length > 0 ? heroNews : menuFallback} />
       <Calendario orari={orari} chiusure={chiusure} />
       <SezioneIntro

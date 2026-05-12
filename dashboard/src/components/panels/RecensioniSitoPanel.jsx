@@ -284,19 +284,18 @@ function RecensioneCard({ item, onEdit, onDelete, onToggle }) {
       <div style={{ display: 'flex', gap: 4, padding: '6px 10px', borderTop: '1px solid var(--border)', alignItems: 'center' }}>
         <button
           type="button"
-          className={`btn-icon ${item.attivo ? '' : ''}`}
+          className="btn-icon"
           onClick={toggleAttivo}
           disabled={toggling}
           title={item.attivo ? 'Visibile — clicca per nascondere' : 'Nascosta — clicca per mostrare'}
-          style={{ padding: '4px 8px', height: 28, display: 'flex', alignItems: 'center', color: item.attivo ? 'var(--accent)' : 'var(--text3)' }}
+          style={item.attivo ? { color: '#2E7D32', background: 'rgba(46,125,50,0.1)', borderColor: 'rgba(46,125,50,0.25)' } : {}}
         >
-          {item.attivo ? <IconEye size={14} /> : <IconEyeSlash size={14} />}
+          {item.attivo ? <IconEye size={15} /> : <IconEyeSlash size={15} />}
         </button>
 
         {!confirm && (
-          <button type="button" className="btn-icon" onClick={() => onEdit(item)} title="Modifica"
-            style={{ padding: '4px 10px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 4, height: 28 }}>
-            <IconEdit size={13} /> Modifica
+          <button type="button" className="btn-icon" onClick={() => onEdit(item)} title="Modifica">
+            <IconEdit size={15} />
           </button>
         )}
 
@@ -304,19 +303,16 @@ function RecensioneCard({ item, onEdit, onDelete, onToggle }) {
 
         {confirm ? (
           <>
-            <button type="button" className="btn-icon danger" onClick={elimina} disabled={deleting}
-              style={{ padding: '4px 8px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 4, height: 28 }}>
-              <IconCheck size={13} /> {deleting ? '…' : 'Conferma'}
+            <button type="button" className="btn-icon danger" onClick={elimina} disabled={deleting}>
+              <IconCheck size={15} />
             </button>
-            <button type="button" className="btn-icon" onClick={() => setConfirm(false)}
-              style={{ padding: '4px 8px', height: 28, display: 'flex', alignItems: 'center' }}>
-              <IconClose size={13} />
+            <button type="button" className="btn-icon" onClick={() => setConfirm(false)}>
+              <IconClose size={15} />
             </button>
           </>
         ) : (
-          <button type="button" className="btn-icon danger" onClick={() => setConfirm(true)} title="Elimina"
-            style={{ padding: '4px 8px', height: 28, display: 'flex', alignItems: 'center' }}>
-            <IconTrash size={13} />
+          <button type="button" className="btn-icon danger" onClick={() => setConfirm(true)} title="Elimina">
+            <IconTrash size={15} />
           </button>
         )}
       </div>

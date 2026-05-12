@@ -40,7 +40,12 @@ export async function fetchArticoli(): Promise<ArticoloBlog[]> {
         dataPubblicazione: (r.fields['DataPubblicazione'] as string) ?? '',
         categoria:        (r.fields['Categoria'] as string) ?? '',
         descrizioneBreve: (r.fields['DescrizioneBreve'] as string) ?? '',
-        fotoHero:         (r.fields['FotoHero'] as string) ?? '',
+        fotoHero:         (() => {
+          const raw = r.fields['FotoHero']
+          if (typeof raw === 'string') return raw
+          if (Array.isArray(raw) && raw.length > 0) return (raw[0] as { url?: string }).url ?? ''
+          return ''
+        })(),
         contenuto:        (r.fields['Contenuto'] as string) ?? '',
         metaTitle:        (r.fields['MetaTitle'] as string) ?? '',
         metaDescription:  (r.fields['MetaDescription'] as string) ?? '',

@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react'
 import { useFidelity } from '../../hooks/useFidelity'
 import IscriviTab from './fidelity/IscriviTab'
 import RicaricaTab from './fidelity/RicaricaTab'
-import GestisciTagTab from './fidelity/GestisciTagTab'
-import { IconFidelity, IconClienti, IconPuntiAdd, IconPuntiRemove, IconRefresh, IconTag } from '../../icons/index.jsx'
+import { IconFidelity, IconClienti, IconPuntiAdd, IconPuntiRemove, IconRefresh } from '../../icons/index.jsx'
 import styles from './FidelityPanel.module.css'
 
 export default function FidelityPanel() {

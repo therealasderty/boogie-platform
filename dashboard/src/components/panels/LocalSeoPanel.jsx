@@ -332,7 +332,8 @@ export default function LocalSeoPanel() {
               <div className={styles.itemActions}>
                 <button
                   type="button"
-                  className={`${styles.toggleBtn} ${item.attiva ? styles.toggleOn : styles.toggleOff}`}
+                  className="btn-icon"
+                  style={item.attiva ? { color: '#2E7D32', background: 'rgba(46,125,50,0.1)', borderColor: 'rgba(46,125,50,0.25)' } : {}}
                   onClick={() => handleToggle(item)}
                   title={item.attiva ? 'Disattiva' : 'Attiva'}
                 >
