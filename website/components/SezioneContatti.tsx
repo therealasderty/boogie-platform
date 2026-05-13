@@ -6,9 +6,15 @@ export default async function SezioneContatti() {
   let fotoAlt = 'Boogie Bistrot'
 
   try {
-    const foto = await fetchMedia('location')
-    if (foto.length > 0) {
-      const scelta = foto[0]
+    const [location, chiSiamo] = await Promise.all([
+      fetchMedia('location'),
+      fetchMedia('chi-siamo'),
+    ])
+    const pool = [...location, ...chiSiamo].filter(m => m.url)
+    if (pool.length > 0) {
+      // Seed giornaliero deterministico: stessa foto per tutto il giorno, cambia ogni mezzanotte
+      const seed = parseInt(new Date().toISOString().split('T')[0].replace(/-/g, ''), 10)
+      const scelta = pool[seed % pool.length]
       fotoSrc = scelta.url
       fotoAlt = scelta.alt || 'Boogie Bistrot'
     }

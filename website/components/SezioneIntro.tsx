@@ -164,8 +164,8 @@ export default function SezioneIntro({ immagini = [], label, titolo, testo, inve
         {hasFoto ? (
           inverti ? (
             <>
-              <motion.div className="md:flex-1 md:flex md:flex-col" {...fadeLeft}>{testi}</motion.div>
-              <motion.div className={`md:flex-1 md:flex md:flex-col ${nascondiImmagineMobile ? 'hidden md:flex' : ''}`} {...fadeRight}>{foto}</motion.div>
+              <motion.div className="md:flex-1 md:flex md:flex-col order-last md:order-first" {...fadeLeft}>{testi}</motion.div>
+              <motion.div className={`md:flex-1 md:flex md:flex-col order-first md:order-last ${nascondiImmagineMobile ? 'hidden md:flex' : ''}`} {...fadeRight}>{foto}</motion.div>
             </>
           ) : (
             <>

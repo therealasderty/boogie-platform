@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { AnimatePresence } from 'framer-motion'
+import SlimPopup from './SlimPopup'
 
 declare global {
   interface Window {
@@ -57,6 +59,13 @@ function formatData(data: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
+function shouldUseSlim(popup: PopupData, urgency: Urgency): boolean {
+  if (popup.fotoHero) return false         // ha immagine → Card
+  if (urgency === 'lastMinute') return false
+  if (urgency === 'imminente') return false
+  return true                              // distante / ricorrente / senza foto → Slim
+}
+
 function storageKey(id: string) { return `bb-popup-${id}` }
 
 function hasBeenSeen(id: string, ricorrente: boolean): boolean {
@@ -85,6 +94,15 @@ export default function PopupManager() {
   const [urgency,   setUrgency]   = useState<Urgency>('distante')
   const [visible,   setVisible]   = useState(false)
   const [animating, setAnimating] = useState(false)
+  const [isDesktop, setIsDesktop] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    setIsDesktop(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   useEffect(() => {
     if (POPUP_BLACKLIST.some(re => re.test(pathname))) return
@@ -115,15 +133,47 @@ export default function PopupManager() {
     return () => clearTimeout(timer)
   }, [pathname])
 
+  const showSlim = !!popup && shouldUseSlim(popup, urgency) && isDesktop
+
   function chiudi() {
-    setAnimating(false)
-    setTimeout(() => {
+    if (popup) markAsSeen(popup.slug || popup.titolo)
+    if (showSlim) {
       setVisible(false)
-      if (popup) markAsSeen(popup.slug || popup.titolo)
-    }, 350)
+    } else {
+      setAnimating(false)
+      setTimeout(() => setVisible(false), 350)
+    }
   }
 
   if (!visible || !popup) return null
+
+  // Slim: solo desktop, nessun contenuto visivo urgente
+  if (showSlim) {
+    const isPassato = popup.stato === 'passato' || popup.stato === 'dormiente'
+    const href = popup.slug
+      ? ((isPassato || popup.stato === 'futuro') ? `/eventi-speciali/${popup.slug}#prenota` : `/eventi-speciali/${popup.slug}`)
+      : '/prenota'
+    const ctaLabel = isPassato ? 'Rimani aggiornato' : 'Scopri di più'
+
+    return (
+      <AnimatePresence>
+        {visible && (
+          <SlimPopup
+            key="slim-popup"
+            titolo={popup.titolo}
+            descrizioneBreve={popup.descrizioneBreve}
+            href={href}
+            ctaLabel={ctaLabel}
+            onClose={chiudi}
+            onCta={() => {
+              chiudi()
+              window.umami?.track('popup-cta', { titolo: popup.titolo, slug: popup.slug, format: 'slim' })
+            }}
+          />
+        )}
+      </AnimatePresence>
+    )
+  }
 
   const isPassato    = popup.stato === 'passato' || popup.stato === 'dormiente'
   const isFuturo     = popup.stato === 'futuro'
