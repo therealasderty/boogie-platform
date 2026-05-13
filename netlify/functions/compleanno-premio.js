@@ -1,7 +1,7 @@
 // netlify/functions/compleanno-premio.js
-// Chiamata ogni domenica mattina via cron-job.org
-// Invia un'email regalo a tutti i clienti che compiono gli anni nella settimana Lun-Dom successiva.
-// Proteggere con ?token=CRON_SECRET nell'URL configurato su cron-job.org
+// Cron giornaliero ore 8:00 — invia email regalo a chi compie gli anni nei prossimi 7 giorni.
+// Dedup via attributo Brevo ANNO_ULTIMO_COMPLEANNO (stringa es. "2026") — un invio per anno.
+// Trigger manuale: GET ?token=CRON_SECRET[&target_dates=YYYY-MM-DD,YYYY-MM-DD]
 
 exports.handler = async (event) => {
   const headers = {
@@ -12,8 +12,8 @@ exports.handler = async (event) => {
 
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers, body: '' };
 
-  // POST senza token = chiamata da Netlify Scheduler (autorizzata)
-  // GET con token = trigger manuale (richiede CRON_SECRET)
+  // POST senza token = Netlify Scheduler (autorizzato)
+  // GET con token   = trigger manuale
   const CRON_SECRET = process.env.CRON_SECRET;
   const isNetlifyScheduler = event.httpMethod === 'POST';
   if (!isNetlifyScheduler) {
@@ -23,9 +23,9 @@ exports.handler = async (event) => {
     }
   }
 
-  const BREVO_API_KEY = process.env.BREVO_API_KEY;
-  const BREVO_LIST_ID = parseInt(process.env.BREVO_LIST_ID) || 3;
-  const EMAIL_FROM    = process.env.EMAIL_FROM;
+  const BREVO_API_KEY    = process.env.BREVO_API_KEY;
+  const BREVO_LIST_ID    = parseInt(process.env.BREVO_LIST_ID) || 3;
+  const EMAIL_FROM       = process.env.EMAIL_FROM;
   const EMAIL_RISTORANTE = process.env.EMAIL_RISTORANTE;
 
   if (!BREVO_API_KEY || !EMAIL_FROM) {
@@ -38,49 +38,25 @@ exports.handler = async (event) => {
     'api-key': BREVO_API_KEY,
   };
 
-  // ── Calcola i giorni da controllare ─────────────────────────────
-  // Modalità normale: domenica → settimana prossima Lun-Dom
-  // Modalità manuale: ?target_dates=YYYY-MM-DD,YYYY-MM-DD → date specifiche
-  const oggi = new Date();
+  const oggi       = new Date();
+  const annoCorrente = String(oggi.getFullYear());
   const targetDatesParam = (event.queryStringParameters || {}).target_dates;
-  let giorniSettimana, validitaDal, validitaAl;
 
+  // ── Costruisci il set MM-DD da controllare ───────────────────────
+  // Cron: prossimi 7 giorni (rolling window). Manuale: date specificate.
+  const giorniSet = new Set();
   if (targetDatesParam) {
-    // Trigger manuale: controlla solo le date specificate
-    const dates = targetDatesParam.split(',').map(s => s.trim()).filter(Boolean);
-    giorniSettimana = new Set();
-    for (const dateStr of dates) {
+    for (const dateStr of targetDatesParam.split(',').map(s => s.trim()).filter(Boolean)) {
       const d = new Date(dateStr + 'T12:00:00Z');
       if (!isNaN(d.getTime())) {
-        const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
-        const dd = String(d.getUTCDate()).padStart(2, '0');
-        giorniSettimana.add(`${mm}-${dd}`);
+        giorniSet.add(`${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`);
       }
     }
-    // Validità = settimana corrente (Lun-Dom)
-    const dayOfWeek = oggi.getDay(); // 0=Dom, 1=Lun, ...
-    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    const lunedi = new Date(oggi);
-    lunedi.setDate(oggi.getDate() + daysToMonday);
-    const domenica = new Date(lunedi);
-    domenica.setDate(lunedi.getDate() + 6);
-    validitaDal = lunedi.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
-    validitaAl = domenica.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
   } else {
-    // Cron settimanale: domenica → prossima settimana Lun-Dom
-    const inizioValidita = new Date(oggi);
-    inizioValidita.setDate(oggi.getDate() + 1);
-    const fineValidita = new Date(oggi);
-    fineValidita.setDate(oggi.getDate() + 7);
-    validitaDal = inizioValidita.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
-    validitaAl = fineValidita.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
-    giorniSettimana = new Set();
     for (let i = 1; i <= 7; i++) {
       const d = new Date(oggi);
       d.setDate(oggi.getDate() + i);
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      giorniSettimana.add(`${mm}-${dd}`);
+      giorniSet.add(`${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
     }
   }
 
@@ -109,24 +85,22 @@ exports.handler = async (event) => {
     }
   }
 
-  // ── Filtra chi compie gli anni nella settimana prossima ──────────
+  // ── Filtra chi compie gli anni nei prossimi 7 giorni ─────────────
+  // Salta chi ha già ricevuto l'email quest'anno (ANNO_ULTIMO_COMPLEANNO === annoCorrente)
   const compleanni = tuttiContatti.filter(c => {
     const dob = c.attributes?.BIRTHDAY ?? c.attributes?.DATE_OF_BIRTH;
     if (!dob) return false;
-    // Brevo può restituire BIRTHDAY/DATE_OF_BIRTH come timestamp Unix (number) o stringa "YYYY-MM-DD"
     let d;
-    if (typeof dob === 'number') {
-      d = new Date(dob * 1000);
-    } else {
-      d = new Date(String(dob) + 'T12:00:00Z');
-    }
+    if (typeof dob === 'number') d = new Date(dob * 1000);
+    else d = new Date(String(dob) + 'T12:00:00Z');
     if (isNaN(d.getTime())) return false;
-    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
-    const dd = String(d.getUTCDate()).padStart(2, '0');
-    return giorniSettimana.has(`${mm}-${dd}`);
+    const mmdd = `${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+    if (!giorniSet.has(mmdd)) return false;
+    if (c.attributes?.ANNO_ULTIMO_COMPLEANNO === annoCorrente) return false; // già inviato
+    return true;
   });
 
-  console.log(`Contatti totali: ${tuttiContatti.length} | Compleanni settimana prossima: ${compleanni.length}`);
+  console.log(`Contatti totali: ${tuttiContatti.length} | Da inviare: ${compleanni.length}`);
 
   // ── Invia email regalo a ciascuno ────────────────────────────────
   let inviati = 0;
@@ -135,6 +109,18 @@ exports.handler = async (event) => {
   for (const contatto of compleanni) {
     const email = contatto.email;
     const nome  = contatto.attributes?.FIRSTNAME || 'caro ospite';
+    const dob   = contatto.attributes?.BIRTHDAY ?? contatto.attributes?.DATE_OF_BIRTH;
+
+    // Calcola data compleanno quest'anno per le date di validità
+    let birthdayDate;
+    if (typeof dob === 'number') birthdayDate = new Date(dob * 1000);
+    else birthdayDate = new Date(String(dob) + 'T12:00:00Z');
+    const birthday = new Date(oggi.getFullYear(), birthdayDate.getUTCMonth(), birthdayDate.getUTCDate());
+    if (birthday < oggi) birthday.setFullYear(oggi.getFullYear() + 1);
+    const fineValidita = new Date(birthday);
+    fineValidita.setDate(birthday.getDate() + 6);
+    const validitaDal = birthday.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
+    const validitaAl  = fineValidita.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
 
     const emailHtml = `<!DOCTYPE html>
 <html lang="it">
@@ -190,6 +176,12 @@ exports.handler = async (event) => {
       });
       if (res.ok) {
         inviati++;
+        // Marca come inviato quest'anno per evitare duplicati
+        fetch(`https://api.brevo.com/v3/contacts/${encodeURIComponent(email)}`, {
+          method: 'PUT',
+          headers: brevoHeaders,
+          body: JSON.stringify({ attributes: { ANNO_ULTIMO_COMPLEANNO: annoCorrente } }),
+        }).catch(err => console.error(`Errore update ANNO_ULTIMO_COMPLEANNO per ${email}:`, err));
       } else {
         const errBody = await res.text();
         console.error(`Errore Brevo per ${email}:`, res.status, errBody);
@@ -204,8 +196,8 @@ exports.handler = async (event) => {
   const risultato = {
     success: true,
     data: oggi.toISOString().split('T')[0],
-    modalita: targetDatesParam ? 'manuale' : 'cron-settimanale',
-    settimanaControlloMmdd: [...giorniSettimana],
+    modalita: targetDatesParam ? 'manuale' : 'cron-giornaliero',
+    giorniControlloMmdd: [...giorniSet],
     contattiTotali: tuttiContatti.length,
     compleanni: compleanni.length,
     inviati,

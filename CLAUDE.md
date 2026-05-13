@@ -370,7 +370,7 @@ Widget home: `AttesaWidget`, `MeteoWidget`, `RecensioniWidget`, `PrenotazioniWid
 
 ## TODO produzione (`TODO-PRODUZIONE.md`)
 
-- [ ] **Compleanno-premio cron strutturale:** passare da cron domenicale a giornaliero (`0 8 * * *`), finestra rolling +7 giorni, dedup con attributo Brevo `ANNO_ULTIMO_COMPLEANNO` (es. `"2026"`) per evitare doppi invii
+- [x] **Risolto (2026-05-13)** — Compleanno-premio: cron giornaliero `0 8 * * *`, finestra rolling +7 giorni, dedup via `ANNO_ULTIMO_COMPLEANNO` Brevo (stringa anno). ⚠️ Creare attributo `ANNO_ULTIMO_COMPLEANNO` (tipo Text) in Brevo → Contacts → Settings → Contact attributes
 - [ ] Gallery: filtri tag (Cucina, Pizza, Giardino, Locale, Serate)
 - [ ] Progress bar navigazione (NProgress-style con `usePathname`)
 - [x] **Risolto (2026-05-11)** — `revalidate` centralizzato in `revalidate.ts` (3gg blog/media/faq, 1gg agenda/orari)

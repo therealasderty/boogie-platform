@@ -19,7 +19,7 @@
 
 # Mantieni le tue funzioni programmate così come sono
 [functions.compleanno-premio]
-  schedule = "0 8 * * 0"
+  schedule = "0 8 * * *"
 
 [functions.pulizia-chiusure]
   schedule = "0 3 * * 1"
