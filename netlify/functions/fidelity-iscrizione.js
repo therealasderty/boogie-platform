@@ -1,5 +1,13 @@
 // netlify/functions/fidelity-iscrizione.js
 
+function normalizeEmail(raw) {
+  return String(raw || '').trim().toLowerCase().replace(/,/g, '.');
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 function normalizePhoneForBrevo(raw) {
   const input = String(raw || '').trim();
   if (!input) return null;
@@ -31,9 +39,13 @@ exports.handler = async (event) => {
   let data;
   try { data = JSON.parse(event.body); } catch { return { statusCode: 400, headers, body: 'Invalid JSON' }; }
 
-  const { nome, cognome, email, telefono, data_nascita, consenso_privacy, consenso_marketing } = data;
+  const { nome, cognome, email: emailRaw, telefono, data_nascita, consenso_privacy, consenso_marketing } = data;
+  const email = normalizeEmail(emailRaw);
   if (!nome || !email || !consenso_privacy) {
     return { statusCode: 400, headers, body: 'Campi obbligatori mancanti' };
+  }
+  if (!isValidEmail(email)) {
+    return { statusCode: 400, headers, body: 'Indirizzo email non valido' };
   }
 
   const brevoHeaders = {
@@ -110,7 +122,7 @@ exports.handler = async (event) => {
       <table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid #C4913A;">
         <tr><td style="padding:40px 40px 20px;">
           <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Boogie Bistrot — Fidelity</p>
-          <h1 style="font-size:24px;color:#1A1610;margin:0 0 20px;font-weight:400;">Benvenuto nel programma Fidelity! 🎉</h1>
+          <h1 style="font-size:26px;color:#1A1610;margin:0 0 24px;font-weight:400;">Benvenuto nel programma Fidelity! 🎉</h1>
           <p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 20px;">Ciao <strong>${nome}</strong>,<br>sei ufficialmente iscritto al programma Fidelity di Boogie Bistrot.</p>
           <table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin-bottom:24px;">
             <tr><td style="padding:20px 24px;">
@@ -119,6 +131,7 @@ exports.handler = async (event) => {
             </td></tr>
           </table>
           <p style="font-size:13px;color:#8B6F47;">Il tuo saldo punti attuale: <strong style="color:#C4913A;">0 punti</strong></p>
+          <p style="font-size:15px;color:#4A4030;line-height:1.6;margin:24px 0 0;">A presto,<br><span style="font-weight:500;">Alessandra &amp; Chiara</span></p>
         </td></tr>
         <tr><td style="padding:16px 40px 24px;border-top:1px solid #D4C9B0;">
           <p style="font-size:11px;color:#B0A898;margin:0;">Boogie Bistrot — Via Europa, 2, Colle Brianza (LC)</p>

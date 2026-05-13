@@ -5,6 +5,14 @@ const BREVO_LIST_ID = parseInt(process.env.BREVO_LIST_ID || '3')
 const EMAIL_FROM    = process.env.EMAIL_FROM
 const BREVO_DEBUG_LOGS = process.env.BREVO_DEBUG_LOGS === '1'
 
+function normalizeEmail(raw: unknown): string {
+  return String(raw || '').trim().toLowerCase().replace(/,/g, '.');
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 function normalizePhoneForBrevo(raw: unknown): string | null {
   const input = String(raw || '').trim()
   if (!input) return null
@@ -29,11 +37,15 @@ export async function POST(req: NextRequest) {
   let body: Record<string, unknown>
   try { body = await req.json() } catch { return NextResponse.json({ success: false }, { status: 400 }) }
 
-  const { nome, cognome, email, telefono, data_nascita, consenso_privacy, consenso_marketing } =
+  const { nome, cognome, email: emailRaw, telefono, data_nascita, consenso_privacy, consenso_marketing } =
     body as Record<string, unknown>
+  const email = normalizeEmail(emailRaw)
 
   if (!nome || !email || !consenso_privacy) {
     return NextResponse.json({ success: false, error: 'Campi obbligatori mancanti' }, { status: 400 })
+  }
+  if (!isValidEmail(email)) {
+    return NextResponse.json({ success: false, error: 'Indirizzo email non valido' }, { status: 400 })
   }
 
   if (!BREVO_API_KEY) {

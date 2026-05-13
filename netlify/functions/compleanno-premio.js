@@ -34,26 +34,50 @@ exports.handler = async (event) => {
     'api-key': BREVO_API_KEY,
   };
 
-  // ── Calcola i giorni della settimana prossima (Lun-Dom) ──────────
-  // Esecuzione: domenica. Prossima settimana: domani (lunedì) → +7 giorni (domenica)
+  // ── Calcola i giorni da controllare ─────────────────────────────
+  // Modalità normale: domenica → settimana prossima Lun-Dom
+  // Modalità manuale: ?target_dates=YYYY-MM-DD,YYYY-MM-DD → date specifiche
   const oggi = new Date();
-  const inizioValidita = new Date(oggi);
-  inizioValidita.setDate(oggi.getDate() + 1);
-  const fineValidita = new Date(oggi);
-  fineValidita.setDate(oggi.getDate() + 7);
-  const validitaDal = inizioValidita.toLocaleDateString('it-IT', {
-    weekday: 'long', day: 'numeric', month: 'long'
-  });
-  const validitaAl = fineValidita.toLocaleDateString('it-IT', {
-    weekday: 'long', day: 'numeric', month: 'long'
-  });
-  const giorniSettimana = new Set();
-  for (let i = 1; i <= 7; i++) {
-    const d = new Date(oggi);
-    d.setDate(oggi.getDate() + i);
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    giorniSettimana.add(`${mm}-${dd}`);
+  const targetDatesParam = (event.queryStringParameters || {}).target_dates;
+  let giorniSettimana, validitaDal, validitaAl;
+
+  if (targetDatesParam) {
+    // Trigger manuale: controlla solo le date specificate
+    const dates = targetDatesParam.split(',').map(s => s.trim()).filter(Boolean);
+    giorniSettimana = new Set();
+    for (const dateStr of dates) {
+      const d = new Date(dateStr + 'T12:00:00Z');
+      if (!isNaN(d.getTime())) {
+        const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(d.getUTCDate()).padStart(2, '0');
+        giorniSettimana.add(`${mm}-${dd}`);
+      }
+    }
+    // Validità = settimana corrente (Lun-Dom)
+    const dayOfWeek = oggi.getDay(); // 0=Dom, 1=Lun, ...
+    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const lunedi = new Date(oggi);
+    lunedi.setDate(oggi.getDate() + daysToMonday);
+    const domenica = new Date(lunedi);
+    domenica.setDate(lunedi.getDate() + 6);
+    validitaDal = lunedi.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
+    validitaAl = domenica.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
+  } else {
+    // Cron settimanale: domenica → prossima settimana Lun-Dom
+    const inizioValidita = new Date(oggi);
+    inizioValidita.setDate(oggi.getDate() + 1);
+    const fineValidita = new Date(oggi);
+    fineValidita.setDate(oggi.getDate() + 7);
+    validitaDal = inizioValidita.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
+    validitaAl = fineValidita.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
+    giorniSettimana = new Set();
+    for (let i = 1; i <= 7; i++) {
+      const d = new Date(oggi);
+      d.setDate(oggi.getDate() + i);
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      giorniSettimana.add(`${mm}-${dd}`);
+    }
   }
 
   // ── Carica tutti i contatti dalla lista con paginazione ──────────
@@ -135,6 +159,7 @@ exports.handler = async (event) => {
             Non vediamo l'ora di brindare insieme!
           </p>
           <p style="font-size:13px;color:#8B6F47;line-height:1.6;">Per info: <a href="mailto:${EMAIL_RISTORANTE}" style="color:#C4913A;">${EMAIL_RISTORANTE}</a></p>
+          <p style="font-size:15px;color:#4A4030;line-height:1.6;margin:24px 0 0;">A presto,<br><span style="font-weight:500;">Alessandra &amp; Chiara</span></p>
         </td></tr>
         <tr><td style="padding:20px 40px 30px;border-top:1px solid #D4C9B0;">
           <p style="font-size:11px;color:#B0A898;margin:0;line-height:1.7;">
@@ -175,6 +200,7 @@ exports.handler = async (event) => {
   const risultato = {
     success: true,
     data: oggi.toISOString().split('T')[0],
+    modalita: targetDatesParam ? 'manuale' : 'cron-settimanale',
     settimanaControlloMmdd: [...giorniSettimana],
     contattiTotali: tuttiContatti.length,
     compleanni: compleanni.length,

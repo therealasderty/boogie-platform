@@ -1,5 +1,13 @@
 // netlify/functions/contatta-evento-aziendale.js
 
+function normalizeEmail(raw) {
+  return String(raw || '').trim().toLowerCase().replace(/,/g, '.');
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 function normalizePhoneForBrevo(raw) {
   const input = String(raw || '').trim()
   if (!input) return null
@@ -41,7 +49,7 @@ exports.handler = async (event) => {
   const {
     nome,
     cognome,
-    email,
+    email: emailRaw,
     telefono,
     data_evento,
     num_ospiti,
@@ -50,9 +58,13 @@ exports.handler = async (event) => {
     consenso_privacy,
     consenso_marketing,
   } = data
+  const email = normalizeEmail(emailRaw)
 
   if (!nome || !email || !num_ospiti || !consenso_privacy) {
     return { statusCode: 400, headers, body: 'Campi obbligatori mancanti' }
+  }
+  if (!isValidEmail(email)) {
+    return { statusCode: 400, headers, body: 'Indirizzo email non valido' }
   }
 
   const brevoHeaders = {
@@ -137,6 +149,7 @@ exports.handler = async (event) => {
             </td></tr>
           </table>
           <p style="font-size:13px;color:#8B6F47;line-height:1.6;">Per urgenze puoi scriverci a <a href="mailto:${EMAIL_RISTORANTE}" style="color:#C4913A;">${EMAIL_RISTORANTE}</a>.</p>
+          <p style="font-size:15px;color:#4A4030;line-height:1.6;margin:24px 0 0;">A presto,<br><span style="font-weight:500;">Alessandra &amp; Chiara</span></p>
         </td></tr>
         <tr><td style="padding:20px 40px 30px;border-top:1px solid #D4C9B0;">
           <p style="font-size:11px;color:#B0A898;margin:0;line-height:1.7;">Boogie Bistrot — Via Europa, 2, Colle Brianza (LC)</p>

@@ -1,5 +1,13 @@
 // netlify/functions/prenota.js
 
+function normalizeEmail(raw) {
+  return String(raw || '').trim().toLowerCase().replace(/,/g, '.');
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 function normalizePhoneForBrevo(raw) {
   const input = String(raw || '').trim();
   if (!input) return null;
@@ -43,10 +51,15 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers, body: 'Invalid JSON' };
   }
 
-  const { nome, cognome, data: dataPrenotazione, ora, persone, email, telefono, note, preferenza, evento, data_nascita, consenso_privacy, consenso_marketing } = data;
+  const { nome, cognome, data: dataPrenotazione, ora, persone, email: emailRaw, telefono, note, preferenza, evento, data_nascita, consenso_privacy, consenso_marketing } = data;
+  const email = normalizeEmail(emailRaw);
 
   if (!nome || !dataPrenotazione || !ora || !persone || !email || !telefono || !consenso_privacy) {
     return { statusCode: 400, headers, body: 'Campi obbligatori mancanti' };
+  }
+
+  if (!isValidEmail(email)) {
+    return { statusCode: 400, headers, body: 'Indirizzo email non valido' };
   }
 
   const nomeCompleto = cognome ? nome + ' ' + cognome : nome;
@@ -185,6 +198,7 @@ exports.handler = async (event) => {
             </td></tr>
           </table>
           <p style="font-size:13px;color:#8B6F47;line-height:1.6;">Per informazioni scrivici a <a href="mailto:${EMAIL_RISTORANTE}" style="color:#C4913A;">${EMAIL_RISTORANTE}</a>.</p>
+          <p style="font-size:15px;color:#4A4030;line-height:1.6;margin:24px 0 0;">A presto,<br><span style="font-weight:500;">Alessandra &amp; Chiara</span></p>
         </td></tr>
         <tr><td style="padding:20px 40px 30px;border-top:1px solid #D4C9B0;">
           <p style="font-size:11px;color:#B0A898;margin:0;line-height:1.7;">Boogie Bistrot — Hai ricevuto questa email perché hai effettuato una richiesta di prenotazione sul nostro sito.</p>
