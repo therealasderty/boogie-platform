@@ -18,6 +18,9 @@
   port = 8888
 
 # Mantieni le tue funzioni programmate così come sono
+[functions.compleanno-premio]
+  schedule = "0 8 * * 0"
+
 [functions.pulizia-chiusure]
   schedule = "0 3 * * 1"
 
@@ -25,7 +28,13 @@
   schedule = "0 23 * * 0"
 
 [functions.pubblica-social-schedulato]
-  schedule = "0 */4 * * *"
+  schedule = "0 2,6,10,14,18,22 * * *"
+
+[functions.pulizia-social-posts]
+  schedule = "0 4 1 * *"
+
+[functions.send-reminders]
+  schedule = "30 9 * * *"
 
 [functions."pubblica-social"]
   timeout = 26

@@ -12,11 +12,15 @@ exports.handler = async (event) => {
 
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers, body: '' };
 
-  // Verifica token segreto per evitare chiamate non autorizzate
-  const CRON_SECRET  = process.env.CRON_SECRET;
-  const tokenRicevuto = (event.queryStringParameters || {}).token;
-  if (CRON_SECRET && tokenRicevuto !== CRON_SECRET) {
-    return { statusCode: 401, headers, body: JSON.stringify({ error: 'Non autorizzato' }) };
+  // POST senza token = chiamata da Netlify Scheduler (autorizzata)
+  // GET con token = trigger manuale (richiede CRON_SECRET)
+  const CRON_SECRET = process.env.CRON_SECRET;
+  const isNetlifyScheduler = event.httpMethod === 'POST';
+  if (!isNetlifyScheduler) {
+    const tokenRicevuto = (event.queryStringParameters || {}).token;
+    if (CRON_SECRET && tokenRicevuto !== CRON_SECRET) {
+      return { statusCode: 401, headers, body: JSON.stringify({ error: 'Non autorizzato' }) };
+    }
   }
 
   const BREVO_API_KEY = process.env.BREVO_API_KEY;
