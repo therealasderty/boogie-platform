@@ -295,12 +295,6 @@ function SlideEditorFoto({ slide, onChange }) {
       <label className={styles.sectionLabel}>Formato</label>
       <div className={styles.sorgenteRow}>
         <button
-          className={`${styles.sorgenteBtn} ${template === 'foto_11' ? styles.sorgenteBtnActive : ''}`}
-          onClick={() => cambiaFormato('foto_11')}
-        >
-          1:1  Quadrato
-        </button>
-        <button
           className={`${styles.sorgenteBtn} ${template === 'foto_45' ? styles.sorgenteBtnActive : ''}`}
           onClick={() => cambiaFormato('foto_45')}
         >
@@ -682,6 +676,10 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
     return <SlideEditorAgenda slide={slide} onChange={onChange} appuntamenti={appuntamenti} orari={orari} />
   }
 
+  if (template === 'appuntamenti_giorno' || template === 'appuntamenti_giorno_storia') {
+    return <SlideEditorAppuntamentiGiorno slide={slide} onChange={onChange} appuntamenti={appuntamenti} orari={orari} />
+  }
+
   if (template === 'agenda_cover') {
     return <SlideEditorAgendaCover slide={slide} onChange={onChange} />
   }
@@ -990,6 +988,116 @@ function SlideEditorAgenda({ slide, onChange, appuntamenti, orari }) {
         </>
       )}
       {eventi.length === 0 && <div style={{ fontSize: '0.8rem', color: 'var(--text3)', marginTop: 4 }}>Seleziona una settimana e clicca "Carica settimana"</div>}
+    </div>
+  )
+}
+
+// ─── SlideEditorAppuntamentiGiorno ───────────────────────────────────────────
+
+function SlideEditorAppuntamentiGiorno({ slide, onChange, appuntamenti, orari }) {
+  const { data = {} } = slide
+  const oggi = localDateStr(new Date())
+  const [giorno, setGiorno] = useState(data.giorno || oggi)
+
+  function caricaGiorno() {
+    const aperti = orari?.length > 0 ? new Set(orari.filter(o => o.attivo).map(o => o.giorno)) : null
+    const d = new Date(giorno + 'T12:00:00')
+    const dowTarget = d.getDay()
+    const risultati = []
+
+    for (const a of (appuntamenti || [])) {
+      if (a.stato === 'futuro' || a.stato === 'bozza') continue
+      const titolo = a.title || a.titolo || ''
+      const ricorrenza = a.ricorrenza || 'nessuna'
+      const startRecur = a.data || null
+      const endRecur   = a.dataFineRicorrenza || null
+
+      if (ricorrenza === 'nessuna') {
+        if (a.data === giorno) risultati.push({ titolo, ora: a.ora || '' })
+      } else if (ricorrenza === 'settimanale') {
+        const giorni = a.giorniSettimana ? a.giorniSettimana.split(',').map(Number) : []
+        const esclusi = a.giorniEsclusione ? a.giorniEsclusione.split(',').map(Number) : []
+        if (!giorni.includes(dowTarget)) continue
+        if (esclusi.includes(dowTarget)) continue
+        if (aperti && !aperti.has(dowTarget)) continue
+        if (startRecur && giorno < startRecur) continue
+        if (endRecur   && giorno > endRecur)   continue
+        risultati.push({ titolo, ora: a.ora || '' })
+      } else if (ricorrenza === 'giornaliera') {
+        const esclusi = a.giorniEsclusione ? a.giorniEsclusione.split(',').map(Number) : []
+        if (esclusi.includes(dowTarget)) continue
+        if (aperti && !aperti.has(dowTarget)) continue
+        if (startRecur && giorno < startRecur) continue
+        if (endRecur   && giorno > endRecur)   continue
+        risultati.push({ titolo, ora: a.ora || '' })
+      } else if (ricorrenza === 'mensile' && a.data) {
+        const dayOfMonth = new Date(a.data + 'T12:00:00').getDate()
+        if (d.getDate() !== dayOfMonth) continue
+        if (startRecur && giorno < startRecur) continue
+        if (endRecur   && giorno > endRecur)   continue
+        risultati.push({ titolo, ora: a.ora || '' })
+      }
+    }
+
+    risultati.sort((a, b) => (a.ora || '').localeCompare(b.ora || ''))
+
+    const dataObj   = new Date(giorno + 'T12:00:00')
+    const nomeGiorno = dataObj.toLocaleDateString('it-IT', { weekday: 'long' })
+    const nomeGiornoCapitalized = nomeGiorno.charAt(0).toUpperCase() + nomeGiorno.slice(1)
+    const numeroGiorno = dataObj.getDate()
+    const isOggi = giorno === oggi
+    const labelGiorno = isOggi
+      ? `Oggi ${nomeGiornoCapitalized} ${numeroGiorno}`
+      : `${nomeGiornoCapitalized} ${numeroGiorno}`
+
+    onChange({ ...slide, data: { ...data, eventi: risultati, giorno, labelGiorno } })
+  }
+
+  const eventi = Array.isArray(data.eventi) ? data.eventi : []
+
+  return (
+    <div className={styles.slideEditor}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+        <input
+          className={styles.edInput}
+          type="date"
+          value={giorno}
+          onChange={e => setGiorno(e.target.value)}
+          style={{ flex: 1 }}
+        />
+        <button type="button" className="btn-secondary" style={{ flexShrink: 0, fontSize: '0.8rem' }} onClick={caricaGiorno}>
+          Carica giorno
+        </button>
+      </div>
+      <label className={styles.sectionLabel}>Label intestazione</label>
+      <input
+        className={styles.edInput}
+        value={data.labelGiorno || ''}
+        onChange={e => onChange({ ...slide, data: { ...data, labelGiorno: e.target.value } })}
+        placeholder="Oggi"
+      />
+      {eventi.length > 0 && (
+        <>
+          <label className={styles.sectionLabel} style={{ marginTop: 8 }}>Eventi ({eventi.length})</label>
+          {eventi.map((ev, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              <span style={{ flex: 1, fontSize: '0.82rem', color: 'var(--text2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {ev.ora ? `ore ${ev.ora} · ` : ''}{ev.titolo}
+              </span>
+              <button
+                type="button"
+                style={{ flexShrink: 0, fontSize: '0.72rem', color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px' }}
+                onClick={() => onChange({ ...slide, data: { ...data, eventi: eventi.filter((_, idx) => idx !== i) } })}
+              >✕</button>
+            </div>
+          ))}
+        </>
+      )}
+      {eventi.length === 0 && (
+        <div style={{ fontSize: '0.8rem', color: 'var(--text3)', marginTop: 4 }}>
+          Seleziona un giorno e clicca "Carica giorno"
+        </div>
+      )}
     </div>
   )
 }

@@ -121,3 +121,6 @@ export const IconLocalSeo    = icon(MapPin)
 
 // — Social Studio
 export const IconSocialStudio = icon(ShareNetwork)
+
+// — Design / Grafiche
+export const IconDesign = icon(Slideshow)

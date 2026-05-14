@@ -882,7 +882,7 @@ export function TemplateChiusura({
         position:   'absolute',
         bottom:     0, left: 0, right: 0,
         height:     600,
-        background: 'linear-gradient(to bottom, transparent 0%, rgba(10,5,0,0.82) 40%, rgba(10,5,0,0.97) 70%, rgba(10,5,0,1) 100%)',
+        background: 'linear-gradient(to bottom, transparent 0%, rgba(10,5,0,0.55) 40%, rgba(10,5,0,0.78) 70%, rgba(10,5,0,0.88) 100%)',
       }} />
 
       {/* Logo */}
@@ -1143,6 +1143,171 @@ export function TemplateAgendaSettimanaStoria({ eventi = [], labelSettimana = 'Q
         paddingTop: 36,
       }}>
         Vedi tutta la programmazione aggiornata e prenota su <span style={{ color: 'rgba(238,206,157,0.6)' }}>boogiebistrot.com</span>
+      </div>
+    </div>
+  )
+}
+
+// ─── Template Appuntamenti Giorno (4:5 — 1080×1350) ─────────────────────────
+// Lista eventi del giorno: solo ora + titolo, senza data.
+
+export function TemplateAppuntamentiGiorno({ eventi = [], labelGiorno = 'Oggi' }) {
+  const lista = eventi.slice(0, 6)
+  return (
+    <div style={{
+      position:        'relative',
+      width:           W_COVER,
+      height:          H_COVER,
+      backgroundColor: DARK_BG,
+      overflow:        'hidden',
+      fontFamily:      "'SofiaPro', 'Helvetica Neue', sans-serif",
+    }}>
+      <div style={{
+        position:   'absolute', inset: 0,
+        background: [
+          'radial-gradient(ellipse at 20% 15%, rgba(180,110,30,0.28) 0%, transparent 50%)',
+          'radial-gradient(ellipse at 80% 80%, rgba(120,60,10,0.18) 0%, transparent 45%)',
+          'linear-gradient(160deg, #1e1208 0%, #13100a 55%, #0a0603 100%)',
+        ].join(', '),
+      }} />
+
+      <LogoBlock top={72} logoW={120} />
+
+      <div style={{ position: 'absolute', top: 260, left: 80, right: 80 }}>
+        <div style={{
+          fontSize:      36,
+          fontWeight:    400,
+          color:         'rgba(238,206,157,0.6)',
+          letterSpacing: 3,
+          textTransform: 'uppercase',
+          marginBottom:  16,
+        }}>
+          {labelGiorno}
+        </div>
+        <div style={{
+          fontFamily:   "'Alga', 'Georgia', serif",
+          fontSize:      96,
+          fontWeight:   600,
+          lineHeight:   1.0,
+          color:        '#ffffff',
+          marginBottom: 48,
+        }}>
+          In programma
+        </div>
+
+        <div style={{ width: '100%', height: 1, background: 'rgba(238,206,157,0.25)', marginBottom: 48 }} />
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+          {lista.length === 0 ? (
+            <div style={{ fontSize: 38, color: 'rgba(255,255,255,0.35)' }}>Nessun evento oggi</div>
+          ) : lista.map((ev, i) => (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {ev.ora && (
+                <div style={{ fontSize: 28, fontWeight: 500, color: BRAND_GOLD }}>
+                  ore {ev.ora}
+                </div>
+              )}
+              <div style={{ fontSize: 50, fontWeight: 700, color: '#ffffff', lineHeight: 1.15 }}>
+                {ev.titolo}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{
+        position:   'absolute',
+        bottom:     72,
+        left:       80,
+        right:      80,
+        fontSize:   30,
+        color:      'rgba(255,255,255,0.4)',
+        borderTop:  '1px solid rgba(238,206,157,0.15)',
+        paddingTop: 28,
+      }}>
+        Prenota su <span style={{ color: 'rgba(238,206,157,0.6)' }}>boogiebistrot.com</span>
+      </div>
+    </div>
+  )
+}
+
+// ─── Template Appuntamenti Giorno Storia (9:16 — 1080×1920) ──────────────────
+
+export function TemplateAppuntamentiGiornoStoria({ eventi = [], labelGiorno = 'Oggi' }) {
+  const lista = eventi.slice(0, 5)
+  return (
+    <div style={{
+      position:        'relative',
+      width:           W_STORIA,
+      height:          H_STORIA,
+      backgroundColor: DARK_BG,
+      overflow:        'hidden',
+      fontFamily:      "'SofiaPro', 'Helvetica Neue', sans-serif",
+    }}>
+      <div style={{
+        position:   'absolute', inset: 0,
+        background: [
+          'radial-gradient(ellipse at 20% 20%, rgba(180,110,30,0.3) 0%, transparent 50%)',
+          'radial-gradient(ellipse at 80% 75%, rgba(120,60,10,0.2) 0%, transparent 45%)',
+          'linear-gradient(160deg, #1e1208 0%, #13100a 55%, #0a0603 100%)',
+        ].join(', '),
+      }} />
+
+      <LogoBlock top={100} logoW={130} />
+
+      <div style={{ position: 'absolute', top: 360, left: 90, right: 90 }}>
+        <div style={{
+          fontSize:      42,
+          fontWeight:    400,
+          color:         'rgba(238,206,157,0.6)',
+          letterSpacing: 4,
+          textTransform: 'uppercase',
+          marginBottom:  20,
+        }}>
+          {labelGiorno}
+        </div>
+        <div style={{
+          fontFamily:   "'Alga', 'Georgia', serif",
+          fontSize:      120,
+          fontWeight:   600,
+          lineHeight:   1.0,
+          color:        '#ffffff',
+          marginBottom: 60,
+        }}>
+          In programma
+        </div>
+
+        <div style={{ width: '100%', height: 1, background: 'rgba(238,206,157,0.25)', marginBottom: 60 }} />
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+          {lista.length === 0 ? (
+            <div style={{ fontSize: 44, color: 'rgba(255,255,255,0.35)' }}>Nessun evento oggi</div>
+          ) : lista.map((ev, i) => (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {ev.ora && (
+                <div style={{ fontSize: 34, fontWeight: 500, color: BRAND_GOLD }}>
+                  ore {ev.ora}
+                </div>
+              )}
+              <div style={{ fontSize: 64, fontWeight: 700, color: '#ffffff', lineHeight: 1.15 }}>
+                {ev.titolo}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{
+        position:   'absolute',
+        bottom:     100,
+        left:       90,
+        right:      90,
+        fontSize:   36,
+        color:      'rgba(255,255,255,0.4)',
+        borderTop:  '1px solid rgba(238,206,157,0.15)',
+        paddingTop: 36,
+      }}>
+        Prenota su <span style={{ color: 'rgba(238,206,157,0.6)' }}>boogiebistrot.com</span>
       </div>
     </div>
   )
@@ -1454,6 +1619,7 @@ export const TEMPLATES = {
       titolo: 'Questa settimana',
       labelPeriodo: '3 – 9 maggio',
       sottotitolo: 'Scorri per il programma',
+      imageUrl: '/sample.webp',
     },
   },
   agenda_settimana: {
@@ -1464,9 +1630,29 @@ export const TEMPLATES = {
     label: 'Agenda Story', Component: TemplateAgendaSettimanaStoria, bgDark: true, size: '9:16',
     demoProps: { eventi: [{ titolo: 'Serata Paella', data: '2026-05-06', ora: '20:00' }, { titolo: 'Aperitivo Jazz', data: '2026-05-08', ora: '19:30' }] },
   },
+  appuntamenti_giorno: {
+    label: 'Appuntamenti del giorno', Component: TemplateAppuntamentiGiorno, bgDark: true, size: '4:5',
+    demoProps: {
+      labelGiorno: 'Oggi',
+      eventi: [
+        { titolo: 'Aperitivo Jazz', ora: '19:00' },
+        { titolo: 'Serata Paella', ora: '21:00' },
+      ],
+    },
+  },
+  appuntamenti_giorno_storia: {
+    label: 'Appuntamenti del giorno Story', Component: TemplateAppuntamentiGiornoStoria, bgDark: true, size: '9:16',
+    demoProps: {
+      labelGiorno: 'Oggi',
+      eventi: [
+        { titolo: 'Aperitivo Jazz', ora: '19:00' },
+        { titolo: 'Serata Paella', ora: '21:00' },
+      ],
+    },
+  },
   cover: {
     label: 'Cover evento', Component: TemplateCover, bgDark: true, size: '4:5',
-    demoProps: { titolo: 'Aperitivo Jazz', data: '2026-05-10', descrizione: 'Musica live e cocktail d\'autore' },
+    demoProps: { titolo: 'Aperitivo Jazz', data: '2026-05-10', descrizione: 'Musica live e cocktail d\'autore', imageUrl: '/sample.webp' },
   },
   prezzo_evento: {
     label: 'Prezzo evento', Component: TemplatePrezzoEvento, bgDark: true, size: '4:5',
@@ -1476,24 +1662,24 @@ export const TEMPLATES = {
       prezzoImporto: '26€',
       prezzoLabel:   'Menù Paella',
       voci:          ['Stuzzichini misti', 'Primo dello chef', 'Drink a scelta'],
+      imageUrl:      '/sample.webp',
     },
   },
   chiusura: {
     label: 'Chiusura', Component: TemplateChiusura, bgDark: true, size: '4:5',
-    demoProps: { nomeSerata: 'Serata Paella' },
+    demoProps: { nomeSerata: 'Serata Paella', imageUrl: '/sample.webp' },
   },
-  foto_11: {
-    label: 'Foto 1:1', Component: TemplateFoto, bgDark: true, size: '1:1',
-  },
-  foto_45: {
+foto_45: {
     label: 'Foto 4:5', Component: TemplateFoto, bgDark: true, size: '4:5',
+    demoProps: { imageUrl: '/sample.webp' },
   },
   foto_916: {
     label: 'Foto Story', Component: TemplateFoto, bgDark: true, size: '9:16',
+    demoProps: { imageUrl: '/sample.webp' },
   },
   storia_evento: {
     label: 'Story Evento', Component: TemplateStoriaEvento, bgDark: true, size: '9:16',
-    demoProps: { titolo: 'Aperitivo Jazz', data: '2026-05-10', ora: '20:00' },
+    demoProps: { titolo: 'Aperitivo Jazz', data: '2026-05-10', ora: '20:00', imageUrl: '/sample.webp' },
   },
   prezzo_storia: {
     label: 'Prezzo Story', Component: TemplatePrezzoStoriaEvento, bgDark: true, size: '9:16',
@@ -1503,6 +1689,7 @@ export const TEMPLATES = {
       prezzoImporto: '26€',
       prezzoLabel:   'Menù Paella',
       voci:          ['Stuzzichini misti', 'Primo dello chef', 'Drink a scelta'],
+      imageUrl:      '/sample.webp',
     },
   },
   offerta_serata: {
@@ -1513,6 +1700,7 @@ export const TEMPLATES = {
       voci:        ['carta', 'pizza', 'aperitivo', 'birre', 'cocktails'],
       data:        '2026-05-10',
       ora:         '20:00',
+      imageUrl:    '/sample.webp',
     },
   },
   offerta_serata_storia: {
@@ -1523,6 +1711,7 @@ export const TEMPLATES = {
       voci:        ['carta', 'pizza', 'aperitivo', 'birre', 'cocktails'],
       data:        '2026-05-10',
       ora:         '20:00',
+      imageUrl:    '/sample.webp',
     },
   },
 }
