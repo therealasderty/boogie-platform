@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { AnimatePresence, motion } from 'framer-motion'
 
 type Preferenze = {
   necessari: true
@@ -75,16 +76,20 @@ export default function CookieBanner() {
     setVisibile(false)
   }
 
-  if (!visibile) return null
-
   return (
-    <div
+    <AnimatePresence>
+      {visibile && (
+    <motion.div
       className="fixed bottom-0 left-0 right-0 z-[300] md:bottom-6 md:left-6 md:right-auto md:max-w-md"
       style={{ padding: '0' }}
+      initial={{ y: '100%', opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      exit={{ y: '100%', opacity: 0 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
     >
       <div
         className="text-white shadow-2xl"
-        style={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0', borderTopLeftRadius: 'var(--radius-card)', borderTopRightRadius: 'var(--radius-card)' }}
+        style={{ backgroundColor: 'var(--color-surface-dark)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0', borderTopLeftRadius: 'var(--radius-card)', borderTopRightRadius: 'var(--radius-card)' }}
       >
         {/* Corpo principale */}
         <div style={{ padding: '20px 20px 16px' }}>
@@ -169,7 +174,9 @@ export default function CookieBanner() {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 

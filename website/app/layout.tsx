@@ -9,6 +9,7 @@ import { fetchEventi } from "@/lib/agenda";
 import type { EventoAgenda } from "@/lib/agenda";
 import { PageContextProvider } from "@/lib/page-context"
 import PopupManager from "@/components/PopupManager";
+import PageTransition from "@/components/PageTransition";
 import { fetchMedia } from "@/lib/media";
 import { openGraphImageUrl } from "@/lib/imagekit-delivery";
 
@@ -85,7 +86,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="it" className={`${raleway.variable} h-full`}>
+    <html lang="it" className={`${raleway.variable} h-full`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col">
         <script
           type="application/ld+json"
@@ -93,7 +94,7 @@ export default async function RootLayout({
         />
         <PageContextProvider>
           <Navbar orariDisplay={orariDisplay} eventi={eventiNavbar} />
-          {children}
+          <PageTransition>{children}</PageTransition>
           <PopupManager />
           <CookieBanner />
         </PageContextProvider>

@@ -521,7 +521,8 @@ exports.handler = async (event) => {
       } catch (e) { errori.instagram = e.message }
     }
 
-    if (piattaforme.includes('facebook')) {
+    // Le storie non sono supportate su Facebook — escludi sempre
+    if (piattaforme.includes('facebook') && !isStoria) {
       try {
         risultati.facebook = imageUrls.length === 1
           ? await pubblicaSuFacebook(imageUrls[0], caption)
@@ -534,23 +535,27 @@ exports.handler = async (event) => {
       catch (e) { errori.google = e.message }
     }
 
-    // Aggiorna record SocialPosts se postId presente
+    // Aggiorna record SocialPosts se postId presente — awaited per evitare terminazione anticipata
     if (postId && AIRTABLE_TOKEN && AIRTABLE_BASE_ID) {
       const SOCIAL_TABLE = process.env.AIRTABLE_SOCIAL_POSTS || 'SocialPosts'
       const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(SOCIAL_TABLE)}/${postId}`
-      const tuttoOk = Object.keys(errori).length === 0
-      fetch(url, {
-        method:  'PATCH',
-        headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}`, 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          fields: {
-            'Stato':                  tuttoOk ? 'Pubblicato' : 'Errore',
-            'DataPubblicata':         new Date().toISOString(),
-            'RisultatiPubblicazione': JSON.stringify({ risultati, errori }),
-            'ErroreMsg':              Object.values(errori).join('; '),
-          },
-        }),
-      }).catch(() => {})
+      const nuovoStato = Object.keys(errori).length === 0
+        ? 'Pubblicato'
+        : (Object.keys(risultati).length > 0 ? 'Pubblicato' : 'Errore')
+      try {
+        await fetch(url, {
+          method:  'PATCH',
+          headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}`, 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            fields: {
+              'Stato':                  nuovoStato,
+              'DataPubblicata':         new Date().toISOString(),
+              'RisultatiPubblicazione': JSON.stringify({ risultati, errori }),
+              'ErroreMsg':              Object.values(errori).join('; '),
+            },
+          }),
+        })
+      } catch (e) { console.error('Airtable update fallita:', e.message) }
     }
 
     const tuttoOk = Object.keys(errori).length === 0

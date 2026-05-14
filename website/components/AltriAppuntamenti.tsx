@@ -39,7 +39,7 @@ export default async function AltriAppuntamenti({ slugCorrente }: { slugCorrente
   if (visibili.length === 0) return null
 
   return (
-    <section className="py-20 md:py-28 bg-surface-warm">
+    <section className="pt-8 pb-14 md:pb-20 bg-surface-warm">
       <div className="max-w-7xl mx-auto px-6 md:px-14">
 
         <div className="mb-12">

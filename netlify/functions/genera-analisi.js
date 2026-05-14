@@ -59,7 +59,7 @@ async function generateWeeklyAnalysis(s, settimane = []) {
 
 DATI:
 - Prenotazioni: ${s.prenotazioni} (sito: ${s.prenotazioniSito}, tel: ${s.prenotazioniTel}${s.prenotazioniEventi ? `, eventi: ${s.prenotazioniEventi}` : ''})
-- Coperti: ${s.persone} (Pranzo: ${s.copertipranzo}, Aperitivo: ${s.copertiAperitivo}, Cena: ${s.copertiCena})
+- Coperti: ${s.persone} (Pranzo: ${s.copertipranzo}, Cena: ${s.copertiCena})
 - Cancellazioni: ${s.cancellazioni} (${s.tassoCancellazione}%) — Lead time: ${s.leadTime}g — Gruppo medio: ${s.dimGruppo} pers.
 - Clienti: ${s.clientiUnici} unici, ${s.clientiRitorno} di ritorno — Last minute: ${s.lastMinute}
 - Giorno più pieno: ${s.giornopiuPieno} — più vuoto: ${s.giornopiuVuoto}

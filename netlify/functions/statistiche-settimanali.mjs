@@ -208,6 +208,35 @@ async function fetchEventiSettimana(dataInizio, dataFine) {
   }
 }
 
+async function fetchUmamiWeekData(dataInizio, dataFine) {
+  const UMAMI_API_KEY    = process.env.UMAMI_API_KEY
+  const UMAMI_WEBSITE_ID = process.env.UMAMI_WEBSITE_ID
+  if (!UMAMI_API_KEY || !UMAMI_WEBSITE_ID) return null
+  const start = new Date(dataInizio + 'T00:00:00').getTime()
+  const end   = new Date(dataFine   + 'T23:59:59').getTime()
+  const BASE_UMAMI = 'https://api.umami.is/v1'
+  const h = { Authorization: `Bearer ${UMAMI_API_KEY}`, Accept: 'application/json' }
+  try {
+    const [statsRes, prenotaRes, pagesRes] = await Promise.all([
+      fetch(`${BASE_UMAMI}/websites/${UMAMI_WEBSITE_ID}/stats?startAt=${start}&endAt=${end}`, { headers: h }),
+      fetch(`${BASE_UMAMI}/websites/${UMAMI_WEBSITE_ID}/stats?startAt=${start}&endAt=${end}&url=%2Fprenota`, { headers: h }),
+      fetch(`${BASE_UMAMI}/websites/${UMAMI_WEBSITE_ID}/metrics?type=url&startAt=${start}&endAt=${end}&limit=1`, { headers: h }),
+    ])
+    const [stats, prenota, pages] = await Promise.all([statsRes.json(), prenotaRes.json(), pagesRes.json()])
+    const topPage = Array.isArray(pages) && pages[0]?.x ? pages[0].x.replace(/^https?:\/\/[^/]+/, '') || '/' : null
+    return {
+      visite:        stats.visits?.value    ?? 0,
+      pageviews:     stats.pageviews?.value ?? 0,
+      visitatori:    stats.visitors?.value  ?? 0,
+      bounceRate:    stats.bounces?.value   ?? 0,
+      visitePrenota: prenota.visits?.value  ?? 0,
+      topPage,
+    }
+  } catch {
+    return null
+  }
+}
+
 // Recupera orari e chiusure da Airtable
 async function fetchOrariEChiusure() {
   const [resOrari, resChiusure] = await Promise.all([
@@ -267,10 +296,11 @@ async function calcAndSaveWeek(dataInizio, dataFine, settimana, prevStats) {
   const mon = new Date(dataInizio + 'T12:00:00')
   const sun = new Date(dataFine   + 'T12:00:00')
 
-  const [{ orari, chiusure }, meteo, eventi] = await Promise.all([
+  const [{ orari, chiusure }, meteo, eventi, umami] = await Promise.all([
     fetchOrariEChiusure(),
     fetchMeteoStorico(dataInizio, dataFine),
     fetchEventiSettimana(dataInizio, dataFine),
+    fetchUmamiWeekData(dataInizio, dataFine),
   ])
   const festivita = getFestivitaSettimana(dataInizio, dataFine)
   const contesto = { meteo, eventi, festivita }
@@ -345,6 +375,14 @@ async function calcAndSaveWeek(dataInizio, dataFine, settimana, prevStats) {
       perFascia[fascia].pren++
       perFascia[fascia].coperti += p.persone
     }
+  })
+
+  // Prenotazioni per appuntamento/evento
+  const perEvento = {}
+  totali.filter(p => p.evento).forEach(p => {
+    if (!perEvento[p.evento]) perEvento[p.evento] = { pren: 0, coperti: 0 }
+    perEvento[p.evento].pren++
+    perEvento[p.evento].coperti += p.persone
   })
   const fasceSorted = Object.entries(perFascia).sort((a, b) => b[1].pren - a[1].pren)
   const fasciaMenoRichiesta = fasceSorted[fasceSorted.length - 1][0]
@@ -429,6 +467,14 @@ async function calcAndSaveWeek(dataInizio, dataFine, settimana, prevStats) {
         'Giorni chiusi':                              giorniChiusi,
         ...(trendPrenotazioni != null && { 'Prenotazioni ultima settimana vs precedente (%)': trendPrenotazioni }),
         ...(trendPersone      != null && { 'Persone ultima settimana vs precedente (%)':      trendPersone }),
+        ...(umami && {
+          'Visite sito':           umami.visite,
+          'Visitatori unici web':  umami.visitatori,
+          'Pageviews':             umami.pageviews,
+          'Bounce rate':           umami.bounceRate,
+          'Visite pagina prenota': umami.visitePrenota,
+          ...(umami.topPage && { 'Pagina più visitata': umami.topPage }),
+        }),
       }
     })
   })
@@ -462,6 +508,8 @@ async function calcAndSaveWeek(dataInizio, dataFine, settimana, prevStats) {
       copertipranzo:    perFascia.Pranzo.coperti,
       copertiAperitivo: perFascia.Aperitivo.coperti,
       copertiCena:      perFascia.Cena.coperti,
+      perEvento,
+      umami: umami || null,
     },
   }
 }
@@ -517,11 +565,18 @@ async function generateWeeklyAnalysis(s, settimane = [], contesto = {}) {
 ${contestoStr}
 DATI:
 - Prenotazioni: ${s.prenotazioni} (sito: ${s.prenotazioniSito}, tel: ${s.prenotazioniTel}${s.prenotazioniEventi ? `, eventi: ${s.prenotazioniEventi}` : ''})
-- Coperti: ${s.persone} (Pranzo: ${s.copertipranzo}, Aperitivo: ${s.copertiAperitivo}, Cena: ${s.copertiCena})
+- Coperti: ${s.persone} (Pranzo: ${s.copertipranzo}, Cena: ${s.copertiCena})
 - Cancellazioni: ${s.cancellazioni} (${s.tassoCancellazione}%) — Lead time: ${s.leadTime}g — Gruppo medio: ${s.dimGruppo} pers.
 - Clienti: ${s.clientiUnici} unici, ${s.clientiRitorno} di ritorno — Last minute: ${s.lastMinute}
 - Giorno più pieno: ${s.giornopiuPieno} — più vuoto: ${s.giornopiuVuoto}
-- Slot più richiesto: ${s.slotPiuRichiesto} — fascia meno richiesta: ${s.fasciaMenoRichiesta}
+- Slot più richiesto: ${s.slotPiuRichiesto} — fascia meno richiesta: ${s.fasciaMenoRichiesta}${
+  s.perEvento && Object.keys(s.perEvento).length > 0
+    ? '\n- Appuntamenti con prenotazioni:\n' + Object.entries(s.perEvento)
+        .sort((a, b) => b[1].pren - a[1].pren)
+        .map(([ev, d]) => `  • ${ev}: ${d.pren} pren. / ${d.coperti} coperti`)
+        .join('\n')
+    : ''
+}${s.umami ? `\n- Sito web: ${s.umami.visite} visite, ${s.umami.visitatori} visitatori unici, bounce ${s.umami.bounceRate}% — ${s.umami.visitePrenota} visite a /prenota${s.prenotazioniSito > 0 && s.umami.visitePrenota > 0 ? ` (conversione ${Math.round(s.prenotazioniSito / s.umami.visitePrenota * 100)}%)` : ''}${s.umami.topPage ? ` — pagina più visitata: ${s.umami.topPage}` : ''}` : ''}
 
 Rispondi ESCLUSIVAMENTE con questo formato, nessun testo fuori dalla struttura:
 
@@ -597,6 +652,7 @@ async function fetchAllStatsRecordsFull() {
     'Clienti unici','Clienti di ritorno',
     'Giorno più pieno','Giorno più vuoto','Slot più richiesto','Fascia meno richiesta',
     'Coperti pranzo','Coperti aperitivo','Coperti cena',
+    'Visite sito','Visitatori unici web','Pageviews','Bounce rate','Visite pagina prenota','Pagina più visitata',
   ].map(f => `fields[]=${encodeURIComponent(f)}`).join('&')
   const records = await fetchAllRecords(
     `${BASE}/${STATS_TABLE}?sort[0][field]=Data%20inizio&sort[0][direction]=asc&${fields}`
@@ -625,6 +681,14 @@ async function fetchAllStatsRecordsFull() {
     copertipranzo:       r.fields['Coperti pranzo'] || 0,
     copertiAperitivo:    r.fields['Coperti aperitivo'] || 0,
     copertiCena:         r.fields['Coperti cena'] || 0,
+    umami: r.fields['Visite sito'] != null ? {
+      visite:        r.fields['Visite sito'] || 0,
+      visitatori:    r.fields['Visitatori unici web'] || 0,
+      pageviews:     r.fields['Pageviews'] || 0,
+      bounceRate:    r.fields['Bounce rate'] || 0,
+      visitePrenota: r.fields['Visite pagina prenota'] || 0,
+      topPage:       r.fields['Pagina più visitata'] || null,
+    } : null,
   }))
 }
 
@@ -685,6 +749,10 @@ async function sendNewsletter(analisiWeek, analisiGlobal, s, nSettimane) {
       </tr>
     </table>`
 
+  const umamiKpiHtml = s.umami
+    ? `<tr>${kpi(s.umami.visite,'Visite sito')}${kpi(s.umami.visitatori,'Visitatori unici')}${kpi(s.umami.visitePrenota,'Visite /prenota')}${s.umami.visitePrenota > 0 && s.prenotazioniSito > 0 ? kpi(Math.round(s.prenotazioniSito/s.umami.visitePrenota*100)+'%','Conv. prenota') : ''}</tr>`
+    : ''
+
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:Georgia,serif;color:#333;background:#f9f9f9;margin:0;padding:0;">
 <div style="max-width:640px;margin:0 auto;background:#fff;">
   <div style="background:#1a1a1a;color:#fff;padding:28px 32px;text-align:center;">
@@ -697,6 +765,7 @@ async function sendNewsletter(analisiWeek, analisiGlobal, s, nSettimane) {
       <tr>
         ${kpi(s.prenotazioni,'Prenotazioni')}${kpi(s.persone,'Coperti')}${kpi(s.tassoCancellazione+'%','Cancellazioni')}${kpi(s.leadTime+'g','Anticipo medio')}
       </tr>
+      ${umamiKpiHtml}
     </table>
   </div>
   <div style="padding:24px 32px;border-bottom:1px solid #eee;">

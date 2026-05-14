@@ -36,7 +36,7 @@ export default async function BlogPage() {
         image={heroImage}
       />
 
-      <section className="py-20 md:py-28" style={{ backgroundColor: '#1a1a1a' }}>
+      <section className="py-20 md:py-28 bg-surface-dark">
         <div className="max-w-7xl mx-auto px-6 md:px-14">
 
           {articoli.length === 0 ? (

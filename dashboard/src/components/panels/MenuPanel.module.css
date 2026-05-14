@@ -22,6 +22,7 @@
 }
 .tab:hover { border-color: var(--accent); color: var(--accent); }
 .tabActive { background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; font-weight: 600; }
+.tabActive:hover { background: var(--accent2) !important; border-color: var(--accent2) !important; color: #fff !important; }
 
 .subTabs {
   display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; padding-top: 8px;

@@ -186,7 +186,7 @@ export default async function CityServicePage({
       </section>
 
       {/* Form prenotazione — sfondo scuro */}
-      <section id="prenota" className="text-white py-16 px-6 md:px-14" style={{ backgroundColor: '#1a1a1a' }}>
+      <section id="prenota" className="text-white py-16 px-6 md:px-14 bg-surface-dark">
         <div className="max-w-3xl mx-auto">
           <FadeIn>
               <div className="bg-white rounded-card p-8">
@@ -220,7 +220,7 @@ export default async function CityServicePage({
       </section>
 
       {/* Mappa */}
-      <section className="py-16 px-6 md:px-14" style={{ backgroundColor: '#1a1a1a' }}>
+      <section className="py-16 px-6 md:px-14 bg-surface-dark">
         <div className="max-w-3xl mx-auto">
           <FadeIn>
             <div className="mb-6">

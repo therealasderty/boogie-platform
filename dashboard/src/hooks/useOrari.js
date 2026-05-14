@@ -1,23 +1,33 @@
 import { useState, useEffect, useCallback } from 'react'
 import { authFetch } from '../lib/authFetch'
 import { API_BASE } from '../lib/config'
+import { cacheGet, cacheSet, cacheInvalidate } from '../lib/cache'
 const BASE = API_BASE
+const CACHE_KEY = 'orari'
 
 export function useOrari() {
   const [orari, setOrari] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const carica = useCallback(() => {
+  const carica = useCallback(async () => {
+    const cached = cacheGet(CACHE_KEY)
+    if (cached) { setOrari(cached); setLoading(false); return }
     setLoading(true)
-    authFetch(BASE + '/get-orari')
-      .then(r => r.json())
-      .then(json => { if (json.success) setOrari(json.orari || []); setLoading(false); })
-      .catch(() => setLoading(false))
+    try {
+      const res = await authFetch(BASE + '/get-orari')
+      const json = await res.json()
+      if (json.success) {
+        setOrari(json.orari || [])
+        cacheSet(CACHE_KEY, json.orari || [])
+      }
+    } catch {}
+    setLoading(false)
   }, [])
 
   useEffect(() => { carica() }, [carica])
 
   const salva = useCallback(async (payload, id = null) => {
+    cacheInvalidate(CACHE_KEY)
     const res = await authFetch(BASE + '/gestisci-orari', {
       method: id ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -27,6 +37,7 @@ export function useOrari() {
   }, [])
 
   const elimina = useCallback(async (id) => {
+    cacheInvalidate(CACHE_KEY)
     const res = await authFetch(`${BASE}/gestisci-orari?id=${id}`, { method: 'DELETE' })
     return res.json()
   }, [])

@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* ── View Transitions API — cross-fade automatico tra pagine ── */
+@view-transition {
+  navigation: auto;
+}
+
 @font-face {
   font-family: 'IvyMode';
   src: url('/fonts/ivymode-regular.woff') format('woff');

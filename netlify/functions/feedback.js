@@ -83,9 +83,9 @@ exports.handler = async (event) => {
   <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
     <tr><td align="center">
       <table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid #C4913A;">
-        <tr><td style="padding:40px 40px 32px;">
+        <tr><td style="padding:40px 40px 20px;">
           <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Boogie Bistrot</p>
-          <h1 style="font-size:24px;color:#1A1610;margin:0 0 20px;font-weight:400;line-height:1.3;">
+          <h1 style="font-size:26px;color:#1A1610;margin:0 0 24px;font-weight:400;line-height:1.3;">
             Ciao ${nome}, grazie per aver scelto il Boogie Bistrot ${dataFormattata}!
           </h1>
           <p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 32px;">
@@ -112,9 +112,7 @@ exports.handler = async (event) => {
             </tr>
           </table>
 
-          <p style="font-size:12px;color:#B0A898;line-height:1.6;margin:24px 0 0;text-align:center;">
-            Grazie di cuore 🙏
-          </p>
+          <p style="font-size:15px;color:#4A4030;line-height:1.6;margin:24px 0 8px;">Grazie di cuore,<br><span style="font-weight:500;">Alessandra &amp; Chiara</span></p>
         </td></tr>
         <tr><td style="padding:16px 40px 24px;border-top:1px solid #D4C9B0;">
           <p style="font-size:11px;color:#B0A898;margin:0;line-height:1.7;">

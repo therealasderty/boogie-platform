@@ -9,8 +9,8 @@
 .tabContent { padding: 24px 28px; border-bottom: var(--border-style); }
 .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
 .field label { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; color: var(--text2); }
-.field input, .field select { border: var(--border-style); color: var(--text); padding: 9px 12px; font-size: 0.9rem; outline: none; border-radius: var(--radius-sm); transition: border-color 0.2s; font-family: var(--font-body); }
-.field input:focus { border-color: var(--accent); }
+.field input, .field select { border: var(--border-style); background: var(--bg2); color: var(--text); padding: 9px 12px; font-size: 0.9rem; outline: none; border-radius: var(--radius-sm); transition: border-color 0.2s; font-family: var(--font-body); }
+.field input:focus, .field select:focus { border-color: var(--accent); }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
 .msg { margin-top: 10px; font-size: 0.85rem; padding: 9px 14px; border-radius: var(--radius-sm); }
 .ok { background: rgba(46,125,50,0.1); color: #2E7D32; border: 1px solid rgba(46,125,50,0.3); }

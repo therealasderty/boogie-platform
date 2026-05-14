@@ -2,12 +2,15 @@
 
 .searchWrap input {
   width: 100%;
-  border: 1px solid var(--border);
+  border: var(--border-style);
+  border-radius: var(--radius-sm);
+  background: var(--bg2);
   color: var(--text);
   padding: 8px 12px;
   font-size: 0.85rem;
   outline: none;
   font-family: var(--font-body);
+  transition: border-color 0.2s;
 }
 
 .searchWrap input:focus { border-color: var(--accent); }
@@ -19,6 +22,7 @@
   background: var(--bg3);
   border: 1px solid var(--accent);
   border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
   z-index: 100;
   max-height: 200px;
   overflow-y: auto;
@@ -27,11 +31,11 @@
 .dropItem {
   padding: 10px 14px;
   cursor: pointer;
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--border-style);
   transition: background 0.15s;
 }
 
-.dropItem:hover { background: var(--border); }
+.dropItem:hover { background: var(--bg2); }
 .dropItem:last-child { border-bottom: none; }
 
 .dropNome { font-size: 0.85rem; color: var(--text); font-weight: 500; }
@@ -40,8 +44,9 @@
 
 .clienteBox {
   background: var(--bg);
-  border: 1px solid var(--border);
+  border: var(--border-style);
   border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
   padding: 12px 16px;
   margin-bottom: 12px;
   display: flex;
@@ -66,19 +71,23 @@
 
 .importoRow input {
   width: 100%;
-  border: 1px solid var(--border);
+  border: var(--border-style);
+  border-radius: var(--radius-sm);
+  background: var(--bg2);
   color: var(--text);
   padding: 8px 12px;
   font-size: 0.85rem;
   outline: none;
   font-family: var(--font-body);
+  transition: border-color 0.2s;
 }
 
 .importoRow input:focus { border-color: var(--accent); }
 
 .preview {
-  background: var(--bg-input);
-  border: 1px solid var(--border);
+  background: var(--bg2);
+  border: var(--border-style);
+  border-radius: var(--radius-sm);
   padding: 8px 12px;
   display: flex;
   align-items: center;
@@ -107,7 +116,8 @@
 
 .toggleBtn {
   padding: 7px 14px;
-  border: 1px solid var(--border);
+  border: var(--border-style);
+  border-radius: var(--radius-sm);
   background: var(--bg);
   color: var(--text2);
   font-size: 0.8rem;
@@ -120,6 +130,7 @@
 .toggleBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .toggleDoppi { background: var(--accent); border-color: var(--accent); color: white; }
+.toggleDoppi:hover:not(:disabled) { background: var(--accent2); border-color: var(--accent2); color: white; }
 .toggleScala { background: var(--danger); border-color: var(--danger); color: white; }
 
 .btnScala { background: var(--danger) !important; }
@@ -127,7 +138,7 @@
 
 .modoToggle {
   display: flex;
-  border: 1px solid var(--border);
+  border: var(--border-style);
   border-radius: var(--radius-sm);
   overflow: hidden;
   margin-bottom: 14px;
@@ -146,7 +157,7 @@
   transition: all 0.15s;
 }
 
-.modoBtn:first-child { border-right: 1px solid var(--border); }
+.modoBtn:first-child { border-right: var(--border-style); }
 .modoBtn:hover:not(.modoBtnActive) { background: var(--bg3); color: var(--text); }
 
 .modoBtnActive {

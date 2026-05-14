@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
+import { cacheGet, cacheSet } from '../lib/cache'
 
+const CACHE_KEY = 'media'
 const AIRTABLE_TOKEN   = import.meta.env.VITE_AIRTABLE_TOKEN
 const AIRTABLE_BASE_ID = import.meta.env.VITE_AIRTABLE_BASE_ID
 const BASE = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}`
@@ -11,6 +13,8 @@ export function useMedia() {
   const [error, setError]     = useState(null)
 
   const fetchAll = useCallback(async () => {
+    const cached = cacheGet(CACHE_KEY)
+    if (cached) { setItems(cached); setLoading(false); return }
     setLoading(true)
     setError(null)
     try {
@@ -25,7 +29,7 @@ export function useMedia() {
         offset = json.offset
       } while (offset)
 
-      setItems(records.map(r => ({
+      const mapped = records.map(r => ({
         id:   r.id,
         nome: r.fields['Nome'] || '',
         url:  r.fields['URL']  || '',
@@ -33,7 +37,9 @@ export function useMedia() {
         tag:        r.fields['Tag'] ? r.fields['Tag'].split(',').map(t => t.trim()).filter(Boolean) : [],
         ordine:     r.fields['Ordine'] ?? 0,
         soloMobile: r.fields['Solo Mobile'] === true,
-      })).filter(m => m.url))
+      })).filter(m => m.url)
+      setItems(mapped)
+      cacheSet(CACHE_KEY, mapped)
     } catch (e) {
       setError(e.message)
     } finally {

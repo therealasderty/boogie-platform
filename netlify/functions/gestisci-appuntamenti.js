@@ -48,14 +48,18 @@ async function notificaRitornoEvento(titolo, slug, data, ora) {
 <body style="margin:0;padding:0;background:#F5F0E8;font-family:'Georgia',serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
 <tr><td align="center"><table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid #C4913A;">
-<tr><td style="padding:40px 40px 32px;">
+<tr><td style="padding:40px 40px 20px;">
 <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Boogie Bistrot · ${titolo}</p>
 <h1 style="font-size:26px;color:#1A1610;margin:0 0 24px;font-weight:400;">È tornato ✓</h1>
 <p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 24px;">${nome ? `Ciao <strong>${nome}</strong>,<br>` : ''}ci avevi lasciato i tuoi contatti — <strong>${titolo}</strong> è di nuovo disponibile${dataLabel ? ` per il <strong>${dataLabel}</strong>` : ''}. Prenota il tuo posto.</p>
 ${dataLabel ? `<table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin-bottom:28px;"><tr><td style="padding:16px 24px;"><p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Data</span><strong>${dataLabel}</strong></p></td></tr></table>` : ''}
-<a href="${eventoLink}" style="display:inline-block;background:#1A1610;color:white;text-decoration:none;padding:14px 32px;font-size:14px;letter-spacing:0.05em;">Prenota ora</a>
-<p style="font-size:12px;color:#8B6F47;margin:32px 0 0;">Boogie Bistrot · Colle Brianza</p>
-</td></tr></table></td></tr></table></body></html>`
+<a href="${eventoLink}" style="display:inline-block;background:#1A1610;color:white;text-decoration:none;padding:12px 24px;font-family:'Raleway',Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.05em;border-radius:4px;">Prenota ora</a>
+<p style="font-size:15px;color:#4A4030;line-height:1.6;margin:28px 0 0;">A presto,<br><span style="font-weight:500;">Alessandra &amp; Chiara</span></p>
+</td></tr>
+<tr><td style="padding:20px 40px 30px;border-top:1px solid #D4C9B0;">
+<p style="font-size:11px;color:#B0A898;margin:0;line-height:1.7;">Boogie Bistrot — Via Europa, 2, Colle Brianza (LC)</p>
+</td></tr>
+</table></td></tr></table></body></html>`
 
     return fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',

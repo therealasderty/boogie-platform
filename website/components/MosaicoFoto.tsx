@@ -9,7 +9,7 @@ interface Foto {
   alt: string
 }
 
-const ASPECT_PATTERN = [
+const ASPECT_NORMAL = [
   'aspect-[3/4]',
   'aspect-square',
   'aspect-[2/3]',
@@ -17,6 +17,9 @@ const ASPECT_PATTERN = [
   'aspect-square',
   'aspect-[3/4]',
 ]
+
+// Indici (0-based, nel pattern ripetuto di 7) che diventano foto wide full-row
+const WIDE_POSITIONS = new Set([3, 6])
 
 const FOTO_FALLBACK: Foto[] = [
   { src: '/images/hero/1.webp', alt: 'Il giardino' },
@@ -67,30 +70,35 @@ export default function MosaicoFoto({ immagini }: { immagini?: { src: string; al
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.7, ease: 'easeOut' }}
           >
-            {foto.map((f, i) => (
-              <button
-                key={i}
-                onClick={() => setAperta(i)}
-                className={`group relative overflow-hidden rounded-card w-full mb-2 ${ASPECT_PATTERN[i % ASPECT_PATTERN.length]}`}
-              >
-                <Image
-                  src={f.src}
-                  alt={f.alt}
-                  fill
-                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                  sizes="(max-width: 768px) 50vw, 25vw"
-                  quality={i < 4 ? 68 : 62}
-                />
-                <div
-                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
-                  style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
+            {foto.map((f, i) => {
+              const wide = WIDE_POSITIONS.has(i % 7)
+              const aspect = wide ? 'aspect-[16/7]' : ASPECT_NORMAL[i % ASPECT_NORMAL.length]
+              return (
+                <button
+                  key={i}
+                  onClick={() => setAperta(i)}
+                  className={`group relative overflow-hidden rounded-card w-full mb-2 ${aspect}`}
+                  style={wide ? { columnSpan: 'all' } : undefined}
                 >
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round">
-                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
-                  </svg>
-                </div>
-              </button>
-            ))}
+                  <Image
+                    src={f.src}
+                    alt={f.alt}
+                    fill
+                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    sizes={wide ? '100vw' : '(max-width: 768px) 50vw, 25vw'}
+                    quality={i < 4 ? 68 : 62}
+                  />
+                  <div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
+                    style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
+                  >
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round">
+                      <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                    </svg>
+                  </div>
+                </button>
+              )
+            })}
           </motion.div>
         </div>
       </section>

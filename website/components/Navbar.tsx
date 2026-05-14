@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
+import { AnimatePresence, motion } from 'framer-motion'
 import type { EventoAgenda } from '@/lib/agenda'
 import { usePageContext } from '@/lib/page-context'
 
@@ -184,53 +185,65 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
   const desktopNav = (
     <>
       <li className="relative" onMouseEnter={() => openDropdown('menu')} onMouseLeave={scheduleClose}>
-        <button className="flex items-center gap-1 text-white/90 hover:text-white transition-colors text-base tracking-wide font-light cursor-pointer">
+        <Link href="/menu/specialita" className="flex items-center gap-1 text-white/90 hover:text-white hover:bg-white/10 transition-colors text-base tracking-wide font-light cursor-pointer px-3 py-1.5 rounded-btn">
           I nostri menù <ChevronDown />
-        </button>
-        {activeDropdown === 'menu' && (
-          <div
-            className="absolute top-full left-0 mt-3 bg-white rounded-card overflow-hidden min-w-52 shadow-xl"
-            onMouseEnter={() => openDropdown('menu')}
-            onMouseLeave={scheduleClose}
-          >
-            {menuVoci.map((v) => (
-              <Link key={v.href} href={v.href} onClick={() => setActiveDropdown(null)} className="block px-5 py-2.5 text-sm text-black/70 hover:text-black hover:bg-brand transition-colors">
-                {v.label}
-              </Link>
-            ))}
-          </div>
-        )}
+        </Link>
+        <AnimatePresence>
+          {activeDropdown === 'menu' && (
+            <motion.div
+              className="absolute top-full left-0 mt-3 bg-white rounded-card overflow-hidden min-w-52 shadow-xl"
+              onMouseEnter={() => openDropdown('menu')}
+              onMouseLeave={scheduleClose}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+            >
+              {menuVoci.map((v) => (
+                <Link key={v.href} href={v.href} onClick={() => setActiveDropdown(null)} className="block px-5 py-2.5 text-sm text-black/70 hover:text-black hover:bg-brand transition-colors">
+                  {v.label}
+                </Link>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </li>
 
       <li className="relative" onMouseEnter={() => openDropdown('eventi')} onMouseLeave={scheduleClose}>
-        <button className="flex items-center gap-1 text-white/90 hover:text-white transition-colors text-base tracking-wide font-light cursor-pointer">
+        <Link href="/eventi-speciali" className="flex items-center gap-1 text-white/90 hover:text-white hover:bg-white/10 transition-colors text-base tracking-wide font-light cursor-pointer px-3 py-1.5 rounded-btn">
           Appuntamenti <ChevronDown />
-        </button>
-        {activeDropdown === 'eventi' && (
-          <div
-            className="absolute top-full left-0 mt-3 bg-white rounded-card overflow-hidden min-w-72 shadow-xl"
-            onMouseEnter={() => openDropdown('eventi')}
-            onMouseLeave={scheduleClose}
-          >
-            <Link href="/eventi-aziendali" onClick={() => setActiveDropdown(null)} className="block px-5 py-3 hover:bg-brand transition-colors border-b border-black/5">
-              <span className="text-[11px] text-black/40 uppercase tracking-wider block">Location & catering</span>
-              <span className="text-sm text-black/70">Eventi Aziendali</span>
-            </Link>
-            {eventi.length > 0 && <div className="border-t border-black/10" />}
-            {eventi.map((e, i) => (
-              <Link key={i} href={e.slug ? `/eventi-speciali/${e.slug}` : '/eventi-speciali'} onClick={() => setActiveDropdown(null)} className="block px-5 py-3 hover:bg-brand transition-colors border-b border-black/5 last:border-b-0">
-                <span className="text-[11px] text-black/40 uppercase tracking-wider block">
-                  {e.ricorrente ? formatRicorrente(e, orariDisplay?.giorniChiusi) : e.data ? formatDataShort(e.data) : ''}
-                </span>
-                <span className="text-sm text-black/70">{e.titolo}</span>
+        </Link>
+        <AnimatePresence>
+          {activeDropdown === 'eventi' && (
+            <motion.div
+              className="absolute top-full left-0 mt-3 bg-white rounded-card overflow-hidden min-w-72 shadow-xl"
+              onMouseEnter={() => openDropdown('eventi')}
+              onMouseLeave={scheduleClose}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+            >
+              <Link href="/eventi-aziendali" onClick={() => setActiveDropdown(null)} className="block px-5 py-3 hover:bg-brand transition-colors border-b border-black/5">
+                <span className="text-[11px] text-black/40 uppercase tracking-wider block">Location & catering</span>
+                <span className="text-sm text-black/70">Eventi Aziendali</span>
               </Link>
-            ))}
-            {eventi.length > 0 && <div className="border-t border-black/10" />}
-            <Link href="/eventi-speciali" onClick={() => setActiveDropdown(null)} className="block px-5 py-2.5 text-sm text-black/50 hover:text-black hover:bg-brand transition-colors">
-              Tutti gli eventi →
-            </Link>
-          </div>
-        )}
+              {eventi.length > 0 && <div className="border-t border-black/10" />}
+              {eventi.map((e, i) => (
+                <Link key={i} href={e.slug ? `/eventi-speciali/${e.slug}` : '/eventi-speciali'} onClick={() => setActiveDropdown(null)} className="block px-5 py-3 hover:bg-brand transition-colors border-b border-black/5 last:border-b-0">
+                  <span className="text-[11px] text-black/40 uppercase tracking-wider block">
+                    {e.ricorrente ? formatRicorrente(e, orariDisplay?.giorniChiusi) : e.data ? formatDataShort(e.data) : ''}
+                  </span>
+                  <span className="text-sm text-black/70">{e.titolo}</span>
+                </Link>
+              ))}
+              {eventi.length > 0 && <div className="border-t border-black/10" />}
+              <Link href="/eventi-speciali" onClick={() => setActiveDropdown(null)} className="block px-5 py-2.5 text-sm text-black/50 hover:text-black hover:bg-brand transition-colors">
+                Tutti gli eventi →
+              </Link>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </li>
 
       {[
@@ -240,7 +253,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
         { label: 'FAQ', href: '/faq' },
       ].map((item) => (
         <li key={item.href}>
-          <Link href={item.href} className="text-white/90 hover:text-white transition-colors text-base tracking-wide font-light">
+          <Link href={item.href} className="text-white/90 hover:text-white hover:bg-white/10 transition-colors text-base tracking-wide font-light px-3 py-1.5 rounded-btn">
             {item.label}
           </Link>
         </li>
@@ -350,7 +363,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
         className={`lg:hidden fixed inset-0 z-40 transition-opacity duration-300 ${
           mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
-        style={{ backgroundColor: '#1a1a1a' }}
+        style={{ backgroundColor: 'var(--color-surface-dark)' }}
       >
         {/* Contenuto menu — padding top per non sovrapporsi alla navbar */}
         <div
@@ -519,7 +532,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
       </div>
 
       {/* ── Bottom bar mobile ─────────────────────────────────────── */}
-      <div className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 backdrop-blur-md border-t border-black/10 transition-transform duration-300 ${mobileOpen || prenotaVisible ? 'translate-y-full' : 'translate-y-0'}`} style={{ backgroundColor: '#1a1a1a' }}>
+      <div className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 backdrop-blur-md border-t border-black/10 transition-transform duration-300 ${mobileOpen || prenotaVisible ? 'translate-y-full' : 'translate-y-0'}`} style={{ backgroundColor: 'var(--color-surface-dark)' }}>
         {isFidelityPage ? (
           <div className="flex items-stretch h-16">
             <a

@@ -28,7 +28,7 @@ export default async function FaqPage() {
         image={heroImage}
       />
 
-      <section className="py-20 md:py-28" style={{ backgroundColor: '#1a1a1a' }}>
+      <section className="py-20 md:py-28 bg-surface-dark">
         <div className="max-w-3xl mx-auto px-6 md:px-14">
           <span
             className="uppercase text-white/30 font-medium"

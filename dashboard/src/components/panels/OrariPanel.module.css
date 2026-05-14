@@ -85,6 +85,7 @@
   border-color: rgba(46,125,50,0.7);
   color: #1B5E20;
 }
+.toggleOn:hover { border-color: rgba(46,125,50,0.85); color: #1B5E20; }
 
 .toggleDot {
   width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
@@ -115,7 +116,7 @@
 
 /* ── Info Modal ───────────────────────────────────────────────────────────── */
 .modalOverlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
   z-index: 1000; display: flex; align-items: center; justify-content: center;
   padding: 20px; animation: fadeIn 0.15s ease;
 }

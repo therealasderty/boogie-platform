@@ -171,7 +171,7 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
       />
 
       {(evento.stato === 'passato' || evento.stato === 'futuro') && (
-        <div className="px-6 md:px-14 py-4" style={{ backgroundColor: '#1a1a1a' }}>
+        <div className="px-6 md:px-14 py-4 bg-surface-dark">
           <div className="max-w-3xl mx-auto">
             <div className="rounded-card px-5 py-4" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)' }}>
               <p className="text-text-muted leading-relaxed m-0" style={{ fontSize: 'var(--text-meta)' }}>
@@ -200,7 +200,7 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
 
       {/* Blocchi contenuto — sfondo chiaro */}
       {evento.blocchi?.length > 0 && (
-        <section className="py-16 px-6 md:px-14 bg-neutral-100">
+        <section className="pt-14 pb-4 px-6 md:px-14 bg-neutral-100">
           <div className="max-w-3xl mx-auto">
             <FadeIn>
               {!showSezioneIntro && (
@@ -221,7 +221,7 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
       <AltriAppuntamenti slugCorrente={slug} />
 
       {/* Prenotazione / Iscrizione — sfondo scuro */}
-      <section id="prenota" className="text-white py-16 px-6 md:px-14" style={{ backgroundColor: '#1a1a1a' }}>
+      <section id="prenota" className="text-white py-16 px-6 md:px-14 bg-surface-dark">
         <div className="max-w-3xl mx-auto">
           <FadeIn>
             {!showSezioneIntro && !evento.blocchi?.length && (

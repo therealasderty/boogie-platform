@@ -117,25 +117,28 @@ exports.handler = async (event) => {
     else birthdayDate = new Date(String(dob) + 'T12:00:00Z');
     const birthday = new Date(oggi.getFullYear(), birthdayDate.getUTCMonth(), birthdayDate.getUTCDate());
     if (birthday < oggi) birthday.setFullYear(oggi.getFullYear() + 1);
-    const fineValidita = new Date(birthday);
-    fineValidita.setDate(birthday.getDate() + 6);
-    const validitaDal = birthday.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
-    const validitaAl  = fineValidita.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
+    // Calcola lunedì e domenica della settimana del compleanno (settimana Lu–Do)
+    const dow = birthday.getDay(); // 0=Dom, 1=Lun, ..., 6=Sab
+    const lunedi = new Date(birthday);
+    lunedi.setDate(birthday.getDate() - (dow === 0 ? 6 : dow - 1));
+    const domenica = new Date(lunedi);
+    domenica.setDate(lunedi.getDate() + 6);
+    const validitaDal = lunedi.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
+    const validitaAl  = domenica.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
 
     const emailHtml = `<!DOCTYPE html>
 <html lang="it">
-<head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;background:#F5F0E8;font-family:'Georgia',serif;">
+<head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet"></head>
+<body style="margin:0;padding:0;background:#F5F0E8;font-family:'Raleway',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
     <tr><td align="center">
       <table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid #C4913A;">
         <tr><td style="padding:40px 40px 20px;">
-          <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Boogie Bistrot — Un regalo per te</p>
+          <img src="https://boogiebistrot.com/logo-email.png" alt="Boogie Bistrot" width="80" height="65" style="display:block;margin:0 auto 8px;border:0;">
+          <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Un regalo per te</p>
           <h1 style="font-size:26px;color:#1A1610;margin:0 0 8px;font-weight:400;">Il tuo compleanno sta arrivando, ${nome}! 🎂</h1>
-          <p style="font-size:13px;color:#8B6F47;margin:0 0 24px;">Ti inviamo in anticipo il tuo regalo per la settimana del compleanno.</p>
-          <p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 24px;">
-            In occasione del tuo compleanno vogliamo offrirti un piccolo omaggio:<br>
-            <strong>un drink a scelta dalla nostra lista</strong>, tutto per te.
+<p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 24px;">
+            In occasione del tuo compleanno vogliamo offrirti un piccolo omaggio.
           </p>
           <table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin-bottom:28px;">
             <tr><td style="padding:20px 24px;">
@@ -148,7 +151,7 @@ exports.handler = async (event) => {
             Prenota il tuo tavolo su <a href="https://boogiebistrot.com/prenota" style="color:#C4913A;">boogiebistrot.com</a> e vieni a festeggiare con noi.<br>
             Non vediamo l'ora di brindare insieme!
           </p>
-          <p style="font-size:13px;color:#8B6F47;line-height:1.6;">Per info: <a href="mailto:${EMAIL_RISTORANTE}" style="color:#C4913A;">${EMAIL_RISTORANTE}</a></p>
+          <p style="font-size:13px;color:#8B6F47;line-height:1.6;">Per info: <a href="mailto:${EMAIL_RISTORANTE}" style="color:#C4913A;">${EMAIL_RISTORANTE}</a> oppure chiamaci al <a href="tel:3465813309" style="color:#C4913A;">346 5813309</a></p>
           <p style="font-size:15px;color:#4A4030;line-height:1.6;margin:24px 0 0;">A presto,<br><span style="font-weight:500;">Alessandra &amp; Chiara</span></p>
         </td></tr>
         <tr><td style="padding:20px 40px 30px;border-top:1px solid #D4C9B0;">

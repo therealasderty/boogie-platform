@@ -100,7 +100,7 @@ const navColumns = [
 
 export default function Footer() {
   return (
-    <footer style={{ backgroundColor: '#1a1a1a' }} className="text-white/70">
+    <footer className="bg-surface-dark text-white/70">
       <div className="max-w-7xl mx-auto px-6 md:px-14 py-16 md:py-20">
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-8">

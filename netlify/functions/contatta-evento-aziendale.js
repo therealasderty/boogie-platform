@@ -128,13 +128,13 @@ exports.handler = async (event) => {
   const emailUtenteHtml = `
 <!DOCTYPE html>
 <html lang="it">
-<head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;background:#F5F0E8;font-family:'Georgia',serif;">
+<head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet"></head>
+<body style="margin:0;padding:0;background:#F5F0E8;font-family:'Raleway',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
     <tr><td align="center">
       <table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid #C4913A;">
         <tr><td style="padding:40px 40px 20px;">
-          <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Boogie Bistrot</p>
+          <img src="https://boogiebistrot.com/logo-email.png" alt="Boogie Bistrot" width="80" height="65" style="display:block;margin:0 auto 20px;border:0;">
           <h1 style="font-size:26px;color:#1A1610;margin:0 0 24px;font-weight:400;">Richiesta ricevuta ✓</h1>
           <p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 24px;">
             Ciao <strong>${nome}</strong>,<br>
@@ -148,7 +148,7 @@ exports.handler = async (event) => {
               ${note ? `<p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Note</span><span style="color:#1A1610;line-height:1.7;">${note}</span></p>` : ''}
             </td></tr>
           </table>
-          <p style="font-size:13px;color:#8B6F47;line-height:1.6;">Per urgenze puoi scriverci a <a href="mailto:${EMAIL_RISTORANTE}" style="color:#C4913A;">${EMAIL_RISTORANTE}</a>.</p>
+          <p style="font-size:13px;color:#8B6F47;line-height:1.6;">Per urgenze chiamaci al <a href="tel:3465813309" style="color:#C4913A;">346 5813309</a>.</p>
           <p style="font-size:15px;color:#4A4030;line-height:1.6;margin:24px 0 0;">A presto,<br><span style="font-weight:500;">Alessandra &amp; Chiara</span></p>
         </td></tr>
         <tr><td style="padding:20px 40px 30px;border-top:1px solid #D4C9B0;">
@@ -164,13 +164,14 @@ exports.handler = async (event) => {
   const emailNotificaHtml = `
 <!DOCTYPE html>
 <html lang="it">
-<head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;background:#F5F0E8;font-family:'Georgia',serif;">
+<head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet"></head>
+<body style="margin:0;padding:0;background:#F5F0E8;font-family:'Raleway',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
     <tr><td align="center">
       <table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid #C4913A;">
         <tr><td style="padding:40px 40px 20px;">
-          <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Boogie Bistrot — Gestionale</p>
+          <img src="https://boogiebistrot.com/logo-email.png" alt="Boogie Bistrot" width="80" height="65" style="display:block;margin:0 auto 8px;border:0;">
+          <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Gestionale</p>
           <h1 style="font-size:22px;color:#1A1610;margin:0 0 6px;font-weight:400;">🏢 Nuova richiesta evento aziendale</h1>
           <p style="font-size:13px;color:#8B6F47;margin:0 0 24px;">Ricevuta il ${new Date().toLocaleString('it-IT')}</p>
           <table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin-bottom:28px;">
@@ -185,7 +186,7 @@ exports.handler = async (event) => {
               <p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Consenso marketing</span><strong style="color:${consenso_marketing ? '#2E7D32' : '#999'};">${consenso_marketing ? '✓ Sì' : '✗ No'}</strong></p>
             </td></tr>
           </table>
-          <a href="mailto:${email}" style="display:inline-block;background:#1A1610;color:white;text-decoration:none;padding:12px 28px;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;letter-spacing:0.05em;">✉ Rispondi a ${nome}</a>
+          <a href="mailto:${email}" style="display:inline-block;background:#1A1610;color:white;text-decoration:none;padding:12px 24px;font-family:'Raleway',Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.05em;border-radius:4px;">✉ Rispondi a ${nome}</a>
         </td></tr>
         <tr><td style="padding:16px 40px 24px;border-top:1px solid #D4C9B0;">
           <p style="font-size:11px;color:#B0A898;margin:0;line-height:1.7;">Boogie Bistrot — Sistema messaggi automatico</p>

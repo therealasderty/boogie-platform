@@ -11,8 +11,7 @@ export default function NotFound() {
   return (
     <main>
       <section
-        className="min-h-screen flex flex-col items-center justify-center px-6 text-white"
-        style={{ backgroundColor: '#1a1a1a' }}
+        className="min-h-screen flex flex-col items-center justify-center px-6 text-white bg-surface-dark"
       >
         <div className="max-w-lg w-full text-center flex flex-col items-center gap-6">
           <span

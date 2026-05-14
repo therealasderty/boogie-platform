@@ -75,7 +75,7 @@ exports.handler = async (event) => {
       <table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid #C4913A;">
         <tr><td style="padding:40px 40px 20px;">
           <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Boogie Bistrot — Fidelity</p>
-          <h1 style="font-size:24px;color:#1A1610;margin:0 0 20px;font-weight:400;">Premio riscattato 🎁</h1>
+          <h1 style="font-size:26px;color:#1A1610;margin:0 0 24px;font-weight:400;">Premio riscattato 🎁</h1>
           <p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 24px;">Ciao <strong>${nome}</strong>, hai riscattato un premio!</p>
           <table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin-bottom:24px;">
             <tr><td style="padding:20px 24px;">
@@ -84,6 +84,7 @@ exports.handler = async (event) => {
               ${nota ? `<p style="margin:12px 0 0;font-size:12px;color:#8B6F47;font-style:italic;">${nota}</p>` : ''}
             </td></tr>
           </table>
+          <p style="font-size:15px;color:#4A4030;line-height:1.6;margin:24px 0 0;">A presto,<br><span style="font-weight:500;">Alessandra &amp; Chiara</span></p>
         </td></tr>
         <tr><td style="padding:16px 40px 24px;border-top:1px solid #D4C9B0;">
           <p style="font-size:11px;color:#B0A898;margin:0;">Boogie Bistrot — Via Europa, 2, Colle Brianza (LC)</p>
@@ -99,7 +100,7 @@ exports.handler = async (event) => {
       <table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid #C4913A;">
         <tr><td style="padding:40px 40px 20px;">
           <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Boogie Bistrot — Fidelity</p>
-          <h1 style="font-size:24px;color:#1A1610;margin:0 0 20px;font-weight:400;">Punti aggiornati ✓</h1>
+          <h1 style="font-size:26px;color:#1A1610;margin:0 0 24px;font-weight:400;">Punti aggiornati ✓</h1>
           <p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 24px;">Ciao <strong>${nome}</strong>, grazie per la tua visita!</p>
           <table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin-bottom:24px;">
             <tr><td style="padding:20px 24px;">
@@ -109,6 +110,7 @@ exports.handler = async (event) => {
               ${nota ? `<p style="margin:12px 0 0;font-size:12px;color:#8B6F47;font-style:italic;">${nota}</p>` : ''}
             </td></tr>
           </table>
+          <p style="font-size:15px;color:#4A4030;line-height:1.6;margin:24px 0 0;">A presto,<br><span style="font-weight:500;">Alessandra &amp; Chiara</span></p>
         </td></tr>
         <tr><td style="padding:16px 40px 24px;border-top:1px solid #D4C9B0;">
           <p style="font-size:11px;color:#B0A898;margin:0;">Boogie Bistrot — Via Europa, 2, Colle Brianza (LC)</p>

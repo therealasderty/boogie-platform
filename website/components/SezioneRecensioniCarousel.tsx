@@ -27,7 +27,7 @@ function Stelle({ n }: { n: number }) {
   return (
     <div className="flex gap-0.5">
       {Array.from({ length: 5 }).map((_, i) => (
-        <svg key={i} width="13" height="13" viewBox="0 0 12 12" fill={i < n ? 'var(--color-brand)' : 'none'} stroke={i < n ? 'none' : '#d1d5db'}>
+        <svg key={i} width="13" height="13" viewBox="0 0 12 12" fill={i < n ? 'var(--color-brand)' : 'none'} stroke={i < n ? 'none' : '#d4d4d4'}>
           <path d="M6 1l1.39 2.82L10.5 4.27l-2.25 2.19.53 3.1L6 8.02 3.22 9.56l.53-3.1L1.5 4.27l3.11-.45L6 1z" />
         </svg>
       ))}
@@ -144,7 +144,7 @@ export default function SezioneRecensioniCarousel({ recensioni }: Props) {
               style={{
                 width: i === current ? '24px' : '6px',
                 height: '6px',
-                backgroundColor: i === current ? '#171717' : '#d1d5db',
+                backgroundColor: i === current ? 'var(--color-foreground)' : '#d4d4d4',
               }}
             />
           ))}

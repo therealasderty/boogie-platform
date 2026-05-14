@@ -404,4 +404,4 @@ export default async () => {
   }
 }
 
-export const config = { schedule: '0 */4 * * *' }
+export const config = { schedule: '0 2,6,10,14,18,22 * * *' }

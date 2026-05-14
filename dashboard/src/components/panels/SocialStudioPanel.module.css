@@ -85,6 +85,7 @@
 }
 .tab:hover { border-color: var(--accent); color: var(--accent); }
 .tabActive { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.tabActive:hover { background: var(--accent2); border-color: var(--accent2); color: #fff; }
 
 /* ── Post Builder list ───────────────────────────────────────────────────────── */
 .postList { display: flex; flex-direction: column; gap: 12px; }
@@ -295,6 +296,7 @@
 }
 .sorgenteBtn:hover { border-color: var(--accent); color: var(--accent); }
 .sorgenteBtnActive { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.sorgenteBtnActive:hover { background: var(--accent2); border-color: var(--accent2); color: #fff; }
 
 .templateGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .templateBtn {
@@ -560,6 +562,7 @@
 }
 .tagBtn:hover { border-color: var(--accent); color: var(--accent); }
 .tagBtnActive { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.tagBtnActive:hover { background: var(--accent2); border-color: var(--accent2); color: #fff; }
 
 .fotoGrid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));

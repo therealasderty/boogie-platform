@@ -156,7 +156,7 @@ export default async function LinksPage() {
   const eventiFuturi = eventi.filter(e => e.stato === 'futuro' && !!e.slug)
 
   return (
-    <main style={{ backgroundColor: '#1a1a1a', minHeight: '100vh' }}>
+    <main style={{ backgroundColor: 'var(--color-surface-dark)', minHeight: '100vh' }}>
       <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column', padding: '40px 20px 0' }}>
 
         {/* Header */}

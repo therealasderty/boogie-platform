@@ -6,7 +6,8 @@
 .vistaTabs { display: flex; gap: 4px; }
 .vistaBtn { padding: 7px 18px; background: none; border: none; color: var(--text2); font-size: 0.88rem; font-weight: 500; cursor: pointer; font-family: var(--font-body); transition: all 0.15s; }
 .vistaBtn:hover { background: var(--bg3); color: var(--text); }
-.vistaActive { background: var(--accent); color: white; }
+.vistaActive { background: var(--accent); color: #fff; }
+.vistaActive:hover { background: var(--accent2); color: #fff; }
 .refresh { display: flex; align-items: center; justify-content: center; background: none; border: var(--border-style); border-radius: var(--radius-sm); color: var(--text2); padding: 6px 12px; font-size: 0.88rem; font-weight: 500; cursor: pointer; font-family: var(--font-body); transition: all 0.15s; }
 .refresh:hover { color: var(--accent); border-color: var(--accent); }
 .loading { font-size: 0.88rem; color: var(--text3); text-align: center; padding: 16px; font-style: italic; margin-bottom: 16px; }
@@ -36,7 +37,7 @@
 .eventoNome { font-weight: 700; color: #1A1208; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
 .eventoNoteIcon { font-size: 0.65rem; flex-shrink: 0; }
 .eventoMeta { font-size: 0.72rem; color: #3D2E18; margin-top: 1px; font-weight: 500; }
-.modalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.15s ease; }
+.modalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.15s ease; }
 .modal { background: var(--bg2); border: var(--border-style); border-top: 3px solid var(--accent); border-radius: var(--radius); width: 100%; max-width: 400px; box-shadow: var(--shadow-md); animation: slideUp 0.2s ease; }
 @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 .modalHeader { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px; border-bottom: var(--border-style); }

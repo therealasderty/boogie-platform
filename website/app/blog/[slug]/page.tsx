@@ -86,7 +86,7 @@ export default async function BlogSlugPage({ params }: { params: Promise<{ slug:
         image={articolo.fotoHero || '/images/hero/1.webp'}
       />
 
-      <section className="text-white py-20 px-6 md:px-14" style={{ backgroundColor: '#1a1a1a' }}>
+      <section className="text-white py-20 px-6 md:px-14 bg-surface-dark">
         <div className="max-w-3xl mx-auto">
           <FadeIn>
 

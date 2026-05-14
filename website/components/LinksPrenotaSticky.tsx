@@ -24,7 +24,7 @@ export default function LinksPrenotaSticky() {
     <div
       style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
-        backgroundColor: '#1a1a1a',
+        backgroundColor: 'var(--color-surface-dark)',
         borderTop: '1px solid rgba(255,255,255,0.08)',
         transform: visibile ? 'translateY(0)' : 'translateY(110%)',
         transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -67,7 +67,7 @@ export default function LinksPrenotaSticky() {
         {/* Prenota */}
         <Link
           href="/prenota"
-          style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: 'var(--color-brand)', color: '#1a1a1a', textDecoration: 'none' }}
+          style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: 'var(--color-brand)', color: 'var(--color-foreground)', textDecoration: 'none' }}
           data-umami-event="prenota"
           data-umami-event-source="links-sticky"
         >

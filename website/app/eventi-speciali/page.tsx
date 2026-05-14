@@ -272,7 +272,7 @@ export default async function EventiSpecialiPage() {
         image="/images/hero/1.webp"
       />
 
-      <section className="text-white py-20 px-6 md:px-14" style={{ backgroundColor: '#1a1a1a' }}>
+      <section className="text-white py-20 px-6 md:px-14 bg-surface-dark">
         <div className="max-w-5xl mx-auto">
 
           {nessuno && (

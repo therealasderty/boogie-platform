@@ -155,7 +155,7 @@ export default async function CityPage({ params }: { params: Promise<{ city: str
       )}
 
       {/* Mappa + indicazioni */}
-      <section className="py-16 px-6 md:px-14" style={{ backgroundColor: '#1a1a1a' }}>
+      <section className="py-16 px-6 md:px-14 bg-surface-dark">
         <div className="max-w-7xl mx-auto">
           <FadeIn>
             <div className="mb-8">

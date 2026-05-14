@@ -83,7 +83,7 @@ export default async function FidelityPage() {
       </section>
 
       {/* ── Catalogo premi ── */}
-      <section className="py-20 px-6 md:px-14" style={{ backgroundColor: '#1a1a1a' }}>
+      <section className="py-20 px-6 md:px-14 bg-surface-dark">
         <div className="max-w-3xl mx-auto">
           <FadeIn>
             <span

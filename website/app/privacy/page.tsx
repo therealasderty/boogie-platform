@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <main>
-      <section style={{ backgroundColor: '#1a1a1a' }} className="text-white py-20 px-6 md:px-14 min-h-[60vh]">
+      <section className="bg-surface-dark text-white py-20 px-6 md:px-14 min-h-[60vh]">
         <div className="max-w-3xl mx-auto">
 
           <nav className="flex items-center gap-2 mb-12" style={{ fontSize: 'var(--text-meta)' }}>

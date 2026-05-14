@@ -62,7 +62,7 @@ export default function MenuLista({ sezioni, mostraAllergeni = false }: MenuList
                   <div
                     key={v.nome}
                     className="flex items-start justify-between gap-6 py-5"
-                    style={{ borderBottom: i < s.voci.length - 1 ? '1px solid #f5f5f5' : 'none' }}
+                    style={{ borderBottom: i < s.voci.length - 1 ? '1px solid #e5e5e5' : 'none' }}
                   >
                     <div className="flex flex-col gap-1 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">

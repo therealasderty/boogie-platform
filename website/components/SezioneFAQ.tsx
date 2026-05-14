@@ -6,7 +6,7 @@ export default async function SezioneFAQ() {
   if (faq.length === 0) return null
 
   return (
-    <section className="py-20 md:py-28" style={{ backgroundColor: '#1a1a1a' }}>
+    <section className="py-20 md:py-28 bg-surface-dark">
       <div className="max-w-7xl mx-auto px-6 md:px-14">
         <div className="flex flex-col md:flex-row md:gap-24">
 
