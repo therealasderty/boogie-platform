@@ -17,7 +17,7 @@ export default async () => {
   const oggi = new Date().toISOString().split('T')[0] // YYYY-MM-DD
 
   // ── 1. Recupera prenotazioni confermate per oggi ─────────────────
-  const formula = encodeURIComponent(`AND({Stato}='Confermata',{Data}='${oggi}')`)
+  const formula = encodeURIComponent(`AND({Stato}='Confermata',DATETIME_FORMAT({Data},'YYYY-MM-DD')='${oggi}')`)
   let records = []
   try {
     const res = await fetch(
