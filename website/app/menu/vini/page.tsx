@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import PaginaHero from '@/components/PaginaHero'
 import SezioneIntro from '@/components/SezioneIntro'
+
+export const revalidate = 86400
 import MenuLista from '@/components/MenuLista'
 import AltreSpecialita from '@/components/AltreSpecialita'
 import SezioneFAQ from '@/components/SezioneFAQ'

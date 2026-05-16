@@ -25,13 +25,13 @@ interface AirtableRecord {
   fields: Record<string, unknown>
 }
 
-async function fetchCategoria(categoria: string): Promise<AirtableRecord[]> {
+async function fetchTuttoMenu(): Promise<AirtableRecord[]> {
   const token   = process.env.AIRTABLE_TOKEN
   const baseId  = process.env.AIRTABLE_BASE_ID
   const table   = process.env.AIRTABLE_MENU || 'Menu'
 
-  const filter = encodeURIComponent(`AND({Categoria}="${categoria}", {Attivo}=TRUE())`)
-  const url = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(table)}?filterByFormula=${filter}&sort[0][field]=Sottocategoria&sort[0][direction]=asc&sort[1][field]=Ordine&sort[1][direction]=asc&pageSize=100`
+  const filter = encodeURIComponent(`{Attivo}=TRUE()`)
+  const url = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(table)}?filterByFormula=${filter}&sort[0][field]=Categoria&sort[0][direction]=asc&sort[1][field]=Sottocategoria&sort[1][direction]=asc&sort[2][field]=Ordine&sort[2][direction]=asc&pageSize=100`
 
   try {
     const res = await fetch(url, {
@@ -40,15 +40,19 @@ async function fetchCategoria(categoria: string): Promise<AirtableRecord[]> {
     })
 
     if (!res.ok) {
-      console.error(`[menu] Airtable error ${res.status} per categoria "${categoria}":`, await res.text())
+      console.error(`[menu] Airtable error ${res.status}:`, await res.text())
       return []
     }
     const json = await res.json()
     return json.records || []
   } catch (error) {
-    console.error(`[menu] Airtable fetch failed per categoria "${categoria}":`, error)
+    console.error('[menu] Airtable fetch failed:', error)
     return []
   }
+}
+
+function filtraCategoria(records: AirtableRecord[], categoria: string): AirtableRecord[] {
+  return records.filter(r => String(r.fields['Categoria'] || '') === categoria)
 }
 
 function toVoce(r: AirtableRecord): VoceMenu {
@@ -80,28 +84,27 @@ function raggruppaPerSottocategoria(records: AirtableRecord[]): SezioneMenu[] {
 }
 
 export async function fetchMenuSpecialita(): Promise<SezioneMenu[]> {
-  const records = await fetchCategoria('Specialità alla Carta')
+  const records = filtraCategoria(await fetchTuttoMenu(), 'Specialità alla Carta')
   return raggruppaPerSottocategoria(records)
 }
 
 export async function fetchMenuPizza(): Promise<SezioneMenu[]> {
-  const records = await fetchCategoria('Pizza')
-  // Pizza non ha sottocategorie — tutto in un'unica sezione
+  const records = filtraCategoria(await fetchTuttoMenu(), 'Pizza')
   if (records.length === 0) return []
   return [{ titolo: 'Le Pizze', voci: records.map(toVoce) }]
 }
 
 export async function fetchMenuBirre(): Promise<SezioneMenu[]> {
-  const records = await fetchCategoria('Birre')
+  const records = filtraCategoria(await fetchTuttoMenu(), 'Birre')
   return raggruppaPerSottocategoria(records)
 }
 
 export async function fetchMenuVini(): Promise<SezioneMenu[]> {
-  const records = await fetchCategoria('Vini')
+  const records = filtraCategoria(await fetchTuttoMenu(), 'Vini')
   return raggruppaPerSottocategoria(records)
 }
 
 export async function fetchMenuCocktails(): Promise<SezioneMenu[]> {
-  const records = await fetchCategoria('Cocktails')
+  const records = filtraCategoria(await fetchTuttoMenu(), 'Cocktails')
   return raggruppaPerSottocategoria(records)
 }

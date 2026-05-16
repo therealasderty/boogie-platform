@@ -6,7 +6,7 @@ import FormContatti from '@/components/FormContatti'
 import { fetchOrari, fetchChiusure, buildOrariLines } from '@/lib/orari'
 import { fetchMedia } from '@/lib/media'
 
-export const revalidate = 300
+export const revalidate = 86400
 
 export const metadata: Metadata = {
   title: 'Contattaci | Boogie Bistrot',

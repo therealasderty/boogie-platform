@@ -10,7 +10,7 @@ import { fetchLocalita, fetchLocalitaBySlug } from '@/lib/localita'
 import { fetchMedia } from '@/lib/media'
 import { fetchEventi } from '@/lib/agenda'
 
-export const revalidate = 300
+export const revalidate = 259200
 
 const MAPS_EMBED = 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2783.5923879393986!2d9.35971967649393!3d45.759317071080446!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4786a7b703fbd1af%3A0x557d2a719fe1678a!2sBoogie%20Bistrot!5e0!3m2!1sit!2sit!4v1776238958687!5m2!1sit!2sit'
 

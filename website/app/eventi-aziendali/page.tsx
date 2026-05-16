@@ -10,7 +10,7 @@ function shuffle<T>(arr: T[]): T[] {
   return [...arr]
 }
 
-export const revalidate = 300
+export const revalidate = 259200
 
 export const metadata: Metadata = {
   title: 'Eventi Aziendali | Boogie Bistrot — Colle Brianza',

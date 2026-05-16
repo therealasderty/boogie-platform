@@ -3,7 +3,7 @@ import { authFetch } from '../lib/authFetch'
 import { API_BASE } from '../lib/config'
 import { cacheGet, cacheSet, cacheInvalidate } from '../lib/cache'
 
-const API = API_BASE + '/get-menu'
+const API = API_BASE + '/gestisci-menu'
 const GESTISCI = API_BASE + '/gestisci-menu'
 const CACHE_KEY = 'menu'
 

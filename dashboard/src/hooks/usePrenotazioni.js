@@ -6,7 +6,7 @@ export function usePrenotazioni() {
   const [loading, setLoading] = useState(true)
   const carica = useCallback(() => {
     setLoading(true)
-    authFetch(API_BASE + '/prenotazioni-attesa')
+    authFetch(API_BASE + '/get-prenotazioni?tipo=attesa')
       .then(r => r.json())
       .then(json => { if (json.success) setAttesa(json.prenotazioni || []); setLoading(false); })
       .catch(() => setLoading(false))

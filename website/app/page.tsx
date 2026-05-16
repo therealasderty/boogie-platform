@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import Hero from '@/components/Hero'
 
+export const revalidate = 86400
+
 export const metadata: Metadata = {
   title: 'Boogie Bistrot | Ristorante con Giardino a Colle Brianza | Cucina e Pizza',
   description: 'Boogie Bistrot a Colle Brianza: ristorante con giardino, cucina del territorio rivisitata, pizza tradizionale cotta nel forno a legna, birre locali ed eventi tutto l\'anno.',

@@ -4,7 +4,7 @@ exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'POST, PATCH, DELETE, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
   };
 
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers, body: '' };
@@ -17,6 +17,25 @@ exports.handler = async (event) => {
   const AIRTABLE_FAQ     = process.env.AIRTABLE_FAQ || 'FAQ';
   const AT_URL = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_FAQ)}`;
   const atHeaders = { 'Authorization': `Bearer ${AIRTABLE_TOKEN}`, 'Content-Type': 'application/json' };
+
+  if (event.httpMethod === 'GET') {
+    try {
+      const res = await fetch(`${AT_URL}?sort[0][field]=Ordine&sort[0][direction]=asc`, { headers: atHeaders });
+      if (!res.ok) return { statusCode: 500, headers, body: JSON.stringify({ success: false }) };
+      const json = await res.json();
+      const faq = (json.records || []).map(r => ({
+        id:       r.id,
+        domanda:  r.fields['Domanda'] || '',
+        risposta: r.fields['Risposta'] || '',
+        ordine:   r.fields['Ordine'] ?? 0,
+        attivo:   r.fields['Attivo'] !== false,
+      }));
+      return { statusCode: 200, headers, body: JSON.stringify({ success: true, faq }) };
+    } catch (err) {
+      console.error('Error:', err);
+      return { statusCode: 500, headers, body: JSON.stringify({ success: false }) };
+    }
+  }
 
   if (event.httpMethod === 'DELETE') {
     const { id } = event.queryStringParameters || {};

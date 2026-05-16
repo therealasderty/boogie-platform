@@ -14,9 +14,8 @@ const AT_HEADERS       = { 'Authorization': `Bearer ${AIRTABLE_TOKEN}`, 'Content
 
 const GIORNI_NOME = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato']
 const FASCE_ORA = {
-  Pranzo:    { start: 11 * 60, end: 15 * 60 },
-  Aperitivo: { start: 15 * 60, end: 19 * 60 },
-  Cena:      { start: 19 * 60, end: 24 * 60 },
+  Pranzo: { start: 11 * 60, end: 15 * 60 },
+  Cena:   { start: 15 * 60, end: 24 * 60 },
 }
 
 function oraToMinuti(ora) {
@@ -368,13 +367,19 @@ async function calcAndSaveWeek(dataInizio, dataFine, settimana, prevStats) {
     : GIORNI_NOME[weekdayPieno]
   const giornopiuVuoto = GIORNI_NOME[parseInt(giorniSorted[giorniSorted.length - 1][0])]
 
-  const perFascia = { Pranzo: { pren: 0, coperti: 0 }, Aperitivo: { pren: 0, coperti: 0 }, Cena: { pren: 0, coperti: 0 } }
+  const perFascia = { Pranzo: { pren: 0, coperti: 0 }, Cena: { pren: 0, coperti: 0 } }
   totali.forEach(p => {
     const fascia = getFasciaOra(p.ora)
     if (fascia && perFascia[fascia]) {
       perFascia[fascia].pren++
       perFascia[fascia].coperti += p.persone
     }
+  })
+
+  const perGiornoCoperti = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }
+  totali.forEach(p => {
+    const d = new Date(p.data + 'T12:00:00')
+    if (!isNaN(d)) perGiornoCoperti[d.getDay()] += p.persone
   })
 
   // Prenotazioni per appuntamento/evento
@@ -452,7 +457,6 @@ async function calcAndSaveWeek(dataInizio, dataFine, settimana, prevStats) {
         'Giorno più vuoto':                           giornopiuVuoto,
         'Fascia meno richiesta':                      fasciaMenoRichiesta,
         'Coperti pranzo':                             perFascia.Pranzo.coperti,
-        'Coperti aperitivo':                          perFascia.Aperitivo.coperti,
         'Coperti cena':                               perFascia.Cena.coperti,
         'Pren. Lunedì':                               perGiorno[1],
         'Pren. Martedì':                              perGiorno[2],
@@ -461,6 +465,13 @@ async function calcAndSaveWeek(dataInizio, dataFine, settimana, prevStats) {
         'Pren. Venerdì':                              perGiorno[5],
         'Pren. Sabato':                               perGiorno[6],
         'Pren. Domenica':                             perGiorno[0],
+        'Coperti Lunedì':                             perGiornoCoperti[1],
+        'Coperti Martedì':                            perGiornoCoperti[2],
+        'Coperti Mercoledì':                          perGiornoCoperti[3],
+        'Coperti Giovedì':                            perGiornoCoperti[4],
+        'Coperti Venerdì':                            perGiornoCoperti[5],
+        'Coperti Sabato':                             perGiornoCoperti[6],
+        'Coperti Domenica':                           perGiornoCoperti[0],
         'Clienti unici':                              clientiUnici,
         'Clienti di ritorno':                         clientiRitorno,
         'Media coperti per giorno':                   mediaCopertiGiorno,
@@ -505,9 +516,8 @@ async function calcAndSaveWeek(dataInizio, dataFine, settimana, prevStats) {
       slotPiuRichiesto,
       fasciaMenoRichiesta,
       lastMinute,
-      copertipranzo:    perFascia.Pranzo.coperti,
-      copertiAperitivo: perFascia.Aperitivo.coperti,
-      copertiCena:      perFascia.Cena.coperti,
+      copertipranzo: perFascia.Pranzo.coperti,
+      copertiCena:   perFascia.Cena.coperti,
       perEvento,
       umami: umami || null,
     },

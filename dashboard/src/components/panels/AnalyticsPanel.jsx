@@ -68,6 +68,76 @@ function BarChart({ items, maxVal }) {
   )
 }
 
+// Istogramma verticale — usato per le fasce Pranzo/Cena
+function BarChartV({ items }) {
+  const max = Math.max(...items.map(i => i.value), 1)
+  const total = items.reduce((s, i) => s + i.value, 0)
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', gap: 24, padding: '0 16px' }}>
+      {items.map(item => (
+        <div key={item.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1, maxWidth: 120 }}>
+          <div style={{ fontSize: '1.4rem', fontWeight: 700, color: item.accent ? 'var(--accent)' : 'var(--text)' }}>{item.value}</div>
+          {item.sub && <div style={{ fontSize: '0.68rem', color: 'var(--text3)', marginTop: -4 }}>{item.sub}</div>}
+          <div style={{ width: '100%', height: 90, display: 'flex', alignItems: 'flex-end', background: 'var(--bg3)', borderRadius: 6, overflow: 'hidden' }}>
+            <div style={{
+              width: '100%',
+              background: item.accent ? 'var(--accent)' : 'var(--text2)',
+              height: `${Math.round((item.value / max) * 100)}%`,
+              transition: 'height 0.4s ease',
+              minHeight: item.value > 0 ? 4 : 0,
+            }} />
+          </div>
+          <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text2)' }}>{item.label}</div>
+          {total > 0 && <div style={{ fontSize: '0.72rem', color: 'var(--text3)' }}>{Math.round(item.value / total * 100)}%</div>}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Barre doppie orizzontali — prenotazioni (grigio) + coperti (oro) per giorno
+function BarChartDual({ items }) {
+  const max = Math.max(...items.filter(i => !i.closed).flatMap(i => [i.pren, i.coperti]), 1)
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', gap: 14, marginBottom: 2 }}>
+        <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--text2)', display: 'inline-block' }} /> Prenotazioni
+        </span>
+        <span style={{ fontSize: '0.68rem', color: 'var(--text3)', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--accent)', display: 'inline-block' }} /> Coperti
+        </span>
+      </div>
+      {items.map(({ label, pren, coperti, closed }) => (
+        <div key={label} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 48px', gap: '2px 8px', alignItems: 'center' }}>
+          <div style={{ fontSize: '0.78rem', color: closed ? 'var(--text3)' : 'var(--text2)' }}>{label}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {!closed ? (
+              <>
+                <div style={{ background: 'var(--bg3)', borderRadius: 2, height: 6, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', background: 'var(--text2)', borderRadius: 2, width: `${Math.round((pren / max) * 100)}%`, minWidth: pren > 0 ? 2 : 0, transition: 'width 0.4s' }} />
+                </div>
+                <div style={{ background: 'var(--bg3)', borderRadius: 2, height: 6, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', background: 'var(--accent)', borderRadius: 2, width: `${Math.round((coperti / max) * 100)}%`, minWidth: coperti > 0 ? 2 : 0, transition: 'width 0.4s' }} />
+                </div>
+              </>
+            ) : (
+              <div style={{ fontSize: '0.7rem', color: 'var(--text3)' }}>chiuso</div>
+            )}
+          </div>
+          {!closed ? (
+            <div style={{ fontSize: '0.72rem', color: 'var(--text)', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap' }}>
+              {pren}<span style={{ color: 'var(--text3)', fontWeight: 400 }}>/</span>{coperti}
+            </div>
+          ) : (
+            <div />
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function polarToCartesian(cx, cy, r, deg) {
   const rad = (deg - 90) * Math.PI / 180
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) }
@@ -246,16 +316,17 @@ function UmamiKpi({ data, loading, prenotazioniSito }) {
 
 function VistaSettimana({ s, medie, umami, umamiLoading }) {
   const chiusiSet = new Set(s.giorniChiusi ? s.giorniChiusi.split(', ') : [])
-  const totaleCoperti = s.copertipranzo + s.copertiAperitivo + s.copertiCena
+  const nGiorniAperti = s.mediaCopertiGiorno > 0 ? Math.round(s.persone / s.mediaCopertiGiorno) : 1
   const fasceBarre = [
-    { label: 'Pranzo',    value: s.copertipranzo },
-    { label: 'Aperitivo', value: s.copertiAperitivo },
-    { label: 'Cena',      value: s.copertiCena, accent: true },
+    { label: 'Pranzo', value: s.copertipranzo, sub: nGiorniAperti > 0 ? `~${Math.round(s.copertipranzo / nGiorniAperti * 10) / 10}/turno` : undefined },
+    { label: 'Cena',   value: s.copertiCena,   sub: nGiorniAperti > 0 ? `~${Math.round(s.copertiCena   / nGiorniAperti * 10) / 10}/turno` : undefined, accent: true },
   ]
+  const COPERTI_KEYS = ['copertilunedi','copertimartedi','copertimercoledi','copertigiovedi','copertivenerdi','copertisabato','copertidomenica']
   const giorniBarre = GIORNI.map((label, i) => ({
     label,
-    value: s[GIORNI_KEYS[i]],
-    closed: chiusiSet.has(GIORNI_TO_NOME[i]),
+    pren:    s[GIORNI_KEYS[i]],
+    coperti: s[COPERTI_KEYS[i]] || 0,
+    closed:  chiusiSet.has(GIORNI_TO_NOME[i]),
   }))
   const canaliPie = [
     { label: 'Sito web',  value: s.prenotazioniSito },
@@ -293,18 +364,11 @@ function VistaSettimana({ s, medie, umami, umamiLoading }) {
       <div className={styles.chartsGrid}>
         <div className={styles.card}>
           <div className={styles.cardTitle}>Coperti per fascia</div>
-          <BarChart items={fasceBarre} />
-          {totaleCoperti > 0 && (
-            <div className={styles.cardFooter}>
-              {fasceBarre.map(f => (
-                <span key={f.label} className={styles.pct}>{f.label} {Math.round(f.value / totaleCoperti * 100)}%</span>
-              ))}
-            </div>
-          )}
+          <BarChartV items={fasceBarre} />
         </div>
         <div className={styles.card}>
-          <div className={styles.cardTitle}>Prenotazioni Lun–Dom</div>
-          <BarChart items={giorniBarre} />
+          <div className={styles.cardTitle}>Prenotazioni e coperti Lun–Dom</div>
+          <BarChartDual items={giorniBarre} />
         </div>
         <div className={styles.card}>
           <div className={styles.cardTitle}>Canale di prenotazione</div>
@@ -332,10 +396,9 @@ function VistaGlobale({ settimane, umami, umamiLoading }) {
     const totPrenTel  = sum(settimane.map(s => s.prenotazioniTel))
     const totEventi   = sum(settimane.map(s => s.prenotazioniEventi))
 
-    const totPranzo    = sum(settimane.map(s => s.copertipranzo))
-    const totAperitivo = sum(settimane.map(s => s.copertiAperitivo))
-    const totCena      = sum(settimane.map(s => s.copertiCena))
-    const totCoperti   = totPranzo + totAperitivo + totCena
+    const totPranzo  = sum(settimane.map(s => s.copertipranzo))
+    const totCena    = sum(settimane.map(s => s.copertiCena))
+    const totCoperti = totPranzo + totCena
 
     const mediaGiorni = GIORNI.map((label, i) => {
       const nomeCompleto = GIORNI_TO_NOME[i]
@@ -350,20 +413,31 @@ function VistaGlobale({ settimane, umami, umamiLoading }) {
     const fasciaPocoRichiesta = mode(settimane.map(s => s.fasciaMenoRichiesta))
     const mediaLastMinute     = avg(settimane.map(s => s.lastMinute))
 
+    const COPERTI_KEYS_G = ['copertilunedi','copertimartedi','copertimercoledi','copertigiovedi','copertivenerdi','copertisabato','copertidomenica']
+    const mediaGiorniDual = GIORNI.map((label, i) => {
+      const nomeCompleto = GIORNI_TO_NOME[i]
+      const settimaneAperte = settimane.filter(s => !s.giorniChiusi?.split(', ').includes(nomeCompleto))
+      return {
+        label,
+        pren:    avg(settimaneAperte.map(s => s[GIORNI_KEYS[i]])),
+        coperti: avg(settimaneAperte.map(s => s[COPERTI_KEYS_G[i]] || 0)),
+        closed:  settimaneAperte.length === 0,
+      }
+    })
+
     const canaliPie = [
       { label: 'Sito web', value: totPrenSito },
       { label: 'Telefono', value: totPrenTel },
     ]
     const fasceBarre = [
-      { label: 'Pranzo',    value: totPranzo },
-      { label: 'Aperitivo', value: totAperitivo },
-      { label: 'Cena',      value: totCena, accent: true },
+      { label: 'Pranzo', value: totPranzo },
+      { label: 'Cena',   value: totCena, accent: true },
     ]
 
     return {
       mediaPrenotazioni, mediaCoperti, mediaCancellaz, mediaLeadTime, mediaDimGruppo,
       mediaClienti, mediaClientiRitorno, totPrenSito, totPrenTel, totEventi,
-      totPranzo, totAperitivo, totCena, totCoperti, mediaGiorni,
+      totPranzo, totCena, totCoperti, mediaGiorni, mediaGiorniDual,
       giornoFrequente, giornoVuoto, slotFrequente, fasciaPocoRichiesta,
       mediaLastMinute, canaliPie, fasceBarre,
     }
@@ -372,7 +446,7 @@ function VistaGlobale({ settimane, umami, umamiLoading }) {
   const {
     mediaPrenotazioni, mediaCoperti, mediaCancellaz, mediaLeadTime, mediaDimGruppo,
     mediaClienti, mediaClientiRitorno, totPrenSito, totPrenTel, totEventi,
-    totPranzo, totAperitivo, totCena, totCoperti, mediaGiorni,
+    totPranzo, totCena, totCoperti, mediaGiorni, mediaGiorniDual,
     giornoFrequente, giornoVuoto, slotFrequente, fasciaPocoRichiesta,
     mediaLastMinute, canaliPie, fasceBarre,
   } = stats
@@ -411,18 +485,11 @@ function VistaGlobale({ settimane, umami, umamiLoading }) {
       <div className={styles.chartsGrid}>
         <div className={styles.card}>
           <div className={styles.cardTitle}>Coperti per fascia — totale</div>
-          <BarChart items={fasceBarre} />
-          {totCoperti > 0 && (
-            <div className={styles.cardFooter}>
-              {fasceBarre.map(f => (
-                <span key={f.label} className={styles.pct}>{f.label} {Math.round(f.value / totCoperti * 100)}%</span>
-              ))}
-            </div>
-          )}
+          <BarChartV items={fasceBarre} />
         </div>
         <div className={styles.card}>
-          <div className={styles.cardTitle}>Media prenotazioni per giorno</div>
-          <BarChart items={mediaGiorni} />
+          <div className={styles.cardTitle}>Media prenotazioni e coperti Lun–Dom</div>
+          <BarChartDual items={mediaGiorniDual} />
         </div>
         <div className={styles.card}>
           <div className={styles.cardTitle}>Canale di prenotazione — totale</div>

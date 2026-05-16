@@ -14,7 +14,7 @@ export function useOrari() {
     if (cached) { setOrari(cached); setLoading(false); return }
     setLoading(true)
     try {
-      const res = await authFetch(BASE + '/get-orari')
+      const res = await authFetch(BASE + '/gestisci-orari')
       const json = await res.json()
       if (json.success) {
         setOrari(json.orari || [])

@@ -330,7 +330,37 @@ const emailFidelity = card(
   cardFooter('Boogie Bistrot — Via Europa, 2, Colle Brianza (LC)')
 )
 
-/* ── 11. Regalo compleanno (cliente) ─────────────────────────────────────── */
+/* ── 11. Richiesta recensione post-visita (cliente) ─────────────────────── */
+const emailFeedback = card(
+  cardBody(`
+    ${logoOnly()}
+    <h1 style="font-size:26px;color:#1A1610;margin:0 0 4px;font-weight:400;line-height:1.3;">Ciao Mario,</h1>
+    <h1 style="font-size:26px;color:#1A1610;margin:0 0 24px;font-weight:400;line-height:1.3;">grazie per aver scelto il Boogie Bistrot sabato 17 maggio!</h1>
+    ${body('Come è andata l\'esperienza? Ci farebbe molto piacere sapere la tua opinione.')}
+    <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:12px;">
+      <tr>
+        <td style="padding-right:8px;">
+          <a href="#"
+             style="display:block;background:#1A1610;color:white;text-decoration:none;padding:14px 16px;font-family:'Raleway',Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.05em;text-align:center;border-radius:4px;line-height:1.4;">
+            😊 È stata una bella serata<br>
+            <span style="font-size:11px;font-weight:400;opacity:0.7;letter-spacing:0;">Lascia una recensione</span>
+          </a>
+        </td>
+        <td style="padding-left:8px;">
+          <a href="#"
+             style="display:block;background:#F5F0E8;color:#1A1610;text-decoration:none;padding:14px 16px;font-family:'Raleway',Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.05em;text-align:center;border:1px solid #D4C9B0;border-radius:4px;line-height:1.4;">
+            😐 C'è qualcosa da migliorare<br>
+            <span style="font-size:11px;font-weight:400;opacity:0.6;letter-spacing:0;">Lascia un feedback</span>
+          </a>
+        </td>
+      </tr>
+    </table>
+    <p style="font-size:15px;color:#4A4030;line-height:1.6;margin:24px 0 0;">Grazie di cuore,<br><span style="font-weight:500;">Alessandra &amp; Chiara</span></p>
+  `) +
+  cardFooter('Boogie Bistrot — Via Europa, 2, Colle Brianza (LC)<br>Hai ricevuto questa email perché hai cenato da noi. Non vuoi ricevere questi messaggi? Scrivici a <a href="mailto:info@boogiebistrot.com" style="color:#C4913A;">info@boogiebistrot.com</a>.')
+)
+
+/* ── 12. Regalo compleanno (cliente) ─────────────────────────────────────── */
 const emailCompleanno = card(
   cardBody(`
     ${logoWithLabel('Un regalo per te')}
@@ -467,6 +497,19 @@ export default function EmailPage() {
             note="Inviata via cron giornaliero 08:00 a chi compie gli anni nei prossimi 7 giorni. Validità: lunedì–domenica della settimana del compleanno."
           />
           <EmailPreview html={emailCompleanno} />
+
+        </Section>
+
+        {/* ── FEEDBACK & RECENSIONI ─────────────────────────────────── */}
+        <Section title="Feedback & Recensioni">
+
+          <Meta
+            oggetto="Come è andata sabato 17 maggio? 😊"
+            funzione="netlify/functions/feedback.js"
+            destinatario="cliente"
+            note="Inviata via cron ogni giorno alle 11:00 ai clienti con prenotazione confermata del giorno precedente. Un'email per cliente (dedup per email). Il pulsante positivo porta a Google Reviews, quello negativo a /feedback per raccogliere il feedback internamente."
+          />
+          <EmailPreview html={emailFeedback} />
 
         </Section>
 

@@ -15,7 +15,7 @@ export function useFaq() {
     if (cached) { setFaq(cached); setLoading(false); return }
     setLoading(true)
     try {
-      const res = await authFetch(BASE + '/get-faq')
+      const res = await authFetch(BASE + '/gestisci-faq')
       const json = await res.json()
       if (json.success) {
         setFaq(json.faq || [])

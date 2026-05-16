@@ -61,7 +61,7 @@ exports.handler = async (event) => {
     let inviati = 0;
 
     for (const record of prenotazioni) {
-      const nome  = record.fields['Nome'] || '';
+      const nome  = (record.fields['Nome'] || '').split(' ')[0];
       const email = record.fields['Email'] || '';
       const data  = record.fields['Data'] || '';
 
@@ -85,9 +85,8 @@ exports.handler = async (event) => {
       <table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid #C4913A;">
         <tr><td style="padding:40px 40px 20px;">
           <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Boogie Bistrot</p>
-          <h1 style="font-size:26px;color:#1A1610;margin:0 0 24px;font-weight:400;line-height:1.3;">
-            Ciao ${nome}, grazie per aver scelto il Boogie Bistrot ${dataFormattata}!
-          </h1>
+          <h1 style="font-size:26px;color:#1A1610;margin:0 0 4px;font-weight:400;line-height:1.3;">Ciao ${nome},</h1>
+          <h1 style="font-size:26px;color:#1A1610;margin:0 0 24px;font-weight:400;line-height:1.3;">grazie per aver scelto il Boogie Bistrot ${dataFormattata}!</h1>
           <p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 32px;">
             Come è andata l'esperienza? Ci farebbe molto piacere sapere la tua opinione.
           </p>
@@ -97,16 +96,16 @@ exports.handler = async (event) => {
             <tr>
               <td style="padding-right:8px;">
                 <a href="${linkPositivo}" target="_blank"
-                   style="display:block;background:#1A1610;color:white;text-decoration:none;padding:16px 20px;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;text-align:center;line-height:1.4;">
+                   style="display:block;background:#1A1610;color:white;text-decoration:none;padding:14px 16px;font-family:'Raleway',Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.05em;text-align:center;border-radius:4px;line-height:1.4;">
                   😊 È stata una bella serata<br>
-                  <span style="font-size:11px;font-weight:400;opacity:0.7;">Lascia una recensione</span>
+                  <span style="font-size:11px;font-weight:400;opacity:0.7;letter-spacing:0;">Lascia una recensione</span>
                 </a>
               </td>
               <td style="padding-left:8px;">
                 <a href="${linkNegativo}"
-                   style="display:block;background:#F5F0E8;color:#1A1610;text-decoration:none;padding:16px 20px;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;text-align:center;border:1px solid #D4C9B0;line-height:1.4;">
-                  😐 C'è qualcosa che possiamo migliorare<br>
-                  <span style="font-size:11px;font-weight:400;opacity:0.6;">Lascia una recensione</span>
+                   style="display:block;background:#F5F0E8;color:#1A1610;text-decoration:none;padding:14px 16px;font-family:'Raleway',Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.05em;text-align:center;border:1px solid #D4C9B0;border-radius:4px;line-height:1.4;">
+                  😐 C'è qualcosa da migliorare<br>
+                  <span style="font-size:11px;font-weight:400;opacity:0.6;letter-spacing:0;">Lascia un feedback</span>
                 </a>
               </td>
             </tr>

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { authFetch } from '../lib/authFetch'
 import { API_BASE } from '../lib/config'
 
-const API = API_BASE + '/prenotazioni-giornaliere'
+const API = API_BASE + '/get-prenotazioni?tipo=giornaliere'
 
 export function usePrenotazioniGiornaliere() {
   const [giorni, setGiorni] = useState([])

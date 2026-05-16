@@ -8,7 +8,7 @@ import GrigliaFotoLocation from '@/components/GrigliaFotoLocation'
 import { fetchMedia } from '@/lib/media'
 import { fetchLocalita, fetchLocalitaBySlug } from '@/lib/localita'
 
-export const revalidate = 300
+export const revalidate = 259200
 
 const PUNTI_FORZA = [
   {

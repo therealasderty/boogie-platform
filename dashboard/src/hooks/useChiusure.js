@@ -7,7 +7,7 @@ export function useChiusure() {
   const [loading, setLoading] = useState(true)
   const carica = useCallback(() => {
     setLoading(true)
-    authFetch(BASE + '/get-chiusure')
+    authFetch(BASE + '/gestisci-chiusure')
       .then(r => r.json())
       .then(json => { if (json.success) setChiusure(json.chiusure || []); setLoading(false); })
       .catch(() => setLoading(false))
