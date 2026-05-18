@@ -18,11 +18,11 @@ import FormFidelity from '@/components/FormFidelity'
 import { fetchMedia } from '@/lib/media'
 
 const PREMI = [
-  { punti: 250,   premio: 'Uno Spritz omaggio',                                          icona: '🥂' },
-  { punti: 500,   premio: 'Un Dessert a tua scelta',                                     icona: '🍮' },
-  { punti: 1000,  premio: 'Uno sconto di 10€ sul totale',                                icona: '🏷️' },
-  { punti: 1500,  premio: 'Un Tagliere di salumi e formaggi per 2 persone',              icona: '🧀' },
-  { punti: 3000,  premio: 'Una Cena completa — menù degustazione o valore equivalente',  icona: '🍽️' },
+  { punti: 2500,  premio: '2 Cocktail omaggio',                                                        icona: '🍹' },
+  { punti: 5000,  premio: '2 Dolci a scelta',                                                          icona: '🍮' },
+  { punti: 7500,  premio: '4 Pizze da asporto',                                                        icona: '🍕' },
+  { punti: 10000, premio: '4 Pizze e 4 bibite al Boogie',                                              icona: '🍕' },
+  { punti: 15000, premio: '2 portate + dolce a scelta dalla nostra carta (bevande escluse)',            icona: '🍽️' },
 ]
 
 function formatPunti(n: number) {
