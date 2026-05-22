@@ -862,13 +862,6 @@ export default async () => {
       console.log('Analisi AI globale salvata')
     } catch (e) { console.error('Analisi AI globale fallita:', e.message) }
 
-    // Newsletter
-    if (analisiWeek) {
-      try {
-        await sendNewsletter(analisiWeek, analisiGlobal, result.statsForAI, tutteSettimane.length)
-      } catch (e) { console.error('Newsletter fallita:', e.message) }
-    }
-
     console.log(msg)
 
   } catch (err) {

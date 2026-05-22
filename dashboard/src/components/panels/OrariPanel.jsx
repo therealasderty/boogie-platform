@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useOrari } from '../../hooks/useOrari'
+import { useConfigurazione } from '../../hooks/useConfigurazione'
 import { IconClock, IconInfo, IconClose, IconLock } from '../../icons/index.jsx'
 import styles from './OrariPanel.module.css'
 
@@ -75,6 +76,7 @@ function InfoModal({ onClose }) {
 
 export default function OrariPanel() {
   const { orari, loading, ricarica, salva, elimina } = useOrari()
+  const { config: cfg, loading: cfgLoading, salva: salvaCfg } = useConfigurazione()
   const [fasceOrari, setFasceOrari] = useState({
     Pranzo:    { ...DEFAULT_FASCIA_ORARI },
     Aperitivo: { ...DEFAULT_FASCIA_ORARI },
@@ -87,6 +89,41 @@ export default function OrariPanel() {
   const [infoOpen, setInfoOpen] = useState(false)
   const [editEnabled, setEditEnabled] = useState(false)
   const [lockModalOpen, setLockModalOpen] = useState(false)
+
+  // Conferma manuale — giorni selezionati
+  const [confermaGiorni, setConfermaGiorni] = useState(new Set())
+  const [savingConferma, setSavingConferma] = useState(false)
+  const [msgConferma, setMsgConferma] = useState(null)
+
+  useEffect(() => {
+    if (!cfgLoading) {
+      const val = cfg['conferma_manuale_giorni'] ?? ''
+      const giorni = new Set(val ? val.split(',').map(d => parseInt(d.trim())).filter(n => !isNaN(n)) : [])
+      setConfermaGiorni(giorni)
+    }
+  }, [cfg, cfgLoading])
+
+  function toggleConfermaGiorno(value) {
+    setConfermaGiorni(prev => {
+      const next = new Set(prev)
+      next.has(value) ? next.delete(value) : next.add(value)
+      return next
+    })
+    setMsgConferma(null)
+  }
+
+  async function salvaConferma() {
+    setSavingConferma(true)
+    setMsgConferma(null)
+    try {
+      const valore = [...confermaGiorni].join(',')
+      const res = await salvaCfg('conferma_manuale_giorni', valore)
+      setMsgConferma(res.success ? { type: 'ok', text: 'Impostazioni salvate' } : { type: 'err', text: 'Errore — riprova' })
+    } catch {
+      setMsgConferma({ type: 'err', text: 'Errore — riprova' })
+    }
+    setSavingConferma(false)
+  }
 
   function abilitaModifica() { setEditEnabled(true); setMsg(null) }
   function annullaModifica() {
@@ -243,6 +280,37 @@ export default function OrariPanel() {
             </div>
           ))}
         </div>
+        </div>
+      </div>
+
+      {/* — Conferma prenotazioni — */}
+      <div className={styles.confermaSection}>
+        <div className={styles.confermaSectionHeader}>
+          <div className={styles.confermaSectionTitle}>Conferma prenotazioni</div>
+          <p className={styles.confermaSectionDesc}>
+            Nei giorni selezionati le prenotazioni dal sito richiedono conferma manuale prima che il cliente riceva l'email definitiva.
+          </p>
+        </div>
+        <div className={styles.confermaGiorni}>
+          {GIORNI.map(g => (
+            <button
+              key={g.value}
+              type="button"
+              className={`${styles.confermaToggle} ${confermaGiorni.has(g.value) ? styles.confermaToggleOn : ''}`}
+              onClick={() => toggleConfermaGiorno(g.value)}
+              disabled={cfgLoading}
+            >
+              {g.label}
+            </button>
+          ))}
+        </div>
+        <div className={styles.confermaActions}>
+          {msgConferma && (
+            <span className={`${styles.inlineMsg} ${styles[msgConferma.type]}`}>{msgConferma.text}</span>
+          )}
+          <button className="btn-primary btn-sm" onClick={salvaConferma} disabled={savingConferma || cfgLoading}>
+            {savingConferma ? 'Salvataggio...' : 'Salva impostazioni'}
+          </button>
         </div>
       </div>
 

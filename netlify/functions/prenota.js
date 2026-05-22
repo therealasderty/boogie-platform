@@ -52,6 +52,19 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers, body: 'Invalid JSON' };
   }
 
+  // ── 0. Leggi configurazione conferma manuale ─────────────────────
+  let confermaManualeDays = new Set();
+  try {
+    const configRes = await fetch(`${NETLIFY_URL}/.netlify/functions/get-configurazione`);
+    if (configRes.ok) {
+      const configJson = await configRes.json();
+      const val = configJson.config?.conferma_manuale_giorni ?? '';
+      if (val) val.split(',').forEach(d => { const n = parseInt(d.trim()); if (!isNaN(n)) confermaManualeDays.add(n); });
+    }
+  } catch (err) {
+    console.error('Errore lettura configurazione:', err);
+  }
+
   const { nome, cognome, data: dataPrenotazione, ora, persone, email: emailRaw, telefono, note, preferenza, evento, data_nascita, consenso_privacy, consenso_marketing } = data;
   const email = normalizeEmail(emailRaw);
 
@@ -68,6 +81,10 @@ exports.handler = async (event) => {
   const dataFormattata = new Date(dataPrenotazione + 'T12:00:00').toLocaleDateString('it-IT', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
+
+  // Determina se questa prenotazione richiede conferma manuale
+  const giornoSettimana = new Date(dataPrenotazione + 'T12:00:00').getDay();
+  const richiedeConferma = confermaManualeDays.has(giornoSettimana);
 
   // ── 1. Salva su Airtable Prenotazioni ────────────────────────────
   let recordId;
@@ -91,7 +108,7 @@ exports.handler = async (event) => {
           'Consenso Privacy':   consenso_privacy,
           'Consenso Marketing': consenso_marketing,
           'Timestamp':          new Date().toISOString(),
-          'Stato':              'Confermata',
+          'Stato':              richiedeConferma ? 'In attesa' : 'Confermata',
         }
       })
     });
@@ -150,17 +167,28 @@ exports.handler = async (event) => {
   const preferenzaEmoji = preferenza === 'Pizza' ? '🍕' : preferenza === 'Cucina' ? '🍽️' : '';
 
   try {
-    const testo =
-      `✅ *Nuova prenotazione confermata!*\n\n` +
-      (evento ? `🎉 *Evento:* ${evento}\n` : '') +
-      `👤 *Nome:* ${nomeCompleto}\n` +
-      `📅 *Data:* ${dataFormattata}\n` +
-      `🕐 *Ora:* ${ora}\n` +
-      `👥 *Persone:* ${persone}\n` +
-      (preferenza ? `${preferenzaEmoji} *Preferenza:* ${preferenza}\n` : '') +
-      `📞 *Telefono:* ${telefono}\n` +
-      `📧 *Email:* ${email}` +
-      (note ? `\n📝 *Note:* ${note}` : '');
+    const testo = richiedeConferma
+      ? `⏳ *Nuova richiesta di prenotazione (da confermare)*\n\n` +
+        (evento ? `🎉 *Evento:* ${evento}\n` : '') +
+        `👤 *Nome:* ${nomeCompleto}\n` +
+        `📅 *Data:* ${dataFormattata}\n` +
+        `🕐 *Ora:* ${ora}\n` +
+        `👥 *Persone:* ${persone}\n` +
+        (preferenza ? `${preferenzaEmoji} *Preferenza:* ${preferenza}\n` : '') +
+        `📞 *Telefono:* ${telefono}\n` +
+        `📧 *Email:* ${email}` +
+        (note ? `\n📝 *Note:* ${note}` : '') +
+        `\n\n👉 Conferma dal dashboard o dall'email ricevuta`
+      : `✅ *Nuova prenotazione confermata!*\n\n` +
+        (evento ? `🎉 *Evento:* ${evento}\n` : '') +
+        `👤 *Nome:* ${nomeCompleto}\n` +
+        `📅 *Data:* ${dataFormattata}\n` +
+        `🕐 *Ora:* ${ora}\n` +
+        `👥 *Persone:* ${persone}\n` +
+        (preferenza ? `${preferenzaEmoji} *Preferenza:* ${preferenza}\n` : '') +
+        `📞 *Telefono:* ${telefono}\n` +
+        `📧 *Email:* ${email}` +
+        (note ? `\n📝 *Note:* ${note}` : '');
 
     await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
       method: 'POST',
@@ -187,7 +215,50 @@ exports.handler = async (event) => {
     googleCalLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${titoloCalendar}&dates=${dtStart}/${dtEnd}&location=${luogo}&details=${dettagli}&ctz=Europe/Rome`;
   }
 
-  // ── 5. Email conferma cliente ────────────────────────────────────
+  // ── 5a. Email cliente — richiesta ricevuta (se richiede conferma) ─
+  const emailAttesaHtml = `
+<!DOCTYPE html>
+<html lang="it">
+<head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet"></head>
+<body style="margin:0;padding:0;background:#F5F0E8;font-family:'Raleway',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
+    <tr><td align="center">
+      <table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid #C4913A;">
+        <tr><td style="padding:40px 40px 20px;">
+          <img src="https://boogiebistrot.com/logo-email.png" alt="Boogie Bistrot" width="80" height="65" style="display:block;margin:0 auto 20px;border:0;">
+          <h1 style="font-size:26px;color:#1A1610;margin:0 0 8px;font-weight:400;">Richiesta ricevuta! 📩</h1>
+          <p style="font-size:13px;color:#8B6F47;margin:0 0 24px;">Ti confermeremo la disponibilità a breve.</p>
+          <p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 24px;">
+            Ciao <strong>${nome}</strong>,<br>
+            abbiamo ricevuto la tua richiesta di prenotazione. Nei prossimi minuti riceverai una conferma via email non appena avremo verificato la disponibilità.
+          </p>
+          <table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin-bottom:28px;">
+            <tr><td style="padding:20px 24px;">
+              ${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Evento</span><strong>${evento}</strong></p>` : ''}
+              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Data richiesta</span><strong>${dataFormattata}</strong></p>
+              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ora</span><strong>${ora}</strong></p>
+              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ospiti</span><strong>${persone} ${parseInt(persone) === 1 ? 'persona' : 'persone'}</strong></p>
+              ${preferenza ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Preferenza</span><strong>${preferenza}</strong></p>` : ''}
+              ${note ? `<p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Note</span><strong>${note}</strong></p>` : ''}
+            </td></tr>
+          </table>
+          <p style="font-size:13px;color:#8B6F47;line-height:1.6;margin:0 0 8px;">
+            Per informazioni scrivici a <a href="mailto:${EMAIL_RISTORANTE}" style="color:#C4913A;">${EMAIL_RISTORANTE}</a>.
+          </p>
+          <p style="font-size:15px;color:#4A4030;line-height:1.6;margin:24px 0 0;">A presto,<br><span style="font-weight:500;">Alessandra &amp; Chiara</span></p>
+        </td></tr>
+        <tr><td style="padding:20px 40px 30px;border-top:1px solid #D4C9B0;">
+          <p style="font-size:11px;color:#B0A898;margin:0;line-height:1.7;">
+            Boogie Bistrot — Via Europa, 2, Colle Brianza (LC)
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  // ── 5b. Email cliente — conferma immediata ────────────────────────
   const emailUtenteHtml = `
 <!DOCTYPE html>
 <html lang="it">
@@ -243,6 +314,7 @@ exports.handler = async (event) => {
 </html>`;
 
   // ── 6. Email notifica ristorante ─────────────────────────────────
+  const confermaLink = `${SITO_URL}/conferma-prenotazione?id=${recordId}`;
   const emailNotificaHtml = `
 <!DOCTYPE html>
 <html lang="it">
@@ -250,11 +322,11 @@ exports.handler = async (event) => {
 <body style="margin:0;padding:0;background:#F5F0E8;font-family:'Raleway',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
     <tr><td align="center">
-      <table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid #C4913A;">
+      <table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid ${richiedeConferma ? '#E67E22' : '#C4913A'};">
         <tr><td style="padding:40px 40px 20px;">
           <img src="https://boogiebistrot.com/logo-email.png" alt="Boogie Bistrot" width="80" height="65" style="display:block;margin:0 auto 8px;border:0;">
           <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Gestionale</p>
-          <h1 style="font-size:22px;color:#1A1610;margin:0 0 6px;font-weight:400;">✅ Nuova prenotazione confermata</h1>
+          <h1 style="font-size:22px;color:#1A1610;margin:0 0 6px;font-weight:400;">${richiedeConferma ? '⏳ Nuova richiesta da confermare' : '✅ Nuova prenotazione confermata'}</h1>
           <p style="font-size:13px;color:#8B6F47;margin:0 0 24px;">Ricevuta il ${new Date().toLocaleString('it-IT')}</p>
           <table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin-bottom:28px;">
             <tr><td style="padding:20px 24px;">
@@ -269,6 +341,12 @@ exports.handler = async (event) => {
               ${note ? `<p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Note</span><strong>${note}</strong></p>` : ''}
             </td></tr>
           </table>
+          ${richiedeConferma ? `
+          <p style="font-size:14px;color:#4A4030;line-height:1.6;margin:0 0 16px;">
+            Clicca il bottone per confermare la prenotazione e inviare l'email al cliente. Puoi aggiungere un messaggio personalizzato.
+          </p>
+          <a href="${confermaLink}" target="_blank" style="display:inline-block;background:#C4913A;color:white;text-decoration:none;padding:14px 28px;font-family:'Raleway',Arial,sans-serif;font-size:14px;font-weight:700;letter-spacing:0.05em;border-radius:4px;margin-bottom:24px;">✅ Conferma prenotazione</a>
+          ` : ''}
         </td></tr>
         <tr><td style="padding:16px 40px 24px;border-top:1px solid #D4C9B0;">
           <p style="font-size:11px;color:#B0A898;margin:0;">Boogie Bistrot — Sistema prenotazioni automatico</p>
@@ -287,10 +365,14 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         sender: { name: 'Boogie Bistrot', email: EMAIL_FROM },
         to: [{ email, name: nomeCompleto }],
-        subject: evento
-          ? `Prenotazione confermata! — ${evento} · ${dataFormattata} ore ${ora}`
-          : `Prenotazione confermata! — ${dataFormattata} ore ${ora}`,
-        htmlContent: emailUtenteHtml,
+        subject: richiedeConferma
+          ? evento
+            ? `Richiesta ricevuta — ${evento} · ${dataFormattata} ore ${ora}`
+            : `Richiesta ricevuta — ${dataFormattata} ore ${ora}`
+          : evento
+            ? `Prenotazione confermata! — ${evento} · ${dataFormattata} ore ${ora}`
+            : `Prenotazione confermata! — ${dataFormattata} ore ${ora}`,
+        htmlContent: richiedeConferma ? emailAttesaHtml : emailUtenteHtml,
       })
     });
     const resUtenteBody = await resUtente.json();
@@ -301,9 +383,13 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         sender: { name: 'Sistema Prenotazioni', email: EMAIL_FROM },
         to: [{ email: EMAIL_RISTORANTE }],
-        subject: evento
-          ? `🎉 ${evento} — ${nomeCompleto} · ${dataFormattata} ore ${ora} (${persone} pers.)`
-          : `✅ Nuova prenotazione: ${nomeCompleto} — ${dataFormattata} ore ${ora} (${persone} pers.)`,
+        subject: richiedeConferma
+          ? evento
+            ? `⏳ ${evento} — ${nomeCompleto} · ${dataFormattata} ore ${ora} (${persone} pers.)`
+            : `⏳ Da confermare: ${nomeCompleto} — ${dataFormattata} ore ${ora} (${persone} pers.)`
+          : evento
+            ? `🎉 ${evento} — ${nomeCompleto} · ${dataFormattata} ore ${ora} (${persone} pers.)`
+            : `✅ Nuova prenotazione: ${nomeCompleto} — ${dataFormattata} ore ${ora} (${persone} pers.)`,
         htmlContent: emailNotificaHtml,
       })
     });

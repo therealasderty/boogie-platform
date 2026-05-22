@@ -141,6 +141,43 @@
 }
 .infoText { font-size: 0.9rem; color: var(--text2); line-height: 1.55; }
 
+/* ── Sezione conferma prenotazioni ────────────────────────────────────────── */
+.confermaSection {
+  margin-top: 32px; padding-top: 28px;
+  border-top: var(--border-style);
+}
+.confermaSectionHeader { margin-bottom: 18px; }
+.confermaSectionTitle {
+  font-size: 0.95rem; font-weight: 700; color: var(--text);
+  margin-bottom: 6px;
+}
+.confermaSectionDesc {
+  font-size: 0.85rem; color: var(--text3); line-height: 1.5; margin: 0;
+}
+
+.confermaGiorni {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 16px;
+}
+.confermaToggle {
+  padding: 8px 14px; border-radius: var(--radius-sm);
+  border: var(--border-style); background: var(--bg3);
+  font-size: 0.85rem; font-weight: 600; color: var(--text3);
+  cursor: pointer; transition: all 0.15s;
+}
+.confermaToggle:hover { border-color: var(--accent); color: var(--text); }
+.confermaToggle:disabled { opacity: 0.5; cursor: default; }
+.confermaToggleOn {
+  background: rgba(184,130,10,0.12);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.confermaToggleOn:hover { background: rgba(184,130,10,0.2); }
+
+.confermaActions {
+  display: flex; align-items: center; gap: 12px;
+}
+
 @media (max-width: 720px) {
   .fasceRow { grid-template-columns: 1fr; }
 

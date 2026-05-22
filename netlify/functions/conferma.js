@@ -31,6 +31,8 @@ exports.handler = async (event) => {
   const EMAIL_FROM       = process.env.EMAIL_FROM;
   const SITO_URL         = process.env.SITO_URL || 'https://boogiebistrot.com';
   const NETLIFY_URL      = process.env.NETLIFY_URL || 'https://shimmering-sundae-54b044.netlify.app';
+  const TELEGRAM_TOKEN   = process.env.TELEGRAM_TOKEN;
+  const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
   const { id, solo_dati } = event.queryStringParameters || {};
   if (!id) return { statusCode: 400, headers, body: JSON.stringify({ success: false, error: 'ID mancante' }) };
@@ -210,6 +212,27 @@ exports.handler = async (event) => {
     });
   } catch (err) {
     console.error('Brevo error:', err);
+  }
+
+  // ── 5. Notifica Telegram — conferma manuale ──────────────────────
+  if (TELEGRAM_TOKEN && TELEGRAM_CHAT_ID) {
+    try {
+      const testo =
+        `✅ *Prenotazione confermata manualmente*\n\n` +
+        `👤 *Nome:* ${nome}\n` +
+        `📅 *Data:* ${dataFormattata}\n` +
+        `🕐 *Ora:* ${ora}\n` +
+        `👥 *Persone:* ${persone}` +
+        (messaggio ? `\n💬 *Messaggio inviato:* ${messaggio}` : '');
+
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: testo, parse_mode: 'Markdown' })
+      });
+    } catch (err) {
+      console.error('Telegram error:', err);
+    }
   }
 
   return {
