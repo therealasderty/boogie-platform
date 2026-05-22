@@ -144,6 +144,7 @@ overlay: rgba(0,0,0,0.45)
 | `/vicino-a/[city]/[service]` | Local SEO: servizio per città — BlocchiRenderer evento madre; JSON-LD Event; canonical self-referencing |
 | `/eventi-aziendali` | Landing eventi aziendali: punti di forza, gastronomia, griglia foto, FormEventoAziendale |
 | `/eventi-aziendali/[city]` | Variante localizzata per 10 città; `generateStaticParams` da Airtable Localita |
+| `/conferma-prenotazione` | Pagina interna (no navbar) per confermare manualmente una prenotazione. Legge `?id=`, mostra i dati, permette di aggiungere un messaggio e invia la conferma via `conferma.js` |
 | `/sitemap.ts` | Sitemap dinamica (events, blog, vicino-a, eventi-aziendali) |
 | `/robots.ts` | Robots.txt dinamico |
 
@@ -282,6 +283,12 @@ Tempi di revalidate centralizzati in `website/lib/revalidate.ts`:
 | `scraping-recensioni.js` | sì | Scraping Google Reviews |
 | `scraping-tripadvisor.js` | sì | Scraping TripAdvisor |
 
+### Contatti & Email
+| Funzione | Auth | Scopo |
+|----------|------|-------|
+| `get-configurazione.js` | no | GET impostazioni runtime come `{ chiave: valore }` — usato da `prenota.js` a ogni prenotazione |
+| `gestisci-configurazione.js` | sì | GET/PATCH tabella `Configurazione` Airtable — usato dal dashboard |
+
 ### Misc
 `auth.js`, `verifyToken.js`, `note.js`, `dati-dashboard.js`, `feedback.js`, `salva-feedback.js`, `get-umami-stats.js`
 
@@ -305,6 +312,7 @@ Tempi di revalidate centralizzati in `website/lib/revalidate.ts`:
 | `RichiesteEventi` | Nome, Cognome, Email, Telefono, TipoEvento, NumOspiti, DataEvento, Note, ConsensoMarketing |
 | `RichiesteContatti` | Nome, Cognome, Email, Telefono, Messaggio, ConsensoMarketing |
 | `Popup` | Config popup modali |
+| `Configurazione` | `Chiave` (primary, text), `Valore` (text) — impostazioni runtime. Record attuale: `conferma_manuale_giorni` = stringa CSV di giorni (0=dom…6=sab) in cui le prenotazioni dal sito vanno in `Stato: In attesa` invece di `Confermata` |
 
 ---
 
@@ -321,15 +329,15 @@ Tempi di revalidate centralizzati in `website/lib/revalidate.ts`:
 | **FaqPanel** | FAQ con DnD e RichTextEditor (Tiptap) |
 | **BlogPanel** | CRUD articoli, DnD, toggle pubblicato, modal editor + SEO |
 | **LocalSeoPanel** | Lista città, toggle attiva, RichTextEditor intro, servizi dinamici da Agenda, SEO, preview URL |
-| **OrariPanel / GestisciOrariPanel** | Orari apertura per fascia/giorno + chiusure straordinarie |
+| **OrariPanel / GestisciOrariPanel** | Orari apertura per fascia/giorno + chiusure straordinarie. In fondo: sezione "Conferma prenotazioni" con toggle per giorno (legge/scrive `Configurazione` via `useConfigurazione`) |
 | **FidelityPanel** | 3 tab: Iscrivi, Ricarica, GestisciTag |
 | **ClientiPanel** | Database clienti fidelity con crediti e storico |
 | **AnalyticsPanel** | KPI settimanali (prenotazioni, coperti, cancellazioni, clienti unici, LTV). Grafici: bar giorni, pie fasce. Report AI Gemini |
 | **RecensioniSitoPanel** | Scraping + visualizzazione Google Reviews e TripAdvisor |
 | **SocialStudioPanel** | Editor post social con slide template, cattura PNG, upload **R2**, programmazione. Tipi: `post` e `storia` (9:16). Template: `TemplateOffertaSerata` (4:5) e `TemplateOffertaSerataStoria` (9:16) aggiunti 2026-05-11. Per eventi ricorrenti, "Recupera dati da evento" compila `dataTesto` con etichette tipo `Da Mar a Dom (Escluso Sabato)` calcolate da `GiorniEsclusione` + `Orari` attivi |
 
-### Hooks (`dashboard/src/hooks/`) — 19 hook
-`useAppuntamenti`, `useBlog`, `useCalendario`, `useChiusure`, `useFaq`, `useFidelity`, `useLocalita`, `useMedia`, `useMenu`, `useMeteo`, `useNote`, `useOrari`, `usePrenotazioni`, `usePrenotazioniGiornaliere`, `useRecensioni`, `useRecensioniSito`, `useTag`, `useAnalytics`, `useUmamiStats`
+### Hooks (`dashboard/src/hooks/`) — 20 hook
+`useAppuntamenti`, `useBlog`, `useCalendario`, `useChiusure`, `useConfigurazione`, `useFaq`, `useFidelity`, `useLocalita`, `useMedia`, `useMenu`, `useMeteo`, `useNote`, `useOrari`, `usePrenotazioni`, `usePrenotazioniGiornaliere`, `useRecensioni`, `useRecensioniSito`, `useTag`, `useAnalytics`, `useUmamiStats`
 
 **Cache in-memory (TTL 5 min):** `dashboard/src/lib/cache.js` — `cacheGet`, `cacheSet`, `cacheInvalidate`, `cacheInvalidatePrefix`. Applicata a: `useAppuntamenti`, `useOrari`, `useMedia`, `useFaq`, `useMenu`. Riduce chiamate Netlify Functions/Airtable per sessioni attive; invalidata automaticamente su ogni operazione di scrittura.
 
@@ -399,6 +407,14 @@ Widget home: `AttesaWidget`, `MeteoWidget`, `RecensioniWidget`, `PrenotazioniWid
 - **Differenza chiave rispetto ai post**: le storie non hanno `caption`, il container va creato con `media_type: 'STORIES'` — se questo campo manca, Meta pubblica come post normale senza errore
 - Il cron non gestisce Facebook Stories (escluso con `filter(p => !(p === 'facebook' && isStoria))`)
 - Anti-duplicato cron: lock ottimistico per record via `RisultatiPubblicazione` + verifica ownership lock prima della pubblicazione effettiva
+
+### Conferma manuale prenotazioni (2026-05-22)
+- `prenota.js` legge `get-configurazione` a ogni prenotazione per sapere quali giorni richiedono conferma (`conferma_manuale_giorni`, CSV es. `"5,6"`)
+- Se il giorno della prenotazione è in lista → `Stato: In attesa`, email cliente "Richiesta ricevuta" (senza link calendario), email ristorante con bottone "Conferma prenotazione" → `{SITO_URL}/conferma-prenotazione?id=...`
+- Se non è in lista → flusso normale `Stato: Confermata` come prima
+- `conferma.js` — gestisce la conferma: cambia stato, manda email definitiva al cliente + notifica Telegram
+- La config si modifica dal dashboard: **OrariPanel → sezione "Conferma prenotazioni"**, salva immediatamente su Airtable senza deploy
+- `AttesaWidget` (Home dashboard) mostra le prenotazioni in attesa con bottone "Conferma" che apre la stessa pagina
 
 ### ImageKit & Cloudflare R2
 - **Website immagini** — `website/lib/imagekit-delivery.ts` custom loader Next.js. Sostituisce il default loader. `website/lib/cloudinary.ts` mantenuto solo per retrocompatibilità (restituisce URL originale senza proxy).
