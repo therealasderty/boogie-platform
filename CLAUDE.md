@@ -312,7 +312,7 @@ Tempi di revalidate centralizzati in `website/lib/revalidate.ts`:
 | `RichiesteEventi` | Nome, Cognome, Email, Telefono, TipoEvento, NumOspiti, DataEvento, Note, ConsensoMarketing |
 | `RichiesteContatti` | Nome, Cognome, Email, Telefono, Messaggio, ConsensoMarketing |
 | `Popup` | Config popup modali |
-| `Configurazione` | `Chiave` (primary, text), `Valore` (text) — impostazioni runtime. Record attuale: `conferma_manuale_giorni` = stringa CSV di giorni (0=dom…6=sab) in cui le prenotazioni dal sito vanno in `Stato: In attesa` invece di `Confermata` |
+| `Configurazione` | `Chiave` (primary, text), `Valore` (text) — impostazioni runtime. Record rilevanti: `conferma_manuale_giorni` (CSV giorni 0=dom…6=sab, retrocompat.), `conferma_manuale_date` (JSON array `[{id, descrizione, dataInizio, dataFine}]`) — le prenotazioni in queste date vanno in `Stato: In attesa` |
 
 ---
 
@@ -329,7 +329,7 @@ Tempi di revalidate centralizzati in `website/lib/revalidate.ts`:
 | **FaqPanel** | FAQ con DnD e RichTextEditor (Tiptap) |
 | **BlogPanel** | CRUD articoli, DnD, toggle pubblicato, modal editor + SEO |
 | **LocalSeoPanel** | Lista città, toggle attiva, RichTextEditor intro, servizi dinamici da Agenda, SEO, preview URL |
-| **OrariPanel / GestisciOrariPanel** | Orari apertura per fascia/giorno + chiusure straordinarie. In fondo: sezione "Conferma prenotazioni" con toggle per giorno (legge/scrive `Configurazione` via `useConfigurazione`) |
+| **OrariPanel / GestisciOrariPanel** | 3 tab: "Orari Ordinari" (OrariPanel), "Chiusure & Aperture" (ChiusurePanel), "Conferma Prenotazioni" (ConfermaPrenotazioniPanel) |
 | **FidelityPanel** | 3 tab: Iscrivi, Ricarica, GestisciTag |
 | **ClientiPanel** | Database clienti fidelity con crediti e storico |
 | **AnalyticsPanel** | KPI settimanali (prenotazioni, coperti, cancellazioni, clienti unici, LTV). Grafici: bar giorni, pie fasce. Report AI Gemini |
@@ -409,11 +409,13 @@ Widget home: `AttesaWidget`, `MeteoWidget`, `RecensioniWidget`, `PrenotazioniWid
 - Anti-duplicato cron: lock ottimistico per record via `RisultatiPubblicazione` + verifica ownership lock prima della pubblicazione effettiva
 
 ### Conferma manuale prenotazioni (2026-05-22)
-- `prenota.js` legge `get-configurazione` a ogni prenotazione per sapere quali giorni richiedono conferma (`conferma_manuale_giorni`, CSV es. `"5,6"`)
-- Se il giorno della prenotazione è in lista → `Stato: In attesa`, email cliente "Richiesta ricevuta" (senza link calendario), email ristorante con bottone "Conferma prenotazione" → `{SITO_URL}/conferma-prenotazione?id=...`
-- Se non è in lista → flusso normale `Stato: Confermata` come prima
+- `prenota.js` legge `get-configurazione` a ogni prenotazione e controlla due config:
+  - `conferma_manuale_giorni` — CSV giorni settimana (retrocompatibilità, non più gestito da UI)
+  - `conferma_manuale_date` — JSON array `[{id, descrizione, dataInizio, dataFine}]` di date/range specifici
+- Se la data prenotazione ricade in uno dei range → `Stato: In attesa`, email cliente "Richiesta ricevuta" (senza link calendario), email ristorante con bottone "Conferma prenotazione" → `{SITO_URL}/conferma-prenotazione?id=...`
+- Se non ricade → flusso normale `Stato: Confermata`
 - `conferma.js` — gestisce la conferma: cambia stato, manda email definitiva al cliente + notifica Telegram
-- La config si modifica dal dashboard: **OrariPanel → sezione "Conferma prenotazioni"**, salva immediatamente su Airtable senza deploy
+- La config si modifica dal dashboard: **GestisciOrariPanel → tab "Conferma Prenotazioni"** (`ConfermaPrenotazioniPanel.jsx`) — form data inizio/fine + nota, lista date attive con rimozione
 - `AttesaWidget` (Home dashboard) mostra le prenotazioni in attesa con bottone "Conferma" che apre la stessa pagina
 
 ### ImageKit & Cloudflare R2
@@ -435,4 +437,10 @@ Revisione capillare di tutti i pannelli. Fix principali:
 ### Hydration mismatch `<html>` (2026-05-12)
 `suppressHydrationWarning` aggiunto su `<html>` in `layout.tsx`. Necessario perché alcune estensioni browser (gestori password, Avast, ecc.) iniettano `data-arp=""` sul tag `<html>` prima che React idrati, causando mismatch. Approccio ufficiale Next.js per `<html>` e `<body>`.
 
-*Aggiornato: 12 Maggio 2026*
+### Dev refresh loop (fix 2026-05-24)
+In Next.js 16.2.3 con Turbopack, avere `turbopack: {}` esplicito in `next.config.ts` causava un loop di reload ogni ~1s in dev mode (Turbopack terminava la compilazione di tutte le route e inviava HMR update continui). **Fix**: rimosso `turbopack: {}` da `next.config.ts` (ridondante — Next.js 16 usa Turbopack di default per `next dev`) + svuotato la cartella `.next` che aveva artefatti misti Webpack/Turbopack. Se il problema ricompare: `rm -rf website/.next` e riavviare.
+
+### GestisciOrariPanel — layout desktop
+`.wrapper` in `GestisciOrariPanel.module.css` ha `max-width: 900px` per evitare che i tab (Orari, Chiusure, Conferma) si allarghino eccessivamente su desktop wide. Si applica a tutti e tre i tab.
+
+*Aggiornato: 24 Maggio 2026*

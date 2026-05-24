@@ -1,4 +1,4 @@
-.wrapper { animation: fadeIn 0.2s ease; }
+.wrapper { animation: fadeIn 0.2s ease; max-width: 900px; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 .tabs {

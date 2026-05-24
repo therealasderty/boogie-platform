@@ -54,12 +54,16 @@ exports.handler = async (event) => {
 
   // ── 0. Leggi configurazione conferma manuale ─────────────────────
   let confermaManualeDays = new Set();
+  let confermaManualeDates = [];
   try {
     const configRes = await fetch(`${NETLIFY_URL}/.netlify/functions/get-configurazione`);
     if (configRes.ok) {
       const configJson = await configRes.json();
       const val = configJson.config?.conferma_manuale_giorni ?? '';
       if (val) val.split(',').forEach(d => { const n = parseInt(d.trim()); if (!isNaN(n)) confermaManualeDays.add(n); });
+      try {
+        confermaManualeDates = JSON.parse(configJson.config?.conferma_manuale_date ?? '[]') || [];
+      } catch {}
     }
   } catch (err) {
     console.error('Errore lettura configurazione:', err);
@@ -84,7 +88,13 @@ exports.handler = async (event) => {
 
   // Determina se questa prenotazione richiede conferma manuale
   const giornoSettimana = new Date(dataPrenotazione + 'T12:00:00').getDay();
-  const richiedeConferma = confermaManualeDays.has(giornoSettimana);
+  const richiedeConfermaGiorno = confermaManualeDays.has(giornoSettimana);
+  const richiedeConfermaData = confermaManualeDates.some(entry => {
+    const inizio = entry.dataInizio;
+    const fine = entry.dataFine || entry.dataInizio;
+    return dataPrenotazione >= inizio && dataPrenotazione <= fine;
+  });
+  const richiedeConferma = richiedeConfermaGiorno || richiedeConfermaData;
 
   // ── 1. Salva su Airtable Prenotazioni ────────────────────────────
   let recordId;
@@ -289,7 +299,7 @@ exports.handler = async (event) => {
           <table cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
             <tr>
               <td style="padding-right:10px;">
-                <a href="${googleCalLink}" target="_blank" style="display:inline-block;background:#1A1610;color:white;text-decoration:none;padding:12px 24px;font-family:'Raleway',Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.05em;border-radius:4px;">📅 Google Calendar</a>
+                <a href="${googleCalLink}" target="_blank" style="display:inline-block;background:#F5F0E8;color:#1A1610;text-decoration:none;padding:12px 24px;font-family:'Raleway',Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.05em;border-radius:4px;border:1px solid #D4C9B0;">📅 Google Calendar</a>
               </td>
               <td>
                 <a href="${icsLink}" style="display:inline-block;background:#F5F0E8;color:#1A1610;text-decoration:none;padding:12px 24px;font-family:'Raleway',Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.05em;border-radius:4px;border:1px solid #D4C9B0;">🍎 Apple Calendar</a>
