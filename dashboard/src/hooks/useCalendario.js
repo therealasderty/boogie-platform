@@ -33,7 +33,7 @@ export function useCalendario() {
           backgroundColor: colore,
           borderColor: colore,
           textColor: '#ffffff',
-          extendedProps: { ora: p.ora, persone: p.persone, stato: p.stato, note: p.note, telefono: p.telefono, evento: p.evento }
+          extendedProps: { ora: p.ora, persone: p.persone, stato: p.stato, note: p.note, telefono: p.telefono, email: p.email, preferenza: p.preferenza, evento: p.evento }
         }
       }))
     } catch(err) { console.error(err) }

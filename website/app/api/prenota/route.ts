@@ -41,6 +41,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Campi obbligatori mancanti' }, { status: 400 })
   }
 
+  const MAX_PER_SLOT = 10
+  const numPersone = parseInt(String(persone))
+
+  // ── Controllo capienza slot ──────────────────────────────────────
+  const capFormula = encodeURIComponent(
+    `AND(DATETIME_FORMAT({Data},'YYYY-MM-DD')="${String(data)}", {Ora}="${String(ora)}", {Stato}!="Cancellata")`
+  )
+  try {
+    const capRes = await fetch(
+      `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}?filterByFormula=${capFormula}&fields[]=Persone`,
+      { headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }, cache: 'no-store' }
+    )
+    if (capRes.ok) {
+      const capJson = await capRes.json() as { records: { fields: { Persone?: number } }[] }
+      const occupati = capJson.records.reduce((sum, r) => sum + (Number(r.fields.Persone) || 0), 0)
+      if (occupati + numPersone > MAX_PER_SLOT) {
+        return NextResponse.json({ success: false, error: 'slot_pieno' }, { status: 409 })
+      }
+    }
+  } catch (err) {
+    console.error('Capacity check error:', err)
+    // Fail-open: in caso di errore Airtable non blocchiamo la prenotazione
+  }
+
   const nomeCompleto = cognome ? `${nome} ${cognome}` : String(nome)
   const dataPrenotazione = String(data)
   const dataFormattata = new Date(dataPrenotazione + 'T12:00:00').toLocaleDateString('it-IT', {
@@ -83,7 +107,7 @@ export async function POST(req: NextRequest) {
             'Nome':               nomeCompleto,
             'Data':               data,
             'Ora':                ora,
-            'Persone':            parseInt(String(persone)),
+            'Persone':            numPersone,
             'Email':              email,
             'Telefono':           telefono,
             'Note':               note || '',
@@ -111,6 +135,8 @@ export async function POST(req: NextRequest) {
 
   // ── 2. Telegram ──────────────────────────────────────────────────
   if (TELEGRAM_TOKEN && TELEGRAM_CHAT_ID) {
+    const prefStr = String(preferenza || '')
+    const prefLine = prefStr ? `${prefStr.toLowerCase() === 'pizza' ? '🍕' : '🍽️'} *Preferenza:* ${prefStr}\n` : ''
     const testo = richiedeConferma
       ? `⏳ *Nuova richiesta da confermare*\n\n` +
         (evento ? `🎉 *Evento:* ${evento}\n` : '') +
@@ -118,6 +144,7 @@ export async function POST(req: NextRequest) {
         `📅 *Data:* ${dataFormattata}\n` +
         `🕐 *Ora:* ${ora}\n` +
         `👥 *Persone:* ${persone}\n` +
+        prefLine +
         `📞 *Telefono:* ${telefono}\n` +
         `📧 *Email:* ${email}` +
         (note ? `\n📝 *Note:* ${note}` : '') +
@@ -128,6 +155,7 @@ export async function POST(req: NextRequest) {
         `📅 *Data:* ${dataFormattata}\n` +
         `🕐 *Ora:* ${ora}\n` +
         `👥 *Persone:* ${persone}\n` +
+        prefLine +
         `📞 *Telefono:* ${telefono}\n` +
         `📧 *Email:* ${email}` +
         (note ? `\n📝 *Note:* ${note}` : '')

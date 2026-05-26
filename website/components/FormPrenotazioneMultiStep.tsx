@@ -216,6 +216,10 @@ export default function FormPrenotazioneMultiStep({
   const autoAdvanceRef  = useRef(0)
   const userChangedDate = useRef(false)
 
+  // ── Refresh disponibilità (forzato dopo errore slot_pieno) ──────────────
+
+  const [refreshKey, setRefreshKey] = useState(0)
+
   // ── Submit ───────────────────────────────────────────────────────────────
 
   const [stato, setStato]     = useState<'pronto' | 'inviando' | 'successo' | 'errore'>('pronto')
@@ -286,14 +290,22 @@ export default function FormPrenotazioneMultiStep({
 
         const visti = new Set<string>()
         for (const fascia of fasceFiltrate) {
-          const primo = fascia.slots.find((s: Slot) => !s.pieno && !visti.has(s.ora))
+          const primo = fascia.slots.find((s: Slot) => s.disponibili >= persone && !visti.has(s.ora))
           if (primo) { setOraSelezionata(primo.ora); break }
           fascia.slots.forEach((s: Slot) => visti.add(s.ora))
         }
         setDisponibilita('pronto')
       })
       .catch(() => setDisponibilita('chiuso'))
-  }, [data, orario, orarioFine, haRange, ricorrente, isEventoMode, orarioFisso])
+  }, [data, orario, orarioFine, haRange, ricorrente, isEventoMode, orarioFisso, refreshKey])
+
+  // ── Invalida slot selezionato se persone cambiano ────────────────────────
+
+  useEffect(() => {
+    if (!oraSelezionata || orarioFisso) return
+    const slot = fasce.flatMap(f => f.slots).find(s => s.ora === oraSelezionata)
+    if (slot && slot.disponibili < persone) setOraSelezionata('')
+  }, [persone, fasce, oraSelezionata, orarioFisso])
 
   // ── Navigazione step ──────────────────────────────────────────────────────
 
@@ -334,6 +346,18 @@ export default function FormPrenotazioneMultiStep({
           consenso_marketing: consensoMarketing,
         }),
       })
+      if (res.status === 409) {
+        const json = await res.json() as { error?: string }
+        if (json.error === 'slot_pieno') {
+          setErroreMsg('Questo orario non è più disponibile per il numero di persone scelto. Torna indietro e scegli un altro slot.')
+          setOraSelezionata('')
+          setRefreshKey(k => k + 1)
+        } else {
+          setErroreMsg('Si è verificato un errore. Riprova o contattaci direttamente.')
+        }
+        setStato('pronto')
+        return
+      }
       if (!res.ok) throw new Error()
       track.bookingComplete()
       setStato('successo')
@@ -346,7 +370,7 @@ export default function FormPrenotazioneMultiStep({
 
   // ── Slot helpers ──────────────────────────────────────────────────────────
 
-  const slotsDisponibili = fasce.flatMap(f => f.slots).filter(s => !s.pieno)
+  const slotsDisponibili = fasce.flatMap(f => f.slots).filter(s => s.disponibili >= persone)
   const fascePerOrario   = oraSelezionata
     ? fasce.filter(f => f.slots.some(s => s.ora === oraSelezionata))
     : []
@@ -364,6 +388,8 @@ export default function FormPrenotazioneMultiStep({
     if (disponibilita !== 'pronto') return false
     if (!oraSelezionata) return false
     if (slotsDisponibili.length === 0) return false
+    const slotSelezionato = fasce.flatMap(f => f.slots).find(s => s.ora === oraSelezionata)
+    if (slotSelezionato && slotSelezionato.disponibili < persone) return false
     if (!isEventoMode && fascePerOrario.length > 1 && fasceSelezionate.length === 0) return false
     return true
   })()
@@ -568,14 +594,16 @@ export default function FormPrenotazioneMultiStep({
                               </p>
                             )}
                             <div className="flex flex-wrap gap-2">
-                              {fascia.slots.map(slot => (
+                              {fascia.slots.map(slot => {
+                                const nonDisponibile = slot.disponibili < persone
+                                return (
                                 <button
                                   key={`${fi}-${slot.ora}`}
                                   type="button"
-                                  disabled={slot.pieno}
+                                  disabled={nonDisponibile}
                                   onClick={() => setOraSelezionata(slot.ora)}
                                   className={`px-5 rounded-btn border font-light transition-colors ${
-                                    slot.pieno
+                                    nonDisponibile
                                       ? 'opacity-30 cursor-not-allowed border-neutral-200 text-neutral-400'
                                       : oraSelezionata === slot.ora
                                         ? 'border-brand bg-brand/10 text-brand'
@@ -583,9 +611,10 @@ export default function FormPrenotazioneMultiStep({
                                   }`}
                                   style={{ fontSize: 'var(--text-body)', minHeight: '48px' }}
                                 >
-                                  {slot.ora}{slot.pieno ? ' — esaurito' : ''}
+                                  {slot.ora}{nonDisponibile ? (slot.pieno ? ' — esaurito' : ' — non disponibile') : ''}
                                 </button>
-                              ))}
+                                )
+                              })}
                             </div>
                           </div>
                         ))}

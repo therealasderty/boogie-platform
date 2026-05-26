@@ -54,8 +54,8 @@ function isGiornoChiuso(dateStr, orari, chiusure) {
 
 function PrefBadge({ preferenza }) {
   if (!preferenza) return null
-  const hasPizza  = preferenza.includes('Pizza')
-  const hasCucina = preferenza.includes('Cucina')
+  const hasPizza  = preferenza.toLowerCase().includes('pizza')
+  const hasCucina = preferenza.toLowerCase().includes('cucina')
   return (
     <span className={styles.prefBadge}>
       {hasPizza  && <span className={styles.prefPizza}>🍕</span>}

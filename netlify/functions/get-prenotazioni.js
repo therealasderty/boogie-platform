@@ -56,7 +56,7 @@ exports.handler = async (event) => {
       const formula = encodeURIComponent(
         `AND(DATETIME_FORMAT({Data},'YYYY-MM-DD') >= "${dataInizio}", DATETIME_FORMAT({Data},'YYYY-MM-DD') <= "${dataFine}", {Stato} != "Cancellata")`
       );
-      const fields = ['Nome','Data','Ora','Persone','Stato','Note','Telefono','Preferenza','Evento']
+      const fields = ['Nome','Data','Ora','Persone','Stato','Note','Telefono','Preferenza','Evento','Email']
         .map(f => `fields[]=${encodeURIComponent(f)}`).join('&');
       const res = await fetch(
         `${AT_BASE}?filterByFormula=${formula}&${fields}&sort[0][field]=Data&sort[0][direction]=asc&sort[1][field]=Ora&sort[1][direction]=asc`,
@@ -79,8 +79,8 @@ exports.handler = async (event) => {
       const perGiorno = giorni.map(data => {
         const pren = prenotazioni.filter(p => p.data === data);
         const totPersone = pren.reduce((s, p) => s + p.persone, 0);
-        const pizza  = pren.filter(p => p.preferenza?.includes('Pizza')).length;
-        const cucina = pren.filter(p => p.preferenza?.includes('Cucina')).length;
+        const pizza  = pren.filter(p => p.preferenza?.toLowerCase().includes('pizza')).length;
+        const cucina = pren.filter(p => p.preferenza?.toLowerCase().includes('cucina')).length;
         return { data, prenotazioni: pren, totPrenotazioni: pren.length, totPersone, pizza, cucina };
       });
       return { statusCode: 200, headers, body: JSON.stringify({ success: true, giorni: perGiorno }) };
@@ -98,6 +98,8 @@ exports.handler = async (event) => {
       url.searchParams.append('fields[]', 'Stato');
       url.searchParams.append('fields[]', 'Note');
       url.searchParams.append('fields[]', 'Telefono');
+      url.searchParams.append('fields[]', 'Email');
+      url.searchParams.append('fields[]', 'Preferenza');
       url.searchParams.append('fields[]', 'Evento');
       url.searchParams.set('filterByFormula', "NOT({Stato}='Cancellata')");
       if (offset) url.searchParams.set('offset', offset);
@@ -115,15 +117,17 @@ exports.handler = async (event) => {
     const prenotazioni = allRecords
       .filter(r => r.fields.Data && r.fields.Ora)
       .map(r => ({
-        id:       r.id,
-        nome:     r.fields.Nome || '',
-        data:     r.fields.Data,
-        ora:      r.fields.Ora,
-        persone:  r.fields.Persone || 0,
-        stato:    r.fields.Stato || '',
-        note:     r.fields.Note || '',
-        telefono: r.fields.Telefono || '',
-        evento:   r.fields.Evento || '',
+        id:         r.id,
+        nome:       r.fields.Nome || '',
+        data:       r.fields.Data,
+        ora:        r.fields.Ora,
+        persone:    r.fields.Persone || 0,
+        stato:      r.fields.Stato || '',
+        note:       r.fields.Note || '',
+        telefono:   r.fields.Telefono || '',
+        email:      r.fields.Email || '',
+        preferenza: r.fields.Preferenza || '',
+        evento:     r.fields.Evento || '',
       }));
 
     return { statusCode: 200, headers, body: JSON.stringify({ success: true, prenotazioni }) };

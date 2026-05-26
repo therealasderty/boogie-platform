@@ -58,7 +58,7 @@ function EventoContenuto({ info }) {
 
 function ModalDettaglio({ evento, onClose, onEdit }) {
   if (!evento) return null
-  const { ora, persone, stato, note, telefono, evento: nomeEvento } = evento.extendedProps
+  const { ora, persone, stato, note, telefono, preferenza, evento: nomeEvento } = evento.extendedProps
   const statoInfo = STATO_INFO[stato] || { color: '#7A6448', bg: 'rgba(122,100,72,0.1)' }
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
@@ -79,6 +79,7 @@ function ModalDettaglio({ evento, onClose, onEdit }) {
           {nomeEvento && <div className={styles.modalRiga}><span className={styles.modalLabel}>Evento</span><span className={styles.modalVal} style={{ color: 'var(--gold)' }}>{nomeEvento}</span></div>}
           <div className={styles.modalRiga}><span className={styles.modalLabel}>Orario</span><span className={styles.modalVal}>{ora}</span></div>
           <div className={styles.modalRiga}><span className={styles.modalLabel}>Persone</span><span className={styles.modalVal}>{persone}</span></div>
+          {preferenza && <div className={styles.modalRiga}><span className={styles.modalLabel}>Preferenza</span><span className={styles.modalVal}>{preferenza.toLowerCase() === 'pizza' ? '🍕 Pizza' : '🍽️ Cucina'}</span></div>}
           {telefono && <div className={styles.modalRiga}><span className={styles.modalLabel}>Telefono</span><a href={`tel:${telefono}`} className={styles.modalTel}>{telefono}</a></div>}
           {note && (
             <div className={styles.modalNote}>
@@ -150,12 +151,12 @@ export default function CalendarioPanel() {
 
   function apriEdit() {
     if (!eventoSelezionato) return
-    const { ora, persone, stato, note, telefono, email, evento } = eventoSelezionato.extendedProps
+    const { ora, persone, stato, note, telefono, email, preferenza, evento } = eventoSelezionato.extendedProps
     setPrenotazioneEdit({
       id:     eventoSelezionato.id,
       nome:   eventoSelezionato.title,
       data:   eventoSelezionato.startStr?.split('T')[0],
-      ora, persone, stato, note, telefono, email: email || '', evento: evento || '',
+      ora, persone, stato, note, telefono, email: email || '', preferenza: preferenza || '', evento: evento || '',
     })
     setEventoSelezionato(null)
   }
