@@ -4,7 +4,7 @@ exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
   };
 
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers, body: '' };
@@ -32,7 +32,7 @@ exports.handler = async (event) => {
         giorno:       r.fields['Giorno'] !== undefined ? r.fields['Giorno'] : null,
         dataInizio:   r.fields['Data inizio'] || '',
         dataFine:     r.fields['Data fine'] || '',
-        fascia:       r.fields['Fascia'] || '',
+        fasce:        Array.isArray(r.fields['Fascia']) ? r.fields['Fascia'] : (r.fields['Fascia'] ? [r.fields['Fascia']] : []),
       }));
       return { statusCode: 200, headers, body: JSON.stringify({ success: true, chiusure }) };
     } catch (err) {
@@ -55,7 +55,7 @@ exports.handler = async (event) => {
     let data;
     try { data = JSON.parse(event.body); } catch { return { statusCode: 400, headers, body: 'Invalid JSON' }; }
 
-    const { descrizione, tipo, tipoApertura, giorno, dataInizio, dataFine, fascia } = data;
+    const { descrizione, tipo, tipoApertura, giorno, dataInizio, dataFine, fasce } = data;
     if (!tipo) return { statusCode: 400, headers, body: 'Tipo obbligatorio' };
 
     const fields = {
@@ -69,11 +69,7 @@ exports.handler = async (event) => {
       if (dataInizio) fields['Data inizio'] = dataInizio;
       if (dataFine)   fields['Data fine']   = dataFine;
     }
-    if (fascia) {
-      // fascia può essere stringa o array
-      const fasciaArr = Array.isArray(fascia) ? fascia : (fascia ? [fascia] : []);
-      if (fasciaArr.length > 0) fields['Fascia'] = fasciaArr;
-    }
+    if (Array.isArray(fasce) && fasce.length > 0) fields['Fascia'] = fasce;
 
     const res = await fetch(
       `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_CHIUSURE)}`,
@@ -87,5 +83,34 @@ exports.handler = async (event) => {
     return { statusCode: res.ok ? 200 : 500, headers, body: JSON.stringify({ success: res.ok, id: result.id }) };
   }
 
-  return { statusCode: 405, headers, body: 'Method Not Allowed' };
+  if (event.httpMethod === 'PATCH') {
+    let data;
+    try { data = JSON.parse(event.body); } catch { return { statusCode: 400, headers, body: 'Invalid JSON' }; }
+
+    const { id, descrizione, tipo, tipoApertura, giorno, dataInizio, dataFine, fasce } = data;
+    if (!id) return { statusCode: 400, headers, body: 'ID mancante' };
+
+    const fields = {
+      'Descrizione':   descrizione || '',
+      'Tipo apertura': tipoApertura || 'Chiusura',
+    };
+
+    if (tipo) fields['Tipo'] = tipo;
+    if (tipo === 'Ricorrente' && giorno !== undefined && giorno !== null) fields['Giorno'] = parseInt(giorno);
+    if (dataInizio) fields['Data inizio'] = dataInizio;
+    if (dataFine)   fields['Data fine']   = dataFine;
+    fields['Fascia'] = Array.isArray(fasce) && fasce.length > 0 ? fasce : [];
+
+    const res = await fetch(
+      `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_CHIUSURE)}/${id}`,
+      {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields })
+      }
+    );
+    return { statusCode: res.ok ? 200 : 500, headers, body: JSON.stringify({ success: res.ok }) };
+  }
+
+  return { statusCode: 405, headers, body: JSON.stringify({ success: false, error: 'Method Not Allowed' }) };
 };
