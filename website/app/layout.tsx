@@ -10,6 +10,7 @@ import type { EventoAgenda } from "@/lib/agenda";
 import { PageContextProvider } from "@/lib/page-context"
 import PopupManager from "@/components/PopupManager";
 import PageTransition from "@/components/PageTransition";
+import BannerChiusure from "@/components/BannerChiusure";
 import { fetchMedia } from "@/lib/media";
 import { openGraphImageUrl } from "@/lib/imagekit-delivery";
 
@@ -51,6 +52,16 @@ export default async function RootLayout({
   const [orari, chiusure, eventiRaw] = await Promise.all([fetchOrari(), fetchChiusure(), fetchEventi()])
   const orariDisplay = buildOrariLines(orari, chiusure)
   const oggi = new Date().toISOString().split('T')[0]
+  const fra7gg = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  const eventiBanner = chiusure
+    .filter(c => c.tipo === 'Data specifica' && c.dataInizio && c.dataInizio <= fra7gg && (c.dataFine || c.dataInizio) >= oggi)
+    .map(c => ({
+      tipo: c.tipoApertura,
+      descrizione: c.descrizione,
+      dataInizio: c.dataInizio,
+      dataFine: c.dataFine || c.dataInizio,
+      fasce: c.fasce,
+    }))
   const eventiNavbar: EventoAgenda[] = [
     ...eventiRaw.filter(e => !e.ricorrente && e.data && e.data >= oggi && e.stato === 'attivo').slice(0, 3),
     ...eventiRaw.filter(e => e.ricorrente && e.stato === 'attivo').slice(0, 2),
@@ -94,6 +105,7 @@ export default async function RootLayout({
         />
         <PageContextProvider>
           <Navbar orariDisplay={orariDisplay} eventi={eventiNavbar} />
+          <BannerChiusure eventi={eventiBanner} />
           <PageTransition>{children}</PageTransition>
           <PopupManager />
           <CookieBanner />

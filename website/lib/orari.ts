@@ -7,6 +7,7 @@ export interface ChiusuraRecord {
   dataInizio: string
   dataFine: string
   descrizione: string
+  fasce: string[]
 }
 
 export interface OrarioRecord {
@@ -255,6 +256,7 @@ export async function fetchChiusure(): Promise<ChiusuraRecord[]> {
       dataInizio:   String(r.fields['Data inizio'] ?? ''),
       dataFine:     String(r.fields['Data fine'] ?? ''),
       descrizione:  String(r.fields['Descrizione'] ?? ''),
+      fasce:        Array.isArray(r.fields['Fascia']) ? r.fields['Fascia'] as string[] : [],
     }))
   } catch {
     return []
