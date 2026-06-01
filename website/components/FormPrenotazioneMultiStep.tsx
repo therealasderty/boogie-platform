@@ -461,7 +461,8 @@ export default function FormPrenotazioneMultiStep({
             </div>
             {maxPersone >= 10 && (
               <p className="mt-3 text-neutral-400 font-light" style={{ fontSize: 'var(--text-meta)' }}>
-                Per gruppi &gt; 10 persone contattaci direttamente.
+                Per gruppi &gt; 10 persone{' '}
+                <a href="tel:+393465813309" className="underline underline-offset-2 hover:text-neutral-200 transition-colors">contattaci direttamente</a>.
               </p>
             )}
             <div className="mt-8 flex justify-end">
