@@ -80,7 +80,7 @@ export default function BannerChiusure({ eventi }: { eventi: Evento[] }) {
 
   return (
     <div
-      className="sticky top-0 z-[45] w-full flex items-center justify-between gap-3 px-4 md:px-8"
+      className="fixed bottom-16 left-0 right-0 z-[45] lg:sticky lg:top-0 lg:bottom-auto w-full flex items-center justify-between gap-3 px-4 md:px-8"
       style={{
         height: 44,
         backgroundColor: isApertura ? '#1a3d1f' : '#3d1a1a',
