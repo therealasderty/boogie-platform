@@ -245,8 +245,8 @@ Tempi di revalidate centralizzati in `website/lib/revalidate.ts`:
 | `get-popup.js` | no | GET evento `InPrimoPiano=true` per popup |
 | `gestisci-orari.js` | sì | PATCH orari apertura |
 | `get-orari.js` | no | GET orari formattati |
-| `gestisci-chiusure.js` | sì | CRUD chiusure straordinarie |
-| `get-chiusure.js` | no | GET chiusure |
+| `gestisci-chiusure.js` | sì | CRUD chiusure straordinarie. GET restituisce `fasce[]` (array). POST/PATCH leggono `fasce[]`. PATCH aggiunge/aggiorna record esistenti |
+| `get-chiusure.js` | — | Non esiste — il sito legge Airtable direttamente tramite `fetchChiusure()` in `website/lib/orari.ts` |
 | `pulizia-chiusure.js` | — | **CRON** lunedì 3:00 — rimuove chiusure scadute |
 
 ### Local SEO
@@ -291,6 +291,8 @@ Tempi di revalidate centralizzati in `website/lib/revalidate.ts`:
 
 ### Misc
 `auth.js`, `verifyToken.js`, `note.js`, `dati-dashboard.js`, `feedback.js`, `salva-feedback.js`, `get-umami-stats.js`
+
+> **`send-reminders.mjs`** — esiste nel codice ma lo schedule è stato **rimosso dal netlify.toml (2026-06-01)**. Non viene più eseguito automaticamente. Per riabilitarlo aggiungere `[functions.send-reminders] schedule = "30 9 * * *"` in `netlify.toml`.
 
 ---
 
@@ -443,4 +445,24 @@ In Next.js 16.2.3 con Turbopack, avere `turbopack: {}` esplicito in `next.config
 ### GestisciOrariPanel — layout desktop
 `.wrapper` in `GestisciOrariPanel.module.css` ha `max-width: 900px` per evitare che i tab (Orari, Chiusure, Conferma) si allarghino eccessivamente su desktop wide. Si applica a tutti e tre i tab.
 
-*Aggiornato: 24 Maggio 2026*
+### ChiusurePanel — fasce orarie (fix 2026-06-01)
+Il campo `Fascia` in Airtable (tabella Chiusure) è **Multi-select** con valori `Pranzo` e `Cena`.
+- `gestisci-chiusure.js` GET restituisce `fasce[]` (array, non stringa)
+- POST/PATCH inviano `fasce[]` — il componente `ChiusurePanel.jsx` usa sempre `form.fasce` (array)
+- Mancava l'handler PATCH: aggiunto — senza di esso la modifica non persisteva su Airtable
+- `fetchChiusure()` in `website/lib/orari.ts` ora mappa `fasce[]` nel tipo `ChiusuraRecord`
+
+### Banner chiusure/aperture straordinarie (2026-06-01)
+`website/components/BannerChiusure.tsx` — striscia sticky sotto la navbar, visibile quando ci sono chiusure o aperture straordinarie nei prossimi 7 giorni.
+- **Verde scuro** → apertura straordinaria · **Rosso scuro** → chiusura straordinaria
+- Badge "Apertura straordinaria" / "Chiusura straordinaria" + testo formato automatico (data singola o range, fasce se specificate)
+- Link "Prenota →" solo per le aperture straordinarie
+- Se più eventi: dots + rotazione automatica ogni 4s
+- Dismiss con localStorage TTL 24h (chiave `bb-banner-chiusure`)
+- Posizione: `sticky top-0 z-[45]` — sta sotto le navbar fixed (`z-50`) quando l'utente scrolla
+- Montato in `layout.tsx` tra `<Navbar>` e `<PageTransition>`, riceve `eventiBanner` filtrati lato server (SSR, revalidate 1 giorno)
+
+### Form prenotazione — link telefono gruppi >10 (2026-06-01)
+In `FormPrenotazioneMultiStep.tsx` il testo "contattaci direttamente" per gruppi >10 persone è ora un link `tel:+393465813309`.
+
+*Aggiornato: 1 Giugno 2026*
