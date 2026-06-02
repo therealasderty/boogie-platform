@@ -452,17 +452,18 @@ Il campo `Fascia` in Airtable (tabella Chiusure) è **Multi-select** con valori 
 - Mancava l'handler PATCH: aggiunto — senza di esso la modifica non persisteva su Airtable
 - `fetchChiusure()` in `website/lib/orari.ts` ora mappa `fasce[]` nel tipo `ChiusuraRecord`
 
-### Banner chiusure/aperture straordinarie (2026-06-01)
-`website/components/BannerChiusure.tsx` — striscia sticky sotto la navbar, visibile quando ci sono chiusure o aperture straordinarie nei prossimi 7 giorni.
+### Banner chiusure/aperture straordinarie (2026-06-01, fix 2026-06-02)
+`website/components/BannerChiusure.tsx` — striscia visibile quando ci sono chiusure o aperture straordinarie nei prossimi 7 giorni.
 - **Verde scuro** → apertura straordinaria · **Rosso scuro** → chiusura straordinaria
 - Badge "Apertura straordinaria" / "Chiusura straordinaria" + testo formato automatico (data singola o range, fasce se specificate)
 - Link "Prenota →" solo per le aperture straordinarie
-- Se più eventi: dots + rotazione automatica ogni 4s
 - Dismiss con localStorage TTL 24h (chiave `bb-banner-chiusure`)
-- Posizione: `sticky top-0 z-[45]` — sta sotto le navbar fixed (`z-50`) quando l'utente scrolla
-- Montato in `layout.tsx` tra `<Navbar>` e `<PageTransition>`, riceve `eventiBanner` filtrati lato server (SSR, revalidate 1 giorno)
+- **Desktop** (`lg+`): `sticky top-20 z-[45]` — si posiziona esattamente sotto la navbar scrollata (h-20). Se più eventi: dots + rotazione 5s
+- **Mobile**: `fixed bottom-16 z-[45]` — sopra la bottom bar (h-16). Testo marquee infinito (`@keyframes marquee` in globals.css, 18s) con testo duplicato per seamless loop. X fissa a destra
+- Filtraggio date eseguito **lato client** con `Date.now()` reale (evita stale date da ISR cache) — eventi con `dataFine` passata non vengono mostrati
+- Montato in `layout.tsx` tra `<Navbar>` e `<PageTransition>`, riceve `eventiBanner` dal server (revalidate 1 giorno)
 
 ### Form prenotazione — link telefono gruppi >10 (2026-06-01)
 In `FormPrenotazioneMultiStep.tsx` il testo "contattaci direttamente" per gruppi >10 persone è ora un link `tel:+393465813309`.
 
-*Aggiornato: 1 Giugno 2026*
+*Aggiornato: 2 Giugno 2026*
