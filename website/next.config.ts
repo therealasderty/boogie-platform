@@ -14,6 +14,8 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'ik.imagekit.io' },
       // Cloudinary (ottimizzazione immagini)
       { protocol: 'https', hostname: 'res.cloudinary.com' },
+      // Cloudflare R2 (media website)
+      { protocol: 'https', hostname: '*.r2.dev' },
       // Airtable attachments
       { protocol: 'https', hostname: 'v5.airtableusercontent.com' },
       { protocol: 'https', hostname: 'v4.airtableusercontent.com' },

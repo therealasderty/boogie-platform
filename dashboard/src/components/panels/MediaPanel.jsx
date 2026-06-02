@@ -5,12 +5,12 @@ import { CSS } from '@dnd-kit/utilities'
 import { useMedia } from '../../hooks/useMedia'
 import { IconImages, IconPlus, IconTrash, IconEdit, IconRefresh, IconClose, IconCheck } from '../../icons/index.jsx'
 
-import { uploadToImageKit } from '../../lib/imagekit.js'
+import { uploadMediaToR2 } from '../../lib/r2-media.js'
 
 const AIRTABLE_TOKEN   = import.meta.env.VITE_AIRTABLE_TOKEN
 const AIRTABLE_BASE_ID = import.meta.env.VITE_AIRTABLE_BASE_ID
 
-function useImageKitUpload(onUpload, onError) {
+function useR2Upload(onUpload, onError) {
   const inputRef = useRef(null)
   const [uploading, setUploading] = useState(false)
   const onUploadRef = useRef(onUpload)
@@ -25,7 +25,7 @@ function useImageKitUpload(onUpload, onError) {
     if (!file) return
     setUploading(true)
     try {
-      const url = await uploadToImageKit(file, 'media')
+      const url = await uploadMediaToR2(file)
       onUploadRef.current(url)
     } catch (err) {
       onErrorRef.current?.(err.message)
@@ -60,7 +60,7 @@ function MediaModal({ item, onClose, onSave, tagEsistenti = [] }) {
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState(null)
 
-  const { open: openWidget, input: cloudinaryInput, uploading } = useImageKitUpload(
+  const { open: openWidget, input: cloudinaryInput, uploading } = useR2Upload(
     url => { setForm(f => ({ ...f, url })); setError(null) },
     msg => setError(`Upload fallito: ${msg}`)
   )
