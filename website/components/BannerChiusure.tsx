@@ -23,13 +23,12 @@ function capitalize(s: string) {
 function buildTesto(ev: Evento): string {
   const isApertura = ev.tipo === 'Apertura straordinaria'
   const isSingleDay = !ev.dataFine || ev.dataFine === ev.dataInizio
-
   const fascePart = ev.fasce.length > 0 ? ` (solo ${ev.fasce.join(' e ')})` : ''
 
   if (isSingleDay) {
     const giorno = capitalize(formatDate(ev.dataInizio))
     return isApertura
-      ? `${giorno} siamo aperti${fascePart} — prenota il tuo tavolo`
+      ? `${giorno} siamo aperti${fascePart}`
       : `${giorno} siamo chiusi${fascePart}`
   }
 
@@ -37,7 +36,7 @@ function buildTesto(ev: Evento): string {
   const fine = new Date(ev.dataFine + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })
 
   return isApertura
-    ? `Dal ${inizio} al ${fine} siamo aperti${fascePart} — prenota il tuo tavolo`
+    ? `Dal ${inizio} al ${fine} siamo aperti${fascePart}`
     : `Dal ${inizio} al ${fine} siamo chiusi${fascePart}`
 }
 
@@ -56,20 +55,25 @@ function markDismissed() {
   try { localStorage.setItem(STORAGE_KEY, String(Date.now())) } catch {}
 }
 
-export default function BannerChiusure({ eventi }: { eventi: Evento[] }) {
+export default function BannerChiusure({ eventi: eventiProp }: { eventi: Evento[] }) {
   const [visible, setVisible] = useState(false)
   const [active, setActive] = useState(0)
+  const [eventi, setEventi] = useState<Evento[]>([])
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  // Filtra lato client con data reale (evita stale server date da ISR cache)
   useEffect(() => {
-    if (!wasDismissed()) setVisible(true)
-  }, [])
+    const oggi = new Date().toISOString().split('T')[0]
+    const filtrati = eventiProp.filter(ev => (ev.dataFine || ev.dataInizio) >= oggi)
+    setEventi(filtrati)
+    if (filtrati.length > 0 && !wasDismissed()) setVisible(true)
+  }, [eventiProp])
 
   useEffect(() => {
     if (!visible || eventi.length <= 1) return
     intervalRef.current = setInterval(() => {
       setActive(i => (i + 1) % eventi.length)
-    }, 4000)
+    }, 5000)
     return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
   }, [visible, eventi.length])
 
@@ -77,67 +81,92 @@ export default function BannerChiusure({ eventi }: { eventi: Evento[] }) {
 
   const ev = eventi[active]
   const isApertura = ev.tipo === 'Apertura straordinaria'
+  const testo = buildTesto(ev)
+  const badge = isApertura ? 'Apertura straordinaria' : 'Chiusura straordinaria'
+  const bgColor = isApertura ? '#1a3d1f' : '#3d1a1a'
+
+  // Testo completo per il marquee (badge + testo + eventuale "Prenota →" hint)
+  const testoCompleto = `${badge} · ${testo}${isApertura ? ' — Prenota il tuo tavolo' : ''}`
 
   return (
-    <div
-      className="fixed bottom-16 left-0 right-0 z-[45] lg:sticky lg:top-0 lg:bottom-auto w-full flex items-center justify-between gap-3 px-4 md:px-8"
-      style={{
-        height: 44,
-        backgroundColor: isApertura ? '#1a3d1f' : '#3d1a1a',
-        color: '#fff',
-        fontSize: 'var(--text-meta)',
-      }}
-    >
-      {/* testo */}
-      <div className="flex items-center gap-2 min-w-0 overflow-hidden">
-        <span
-          className="hidden sm:inline-block shrink-0 text-[0.65rem] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-pill"
-          style={{
-            backgroundColor: isApertura ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.15)',
-            letterSpacing: '0.1em',
-          }}
-        >
-          {isApertura ? 'Apertura straordinaria' : 'Chiusura straordinaria'}
-        </span>
-        <span className="truncate opacity-90 font-light">
-          {buildTesto(ev)}
-        </span>
-        {isApertura && (
-          <Link
-            href="/prenota"
-            className="shrink-0 hidden sm:inline-block underline underline-offset-2 opacity-80 hover:opacity-100 transition-opacity font-medium ml-1"
-            style={{ fontSize: 'var(--text-meta)' }}
+    <>
+      {/* ── Desktop: sticky sotto la navbar (top-20 = h-20 della navbar scrollata) ── */}
+      <div
+        className="hidden lg:flex sticky top-20 z-[45] w-full items-center justify-between gap-3 px-8"
+        style={{ height: 44, backgroundColor: bgColor, color: '#fff', fontSize: 'var(--text-meta)' }}
+      >
+        <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+          <span
+            className="shrink-0 text-[0.65rem] font-semibold uppercase px-2 py-0.5 rounded-pill"
+            style={{ backgroundColor: 'rgba(255,255,255,0.15)', letterSpacing: '0.1em' }}
           >
-            Prenota →
-          </Link>
-        )}
+            {badge}
+          </span>
+          <span className="truncate opacity-90 font-light">{testo}</span>
+          {isApertura && (
+            <Link
+              href="/prenota"
+              className="shrink-0 underline underline-offset-2 opacity-80 hover:opacity-100 transition-opacity font-medium ml-1 whitespace-nowrap"
+              style={{ fontSize: 'var(--text-meta)' }}
+            >
+              Prenota →
+            </Link>
+          )}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {eventi.length > 1 && (
+            <div className="flex gap-1">
+              {eventi.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActive(i)}
+                  className="w-1.5 h-1.5 rounded-full transition-opacity"
+                  style={{ backgroundColor: '#fff', opacity: i === active ? 1 : 0.35 }}
+                  aria-label={`Evento ${i + 1}`}
+                />
+              ))}
+            </div>
+          )}
+          <button
+            onClick={() => { markDismissed(); setVisible(false) }}
+            aria-label="Chiudi"
+            className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/15 transition-colors"
+          >
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+              <path d="M1 1L11 11M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
       </div>
 
-      {/* dots (se più eventi) + chiudi */}
-      <div className="flex items-center gap-2 shrink-0">
-        {eventi.length > 1 && (
-          <div className="flex gap-1">
-            {eventi.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setActive(i)}
-                className="w-1.5 h-1.5 rounded-full transition-opacity"
-                style={{ backgroundColor: '#fff', opacity: i === active ? 1 : 0.35 }}
-                aria-label={`Evento ${i + 1}`}
-              />
-            ))}
+      {/* ── Mobile: fixed sopra la bottom bar, testo marquee infinito ── */}
+      <div
+        className="lg:hidden fixed bottom-16 left-0 right-0 z-[45] flex items-center"
+        style={{ height: 44, backgroundColor: bgColor, color: '#fff', fontSize: 'var(--text-meta)' }}
+      >
+        {/* Marquee area */}
+        <div className="flex-1 overflow-hidden min-w-0">
+          <div
+            className="flex whitespace-nowrap"
+            style={{ animation: 'marquee 18s linear infinite' }}
+          >
+            {/* Testo duplicato per seamless loop */}
+            <span className="opacity-90 font-light px-6">{testoCompleto}</span>
+            <span className="opacity-90 font-light px-6">{testoCompleto}</span>
           </div>
-        )}
+        </div>
+
+        {/* X chiudi — sempre visibile a destra */}
         <button
           onClick={() => { markDismissed(); setVisible(false) }}
           aria-label="Chiudi"
-          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/15 transition-colors"
+          className="shrink-0 w-10 h-full flex items-center justify-center hover:bg-white/15 transition-colors border-l border-white/20"
         >
           <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
             <path d="M1 1L11 11M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
           </svg>
         </button>
       </div>
-    </div>
+    </>
   )
 }

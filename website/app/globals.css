@@ -87,6 +87,11 @@
   to   { transform: scale(1)    translateX(-1%)   translateY(2%); }
 }
 
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 html {
   background: #1a1a1a; /* overscroll in fondo → colore footer */
   overflow-x: clip;    /* evita scroll orizzontale da animazioni translateX pre-trigger */
