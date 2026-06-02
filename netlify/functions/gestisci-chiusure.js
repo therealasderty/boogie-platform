@@ -1,16 +1,5 @@
 // netlify/functions/gestisci-chiusure.js
 
-async function revalidaChiusure() {
-  const sitoUrl = process.env.SITO_URL || 'https://boogiebistrot.com';
-  const secret  = process.env.REVALIDATE_SECRET;
-  if (!secret) return;
-  try {
-    await fetch(`${sitoUrl}/api/revalidate?tag=chiusure&secret=${secret}`, { method: 'POST' });
-  } catch {
-    // fire-and-forget, non blocca la risposta
-  }
-}
-
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -59,7 +48,6 @@ exports.handler = async (event) => {
       `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_CHIUSURE)}/${id}`,
       { method: 'DELETE', headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` } }
     );
-    if (res.ok) await revalidaChiusure();
     return { statusCode: res.ok ? 200 : 500, headers, body: JSON.stringify({ success: res.ok }) };
   }
 
@@ -92,7 +80,6 @@ exports.handler = async (event) => {
       }
     );
     const result = await res.json();
-    if (res.ok) await revalidaChiusure();
     return { statusCode: res.ok ? 200 : 500, headers, body: JSON.stringify({ success: res.ok, id: result.id }) };
   }
 
@@ -122,7 +109,6 @@ exports.handler = async (event) => {
         body: JSON.stringify({ fields })
       }
     );
-    if (res.ok) await revalidaChiusure();
     return { statusCode: res.ok ? 200 : 500, headers, body: JSON.stringify({ success: res.ok }) };
   }
 
