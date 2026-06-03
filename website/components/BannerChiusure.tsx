@@ -90,9 +90,9 @@ export default function BannerChiusure({ eventi: eventiProp }: { eventi: Evento[
 
   return (
     <>
-      {/* ── Desktop: sticky sotto la navbar (top-20 = h-20 della navbar scrollata) ── */}
+      {/* ── Desktop: fixed sotto la navbar (top-20 = h-20 della navbar scrollata) ── */}
       <div
-        className="hidden lg:flex sticky top-20 z-[45] w-full items-center justify-between gap-3 px-8"
+        className="hidden lg:flex fixed top-20 z-[45] w-full items-center justify-between gap-3 px-8"
         style={{ height: 44, backgroundColor: bgColor, color: '#fff', fontSize: 'var(--text-meta)' }}
       >
         <div className="flex items-center gap-2 min-w-0 overflow-hidden">
