@@ -160,9 +160,12 @@ async function migrateTable(tableName, fieldName) {
     }
 
     try {
-      // 1. Scarica originale da ImageKit
-      const dlRes = await fetch(origUrl)
-      if (!dlRes.ok) throw new Error(`Download fallito ${dlRes.status}`)
+      // 1. Scarica originale da ImageKit (User-Agent richiesto per evitare 503)
+      const dlRes = await fetch(origUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        signal: AbortSignal.timeout(90_000),
+      })
+      if (!dlRes.ok) throw new Error(`Download fallito ${dlRes.status} [${origUrl.slice(-80)}]`)
       const contentType = dlRes.headers.get('content-type') || 'image/jpeg'
       const buffer = Buffer.from(await dlRes.arrayBuffer())
 
