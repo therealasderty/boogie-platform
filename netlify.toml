@@ -4,6 +4,14 @@
   command = "npm run build"
   publish = ".next"
 
+[images]
+  remote_images = [
+    "https://pub-412a895afa8e491c84ad5df75bc1458b\\.r2\\.dev/.*",
+    "https://ik\\.imagekit\\.io/.*",
+    "https://v5\\.airtableusercontent\\.com/.*",
+    "https://.*\\.airtableusercontent\\.com/.*",
+  ]
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
