@@ -513,7 +513,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
               <div className="flex flex-col gap-0.5">
                 {orariDisplay.righe.map((r, i) => <span key={i}>{r}</span>)}
                 {orariDisplay.avvisoSettimana && (
-                  <span className="text-brand/80 text-xs mt-1">⚠ Orari cambiati questa settimana — controlla il calendario</span>
+                  <Link href="/eventi-speciali" className="text-brand/80 text-xs mt-1 hover:underline underline-offset-2">⚠ Orari cambiati questa settimana — controlla il calendario</Link>
                 )}
               </div>
             </div>

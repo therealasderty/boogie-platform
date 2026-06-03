@@ -216,7 +216,7 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
                     : <span>Lun–Ven 12:00–15:00 · 19:00–23:00</span>
                   }
                   {orariDisplay?.avvisoSettimana && (
-                    <span className="text-brand text-xs mt-1">⚠ Orari modificati questa settimana — controlla il calendario</span>
+                    <Link href="/eventi-speciali" className="text-brand text-xs mt-1 hover:underline underline-offset-2">⚠ Orari modificati questa settimana — controlla il calendario</Link>
                   )}
                 </div>
               </div>

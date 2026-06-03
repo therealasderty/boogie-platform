@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import PaginaHero from '@/components/PaginaHero'
 import Footer from '@/components/Footer'
 import FadeIn from '@/components/FadeIn'
@@ -141,9 +142,9 @@ export default async function ContattaciPage() {
                       ))}
                     </div>
                     {orariDisplay.avvisoSettimana && (
-                      <p className="text-brand/80 mt-2" style={{ fontSize: 'var(--text-meta)' }}>
+                      <Link href="/eventi-speciali" className="text-brand/80 mt-2 hover:underline underline-offset-2" style={{ fontSize: 'var(--text-meta)' }}>
                         ⚠ Orari modificati questa settimana — controlla il calendario
-                      </p>
+                      </Link>
                     )}
                   </div>
                 </div>
