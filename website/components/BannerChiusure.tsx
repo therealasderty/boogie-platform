@@ -100,8 +100,7 @@ export default function BannerChiusure({ eventi: eventiProp }: { eventi: Evento[
       {/* ── Desktop: fixed, top-0 se non scrollato, top-20 se scrollato (sotto navbar) ── */}
       <div
         className="hidden lg:flex fixed z-[45] w-full items-center justify-between gap-3 px-8 transition-all duration-300"
-        style={{ top: scrolled ? 80 : 0 }}
-        style={{ height: 44, backgroundColor: bgColor, color: '#fff', fontSize: 'var(--text-meta)' }}
+        style={{ top: scrolled ? 80 : 0, height: 44, backgroundColor: bgColor, color: '#fff', fontSize: 'var(--text-meta)' }}
       >
         <div className="flex items-center gap-2 min-w-0 overflow-hidden">
           <span
