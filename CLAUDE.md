@@ -396,6 +396,8 @@ Widget home: `AttesaWidget`, `MeteoWidget`, `RecensioniWidget`, `PrenotazioniWid
 - [ ] Testare flow Social Automation end-to-end (cron ora ogni 4 ore)
 - [ ] Configurare dominio custom su Netlify
 - [ ] **Multilingua (futuro):** `next-intl`, prefisso `/en /fr /de /es`, campi Airtable `_EN/_FR/_DE/_ES`
+- [x] **Risolto (2026-06-03)** — Migrazione image hosting ImageKit → Cloudflare R2. Upload media dashboard ora su R2 (`upload-media.js`). Netlify Image CDN per ottimizzazione. 6 foto 404 da sostituire manualmente.
+- [x] **Risolto (2026-06-03)** — Banner chiusure/aperture straordinarie: fix desktop (fixed + segue scroll), fix mobile (hamburger spostato a bottom-28), avviso orari modificati ora link a /eventi-speciali.
 
 ---
 
@@ -476,4 +478,4 @@ In `FormPrenotazioneMultiStep.tsx` il testo "contattaci direttamente" per gruppi
 ### Chiusure — revalidate 30 minuti (2026-06-02)
 `fetchChiusure()` in `website/lib/orari.ts` usa `revalidate: 1800` (30 minuti). On-demand revalidation valutata e abbandonata per complessità/inaffidabilità. Il BannerChiusure filtra le date lato client per evitare stale data da cache ISR.
 
-*Aggiornato: 3 Giugno 2026*
+*Aggiornato: 3 Giugno 2026 (sera)*
