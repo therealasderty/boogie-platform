@@ -30,7 +30,7 @@ export default function imageLoader({
   // R2 e altri URL esterni — Netlify Image CDN in produzione
   if (process.env.NODE_ENV === 'production') {
     const q = Math.min(Math.max(Math.round((quality ?? 75) * 0.94), 48), 72)
-    return `/.netlify/images?url=${encodeURIComponent(src)}&w=${width}&q=${q}&fm=auto`
+    return `/.netlify/images?url=${encodeURIComponent(src)}&w=${width}&q=${q}&fm=webp`
   }
 
   // Sviluppo: URL originale
