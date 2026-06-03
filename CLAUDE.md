@@ -360,8 +360,8 @@ Widget home: `AttesaWidget`, `MeteoWidget`, `RecensioniWidget`, `PrenotazioniWid
 | **Google Business Profile** | Pubblica Local Post (OAuth2 refresh token) |
 | **Telegram** | Notifiche nuove prenotazioni al ristorante |
 | **Umami** | Analytics pageview (tracking + API stats). Dati settimanali (visite, visitatori, pageviews, bounce rate, conversioni /prenota, top page) ora persistiti su Airtable via cron |
-| **ImageKit** | CDN e ottimizzazione immagini website (custom loader Next.js) |
-| **Cloudflare R2** | Storage slide social (upload via `upload-slide.js`) |
+| **ImageKit** | CDN per immagini vecchie (pre-migrazione). Bandwidth limit raggiunto — nessun nuovo upload |
+| **Cloudflare R2** | Storage permanente immagini media + slide social. `upload-media.js` (media), `upload-slide.js` (social). Zero egress |
 | **Open-Meteo** | Meteo widget dashboard (no API key) |
 
 ---
@@ -421,8 +421,15 @@ Widget home: `AttesaWidget`, `MeteoWidget`, `RecensioniWidget`, `PrenotazioniWid
 - `AttesaWidget` (Home dashboard) mostra le prenotazioni in attesa con bottone "Conferma" che apre la stessa pagina
 
 ### ImageKit & Cloudflare R2
-- **Website immagini** — `website/lib/imagekit-delivery.ts` custom loader Next.js. Sostituisce il default loader. `website/lib/cloudinary.ts` mantenuto solo per retrocompatibilità (restituisce URL originale senza proxy).
-- **Upload slide social (dashboard)** — migrato da ImageKit a **Cloudflare R2** (2026-05-07). `netlify/functions/upload-slide.js` carica PNG su R2 con AWS SigV4 nativo (zero dipendenze extra). Helper client: `dashboard/src/lib/r2.js`.
+- **Upload media (dashboard)** — migrato da ImageKit a **Cloudflare R2** (2026-06-02). `netlify/functions/upload-media.js` carica immagini sotto il prefisso `media/`. Helper client: `dashboard/src/lib/r2-media.js` → `uploadMediaToR2(file)`.
+- **Upload slide social (dashboard)** — migrato da ImageKit a **Cloudflare R2** (2026-05-07). `netlify/functions/upload-slide.js` carica PNG sotto `social_posts/`. Helper client: `dashboard/src/lib/r2.js`.
+- **Image loader website** (`website/image-loader.ts`) — gestisce tre casi:
+  1. URL `ik.imagekit.io` (foto vecchie non migrate) → trasformazione via ImageKit CDN
+  2. URL R2 e altri esterni in produzione → Netlify Image CDN (`/.netlify/images?url=...&w=...&q=...&fm=auto`) per ottimizzazione WebP/AVIF zero egress
+  3. Dev → URL originale
+- **Migrazione ImageKit → R2** (2026-06-03) — script `migrate-media-to-r2.mjs` alla root. Migrati ~77/83 record. 6 foto 404 (cancellate da ImageKit) da sostituire manualmente in Airtable: record Media `recP3zsnvll4IL2eo`, `recVmIA3KPVS56znf`, `recksHLl7fkaAsXck`, `recu8SCvC4Vdes8j4`; Agenda `recVmdWNfQIglh8vD`; Blog `recmPswNGVpBsIbik`.
+- **Airtable Base ID corretto**: `appo1z9qJbcQm2PQx` (non `appE7FPb3LSVHBQP5`).
+- **Env var dashboard** (Vite): `VITE_AIRTABLE_TOKEN`, `VITE_AIRTABLE_BASE_ID` — separate da `AIRTABLE_TOKEN`/`AIRTABLE_BASE_ID` usate dalle Netlify Functions.
 - Cloudinary non più usato nel progetto.
 
 ### Meta / Social
@@ -466,4 +473,7 @@ Il campo `Fascia` in Airtable (tabella Chiusure) è **Multi-select** con valori 
 ### Form prenotazione — link telefono gruppi >10 (2026-06-01)
 In `FormPrenotazioneMultiStep.tsx` il testo "contattaci direttamente" per gruppi >10 persone è ora un link `tel:+393465813309`.
 
-*Aggiornato: 2 Giugno 2026*
+### Chiusure — revalidate 30 minuti (2026-06-02)
+`fetchChiusure()` in `website/lib/orari.ts` usa `revalidate: 1800` (30 minuti). On-demand revalidation valutata e abbandonata per complessità/inaffidabilità. Il BannerChiusure filtra le date lato client per evitare stale data da cache ISR.
+
+*Aggiornato: 3 Giugno 2026*
