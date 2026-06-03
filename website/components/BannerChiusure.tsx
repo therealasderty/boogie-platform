@@ -59,7 +59,14 @@ export default function BannerChiusure({ eventi: eventiProp }: { eventi: Evento[
   const [visible, setVisible] = useState(false)
   const [active, setActive] = useState(0)
   const [eventi, setEventi] = useState<Evento[]>([])
+  const [scrolled, setScrolled] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   // Filtra lato client con data reale (evita stale server date da ISR cache)
   useEffect(() => {
@@ -90,9 +97,10 @@ export default function BannerChiusure({ eventi: eventiProp }: { eventi: Evento[
 
   return (
     <>
-      {/* ── Desktop: fixed sotto la navbar (top-20 = h-20 della navbar scrollata) ── */}
+      {/* ── Desktop: fixed, top-0 se non scrollato, top-20 se scrollato (sotto navbar) ── */}
       <div
-        className="hidden lg:flex fixed top-20 z-[45] w-full items-center justify-between gap-3 px-8"
+        className="hidden lg:flex fixed z-[45] w-full items-center justify-between gap-3 px-8 transition-all duration-300"
+        style={{ top: scrolled ? 80 : 0 }}
         style={{ height: 44, backgroundColor: bgColor, color: '#fff', fontSize: 'var(--text-meta)' }}
       >
         <div className="flex items-center gap-2 min-w-0 overflow-hidden">
