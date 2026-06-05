@@ -99,7 +99,7 @@ export default function BannerChiusure({ eventi: eventiProp }: { eventi: Evento[
     <>
       {/* ── Desktop: fixed, top-0 se non scrollato, top-20 se scrollato (sotto navbar) ── */}
       <div
-        className="hidden lg:flex fixed z-[45] w-full items-center justify-between gap-3 px-8 transition-all duration-300"
+        className="hidden lg:flex fixed z-[51] w-full items-center justify-between gap-3 px-8 transition-all duration-300"
         style={{ top: scrolled ? 80 : 0, height: 44, backgroundColor: bgColor, color: '#fff', fontSize: 'var(--text-meta)' }}
       >
         <div className="flex items-center gap-2 min-w-0 overflow-hidden">
@@ -148,18 +148,27 @@ export default function BannerChiusure({ eventi: eventiProp }: { eventi: Evento[
 
       {/* ── Mobile: fixed sopra la bottom bar, testo marquee infinito ── */}
       <div
-        className="lg:hidden fixed bottom-16 left-0 right-0 z-[45] flex items-center"
+        className="banner-chiusure-mobile fixed bottom-16 left-0 right-0 z-[51] flex items-center lg:hidden"
         style={{ height: 44, backgroundColor: bgColor, color: '#fff', fontSize: 'var(--text-meta)' }}
       >
         {/* Marquee area */}
         <div className="flex-1 overflow-hidden min-w-0">
           <div
-            className="flex whitespace-nowrap"
+            className="flex items-center whitespace-nowrap"
             style={{ animation: 'marquee 18s linear infinite' }}
           >
             {/* Testo duplicato per seamless loop */}
-            <span className="opacity-90 font-light px-6">{testoCompleto}</span>
-            <span className="opacity-90 font-light px-6">{testoCompleto}</span>
+            {[0, 1].map(i => (
+              <span key={i} className="flex items-center gap-2 px-6">
+                <span
+                  className="text-[0.65rem] font-semibold uppercase px-2 py-0.5 rounded-pill shrink-0"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.15)', letterSpacing: '0.1em' }}
+                >
+                  {badge}
+                </span>
+                <span className="opacity-90 font-light">{testo}{isApertura ? ' — Prenota il tuo tavolo' : ''}</span>
+              </span>
+            ))}
           </div>
         </div>
 

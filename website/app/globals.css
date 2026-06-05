@@ -137,6 +137,10 @@ body {
 :is(.rich-text, .faq-risposta) blockquote { border-left: 3px solid oklch(100% 0 0 / 20%); margin: 0.75em 0; padding: 4px 16px; color: oklch(100% 0 0 / 50%); font-style: italic; }
 :is(.rich-text, .faq-risposta) hr { border: none; border-top: 1px solid oklch(100% 0 0 / 10%); margin: 1.5em 0; }
 .rich-text img { max-width: 100%; height: auto; border-radius: 12px; margin: 1.5em 0; display: block; }
+.rich-text table { width: 100%; border-collapse: collapse; margin: 1.25em 0; font-size: 0.9rem; }
+.rich-text th { background: oklch(100% 0 0 / 8%); color: oklch(100% 0 0 / 90%); font-weight: 600; text-align: left; padding: 0.55em 0.75em; border: 1px solid oklch(100% 0 0 / 12%); }
+.rich-text td { padding: 0.5em 0.75em; border: 1px solid oklch(100% 0 0 / 10%); color: var(--color-text-muted); vertical-align: top; }
+.rich-text tr:nth-child(even) td { background: oklch(100% 0 0 / 3%); }
 
 /* ── Utility classes riusabili ─────────────────────────────────────────────── */
 
