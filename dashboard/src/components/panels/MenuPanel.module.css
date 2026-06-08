@@ -157,7 +157,7 @@
 .fieldGroup { display: flex; flex-direction: column; gap: 8px; }
 .fieldGroupLabel { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; color: var(--text2); }
 
-.checkGroup { display: flex; gap: 20px; flex-wrap: wrap; }
+.allergenGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
 .dividerLine { border: none; border-top: var(--border-style); margin: 4px 0; }
 
 .toggleRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }

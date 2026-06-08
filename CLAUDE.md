@@ -187,6 +187,7 @@ Tutti i form con dati cliente raccolgono `data_nascita` → inviata a Brevo come
 
 ### Interactive
 - **PopupManager.tsx** — Client, in `layout.tsx`. Fetch da `get-popup` dopo 3s. localStorage key `bb-popup-{slug}` con TTL 24h. Card fixed bottom-right, animazione cubic-bezier 0.6s.
+- **PopupChiusure.tsx** — Client, in `layout.tsx`. Riceve gli stessi `eventiBanner` del `BannerChiusure` (zero fetch extra). Mostra un modal centrato dopo 2s se ci sono chiusure/aperture straordinarie nei prossimi 7 giorni. Stesso localStorage key del banner (`bb-banner-chiusure`, TTL 24h): chiudere il popup chiude anche il banner e viceversa. Verde scuro per aperture (CTA "Prenota ora"), rosso scuro per chiusure ("Ho capito"). z-index 110.
 - **EventoPopup.tsx** — Card popup modale evento.
 - **CookieBanner.tsx** + **GestisciCookieButton.tsx** — Cookie consent con localStorage.
 - **Calendario.tsx** — Mini calendario giorni aperti/chiusi evento.
@@ -305,7 +306,7 @@ Tempi di revalidate centralizzati in `website/lib/revalidate.ts`:
 | `Blog` | Titolo, Slug, Autore, DataPubblicazione, Categoria, DescrizioneBreve, FotoHero, Contenuto (HTML), MetaTitle, MetaDescription, Pubblicato, Ordine |
 | `FAQ` | Domanda, Risposta (HTML), Ordine, Attivo |
 | `Localita` | Citta, Slug, ServiziAttivi (comma-separated), IntroText (HTML), MetaTitle, MetaDescription, Attiva, Ordine |
-| `Menu` | Nome, Categoria, Descrizione, Prezzo, Formato, BadgeIntolleranze, Ordine, Attivo |
+| `Menu` | Nome, Categoria, Descrizione, Prezzo, Formato, Sottocategoria, Ordine, Attivo, Etichetta, Note, Produttore, Regione, Prezzo2, Formato2, Senza Glutine (bool, legacy), Senza Lattosio (bool, legacy), **Allergeni** (text, CSV "1,3,7") — allergeni EU 1–14. `senzaGlutine`/`senzaLattosio` sul sito derivati da Allergeni (#1 assente = senza glutine, #7 assente = senza lattosio); fallback ai bool legacy se Allergeni vuoto |
 | `Media` | Url, Alt, Tag (multi), Ordine, SoloMobile |
 | `Orari` | Giorno, AperturaPranzo, ChiusuraPranzo, AperturaCena, ChiusuraCena, Chiuso |
 | `Prenotazioni` | Nome, Email, Telefono, Data, Ora, Persone, Fascia, Note, Stato, ConsensoMarketing |
@@ -478,4 +479,10 @@ In `FormPrenotazioneMultiStep.tsx` il testo "contattaci direttamente" per gruppi
 ### Chiusure — revalidate 30 minuti (2026-06-02)
 `fetchChiusure()` in `website/lib/orari.ts` usa `revalidate: 1800` (30 minuti). On-demand revalidation valutata e abbandonata per complessità/inaffidabilità. Il BannerChiusure filtra le date lato client per evitare stale data da cache ISR.
 
-*Aggiornato: 3 Giugno 2026 (sera)*
+### Allergeni menu (2026-06-08)
+Aggiunto campo `Allergeni` (Single line text, CSV "1,3,7") su Airtable tabella `Menu`. Contiene i numeri degli allergeni EU 1–14 presenti nel piatto.
+- **Dashboard** (`MenuPanel.jsx`) — griglia 14 checkbox nel modal di modifica, per tutte le categorie. I vecchi checkbox "Senza glutine" / "Senza lattosio" sono stati rimossi (ridondanti).
+- **Website** (`website/lib/menu.ts`) — `senzaGlutine` e `senzaLattosio` ora derivati da `Allergeni`: se la lista non è vuota, `senzaGlutine = #1 assente`, `senzaLattosio = #7 assente`. Se `Allergeni` è vuoto, fallback ai campi boolean legacy `Senza Glutine`/`Senza Lattosio` (retrocompatibilità per piatti non ancora aggiornati).
+- I chip "Senza glutine" / "Senza lattosio" sul sito continuano a funzionare esattamente come prima.
+
+*Aggiornato: 8 Giugno 2026*

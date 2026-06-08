@@ -68,8 +68,16 @@ function toVoce(r: AirtableRecord): VoceMenu {
     badge:       f['Etichetta'] ? String(f['Etichetta']) : undefined,
     produttore:  f['Produttore'] ? String(f['Produttore']) : undefined,
     regione:     f['Regione'] ? String(f['Regione']) : undefined,
-    senzaGlutine:  f['Senza Glutine'] === true,
-    senzaLattosio: f['Senza Lattosio'] === true,
+    senzaGlutine:  (() => {
+      const s = f['Allergeni'] ? String(f['Allergeni']) : ''
+      if (!s) return f['Senza Glutine'] === true
+      return !s.split(',').map(x => x.trim()).includes('1')
+    })(),
+    senzaLattosio: (() => {
+      const s = f['Allergeni'] ? String(f['Allergeni']) : ''
+      if (!s) return f['Senza Lattosio'] === true
+      return !s.split(',').map(x => x.trim()).includes('7')
+    })(),
   }
 }
 

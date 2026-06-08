@@ -11,6 +11,7 @@ import { PageContextProvider } from "@/lib/page-context"
 import PopupManager from "@/components/PopupManager";
 import PageTransition from "@/components/PageTransition";
 import BannerChiusure from "@/components/BannerChiusure";
+import PopupChiusure from "@/components/PopupChiusure";
 import { fetchMedia } from "@/lib/media";
 import { openGraphImageUrl } from "@/lib/imagekit-delivery";
 
@@ -106,6 +107,7 @@ export default async function RootLayout({
         <PageContextProvider>
           <Navbar orariDisplay={orariDisplay} eventi={eventiNavbar} />
           <BannerChiusure eventi={eventiBanner} />
+          <PopupChiusure eventi={eventiBanner} />
           <PageTransition>{children}</PageTransition>
           <PopupManager />
           <CookieBanner />

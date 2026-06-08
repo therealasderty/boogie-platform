@@ -25,6 +25,23 @@ const SOTTOCATEGORIE = {
 
 const ETICHETTE = ['', 'Novità', 'Chef consiglia', 'Stagionale']
 
+const ALLERGENI = [
+  { num: '1',  label: 'Cereali contenenti glutine' },
+  { num: '2',  label: 'Crostacei e derivati' },
+  { num: '3',  label: 'Uova e derivati' },
+  { num: '4',  label: 'Pesce e derivati' },
+  { num: '5',  label: 'Arachidi e derivati' },
+  { num: '6',  label: 'Soia e derivati' },
+  { num: '7',  label: 'Latte e derivati' },
+  { num: '8',  label: 'Frutta a Guscio' },
+  { num: '9',  label: 'Sedano' },
+  { num: '10', label: 'Senape' },
+  { num: '11', label: 'Sesamo' },
+  { num: '12', label: 'Anidride Solforosa e solfiti' },
+  { num: '13', label: 'Lupini e derivati' },
+  { num: '14', label: 'Molluschi e derivati' },
+]
+
 const REGIONI_VINO = [
   '', 'Lombardia', 'Piemonte', 'Veneto', 'Toscana', 'Sicilia',
   'Campania', 'Puglia', 'Trentino-Alto Adige', 'Friuli-Venezia Giulia',
@@ -36,8 +53,7 @@ const EMPTY_FORM = {
   nome: '', descrizione: '', prezzo: '', formato: '',
   prezzo2: '', formato2: '', categoria: 'Specialità alla Carta',
   sottocategoria: 'Antipasti', attivo: true, ordine: 0,
-  note: '', etichetta: '', produttore: '', regione: '',
-  senzaGlutine: false, senzaLattosio: false,
+  note: '', etichetta: '', produttore: '', regione: '', allergeni: [],
 }
 
 // ─── Riga singola con drag ────────────────────────────────────────────────────
@@ -98,7 +114,10 @@ function SortableRow({ piatto, onEdit, onToggle, onDelete, modificheAbilitate })
 
 // ─── Modal aggiungi / modifica ────────────────────────────────────────────────
 function ModalPiatto({ piatto, onClose, onSave, defaultCategoria, defaultSottocategoria }) {
-  const [form, setForm] = useState(piatto || { ...EMPTY_FORM, categoria: defaultCategoria, sottocategoria: defaultSottocategoria || SOTTOCATEGORIE[defaultCategoria]?.[0] || '' })
+  const initForm = piatto
+    ? { ...piatto, allergeni: piatto.allergeni ? piatto.allergeni.split(',').map(s => s.trim()).filter(Boolean) : [] }
+    : { ...EMPTY_FORM, categoria: defaultCategoria, sottocategoria: defaultSottocategoria || SOTTOCATEGORIE[defaultCategoria]?.[0] || '' }
+  const [form, setForm] = useState(initForm)
   const [saving, setSaving] = useState(false)
 
   const sotto = SOTTOCATEGORIE[form.categoria] || []
@@ -108,6 +127,14 @@ function ModalPiatto({ piatto, onClose, onSave, defaultCategoria, defaultSottoca
       const next = { ...f, [k]: v }
       if (k === 'categoria') next.sottocategoria = SOTTOCATEGORIE[v]?.[0] || ''
       return next
+    })
+  }
+
+  function toggleAllergen(num) {
+    setForm(f => {
+      const current = f.allergeni || []
+      const next = current.includes(num) ? current.filter(n => n !== num) : [...current, num]
+      return { ...f, allergeni: next }
     })
   }
 
@@ -223,24 +250,22 @@ function ModalPiatto({ piatto, onClose, onSave, defaultCategoria, defaultSottoca
             </div>
           )}
 
-          {/* Intolleranze — Specialità, Pizza, Birre */}
-          {(form.categoria === 'Specialità alla Carta' || form.categoria === 'Pizza' || form.categoria === 'Birre') && (
-            <div className={styles.fieldGroup}>
-              <span className={styles.fieldGroupLabel}>Intolleranze</span>
-              <div className={styles.checkGroup}>
-                <label className={styles.checkRow}>
-                  <input type="checkbox" checked={form.senzaGlutine} onChange={e => set('senzaGlutine', e.target.checked)} />
-                  Senza glutine
+          {/* Allergeni — tutte le categorie */}
+          <div className={styles.fieldGroup}>
+            <span className={styles.fieldGroupLabel}>Allergeni presenti</span>
+            <div className={styles.allergenGrid}>
+              {ALLERGENI.map(({ num, label }) => (
+                <label key={num} className={styles.checkRow}>
+                  <input
+                    type="checkbox"
+                    checked={(form.allergeni || []).includes(num)}
+                    onChange={() => toggleAllergen(num)}
+                  />
+                  <span><strong>{num}</strong> – {label}</span>
                 </label>
-                {form.categoria !== 'Birre' && (
-                  <label className={styles.checkRow}>
-                    <input type="checkbox" checked={form.senzaLattosio} onChange={e => set('senzaLattosio', e.target.checked)} />
-                    Senza lattosio
-                  </label>
-                )}
-              </div>
+              ))}
             </div>
-          )}
+          </div>
 
           {/* Visibilità — sempre */}
           <div className={styles.dividerLine} />

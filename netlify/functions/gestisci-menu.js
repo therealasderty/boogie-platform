@@ -39,13 +39,12 @@ exports.handler = async (event) => {
         categoria:     r.fields['Categoria'] || '',
         sottocategoria: r.fields['Sottocategoria'] || '',
         attivo:        r.fields['Attivo'] || false,
-        senzaGlutine:  r.fields['Senza Glutine'] || false,
-        senzaLattosio: r.fields['Senza Lattosio'] || false,
         ordine:        r.fields['Ordine'] ?? 0,
         note:          r.fields['Note'] || '',
         etichetta:     r.fields['Etichetta'] || '',
         produttore:    r.fields['Produttore'] || '',
         regione:       r.fields['Regione'] || '',
+        allergeni:     r.fields['Allergeni'] || '',
       }));
       return { statusCode: 200, headers, body: JSON.stringify({ success: true, piatti }) };
     } catch (err) {
@@ -82,9 +81,8 @@ exports.handler = async (event) => {
         'Etichetta':      d.etichetta,
         'Produttore':     d.produttore || '',
         'Regione':        d.regione || '',
+        'Allergeni':      Array.isArray(d.allergeni) ? d.allergeni.join(',') : (d.allergeni || ''),
       }
-      if (d.senzaGlutine  !== undefined) fields['Senza Glutine']  = !!d.senzaGlutine
-      if (d.senzaLattosio !== undefined) fields['Senza Lattosio'] = !!d.senzaLattosio
       return fields
     }
 
