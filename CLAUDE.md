@@ -186,7 +186,7 @@ Tutti i form con dati cliente raccolgono `data_nascita` → inviata a Brevo come
 - **BlocchiRenderer.tsx** — Renderizza `Blocco[]` (Testo, Immagine, Menu, Prenotazione, Artista, CardOfferte, Prezzo).
 
 ### Interactive
-- **PopupManager.tsx** — Client, in `layout.tsx`. Riceve `chiusure` prop dal layout. Gestisce un solo popup alla volta con priorità: **1) chiusure/aperture straordinarie** (dopo 2s, modal testuale verde/rosso, localStorage `bb-banner-chiusure` TTL 24h condiviso con BannerChiusure) → **2) evento `InPrimoPiano`** (fetch `/api/get-popup`, delay 2-10s per urgency, card con foto o SlimPopup desktop). Chiudere il primo non apre il secondo. z-index 100.
+- **PopupManager.tsx** — Client, in `layout.tsx`. Riceve `chiusure` prop dal layout. Fetcha chiusure e evento in parallelo, poi decide il mode: **`chiusura`** (solo chiusura/apertura), **`evento`** (solo evento), **`entrambi`** (layout split). In mode `entrambi`: card unica `max-w-2xl`, due tile affiancate su desktop (`sm:flex-row`) / stacked su mobile — sinistra/top tile chiusura (sfondo verde/rosso, testo bianco, CTA "Prenota ora"), destra/bottom tile evento (foto + titolo + CTA "Scopri di più"). Un solo X chiude tutto e segna entrambi come visti. Delay 2s se c'è chiusura, altrimenti delay per urgency evento (2-10s). z-index 100.
 - **EventoPopup.tsx** — Card popup modale evento.
 - **CookieBanner.tsx** + **GestisciCookieButton.tsx** — Cookie consent con localStorage.
 - **Calendario.tsx** — Mini calendario giorni aperti/chiusi evento.

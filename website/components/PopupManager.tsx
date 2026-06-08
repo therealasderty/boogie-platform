@@ -33,6 +33,7 @@ type PopupData = {
 }
 
 type Urgency = 'distante' | 'imminente' | 'lastMinute'
+type Mode    = 'chiusura' | 'evento' | 'entrambi' | null
 
 // ─── Helpers evento ───────────────────────────────────────────────────────────
 
@@ -138,18 +139,28 @@ const POPUP_BLACKLIST = [
   /^\/vicino-a\/.+\/.+/,
 ]
 
+// ─── SVG X ───────────────────────────────────────────────────────────────────
+
+function IconX() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+      <path d="M1 1L11 11M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 // ─── Componente ───────────────────────────────────────────────────────────────
 
 export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] }) {
   const pathname = usePathname()
 
-  const [mode,            setMode]            = useState<'chiusura' | 'evento' | null>(null)
-  const [chiusuraEventi,  setChiusuraEventi]  = useState<Chiusura[]>([])
-  const [popup,           setPopup]           = useState<PopupData | null>(null)
-  const [urgency,         setUrgency]         = useState<Urgency>('distante')
-  const [visible,         setVisible]         = useState(false)
-  const [animating,       setAnimating]       = useState(false)
-  const [isDesktop,       setIsDesktop]       = useState(false)
+  const [mode,           setMode]           = useState<Mode>(null)
+  const [chiusuraEventi, setChiusuraEventi] = useState<Chiusura[]>([])
+  const [popup,          setPopup]          = useState<PopupData | null>(null)
+  const [urgency,        setUrgency]        = useState<Urgency>('distante')
+  const [visible,        setVisible]        = useState(false)
+  const [animating,      setAnimating]      = useState(false)
+  const [isDesktop,      setIsDesktop]      = useState(false)
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 768px)')
@@ -163,70 +174,229 @@ export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] 
     if (POPUP_BLACKLIST.some(re => re.test(pathname))) return
     let timer: ReturnType<typeof setTimeout>
 
-    // 1. Chiusure hanno priorità
-    if (!chiusuraWasDismissed()) {
+    async function init() {
       const oggi = new Date().toISOString().split('T')[0]
-      const attivi = chiusure.filter(ev => (ev.dataFine || ev.dataInizio) >= oggi)
-      if (attivi.length > 0) {
-        setChiusuraEventi(attivi)
-        setMode('chiusura')
-        timer = setTimeout(() => {
-          setVisible(true)
-          setTimeout(() => setAnimating(true), 20)
-        }, 2000)
-        return () => clearTimeout(timer)
-      }
-    }
 
-    // 2. Altrimenti popup evento
-    async function carica() {
+      // Chiusure
+      const chiusureAttive = chiusuraWasDismissed()
+        ? []
+        : chiusure.filter(ev => (ev.dataFine || ev.dataInizio) >= oggi)
+
+      // Evento (fetch in parallelo)
+      let eventoData: PopupData | null = null
+      let eventoUrgency: Urgency = 'distante'
       try {
         const res  = await fetch('/api/get-popup')
         const json = await res.json()
-        if (!json.success || !json.popup?.titolo) return
-
-        const data: PopupData = json.popup
-        const id = data.slug || data.titolo
-        if (hasBeenSeen(id, data.ricorrente)) return
-
-        const urg = getUrgency(data.data, data.ricorrente)
-        setPopup(data)
-        setUrgency(urg)
-        setMode('evento')
-
-        timer = setTimeout(() => {
-          setVisible(true)
-          setTimeout(() => setAnimating(true), 20)
-        }, DELAY_MS[urg])
+        if (json.success && json.popup?.titolo) {
+          const data: PopupData = json.popup
+          const id = data.slug || data.titolo
+          if (!hasBeenSeen(id, data.ricorrente)) {
+            eventoData    = data
+            eventoUrgency = getUrgency(data.data, data.ricorrente)
+          }
+        }
       } catch {}
+
+      const hasChiusura = chiusureAttive.length > 0
+      const hasEvento   = eventoData !== null
+
+      if (!hasChiusura && !hasEvento) return
+
+      if (hasChiusura) setChiusuraEventi(chiusureAttive)
+      if (hasEvento)   { setPopup(eventoData); setUrgency(eventoUrgency) }
+
+      const newMode: Mode = hasChiusura && hasEvento ? 'entrambi' : hasChiusura ? 'chiusura' : 'evento'
+      const delay = newMode === 'evento' ? DELAY_MS[eventoUrgency] : 2000
+      setMode(newMode)
+
+      timer = setTimeout(() => {
+        setVisible(true)
+        setTimeout(() => setAnimating(true), 20)
+      }, delay)
     }
 
-    carica()
+    init()
     return () => clearTimeout(timer)
   }, [pathname, chiusure])
 
   // ─── Chiudi ───────────────────────────────────────────────────────────────
 
+  function chiudiAnimate(cb?: () => void) {
+    setAnimating(false)
+    setTimeout(() => { setVisible(false); cb?.() }, 350)
+  }
+
   function chiudiChiusura() {
     chiusuraMarkDismissed()
-    setAnimating(false)
-    setTimeout(() => setVisible(false), 350)
+    chiudiAnimate()
   }
 
   function chiudiEvento() {
     if (popup) markAsSeen(popup.slug || popup.titolo)
     const slim = !!popup && shouldUseSlim(popup, urgency) && isDesktop
-    if (slim) {
-      setVisible(false)
-    } else {
-      setAnimating(false)
-      setTimeout(() => setVisible(false), 350)
-    }
+    if (slim) { setVisible(false) } else { chiudiAnimate() }
+  }
+
+  function chiudiTutto() {
+    chiusuraMarkDismissed()
+    if (popup) markAsSeen(popup.slug || popup.titolo)
+    chiudiAnimate()
   }
 
   if (!visible) return null
 
-  // ─── Render chiusura ──────────────────────────────────────────────────────
+  const cardAnim = {
+    opacity:   animating ? 1 : 0,
+    transform: animating ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.97)',
+    transition: 'opacity 0.35s cubic-bezier(0.22,1,0.36,1), transform 0.35s cubic-bezier(0.22,1,0.36,1)',
+  }
+
+  const overlayStyle = (blur: number) => ({
+    backgroundColor: `rgba(0,0,0,${animating ? 0.5 : 0})`,
+    backdropFilter:  `blur(${animating ? blur : 0}px)`,
+    transition: 'background-color 0.35s, backdrop-filter 0.35s',
+  })
+
+  const btnX = (onClick: () => void) => (
+    <button
+      onClick={onClick}
+      aria-label="Chiudi"
+      className="absolute top-3 right-3 z-10 w-8 h-8 rounded-pill bg-white shadow-md flex items-center justify-center text-neutral-600 hover:text-neutral-900 transition-colors"
+    >
+      <IconX />
+    </button>
+  )
+
+  // ─── Layout entrambi ──────────────────────────────────────────────────────
+
+  if (mode === 'entrambi' && chiusuraEventi.length > 0 && popup) {
+    const ev          = chiusuraEventi[0]
+    const isApertura  = ev.tipo === 'Apertura straordinaria'
+    const testoChius  = buildTestoChiusura(ev)
+    const badgeChius  = isApertura ? 'Apertura straordinaria' : 'Chiusura straordinaria'
+    const accentColor = isApertura ? '#1a3d1f' : '#7a1a1a'
+
+    const isPassatoEv = popup.stato === 'passato' || popup.stato === 'dormiente'
+    const isFuturoEv  = popup.stato === 'futuro'
+    const badgeEv     = isPassatoEv ? 'Prossimamente' : isFuturoEv ? 'Data da definire' : getBadge(popup.data, urgency)
+    const dataLabelEv = !isPassatoEv && !isFuturoEv && popup.data && !popup.ricorrente ? formatData(popup.data) : null
+    const hrefEv      = popup.slug
+      ? ((isPassatoEv || isFuturoEv) ? `/eventi-speciali/${popup.slug}#prenota` : `/eventi-speciali/${popup.slug}`)
+      : '/prenota'
+    const ctaEv = isPassatoEv ? 'Rimani aggiornato' : 'Scopri di più'
+
+    return (
+      <div
+        className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 sm:p-8"
+        style={overlayStyle(4)}
+        onClick={chiudiTutto}
+      >
+        <div
+          className="relative w-full max-w-2xl rounded-card overflow-hidden shadow-2xl flex flex-col sm:flex-row"
+          style={cardAnim}
+          onClick={e => e.stopPropagation()}
+        >
+          {btnX(chiudiTutto)}
+
+          {/* ── Tile chiusura (sinistra / top mobile) ── */}
+          <div
+            className="sm:w-1/2 flex flex-col justify-center gap-4 px-7 py-8"
+            style={{ backgroundColor: accentColor }}
+          >
+            <span
+              className="self-start text-[0.6rem] font-semibold uppercase tracking-[0.12em] px-2.5 py-1 rounded-pill text-white"
+              style={{ backgroundColor: 'rgba(255,255,255,0.18)' }}
+            >
+              {badgeChius}
+            </span>
+
+            <p className="font-sans font-semibold text-white leading-snug pr-6" style={{ fontSize: 'var(--text-section)' }}>
+              {testoChius}
+            </p>
+
+            {chiusuraEventi.length > 1 && (
+              <p className="text-white/60 font-light -mt-1" style={{ fontSize: 'var(--text-meta)' }}>
+                +{chiusuraEventi.length - 1} {chiusuraEventi.length - 1 === 1 ? 'altro avviso' : 'altri avvisi'}
+              </p>
+            )}
+
+            {isApertura && (
+              <Link
+                href="/prenota"
+                onClick={chiudiTutto}
+                className="self-start bg-white font-semibold px-5 py-2.5 rounded-btn transition-colors hover:bg-white/90"
+                style={{ fontSize: 'var(--text-meta)', color: accentColor }}
+              >
+                Prenota ora
+              </Link>
+            )}
+          </div>
+
+          {/* ── Tile evento (destra / bottom mobile) ── */}
+          <div className="sm:w-1/2 bg-white flex flex-col">
+            {popup.fotoHero ? (
+              <div className="relative h-36 sm:h-44 flex-shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={popup.fotoHero} alt={popup.titolo} className="w-full h-full object-cover" />
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.35) 100%)' }} />
+              </div>
+            ) : (
+              <div className="h-10 sm:h-12 bg-surface-dark flex-shrink-0" />
+            )}
+
+            <div className="px-6 py-5 flex flex-col gap-2.5 flex-1">
+              <div>
+                {badgeEv ? (
+                  <span className="text-[0.6rem] font-semibold uppercase tracking-[0.12em] px-2.5 py-1 rounded-pill bg-neutral-100 text-neutral-500">
+                    {badgeEv}
+                  </span>
+                ) : dataLabelEv ? (
+                  <span className="text-[0.65rem] font-medium uppercase tracking-[0.1em] text-neutral-400" style={{ letterSpacing: 'var(--tracking-label)' }}>
+                    {dataLabelEv}
+                  </span>
+                ) : (
+                  <span className="text-[0.65rem] font-medium uppercase tracking-[0.1em] text-neutral-400" style={{ letterSpacing: 'var(--tracking-label)' }}>
+                    In evidenza
+                  </span>
+                )}
+              </div>
+
+              {badgeEv && dataLabelEv && (
+                <span className="text-[0.65rem] font-medium uppercase tracking-[0.1em] text-neutral-400 -mt-1" style={{ letterSpacing: 'var(--tracking-label)' }}>
+                  {dataLabelEv}
+                </span>
+              )}
+
+              <h3 className="font-sans font-semibold text-neutral-900 leading-tight" style={{ fontSize: 'var(--text-lead)' }}>
+                {popup.titolo}
+              </h3>
+
+              {popup.descrizioneBreve && (
+                <p className="text-neutral-500 font-light leading-relaxed line-clamp-2" style={{ fontSize: 'var(--text-meta)' }}>
+                  {popup.descrizioneBreve}
+                </p>
+              )}
+
+              <Link
+                href={hrefEv}
+                onClick={() => {
+                  chiudiTutto()
+                  window.umami?.track('popup-cta', { titolo: popup.titolo, slug: popup.slug, format: 'split' })
+                }}
+                className="mt-1 self-start bg-brand hover:bg-brand-hover text-black/80 font-semibold px-5 py-2.5 rounded-btn transition-colors"
+                style={{ fontSize: 'var(--text-meta)' }}
+              >
+                {ctaEv}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ─── Layout chiusura singola ──────────────────────────────────────────────
 
   if (mode === 'chiusura' && chiusuraEventi.length > 0) {
     const ev          = chiusuraEventi[0]
@@ -238,32 +408,15 @@ export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] 
     return (
       <div
         className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 sm:p-8"
-        style={{
-          backgroundColor: `rgba(0,0,0,${animating ? 0.5 : 0})`,
-          backdropFilter:  `blur(${animating ? 3 : 0}px)`,
-          transition: 'background-color 0.35s, backdrop-filter 0.35s',
-        }}
+        style={overlayStyle(3)}
         onClick={chiudiChiusura}
       >
         <div
           className="relative w-full max-w-md rounded-card bg-white shadow-2xl overflow-hidden"
-          style={{
-            borderTop: `3px solid ${accentColor}`,
-            opacity:   animating ? 1 : 0,
-            transform: animating ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.97)',
-            transition: 'opacity 0.35s cubic-bezier(0.22,1,0.36,1), transform 0.35s cubic-bezier(0.22,1,0.36,1)',
-          }}
+          style={{ borderTop: `3px solid ${accentColor}`, ...cardAnim }}
           onClick={e => e.stopPropagation()}
         >
-          <button
-            onClick={chiudiChiusura}
-            aria-label="Chiudi"
-            className="absolute top-3 right-3 z-10 w-8 h-8 rounded-pill bg-white shadow-md flex items-center justify-center text-neutral-600 hover:text-neutral-900 transition-colors"
-          >
-            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-              <path d="M1 1L11 11M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
-          </button>
+          {btnX(chiudiChiusura)}
 
           <div className="px-8 py-7 flex flex-col gap-4">
             <span
@@ -308,7 +461,7 @@ export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] 
     )
   }
 
-  // ─── Render evento ────────────────────────────────────────────────────────
+  // ─── Layout evento singolo ────────────────────────────────────────────────
 
   if (mode !== 'evento' || !popup) return null
 
@@ -353,31 +506,15 @@ export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] 
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8"
-      style={{
-        backgroundColor: `rgba(0,0,0,${animating ? 0.5 : 0})`,
-        backdropFilter: `blur(${animating ? 4 : 0}px)`,
-        transition: 'background-color 0.35s, backdrop-filter 0.35s',
-      }}
+      style={overlayStyle(4)}
       onClick={chiudiEvento}
     >
       <div
         className="relative w-full max-w-lg rounded-card overflow-hidden shadow-2xl"
-        style={{
-          opacity:   animating ? 1 : 0,
-          transform: animating ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.97)',
-          transition: 'opacity 0.35s cubic-bezier(0.22,1,0.36,1), transform 0.35s cubic-bezier(0.22,1,0.36,1)',
-        }}
+        style={cardAnim}
         onClick={e => e.stopPropagation()}
       >
-        <button
-          onClick={chiudiEvento}
-          aria-label="Chiudi"
-          className="absolute top-3 right-3 z-10 w-8 h-8 rounded-pill bg-white shadow-md flex items-center justify-center text-neutral-600 hover:text-neutral-900 transition-colors"
-        >
-          <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-            <path d="M1 1L11 11M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
-        </button>
+        {btnX(chiudiEvento)}
 
         {popup.fotoHero ? (
           <div className="relative h-52 md:h-64">
