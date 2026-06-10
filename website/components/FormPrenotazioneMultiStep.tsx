@@ -43,6 +43,8 @@ export interface FormPrenotazioneMultiStepProps {
   dataFormattata?: string
   /** Giorni della settimana consentiti per ricorrenti, es. "3,5" (mer, ven). */
   giornoSettimana?: string
+  /** Giorni esclusi per eventi giornalieri, es. "6" (sabato). */
+  giorniEsclusione?: string
 }
 
 // ─── Costanti ────────────────────────────────────────────────────────────────
@@ -85,12 +87,15 @@ function timeToMin(t: string): number {
   return h * 60 + m
 }
 
-function prossimaDataValida(fromIso: string, giorniConsentiti: number[]): string {
+function prossimaDataValida(fromIso: string, giorniConsentiti: number[], giorniEsclusi: number[] = []): string {
   const d = new Date(fromIso + 'T00:00:00')
-  for (let i = 0; i <= 7; i++) {
+  for (let i = 0; i <= 13; i++) {
     const check = new Date(d)
     check.setDate(check.getDate() + i)
-    if (giorniConsentiti.includes(check.getDay())) return localDateStr(check)
+    const g = check.getDay()
+    const okConsentiti = giorniConsentiti.length === 0 || giorniConsentiti.includes(g)
+    const okEsclusi    = !giorniEsclusi.includes(g)
+    if (okConsentiti && okEsclusi) return localDateStr(check)
   }
   return fromIso
 }
@@ -168,12 +173,16 @@ export default function FormPrenotazioneMultiStep({
   ricorrente,
   dataFormattata,
   giornoSettimana,
+  giorniEsclusione,
 }: FormPrenotazioneMultiStepProps = {}) {
 
   const isEventoMode = !!titolo
   const haRange      = !!(orario && orarioFine)
   const orarioFisso  = !!(orario && !orarioFine)  // badge fisso, niente fetch
   const maxPersone   = maxPosti ? Math.min(Number(maxPosti), 10) : 10
+  const giorniEsclusi = ricorrente && giorniEsclusione
+    ? giorniEsclusione.split(',').map(Number).filter(n => !isNaN(n))
+    : []
   const giorniConsentiti = ricorrente && giornoSettimana
     ? giornoSettimana.split(',').map(Number).filter(n => !isNaN(n))
     : []
@@ -502,12 +511,13 @@ export default function FormPrenotazioneMultiStep({
                       const selected = e.target.value
                       userChangedDate.current = true
                       autoAdvanceRef.current  = 0
-                      if (giorniConsentiti.length > 0) {
-                        const d = new Date(selected + 'T00:00:00')
-                        if (!giorniConsentiti.includes(d.getDay())) {
-                          setData(prossimaDataValida(selected, giorniConsentiti))
-                          return
-                        }
+                      const d = new Date(selected + 'T00:00:00')
+                      const g = d.getDay()
+                      const okConsentiti = giorniConsentiti.length === 0 || giorniConsentiti.includes(g)
+                      const okEsclusi    = !giorniEsclusi.includes(g)
+                      if (!okConsentiti || !okEsclusi) {
+                        setData(prossimaDataValida(selected, giorniConsentiti, giorniEsclusi))
+                        return
                       }
                       setData(selected)
                     }}
