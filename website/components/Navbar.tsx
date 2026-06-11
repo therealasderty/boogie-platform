@@ -346,16 +346,22 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
       </button>
 
       {/* ── Hamburger mobile scrollato — bollo bianco floating in basso (solo se menu chiuso) */}
-      {scrolled && !mobileOpen && (
-        <button
-          className="lg:hidden fixed bottom-28 right-4 z-50 w-12 h-12 flex items-center justify-center rounded-pill bg-white text-black shadow-lg border border-black/10 cursor-pointer"
-          style={{ animation: 'slide-in-right 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both' }}
-          onClick={() => setMobileOpen((v) => !v)}
-          aria-label="Menu"
-        >
-          <HamburgerIcon open={false} />
-        </button>
-      )}
+      <AnimatePresence>
+        {scrolled && !mobileOpen && (
+          <motion.button
+            key="fab-hamburger"
+            className="lg:hidden fixed bottom-28 right-4 z-50 w-12 h-12 flex items-center justify-center rounded-pill bg-white text-black shadow-lg border border-black/10 cursor-pointer"
+            initial={{ x: 80, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 80, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 24 }}
+            onClick={() => setMobileOpen((v) => !v)}
+            aria-label="Menu"
+          >
+            <HamburgerIcon open={false} />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
 
       {/* ── Menu mobile fullscreen ────────────────────────────────── */}

@@ -25,7 +25,7 @@ const MESI = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','
 
 export default async function BlogPage() {
   const [articoli, mediaChiSiamo] = await Promise.all([fetchArticoli(), fetchMedia('chi-siamo')])
-  const heroImage = mediaChiSiamo[0]?.url ?? '/images/hero/2.avif'
+  const heroImage = mediaChiSiamo[0]?.url ?? '/images/hero/giardino-boogie-bistrot-colle-brianza.avif'
 
   return (
     <main>

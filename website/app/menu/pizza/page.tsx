@@ -37,8 +37,8 @@ export default async function PizzaPage() {
   const immagini = mediaPizza.length > 0
     ? mediaPizza.map(m => ({ src: m.url, alt: m.alt || m.nome }))
     : [
-        { src: '/images/hero/2.avif', alt: 'La pizza di Boogie Bistrot' },
-        { src: '/images/hero/1.webp', alt: 'Il forno a legna' },
+        { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'La pizza di Boogie Bistrot' },
+        { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Il forno a legna' },
       ]
 
   return (

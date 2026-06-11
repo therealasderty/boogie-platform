@@ -37,8 +37,8 @@ export default async function CocktailsPage() {
   const immagini = mediaCocktails.length > 0
     ? mediaCocktails.map(m => ({ src: m.url, alt: m.alt || m.nome }))
     : [
-        { src: '/images/hero/1.webp', alt: 'Cocktails Boogie Bistrot' },
-        { src: '/images/hero/2.avif', alt: 'Il bar di Boogie' },
+        { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Cocktails Boogie Bistrot' },
+        { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Il bar di Boogie' },
       ]
 
   return (

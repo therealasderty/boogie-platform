@@ -2,7 +2,7 @@ import { fetchMedia } from '@/lib/media'
 import SezioneContattiClient from './SezioneContattiClient'
 
 export default async function SezioneContatti() {
-  let fotoSrc = '/images/hero/2.avif'
+  let fotoSrc = '/images/hero/giardino-boogie-bistrot-colle-brianza.avif'
   let fotoAlt = 'Boogie Bistrot'
 
   try {

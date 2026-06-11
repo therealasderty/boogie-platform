@@ -9,14 +9,14 @@ const ARTICOLI_FALLBACK = [
   {
     titolo: 'Girorisotti: la tradizione del risotto brianzolo reinterpretata ogni giovedì',
     intro: 'Ogni settimana una nuova ricetta, ingredienti di stagione e il calore di una cucina che non smette mai di sorprendere. Scopri la storia del nostro appuntamento più amato.',
-    image: '/images/hero/1.webp',
+    image: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif',
     href: '/blog/girorisotti',
     label: 'Cucina',
   },
   {
     titolo: 'Pranzo di lavoro a Colle Brianza: come staccare davvero dalla routine',
     intro: "Un'ora lontano dall'ufficio, nel verde della Brianza lecchese. Perché il pranzo non è solo nutrimento, ma un momento da vivere con calma.",
-    image: '/images/hero/2.avif',
+    image: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif',
     href: '/blog/pranzo-di-lavoro',
     label: 'Location',
   },

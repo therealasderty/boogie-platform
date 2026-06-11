@@ -25,7 +25,7 @@ exports.handler = async (event) => {
   try {
     // ── 1. Chiama ScraperAPI ─────────────────────────────────────────
     const scraperUrl = `http://api.scraperapi.com?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(TA_URL)}&render=true&country_code=it`;
-    const res = await fetch(scraperUrl, { timeout: 25000 });
+    const res = await fetch(scraperUrl);
     const html = await res.text();
 
     let recensioni = null;

@@ -4,6 +4,7 @@ import Footer from '@/components/Footer'
 import FadeIn from '@/components/FadeIn'
 import FormEventoAziendale from '@/components/FormEventoAziendale'
 import GrigliaFotoLocation from '@/components/GrigliaFotoLocation'
+import SezioneVieni from '@/components/SezioneVieni'
 import { fetchMedia } from '@/lib/media'
 
 function shuffle<T>(arr: T[]): T[] {
@@ -46,7 +47,7 @@ const VOCI_MENU = [
 export default async function EventiAziendaliPage() {
   const mediaLocation = await fetchMedia('location')
   const fotoShuffled = shuffle(mediaLocation)
-  const heroImage = fotoShuffled[0]?.url ?? '/images/hero/1.webp'
+  const heroImage = 'https://pub-412a895afa8e491c84ad5df75bc1458b.r2.dev/media/1780389736209-media_1.1_TaY9KSJq6.jpg'
 
   return (
     <main>
@@ -220,6 +221,7 @@ export default async function EventiAziendaliPage() {
         </div>
       </section>
 
+      <SezioneVieni />
       <Footer />
     </main>
   )

@@ -48,8 +48,8 @@ export default async function SpecialitaAllaCartaPage() {
   const immaginiCarta = mediaCarta.length > 0
     ? mediaCarta.map(m => ({ src: m.url, alt: m.alt || m.nome }))
     : [
-        { src: '/images/hero/1.webp', alt: 'Specialità alla carta' },
-        { src: '/images/hero/2.avif', alt: 'Cucina Boogie Bistrot' },
+        { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Specialità alla carta' },
+        { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Cucina Boogie Bistrot' },
       ]
 
   const vociPerIntro = sezioni

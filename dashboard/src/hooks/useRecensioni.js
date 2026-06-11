@@ -12,7 +12,8 @@ export function useRecensioni() {
           const d = json.dati
           setDati({
             google: { votoAttuale: d.rating, recensioni: d.recensioni, diffSettimana: d.diffSettimana, diffMese: d.diffMese },
-            tripadvisor: { votoAttuale: d.taRating, recensioni: d.taRecensioni, diffSettimana: d.diffSettimanaTA, diffMese: d.diffMeseTA }
+            tripadvisor: { votoAttuale: d.taRating, recensioni: d.taRecensioni, diffSettimana: d.diffSettimanaTA, diffMese: d.diffMeseTA },
+            storico: d.storico || [],
           })
         }
         setLoading(false)

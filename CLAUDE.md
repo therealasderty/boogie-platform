@@ -47,6 +47,7 @@ Tutto in `@theme inline` (Tailwind v4). Mai colori/radius/font hardcoded nei com
 - **AnimatePresence sui componenti UI**:
   - `CookieBanner.tsx` — slide-up in entrata, slide-down in uscita (`y: '100%'`), curva `[0.16, 1, 0.3, 1]`, 0.4s
   - `Navbar.tsx` dropdown ("I nostri menù", "Appuntamenti") — fade + slide-down 8px in entrata, reverse in uscita, 0.18s. Usa `AnimatePresence` per la exit animation al mouse leave
+  - `Navbar.tsx` FAB hamburger mobile (bollo bianco floating) — `motion.button` con `AnimatePresence`: entra da destra (`x: 80`), esce verso destra. Spring `stiffness: 320, damping: 24`
 
 ### CSS globale
 - `.rich-text`, `.faq-risposta` — formattano HTML da Tiptap su sfondo dark
@@ -133,7 +134,7 @@ overlay: rgba(0,0,0,0.45)
 | `/blog` | Lista articoli blog da Airtable |
 | `/blog/[slug]` | Articolo con rich text HTML + JSON-LD BlogPosting |
 | `/faq` | FAQ accordion da Airtable |
-| `/galleria` | Mosaico foto da Airtable Media (TODO: filtri tag) |
+| `/galleria` | Mosaico foto da Airtable Media — fetcha tag `location`, `carta`, `galleria` (TODO: filtri tag UI) |
 | `/fidelity` | Programma fidelity + form iscrizione |
 | `/contattaci` | Form contatti + mappa |
 | `/links` | Pagina link social (Spotify, YouTube, IG…) — proprio layout |
@@ -142,8 +143,8 @@ overlay: rgba(0,0,0,0.45)
 | `/design` | Design system showcase (DEV only) |
 | `/vicino-a/[city]` | Local SEO: intro città, foto location, menu, appuntamenti, mappa embed |
 | `/vicino-a/[city]/[service]` | Local SEO: servizio per città — BlocchiRenderer evento madre; JSON-LD Event; canonical self-referencing |
-| `/eventi-aziendali` | Landing eventi aziendali: punti di forza, gastronomia, griglia foto, FormEventoAziendale |
-| `/eventi-aziendali/[city]` | Variante localizzata per 10 città; `generateStaticParams` da Airtable Localita |
+| `/eventi-aziendali` | Landing eventi aziendali: punti di forza, gastronomia, griglia foto, FormEventoAziendale, SezioneVieni. Hero: foto R2 fissa |
+| `/eventi-aziendali/[city]` | Variante localizzata per 10 città; `generateStaticParams` da Airtable Localita. Hero: foto R2 fissa. SezioneVieni in fondo |
 | `/conferma-prenotazione` | Pagina interna (no navbar) per confermare manualmente una prenotazione. Legge `?id=`, mostra i dati, permette di aggiungere un messaggio e invia la conferma via `conferma.js` |
 | `/sitemap.ts` | Sitemap dinamica (events, blog, vicino-a, eventi-aziendali) |
 | `/robots.ts` | Robots.txt dinamico |
@@ -177,7 +178,7 @@ Tutti i form con dati cliente raccolgono `data_nascita` → inviata a Brevo come
 - **SezioneBlog.tsx** — Priorità: articoli Airtable → eventi con foto → placeholder. Link → `/blog` o `/eventi-speciali`.
 - **SezioneFAQ.tsx** + **SezioneFAQAccordion.tsx** — Server + client accordion. Risposte HTML con `dangerouslySetInnerHTML`.
 - **SezioneRecensioni.tsx** + **SezioneRecensioniCarousel.tsx** — Google Reviews.
-- **SezioneContatti.tsx** + **SezioneContattiClient.tsx** — Mappa embed + form.
+- **SezioneContatti.tsx** + **SezioneContattiClient.tsx** — Form contatto generico + foto (NON mappa). Per la sezione con mappa usa `SezioneVieni.tsx`.
 - **SezioneIntro.tsx** — Testo + immagine per pagine evento/local SEO.
 
 ### Media & Rich Content
@@ -193,6 +194,10 @@ Tutti i form con dati cliente raccolgono `data_nascita` → inviata a Brevo come
 
 ### Utility
 `FadeIn.tsx`, `AltreSpecialita.tsx`, `AltriAppuntamenti.tsx`, `SetEventoTitolo.tsx`, `ArrowRightIcon.tsx`, `LinksPrenotaSticky.tsx`, `PageTransition.tsx`
+
+### Sezioni riutilizzabili
+- **SezioneContatti.tsx** + **SezioneContattiClient.tsx** — form contatto generico + foto. Usata in homepage e pagine evento.
+- **SezioneVieni.tsx** — async server component. Indirizzo, telefoni, orari da Airtable, mappa Google Maps embed. Usata in `/eventi-aziendali` e `/eventi-aziendali/[city]`.
 
 ---
 
@@ -280,8 +285,8 @@ Tempi di revalidate centralizzati in `website/lib/revalidate.ts`:
 | `upload-slide.js` | sì | POST multipart PNG → Cloudflare R2 (AWS SigV4 nativo, zero dipendenze) |
 | `compleanno-premio.js` | — | **CRON** domenica — invia email regalo ai clienti fidelity con `DATE_OF_BIRTH` nella settimana successiva. Protetta da `CRON_SECRET` |
 | `gestisci-social-posts.js` | sì | CRUD tabella `SocialPosts` Airtable |
-| `scraping-recensioni.js` | sì | Scraping Google Reviews |
-| `scraping-tripadvisor.js` | sì | Scraping TripAdvisor |
+| `scraping-recensioni.js` | sì | Scraping Google Reviews via Google Places API — chiamata manualmente o via cron-job.org esterno |
+| `scraping-tripadvisor.js` | sì | Scraping TripAdvisor via ScraperAPI — **CRON** lunedì 4:00, timeout 26s. Salva `TripAdvisor Recensioni` e `TripAdvisor Rating` in Airtable `Recensioni` |
 
 ### Contatti & Email
 | Funzione | Auth | Scopo |
@@ -336,6 +341,7 @@ Tempi di revalidate centralizzati in `website/lib/revalidate.ts`:
 | **ClientiPanel** | Database clienti fidelity con crediti e storico |
 | **AnalyticsPanel** | KPI settimanali (prenotazioni, coperti, cancellazioni, clienti unici, LTV). Grafici: bar giorni, pie fasce. Report AI Gemini |
 | **RecensioniSitoPanel** | Scraping + visualizzazione Google Reviews e TripAdvisor |
+| **RecensioniWidget** (home) | Widget con card Google + TripAdvisor (voto, conteggio, diff settimana/mese) + due grafici SVG separati (linea blu Google, linea verde TripAdvisor) con storico settimanale da Airtable `Recensioni` |
 | **SocialStudioPanel** | Editor post social con slide template, cattura PNG, upload **R2**, programmazione. Tipi: `post` e `storia` (9:16). Template: `TemplateOffertaSerata` (4:5) e `TemplateOffertaSerataStoria` (9:16) aggiunti 2026-05-11. Per eventi ricorrenti, "Recupera dati da evento" compila `dataTesto` con etichette tipo `Da Mar a Dom (Escluso Sabato)` calcolate da `GiorniEsclusione` + `Orari` attivi |
 
 ### Hooks (`dashboard/src/hooks/`) — 20 hook
@@ -484,4 +490,26 @@ Aggiunto campo `Allergeni` (Single line text, CSV "1,3,7") su Airtable tabella `
 - **Website** (`website/lib/menu.ts`) — `senzaGlutine` e `senzaLattosio` ora derivati da `Allergeni`: se la lista non è vuota, `senzaGlutine = #1 assente`, `senzaLattosio = #7 assente`. Se `Allergeni` è vuoto, fallback ai campi boolean legacy `Senza Glutine`/`Senza Lattosio` (retrocompatibilità per piatti non ancora aggiornati).
 - I chip "Senza glutine" / "Senza lattosio" sul sito continuano a funzionare esattamente come prima.
 
-*Aggiornato: 8 Giugno 2026*
+### Hero images locali (2026-06-12)
+Le due immagini hero statiche in `public/images/hero/` sono:
+- `sala-boogie-bistrot-colle-brianza.webp`
+- `giardino-boogie-bistrot-colle-brianza.avif` ← usata come fallback universale in tutto il sito
+
+I vecchi path `1.webp` e `2.avif` (inesistenti) sono stati sostituiti globalmente con `giardino-*`.
+
+### Email feedback — alternanza Google / TripAdvisor (2026-06-12)
+`netlify/functions/feedback.js` — il bottone positivo alterna piattaforma in base al giorno del mese:
+- **Giorno pari** → Google Reviews (`search.google.com/local/writereview?placeid=...`)
+- **Giorno dispari** → TripAdvisor (`tripadvisor.it/UserReviewEdit-g2717697-d17786536-...`)
+- Il bottone negativo punta sempre a `/feedback` (interno)
+- Label del bottone aggiornata dinamicamente ("Lascia una recensione su Google" / "su TripAdvisor")
+- URL TripAdvisor overridabile via env var `TRIPADVISOR_REVIEW_URL`
+
+### Widget Recensioni dashboard — grafici storici (2026-06-12)
+`dati-dashboard.js` ora include `storico[]` (ultimi 10 record Airtable `Recensioni`, ordine cronologico).
+`RecensioniWidget.jsx` mostra due grafici SVG separati affiancati sotto le card:
+- Blu → Google, Verde → TripAdvisor
+- Asse Y indipendente per ogni piattaforma (scala propria)
+- Si renderizza solo se ≥2 punti disponibili per quella piattaforma
+
+*Aggiornato: 12 Giugno 2026*

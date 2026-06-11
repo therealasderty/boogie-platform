@@ -167,7 +167,7 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
         titolo={evento.titolo}
         sottotitolo="Eventi Speciali"
         badge={evento.stato === 'passato' ? undefined : (heroBadge || undefined)}
-        image={evento.fotoHero || '/images/hero/1.webp'}
+        image={evento.fotoHero || '/images/hero/giardino-boogie-bistrot-colle-brianza.avif'}
       />
 
       {(evento.stato === 'passato' || evento.stato === 'futuro') && (

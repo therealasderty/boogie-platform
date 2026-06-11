@@ -269,7 +269,7 @@ export default async function EventiSpecialiPage() {
         titolo="Eventi Speciali"
         sottotitolo="Appuntamenti & Serate"
         tagline="Musica live, serate a tema e appuntamenti fissi — scopri cosa ti aspetta"
-        image="/images/hero/1.webp"
+        image="/images/hero/giardino-boogie-bistrot-colle-brianza.avif"
       />
 
       <section className="text-white py-20 px-6 md:px-14 bg-surface-dark">

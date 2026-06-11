@@ -33,7 +33,7 @@ export default async function FidelityPage() {
   const mediaLocation = await fetchMedia('location')
   const heroImage = mediaLocation.length > 0
     ? mediaLocation[Math.floor(Math.random() * mediaLocation.length)].url
-    : '/images/hero/2.avif'
+    : '/images/hero/giardino-boogie-bistrot-colle-brianza.avif'
 
   return (
     <main>

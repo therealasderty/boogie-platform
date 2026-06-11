@@ -44,6 +44,10 @@
 [functions."pubblica-social"]
   timeout = 26
 
+[functions.scraping-tripadvisor]
+  schedule = "0 4 * * 1"
+  timeout = 26
+
 # ── Redirect 301 dal sito vecchio ─────────────────────────────────────────────
 
 # Menu

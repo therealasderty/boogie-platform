@@ -85,8 +85,8 @@ function formatLabelEvento(e: { data: string | null; ricorrente: boolean; ricorr
 }
 
 const HERO_FALLBACK = [
-  { src: '/images/hero/1.webp', alt: 'Boogie Bistrot' },
-  { src: '/images/hero/2.avif', alt: 'Il giardino del Boogie Bistrot' },
+  { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Boogie Bistrot' },
+  { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Il giardino del Boogie Bistrot' },
 ]
 
 export default async function Home() {
@@ -147,11 +147,11 @@ export default async function Home() {
     })
 
   const menuFallback = heroNews.length === 0 ? [
-    { label: 'I nostri menù', titolo: 'Specialità alla Carta', descrizione: 'Cucina del territorio rivisitata con creatività e ingredienti freschi selezionati.', href: '/menu/specialita', ctaLabel: 'Scopri', image: mediaCarta[0]?.url ?? '/images/hero/1.webp' },
-    { label: 'I nostri menù', titolo: 'La Pizza',              descrizione: 'Impasto a lunga lievitazione, cotto nel forno a legna.',                              href: '/menu/pizza',      ctaLabel: 'Scopri', image: mediaPizza[0]?.url  ?? '/images/hero/2.avif' },
-    { label: 'I nostri menù', titolo: 'Le Birre',              descrizione: 'Birre selezionate dalla Lombardia e oltre.',                                          href: '/menu/birre',      ctaLabel: 'Scopri', image: mediaBirra[0]?.url  ?? '/images/hero/1.webp' },
-    { label: 'I nostri menù', titolo: 'Carta dei Vini',        descrizione: 'Etichette italiane e locali selezionate con cura.',                                   href: '/menu/vini',       ctaLabel: 'Scopri', image: mediaVino[0]?.url   ?? '/images/hero/2.avif' },
-    { label: 'I nostri menù', titolo: 'Cocktails',             descrizione: 'Aperitivi, long drink e signature cocktail preparati al momento.',                    href: '/menu/cocktails',  ctaLabel: 'Scopri', image: mediaCocktail[0]?.url ?? '/images/hero/1.webp' },
+    { label: 'I nostri menù', titolo: 'Specialità alla Carta', descrizione: 'Cucina del territorio rivisitata con creatività e ingredienti freschi selezionati.', href: '/menu/specialita', ctaLabel: 'Scopri', image: mediaCarta[0]?.url ?? '/images/hero/giardino-boogie-bistrot-colle-brianza.avif' },
+    { label: 'I nostri menù', titolo: 'La Pizza',              descrizione: 'Impasto a lunga lievitazione, cotto nel forno a legna.',                              href: '/menu/pizza',      ctaLabel: 'Scopri', image: mediaPizza[0]?.url  ?? '/images/hero/giardino-boogie-bistrot-colle-brianza.avif' },
+    { label: 'I nostri menù', titolo: 'Le Birre',              descrizione: 'Birre selezionate dalla Lombardia e oltre.',                                          href: '/menu/birre',      ctaLabel: 'Scopri', image: mediaBirra[0]?.url  ?? '/images/hero/giardino-boogie-bistrot-colle-brianza.avif' },
+    { label: 'I nostri menù', titolo: 'Carta dei Vini',        descrizione: 'Etichette italiane e locali selezionate con cura.',                                   href: '/menu/vini',       ctaLabel: 'Scopri', image: mediaVino[0]?.url   ?? '/images/hero/giardino-boogie-bistrot-colle-brianza.avif' },
+    { label: 'I nostri menù', titolo: 'Cocktails',             descrizione: 'Aperitivi, long drink e signature cocktail preparati al momento.',                    href: '/menu/cocktails',  ctaLabel: 'Scopri', image: mediaCocktail[0]?.url ?? '/images/hero/giardino-boogie-bistrot-colle-brianza.avif' },
   ] : []
 
   return (
@@ -164,8 +164,8 @@ export default async function Home() {
           mediaChiSiamoIntro.length > 0
             ? mediaChiSiamoIntro.map(m => ({ src: m.url, alt: m.alt || m.nome }))
             : [
-                { src: '/images/hero/1.webp', alt: 'Boogie Bistrot' },
-                { src: '/images/hero/2.avif', alt: 'Il giardino' },
+                { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Boogie Bistrot' },
+                { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Il giardino' },
               ]
         }
         label="Chi siamo"
@@ -179,8 +179,8 @@ export default async function Home() {
           mediaLocation.length > 0
             ? mediaLocation.map(m => ({ src: m.url, alt: m.alt || m.nome }))
             : [
-                { src: '/images/hero/1.webp', alt: 'La location' },
-                { src: '/images/hero/2.avif', alt: 'Il giardino' },
+                { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'La location' },
+                { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Il giardino' },
               ]
         }
         cta={{ label: 'Vai alla galleria fotografica', href: '/galleria' }}

@@ -22,14 +22,14 @@ const ASPECT_NORMAL = [
 const WIDE_POSITIONS = new Set([3, 6])
 
 const FOTO_FALLBACK: Foto[] = [
-  { src: '/images/hero/1.webp', alt: 'Il giardino' },
-  { src: '/images/hero/2.avif', alt: 'La sala interna' },
-  { src: '/images/hero/1.webp', alt: 'I piatti' },
-  { src: '/images/hero/2.avif', alt: 'La pizza' },
-  { src: '/images/hero/1.webp', alt: 'Il forno a legna' },
-  { src: '/images/hero/2.avif', alt: 'Aperitivo in giardino' },
-  { src: '/images/hero/1.webp', alt: 'I cocktail' },
-  { src: '/images/hero/2.avif', alt: 'Il risotto' },
+  { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Il giardino' },
+  { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'La sala interna' },
+  { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'I piatti' },
+  { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'La pizza' },
+  { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Il forno a legna' },
+  { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Aperitivo in giardino' },
+  { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'I cocktail' },
+  { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Il risotto' },
 ]
 
 export default function MosaicoFoto({ immagini }: { immagini?: { src: string; alt: string }[] }) {

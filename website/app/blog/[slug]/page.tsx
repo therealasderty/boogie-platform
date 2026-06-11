@@ -83,7 +83,7 @@ export default async function BlogSlugPage({ params }: { params: Promise<{ slug:
       <PaginaHero
         titolo={articolo.titolo}
         sottotitolo={articolo.categoria || 'Blog'}
-        image={articolo.fotoHero || '/images/hero/1.webp'}
+        image={articolo.fotoHero || '/images/hero/giardino-boogie-bistrot-colle-brianza.avif'}
       />
 
       <section className="text-white py-20 px-6 md:px-14 bg-surface-dark">

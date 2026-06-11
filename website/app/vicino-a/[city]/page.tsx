@@ -58,7 +58,7 @@ export default async function CityPage({ params }: { params: Promise<{ city: str
 
   const heroImage = fotoCarta.length > 0
     ? fotoCarta[0].url
-    : '/images/hero/1.webp'
+    : '/images/hero/giardino-boogie-bistrot-colle-brianza.avif'
 
   const serviziEventi = localita
     ? tuttiEventi.filter(e => e.slug && localita.serviziAttivi.includes(e.slug) && e.stato === 'attivo')
@@ -66,7 +66,7 @@ export default async function CityPage({ params }: { params: Promise<{ city: str
 
   const fotoCarousel = fotoLocation.length > 0
     ? fotoLocation.map(f => ({ src: f.url, alt: f.alt || 'Boogie Bistrot' }))
-    : [{ src: '/images/hero/1.webp', alt: 'Boogie Bistrot' }, { src: '/images/hero/2.avif', alt: 'Il giardino' }]
+    : [{ src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Boogie Bistrot' }, { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Il giardino' }]
   const directionsUrl = `https://www.google.com/maps/dir/${encodeURIComponent(localita.citta + ', LC')}/Boogie+Bistrot+Colle+Brianza`
 
   return (

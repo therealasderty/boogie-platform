@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import PaginaHero from '@/components/PaginaHero'
 import Footer from '@/components/Footer'
+import SezioneVieni from '@/components/SezioneVieni'
 import FadeIn from '@/components/FadeIn'
 import FormEventoAziendale from '@/components/FormEventoAziendale'
 import GrigliaFotoLocation from '@/components/GrigliaFotoLocation'
@@ -83,7 +84,7 @@ export default async function EventiAziendaliCityPage(
   if (!localita) notFound()
 
   const fotoShuffled = shuffle(mediaLocation)
-  const heroImage = fotoShuffled[0]?.url ?? '/images/hero/1.webp'
+  const heroImage = 'https://pub-412a895afa8e491c84ad5df75bc1458b.r2.dev/media/1780389736209-media_1.1_TaY9KSJq6.jpg'
   const distanza = localita.tempoGuida
     ? `a soli ${localita.tempoGuida} minuti da ${localita.citta}`
     : `vicino a ${localita.citta}`
@@ -262,6 +263,7 @@ export default async function EventiAziendaliCityPage(
         </div>
       </section>
 
+      <SezioneVieni />
       <Footer />
     </main>
   )

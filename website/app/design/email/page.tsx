@@ -330,8 +330,8 @@ const emailFidelity = card(
   cardFooter('Boogie Bistrot — Via Europa, 2, Colle Brianza (LC)')
 )
 
-/* ── 11. Richiesta recensione post-visita (cliente) ─────────────────────── */
-const emailFeedback = card(
+/* ── 11a. Richiesta recensione — variante Google (giorno pari) ───────────── */
+const emailFeedbackGoogle = card(
   cardBody(`
     ${logoOnly()}
     <h1 style="font-size:26px;color:#1A1610;margin:0 0 4px;font-weight:400;line-height:1.3;">Ciao Mario,</h1>
@@ -343,7 +343,37 @@ const emailFeedback = card(
           <a href="#"
              style="display:block;background:#1A1610;color:white;text-decoration:none;padding:14px 16px;font-family:'Raleway',Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.05em;text-align:center;border-radius:4px;line-height:1.4;">
             😊 È stata una bella serata<br>
-            <span style="font-size:11px;font-weight:400;opacity:0.7;letter-spacing:0;">Lascia una recensione</span>
+            <span style="font-size:11px;font-weight:400;opacity:0.7;letter-spacing:0;">Lascia una recensione su Google</span>
+          </a>
+        </td>
+        <td style="padding-left:8px;">
+          <a href="#"
+             style="display:block;background:#F5F0E8;color:#1A1610;text-decoration:none;padding:14px 16px;font-family:'Raleway',Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.05em;text-align:center;border:1px solid #D4C9B0;border-radius:4px;line-height:1.4;">
+            😐 C'è qualcosa da migliorare<br>
+            <span style="font-size:11px;font-weight:400;opacity:0.6;letter-spacing:0;">Lascia un feedback</span>
+          </a>
+        </td>
+      </tr>
+    </table>
+    <p style="font-size:15px;color:#4A4030;line-height:1.6;margin:24px 0 0;">Grazie di cuore,<br><span style="font-weight:500;">Alessandra &amp; Chiara</span></p>
+  `) +
+  cardFooter('Boogie Bistrot — Via Europa, 2, Colle Brianza (LC)<br>Hai ricevuto questa email perché hai cenato da noi. Non vuoi ricevere questi messaggi? Scrivici a <a href="mailto:info@boogiebistrot.com" style="color:#C4913A;">info@boogiebistrot.com</a>.')
+)
+
+/* ── 11b. Richiesta recensione — variante TripAdvisor (giorno dispari) ───── */
+const emailFeedbackTripadvisor = card(
+  cardBody(`
+    ${logoOnly()}
+    <h1 style="font-size:26px;color:#1A1610;margin:0 0 4px;font-weight:400;line-height:1.3;">Ciao Mario,</h1>
+    <h1 style="font-size:26px;color:#1A1610;margin:0 0 24px;font-weight:400;line-height:1.3;">grazie per aver scelto il Boogie Bistrot sabato 17 maggio!</h1>
+    ${body('Come è andata l\'esperienza? Ci farebbe molto piacere sapere la tua opinione.')}
+    <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:12px;">
+      <tr>
+        <td style="padding-right:8px;">
+          <a href="#"
+             style="display:block;background:#1A1610;color:white;text-decoration:none;padding:14px 16px;font-family:'Raleway',Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.05em;text-align:center;border-radius:4px;line-height:1.4;">
+            😊 È stata una bella serata<br>
+            <span style="font-size:11px;font-weight:400;opacity:0.7;letter-spacing:0;">Lascia una recensione su TripAdvisor</span>
           </a>
         </td>
         <td style="padding-left:8px;">
@@ -507,9 +537,10 @@ export default function EmailPage() {
             oggetto="Come è andata sabato 17 maggio? 😊"
             funzione="netlify/functions/feedback.js"
             destinatario="cliente"
-            note="Inviata via cron ogni giorno alle 11:00 ai clienti con prenotazione confermata del giorno precedente. Un'email per cliente (dedup per email). Il pulsante positivo porta a Google Reviews, quello negativo a /feedback per raccogliere il feedback internamente."
+            note="Inviata ogni giorno alle 11:00. Giorno pari → Google Reviews. Giorno dispari → TripAdvisor. Il pulsante negativo rimanda sempre a /feedback (interno). Env var: TRIPADVISOR_REVIEW_URL."
           />
-          <EmailPreview html={emailFeedback} />
+          <EmailPreview html={emailFeedbackGoogle} />
+          <EmailPreview html={emailFeedbackTripadvisor} />
 
         </Section>
 

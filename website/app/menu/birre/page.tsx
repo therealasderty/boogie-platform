@@ -37,8 +37,8 @@ export default async function BirrePage() {
   const immagini = mediaBirre.length > 0
     ? mediaBirre.map(m => ({ src: m.url, alt: m.alt || m.nome }))
     : [
-        { src: '/images/hero/1.webp', alt: 'Le birre di Boogie Bistrot' },
-        { src: '/images/hero/2.avif', alt: 'Selezione birre' },
+        { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Le birre di Boogie Bistrot' },
+        { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Selezione birre' },
       ]
 
   return (

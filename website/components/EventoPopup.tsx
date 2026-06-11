@@ -9,7 +9,7 @@ const eventoPopup = {
   label: '12 Aprile 2025',
   titolo: 'Serata Jazz Live',
   descrizione: 'Una serata speciale con musica dal vivo nel nostro giardino. Posti limitati, prenota subito il tuo tavolo.',
-  image: '/images/hero/1.webp',
+  image: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif',
   ctaLabel: 'Prenota ora',
   ctaHref: '/prenota',
 }

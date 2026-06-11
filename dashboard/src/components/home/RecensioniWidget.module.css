@@ -15,3 +15,10 @@
 .neg { font-size: 1rem; color: var(--danger); font-weight: 600; }
 .nd { font-size: 0.75rem; color: var(--text3); font-style: italic; }
 @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } }
+
+.graficiWrap { margin-top: 20px; padding-top: 16px; border-top: var(--border-style); display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.graficoBox { display: flex; flex-direction: column; gap: 6px; }
+.graficoLabel { display: flex; align-items: center; gap: 5px; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 500; }
+.legendDot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.svg { width: 100%; height: auto; display: block; }
+@media (max-width: 600px) { .graficiWrap { grid-template-columns: 1fr; } }

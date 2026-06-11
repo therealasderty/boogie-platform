@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 import FormContatti from '@/components/FormContatti'
 
-export default function SezioneContatti({ fotoSrc = '/images/hero/2.avif', fotoAlt = 'Boogie Bistrot' }: { fotoSrc?: string; fotoAlt?: string }) {
+export default function SezioneContatti({ fotoSrc = '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', fotoAlt = 'Boogie Bistrot' }: { fotoSrc?: string; fotoAlt?: string }) {
 
   return (
     <section className="flex flex-col md:flex-row min-h-[600px]">

@@ -157,7 +157,7 @@ export default async function CityServicePage({
         titolo={`${evento.titolo} vicino a ${localita.citta}`}
         sottotitolo={`A ${localita.tempoGuida ? `${localita.tempoGuida} minuti` : 'pochi minuti'} da ${localita.citta}`}
         badge={heroBadge || undefined}
-        image={evento.fotoHero || '/images/hero/1.webp'}
+        image={evento.fotoHero || '/images/hero/giardino-boogie-bistrot-colle-brianza.avif'}
       />
 
       {(introServizio || introImages.length > 0) && (

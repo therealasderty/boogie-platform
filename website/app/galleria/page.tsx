@@ -19,8 +19,8 @@ import Footer from '@/components/Footer'
 import { fetchMedia } from '@/lib/media'
 
 const FALLBACK_IMMAGINI = [
-  { src: '/images/hero/2.avif', alt: 'Il giardino di Boogie Bistrot' },
-  { src: '/images/hero/1.webp', alt: 'Le sale interne' },
+  { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Il giardino di Boogie Bistrot' },
+  { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Le sale interne' },
 ]
 
 function shuffle<T>(arr: T[]): T[] {
@@ -28,18 +28,20 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export default async function GalleriaPage() {
-  const [mediaLocation, mediaCarta] = await Promise.all([
+  const [mediaLocation, mediaCarta, mediaGalleria] = await Promise.all([
     fetchMedia('location'),
     fetchMedia('carta'),
+    fetchMedia('galleria'),
   ])
   const immaginiLocation = mediaLocation.map(m => ({ src: m.url, alt: m.alt || m.nome }))
   const immaginiCarta = mediaCarta.map(m => ({ src: m.url, alt: m.alt || m.nome }))
+  const immaginiGalleria = mediaGalleria.map(m => ({ src: m.url, alt: m.alt || m.nome }))
 
   const seen = new Set<string>()
   const tutteLeImmagini = shuffle(
-    [...immaginiLocation, ...immaginiCarta].filter(m => seen.has(m.src) ? false : (seen.add(m.src), true))
+    [...immaginiLocation, ...immaginiCarta, ...immaginiGalleria].filter(m => seen.has(m.src) ? false : (seen.add(m.src), true))
   )
-  const heroImage = tutteLeImmagini[0]?.src ?? '/images/hero/1.webp'
+  const heroImage = tutteLeImmagini[0]?.src ?? '/images/hero/giardino-boogie-bistrot-colle-brianza.avif'
   const immaginiCarousel = tutteLeImmagini.length > 0 ? tutteLeImmagini.slice(0, 4) : FALLBACK_IMMAGINI
 
   return (
@@ -64,7 +66,7 @@ export default async function GalleriaPage() {
         immagini={immaginiCarousel}
       />
       {/* Galleria fotografica — su desktop usa tag location + carta */}
-      <MosaicoFoto immagini={[...immaginiLocation, ...immaginiCarta].length > 0 ? [...immaginiLocation, ...immaginiCarta] : undefined} />
+      <MosaicoFoto immagini={tutteLeImmagini.length > 0 ? tutteLeImmagini : undefined} />
       <SezioneFAQ />
       <SezioneContatti />
       <Footer />

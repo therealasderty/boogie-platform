@@ -72,7 +72,13 @@ exports.handler = async (event) => {
         ? new Date(data + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
         : 'ieri sera';
 
-      const linkPositivo = 'https://search.google.com/local/writereview?placeid=ChIJr9H7A7enhkcRimfhn3EqfVU';
+      const GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJr9H7A7enhkcRimfhn3EqfVU';
+      const TRIPADVISOR_REVIEW_URL = process.env.TRIPADVISOR_REVIEW_URL || 'https://www.tripadvisor.it/UserReviewEdit-g2717697-d17786536-Boogie_Bistrot-Colle_Brianza_Province_of_Lecco_Lombardy.html';
+
+      const giornoIeri = ieri.getDate();
+      const isGiornoPari = giornoIeri % 2 === 0;
+      const linkPositivo = isGiornoPari ? GOOGLE_REVIEW_URL : TRIPADVISOR_REVIEW_URL;
+      const labelPiattaforma = isGiornoPari ? 'su Google' : 'su TripAdvisor';
       const linkNegativo = `${SITO_URL}/feedback?nome=${encodeURIComponent(nome)}&data=${data}`;
 
       const emailHtml = `
@@ -98,7 +104,7 @@ exports.handler = async (event) => {
                 <a href="${linkPositivo}" target="_blank"
                    style="display:block;background:#1A1610;color:white;text-decoration:none;padding:14px 16px;font-family:'Raleway',Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.05em;text-align:center;border-radius:4px;line-height:1.4;">
                   😊 È stata una bella serata<br>
-                  <span style="font-size:11px;font-weight:400;opacity:0.7;letter-spacing:0;">Lascia una recensione</span>
+                  <span style="font-size:11px;font-weight:400;opacity:0.7;letter-spacing:0;">Lascia una recensione ${labelPiattaforma}</span>
                 </a>
               </td>
               <td style="padding-left:8px;">

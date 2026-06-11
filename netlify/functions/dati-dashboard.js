@@ -71,6 +71,14 @@ exports.handler = async (event) => {
       ? ultimo['TripAdvisor Recensioni'] - meseFa.fields['TripAdvisor Recensioni']
       : null;
 
+    const storico = [...records]
+      .reverse()
+      .map(r => ({
+        data:         r.fields['Data'],
+        google:       r.fields['Google Recensioni'] ?? null,
+        tripadvisor:  r.fields['TripAdvisor Recensioni'] ?? null,
+      }));
+
     return {
       statusCode: 200,
       headers,
@@ -86,6 +94,7 @@ exports.handler = async (event) => {
           taRating:        ultimo['TripAdvisor Rating'],
           diffSettimanaTA,
           diffMeseTA,
+          storico,
         }
       })
     };

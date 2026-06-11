@@ -53,7 +53,7 @@ export default async function ContattaciPage() {
   ])
   const orariDisplay = buildOrariLines(orari, chiusure)
   const mediaPool = [...mediaChiSiamo, ...mediaLocation]
-  const heroImage = mediaPool[0]?.url ?? '/images/hero/1.webp'
+  const heroImage = mediaPool[0]?.url ?? '/images/hero/giardino-boogie-bistrot-colle-brianza.avif'
 
   return (
     <main>

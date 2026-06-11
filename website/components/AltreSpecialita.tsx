@@ -3,10 +3,10 @@ import Link from 'next/link'
 import { fetchMedia } from '@/lib/media'
 
 const SPECIALITA = [
-  { titolo: 'Pizza',    descrizione: 'Impasto a lunga lievitazione, forno a legna',      href: '/menu/pizza',     tag: 'pizza',     fallback: '/images/hero/2.avif' },
-  { titolo: 'Cocktail', descrizione: 'Aperitivi e signature drink',                       href: '/menu/cocktails', tag: 'cocktail', fallback: '/images/hero/1.webp' },
-  { titolo: 'Birre',    descrizione: 'Selezione di birre locali alla spina e in bottiglia', href: '/menu/birre',   tag: 'birra',     fallback: '/images/hero/2.avif' },
-  { titolo: 'Vini',     descrizione: 'Carta dei vini con etichette locali e nazionali',   href: '/menu/vini',      tag: 'vino',      fallback: '/images/hero/1.webp' },
+  { titolo: 'Pizza',    descrizione: 'Impasto a lunga lievitazione, forno a legna',      href: '/menu/pizza',     tag: 'pizza',     fallback: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif' },
+  { titolo: 'Cocktail', descrizione: 'Aperitivi e signature drink',                       href: '/menu/cocktails', tag: 'cocktail', fallback: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif' },
+  { titolo: 'Birre',    descrizione: 'Selezione di birre locali alla spina e in bottiglia', href: '/menu/birre',   tag: 'birra',     fallback: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif' },
+  { titolo: 'Vini',     descrizione: 'Carta dei vini con etichette locali e nazionali',   href: '/menu/vini',      tag: 'vino',      fallback: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif' },
 ]
 
 export default async function AltreSpecialita({ escludi }: { escludi?: string }) {
