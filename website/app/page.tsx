@@ -23,7 +23,6 @@ import SezioneRecensioni from '@/components/SezioneRecensioni'
 import Footer from '@/components/Footer'
 import { fetchOrari, fetchChiusure, buildOrariLines } from '@/lib/orari'
 import { fetchMedia } from '@/lib/media'
-import { optimizeHeroImageSrc } from '@/lib/cloudinary'
 import { fetchEventi } from '@/lib/agenda'
 
 const GIORNI_ESTESI  = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato']
@@ -111,7 +110,7 @@ export default async function Home() {
     .map(c => c.giorno as number)
   const giorniChiusi = [...new Set([...chiusiOrdinari, ...chiusiSettimanali])]
   const heroImages = mediaHero.length > 0
-    ? mediaHero.map(m => ({ src: optimizeHeroImageSrc(m.url), alt: m.alt || m.nome }))
+    ? mediaHero.map(m => ({ src: m.url, alt: m.alt || m.nome }))
     : HERO_FALLBACK
 
   const oggi = new Date().toISOString().split('T')[0]
