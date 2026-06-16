@@ -11,6 +11,8 @@ export const metadata: Metadata = {
     siteName: 'Boogie Bistrot',
   },
 }
+export const revalidate = 259200
+
 import SezioneContatti from '@/components/SezioneContatti'
 import Footer from '@/components/Footer'
 import FadeIn from '@/components/FadeIn'

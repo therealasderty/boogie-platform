@@ -11,6 +11,8 @@ export const metadata: Metadata = {
     siteName: 'Boogie Bistrot',
   },
 }
+export const revalidate = 259200
+
 import SezioneIntro from '@/components/SezioneIntro'
 import MosaicoFoto from '@/components/MosaicoFoto'
 import SezioneFAQ from '@/components/SezioneFAQ'

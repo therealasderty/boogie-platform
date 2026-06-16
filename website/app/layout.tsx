@@ -11,6 +11,7 @@ import { PageContextProvider } from "@/lib/page-context"
 import PopupManager from "@/components/PopupManager";
 import PageTransition from "@/components/PageTransition";
 import BannerChiusure from "@/components/BannerChiusure";
+import NavbarShell from "@/components/NavbarShell";
 import { fetchMedia } from "@/lib/media";
 import { openGraphImageUrl } from "@/lib/imagekit-delivery";
 
@@ -104,10 +105,14 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
         />
         <PageContextProvider>
-          <Navbar orariDisplay={orariDisplay} eventi={eventiNavbar} />
-          <BannerChiusure eventi={eventiBanner} />
+          <NavbarShell>
+            <Navbar orariDisplay={orariDisplay} eventi={eventiNavbar} />
+            <BannerChiusure eventi={eventiBanner} />
+          </NavbarShell>
           <PageTransition>{children}</PageTransition>
-          <PopupManager chiusure={eventiBanner} />
+          <NavbarShell>
+            <PopupManager chiusure={eventiBanner} />
+          </NavbarShell>
           <CookieBanner />
         </PageContextProvider>
         {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (

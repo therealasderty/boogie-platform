@@ -4,8 +4,6 @@ import SezioneContatti from '@/components/SezioneContatti'
 import Footer from '@/components/Footer'
 import FadeIn from '@/components/FadeIn'
 import FormPrenotazioneMultiStep from '@/components/FormPrenotazioneMultiStep'
-import { fetchMedia } from '@/lib/media'
-
 export const revalidate = 86400
 
 export const metadata: Metadata = {
@@ -16,17 +14,16 @@ export const metadata: Metadata = {
   },
 }
 
-export default async function PrenotaPage() {
-  const media = await fetchMedia('location')
-  const heroImage = media[0]?.url || '/images/hero/sala-boogie-bistrot-colle-brianza.webp'
+const HERO_IMAGE = 'https://pub-412a895afa8e491c84ad5df75bc1458b.r2.dev/media/1780389706247-media_Gigapixel_Clipboard_6ffcc1ba8102abd5c2884e838be666d36cd9af33fc28067dc6f619f13f020147-gigapixel-low-resolution-v2-2'
 
+export default async function PrenotaPage() {
   return (
     <main>
       <PaginaHero
         titolo="Prenota un tavolo"
         sottotitolo="Boogie Bistrot"
         tagline="Riserva il tuo posto — ti aspettiamo"
-        image={heroImage}
+        image={HERO_IMAGE}
       />
 
       <section className="py-20 px-6 md:px-14 bg-white">

@@ -42,28 +42,3 @@ export async function fetchMedia(tag?: string): Promise<MediaItem[]> {
   }
 }
 
-export async function fetchMediaById(id: string): Promise<MediaItem | null> {
-  const token = process.env.AIRTABLE_TOKEN
-  const base  = process.env.AIRTABLE_BASE_ID
-  if (!token || !base) return null
-
-  try {
-    const res = await fetch(
-      `https://api.airtable.com/v0/${base}/Media/${id}`,
-      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: REVALIDATE_3_GIORNI_S } }
-    )
-    if (!res.ok) return null
-    const r = await res.json()
-    return {
-      id:         r.id,
-      nome:       r.fields['Nome'] || '',
-      url:        r.fields['URL']  || '',
-      alt:        r.fields['Alt text'] || '',
-      tag:        r.fields['Tag'] || [],
-      ordine:     r.fields['Ordine'] || 0,
-      soloMobile: r.fields['Solo mobile'] || false,
-    }
-  } catch {
-    return null
-  }
-}

@@ -77,7 +77,15 @@ function SortableRow({ piatto, onEdit, onToggle, onDelete, modificheAbilitate })
         <span className={styles.rowNome}>{piatto.nome}</span>
         {piatto.etichetta && <span className={styles.badge}>{piatto.etichetta}</span>}
         {piatto.descrizione && <span className={styles.rowDesc}>{piatto.descrizione}</span>}
-        {piatto.note && <span className={styles.rowNote}>{piatto.note}</span>}
+        {(() => {
+          if (!piatto.note) return null
+          const cleaned = piatto.note
+            .replace(/senza\s+glutine/gi, '')
+            .replace(/senza\s+lattosio/gi, '')
+            .replace(/^[\s,;.·\-()]+|[\s,;.·\-()]+$/g, '')
+            .trim()
+          return cleaned ? <span className={styles.rowNote}>{cleaned}</span> : null
+        })()}
       </div>
 
       <div className={styles.rowPrezzi}>

@@ -146,6 +146,7 @@ overlay: rgba(0,0,0,0.45)
 | `/eventi-aziendali` | Landing eventi aziendali: punti di forza, gastronomia, griglia foto, FormEventoAziendale, SezioneVieni. Hero: foto R2 fissa |
 | `/eventi-aziendali/[city]` | Variante localizzata per 10 città; `generateStaticParams` da Airtable Localita. Hero: foto R2 fissa. SezioneVieni in fondo |
 | `/conferma-prenotazione` | Pagina interna (no navbar) per confermare manualmente una prenotazione. Legge `?id=`, mostra i dati, permette di aggiungere un messaggio e invia la conferma via `conferma.js` |
+| `/feedback` | Pagina standalone (route group `(standalone)/`, senza navbar/popup) — form feedback negativo post-cena. Legge `?nome=&data=` (passati dall'email `feedback.js`). Stelle opzionali + textarea commento obbligatorio → `salva-feedback.js` |
 | `/sitemap.ts` | Sitemap dinamica (events, blog, vicino-a, eventi-aziendali) |
 | `/robots.ts` | Robots.txt dinamico |
 
@@ -157,7 +158,7 @@ overlay: rgba(0,0,0,0.45)
 ## Componenti website (`website/components/`)
 
 ### Layout & Navigation
-- **Navbar.tsx** — Fixed, trasparente → `bg-black/55 backdrop-blur` allo scroll. Homepage non scrollata: no logo, voci left-aligned. Dropdown eventi con preview prossimi appuntamenti da Airtable. Mobile: hamburger + bottom bar fissa (Contattaci/Maps/Prenota).
+- **Navbar.tsx** — Fixed, trasparente → `bg-black/55 backdrop-blur` allo scroll. Homepage non scrollata: no logo, voci left-aligned. Dropdown eventi con preview prossimi appuntamenti da Airtable. Mobile: hamburger + bottom bar fissa. Bottom bar: Contattaci (tel) / Come raggiungerci (Maps) / **Menù** (→ `/menu/specialita`, solo homepage) / Prenota (brand gold).
 - **Footer.tsx** — 4 colonne: Logo+social | Esplora | Vieni da noi | Contatti. Sfondo `#1a1a1a`.
 - **PaginaHero.tsx** — Hero pagine interne: 50vh, parallax Framer Motion, slide dall'alto al mount.
 
@@ -478,6 +479,9 @@ Il campo `Fascia` in Airtable (tabella Chiusure) è **Multi-select** con valori 
 - Filtraggio date eseguito **lato client** con `Date.now()` reale (evita stale date da ISR cache) — eventi con `dataFine` passata non vengono mostrati
 - Montato in `layout.tsx` tra `<Navbar>` e `<PageTransition>`, riceve `eventiBanner` dal server (revalidate 1 giorno)
 
+### Route group `(standalone)` — pagine senza navbar (2026-06-16)
+`website/app/(standalone)/` — route group per pagine standalone (senza Navbar, BannerChiusure, PopupManager). Layout: `(standalone)/layout.tsx` restituisce solo `{children}` senza html/body (sono nel root layout). La visibilità di Navbar/Banner/Popup è controllata da `NavbarShell.tsx` (client component con `usePathname`). Array `STANDALONE_PATHS` in `NavbarShell.tsx` — aggiungere qui i path da escludere. Attualmente: `/feedback`.
+
 ### Form prenotazione — link telefono gruppi >10 (2026-06-01)
 In `FormPrenotazioneMultiStep.tsx` il testo "contattaci direttamente" per gruppi >10 persone è ora un link `tel:+393465813309`.
 
@@ -512,4 +516,21 @@ I vecchi path `1.webp` e `2.avif` (inesistenti) sono stati sostituiti globalment
 - Asse Y indipendente per ogni piattaforma (scala propria)
 - Si renderizza solo se ≥2 punti disponibili per quella piattaforma
 
-*Aggiornato: 12 Giugno 2026*
+### Audit codebase (2026-06-16) — fix applicati
+- **netlify.toml**: rimosso redirect 301 `/feedback → /` che bloccava la nuova pagina feedback in produzione
+- **privacy/page.tsx**: rimosso import `Navbar` inutilizzato (la navbar è nel root layout)
+- **galleria/page.tsx** + **fidelity/page.tsx**: aggiunti `export const revalidate = 259200` (erano render dinamici ad ogni visita)
+- **links/page.tsx**: corretto `GIORNI_ESTESI` da minuscolo a Title Case (coerente con Navbar e page.tsx)
+- **eventi-aziendali/page.tsx** + **[city]/page.tsx**: rimossa funzione `shuffle()` non-operante (`return [...arr]`), chiamate sostituite con spread diretto
+- **Navbar.tsx**: rimosso alias `prenotaBottomLabel` ridondante; semplificato `PHONES` in singola costante `PHONE`
+- **Eliminati file orfani**: `SmartImage.tsx`, `lib/cloudinary.ts`, `EventoPopup.tsx`, `public/conferma-prenotazione.html`
+- **lib/orari.ts**: rimossa `buildOrariDisplay()` (mai chiamata, sostituita da `buildOrariLines()`)
+- **lib/media.ts**: rimossa `fetchMediaById()` (mai chiamata)
+
+### ⚠️ Problemi di sicurezza pendenti — richiedono azione manuale
+1. **`.env` nella root del monorepo** contiene credenziali reali (Airtable, Meta, Brevo). Il file è in `.gitignore` ma andrebbe eliminato — le Netlify Functions leggono le env vars dall'interfaccia Netlify in produzione.
+2. **`upload-media.js` e `upload-slide.js`** non hanno autenticazione: accettano POST senza `verifyToken` né header segreto. Chiunque conosca l'URL può caricare file su R2.
+3. **`VITE_IMAGEKIT_PRIVATE_KEY`** in `dashboard/.env.local` è esposta nel bundle Vite (prefisso `VITE_`). La migrazione a R2 è completata — il file `dashboard/src/lib/imagekit.js` può essere eliminato insieme alla env var.
+4. **`og-image.jpg`** mancante in `website/public/` — fallback 404 se Airtable non risponde al fetch `og-image` tag.
+
+*Aggiornato: 16 Giugno 2026*

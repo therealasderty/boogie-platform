@@ -70,8 +70,7 @@ function formatRicorrente(e: EventoAgenda, giorniChiusi: number[] = []): string 
   return label
 }
 
-const PHONES = ['+39 039 9260568', '+39 320 1465504', '+39 346 5813309']
-const PHONE = PHONES[0]
+const PHONE = '+39 039 9260568'
 const MAPS_HREF = 'https://maps.google.com/?q=Via+Europa+2+Colle+Brianza'
 
 const menuVoci = [
@@ -123,7 +122,6 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
   const prenotaLabel = (isEventoPage || isCityServicePage) && eventoTitolo
     ? (eventoDormiente ? `Rimani aggiornato su ${eventoTitolo}` : `Prenota ${eventoTitolo}`)
     : 'Prenota un tavolo'
-  const prenotaBottomLabel = prenotaLabel
   const showPrenotaBtn = !isPrenotaPage
 
   const [scrolled, setScrolled] = useState(false)
@@ -580,6 +578,24 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
               <span className="text-[10px] tracking-wide">Come raggiungerci</span>
             </a>
 
+            {/* Divisore + Menu (solo homepage) */}
+            {isHome && (
+              <>
+                <div className="w-px bg-white/10 my-3" />
+                <Link
+                  href="/menu/specialita"
+                  className="flex-1 flex flex-col items-center justify-center gap-1 text-white/70 active:bg-white/5"
+                >
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M6 2v6c0 1.66 1.34 3 3 3v7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M9 2v4M6 6h6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                    <path d="M14 2c0 0 1 2 1 4.5S14 11 14 11v7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span className="text-[10px] tracking-wide">Menù</span>
+                </Link>
+              </>
+            )}
+
             {/* Divisore */}
             {showPrenotaBtn && <div className="w-px bg-white/10 my-3" />}
 
@@ -593,7 +609,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
                   <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" strokeWidth="1.4" />
                   <path d="M3 8h14M7 2v3M13 2v3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
                 </svg>
-                <span className="text-[10px] tracking-wide text-center leading-tight line-clamp-1">{prenotaBottomLabel}</span>
+                <span className="text-[10px] tracking-wide text-center leading-tight line-clamp-1">{prenotaLabel}</span>
               </Link>
             )}
 

@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 // ─── Helpers label evento ─────────────────────────────────────────────────────
 const GIORNI_BREVI   = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab']
 const GIORNI_LABEL   = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
-const GIORNI_ESTESI  = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato']
+const GIORNI_ESTESI  = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato']
 const MESI_FULL      = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre']
 const ORDINE_SETTIMANA = [1, 2, 3, 4, 5, 6, 0]
 

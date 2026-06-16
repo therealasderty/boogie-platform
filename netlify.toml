@@ -103,10 +103,6 @@
   to = "/fidelity"
   status = 301
 
-[[redirects]]
-  from = "/feedback"
-  to = "/"
-  status = 301
 
 [[redirects]]
   from = "/buoni-regalo"
