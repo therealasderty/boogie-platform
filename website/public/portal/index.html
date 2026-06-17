@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>WiFi Boogie Bistrot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="card" id="card">
+
+    <!-- Header sempre visibile -->
+    <div class="header">
+      <div class="logo">
+        <span class="logo-fallback">B</span>
+      </div>
+      <h1>WiFi Boogie Bistrot</h1>
+      <span class="ssid">
+        <span class="ssid-dot"></span>
+        Boogie_Clienti
+      </span>
+    </div>
+
+    <!-- Spinner iniziale (mostrato finché /api/portal-check non risponde) -->
+    <div id="state-loading" class="spinner-wrap">
+      <div class="spinner"></div>
+      <p>Connessione in corso…</p>
+    </div>
+
+    <!-- Stato: nuovo utente → form -->
+    <div id="state-new" style="display:none">
+      <p style="font-size:0.875rem; color:var(--text2); text-align:center; margin-bottom:1rem;">
+        Inserisci i tuoi dati per connetterti gratuitamente.
+      </p>
+      <form class="form" id="form-new" novalidate>
+
+        <!-- Hidden fields Omada -->
+        <input type="hidden" id="h-clientMac"  name="clientMac" />
+        <input type="hidden" id="h-apMac"      name="apMac" />
+        <input type="hidden" id="h-ssidName"   name="ssidName" />
+        <input type="hidden" id="h-radioId"    name="radioId" />
+        <input type="hidden" id="h-site"       name="site" />
+        <input type="hidden" id="h-redirectUrl" name="redirectUrl" />
+
+        <div class="field">
+          <label for="nome">Nome *</label>
+          <input type="text" id="nome" name="nome" placeholder="Il tuo nome" autocomplete="given-name" required />
+        </div>
+
+        <div class="field">
+          <label for="email">Email *</label>
+          <input type="email" id="email" name="email" placeholder="tua@email.it" autocomplete="email" inputmode="email" required />
+        </div>
+
+        <label class="checkbox-row">
+          <input type="checkbox" id="consenso" name="consenso" />
+          <span>
+            Acconsento a ricevere comunicazioni promozionali da Boogie Bistrot
+            (aggiornamenti eventi, offerte). Puoi disiscriverti in qualsiasi momento.
+            <a href="https://boogiebistrot.it/privacy" target="_blank" rel="noopener">Privacy policy</a>
+          </span>
+        </label>
+
+        <div id="msg-new" class="msg"></div>
+
+        <button type="submit" class="btn-connect" id="btn-new">
+          Connettiti gratis
+        </button>
+      </form>
+    </div>
+
+    <!-- Stato: utente di ritorno -->
+    <div id="state-returning" style="display:none">
+      <!-- Hidden fields Omada (duplicati per il form di ritorno) -->
+      <input type="hidden" id="r-clientMac"   value="" />
+      <input type="hidden" id="r-apMac"       value="" />
+      <input type="hidden" id="r-ssidName"    value="" />
+      <input type="hidden" id="r-radioId"     value="" />
+      <input type="hidden" id="r-site"        value="" />
+      <input type="hidden" id="r-redirectUrl" value="" />
+
+      <div class="welcome">
+        <span class="hello">Bentornato,</span>
+        <span class="name" id="welcome-name">—</span>
+        <span class="visits" id="welcome-visits"></span>
+      </div>
+
+      <div id="msg-ret" class="msg" style="margin-top:1rem;"></div>
+
+      <button class="btn-connect" id="btn-returning" style="margin-top:1.25rem;">
+        Connettiti
+      </button>
+    </div>
+
+    <!-- Note legali -->
+    <p class="footer-note">
+      Connettendoti accetti i <a href="https://boogiebistrot.it/privacy" style="color:var(--accent);" target="_blank" rel="noopener">termini d'uso</a> della rete WiFi.
+      Sessione: 8 ore.
+    </p>
+
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ── Lettura parametri Omada da querystring ──────────────────────
+      const qs = new URLSearchParams(window.location.search);
+      const omada = {
+        clientMac:   qs.get('clientMac')   || '',
+        apMac:       qs.get('apMac')       || '',
+        ssidName:    qs.get('ssidName')    || 'Boogie_Clienti',
+        radioId:     qs.get('radioId')     || '',
+        site:        qs.get('site')        || '',
+        redirectUrl: qs.get('redirectUrl') || 'https://boogiebistrot.it',
+      };
+
+      // ── Popola hidden fields ────────────────────────────────────────
+      ['clientMac','apMac','ssidName','radioId','site','redirectUrl'].forEach(k => {
+        const n = document.getElementById('h-' + k);
+        const r = document.getElementById('r-' + k);
+        if (n) n.value = omada[k];
+        if (r) r.value = omada[k];
+      });
+
+      // ── Helper: mostra stato ────────────────────────────────────────
+      function showState(id) {
+        ['state-loading','state-new','state-returning'].forEach(s => {
+          document.getElementById(s).style.display = (s === id) ? '' : 'none';
+        });
+      }
+
+      function showMsg(elId, text, type) {
+        const el = document.getElementById(elId);
+        el.textContent = text;
+        el.className = 'msg ' + type + ' show';
+      }
+
+      function clearMsg(elId) {
+        const el = document.getElementById(elId);
+        el.textContent = '';
+        el.className = 'msg';
+      }
+
+      // ── Redirect post-autorizzazione ────────────────────────────────
+      function redirect(url) {
+        window.location.href = url || omada.redirectUrl || 'https://boogiebistrot.it';
+      }
+
+      // ── 1. Controlla se cliente noto (cookie) ───────────────────────
+      fetch('/.netlify/functions/portal-check', {
+        credentials: 'include',
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.returning) {
+            document.getElementById('welcome-name').textContent = data.name || 'amico';
+            if (data.visits && data.visits > 1) {
+              document.getElementById('welcome-visits').textContent =
+                'Visita n. ' + data.visits + ' — grazie per essere tornato!';
+            }
+            showState('state-returning');
+          } else {
+            showState('state-new');
+          }
+        })
+        .catch(() => {
+          // In caso di errore di rete mostriamo il form
+          showState('state-new');
+        });
+
+      // ── 2. Submit nuovo utente ──────────────────────────────────────
+      document.getElementById('form-new').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        clearMsg('msg-new');
+
+        const nome     = document.getElementById('nome').value.trim();
+        const email    = document.getElementById('email').value.trim().toLowerCase();
+        const consenso = document.getElementById('consenso').checked;
+
+        if (!nome) { showMsg('msg-new', 'Inserisci il tuo nome.', 'error'); return; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          showMsg('msg-new', 'Inserisci un indirizzo email valido.', 'error');
+          return;
+        }
+
+        const btn = document.getElementById('btn-new');
+        btn.disabled = true;
+        btn.textContent = 'Connessione…';
+
+        try {
+          const res = await fetch('/.netlify/functions/portal-submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              nome, email, consenso,
+              clientMac:   omada.clientMac,
+              apMac:       omada.apMac,
+              ssidName:    omada.ssidName,
+              radioId:     omada.radioId,
+              site:        omada.site,
+              redirectUrl: omada.redirectUrl,
+            }),
+          });
+
+          const data = await res.json();
+
+          if (res.ok && data.success) {
+            showMsg('msg-new', 'Connesso! Reindirizzamento…', 'success');
+            setTimeout(() => redirect(data.redirectUrl), 1200);
+          } else {
+            showMsg('msg-new', data.error || 'Errore. Riprova.', 'error');
+            btn.disabled = false;
+            btn.textContent = 'Connettiti gratis';
+          }
+        } catch {
+          showMsg('msg-new', 'Errore di rete. Riprova.', 'error');
+          btn.disabled = false;
+          btn.textContent = 'Connettiti gratis';
+        }
+      });
+
+      // ── 3. Submit utente di ritorno ─────────────────────────────────
+      document.getElementById('btn-returning').addEventListener('click', async function () {
+        clearMsg('msg-ret');
+        this.disabled = true;
+        this.textContent = 'Connessione…';
+
+        try {
+          const res = await fetch('/.netlify/functions/portal-submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              returning:   true,
+              clientMac:   document.getElementById('r-clientMac').value,
+              apMac:       document.getElementById('r-apMac').value,
+              ssidName:    document.getElementById('r-ssidName').value,
+              radioId:     document.getElementById('r-radioId').value,
+              site:        document.getElementById('r-site').value,
+              redirectUrl: document.getElementById('r-redirectUrl').value,
+            }),
+          });
+
+          const data = await res.json();
+
+          if (res.ok && data.success) {
+            showMsg('msg-ret', 'Connesso! Reindirizzamento…', 'success');
+            setTimeout(() => redirect(data.redirectUrl), 1200);
+          } else {
+            showMsg('msg-ret', data.error || 'Errore. Riprova.', 'error');
+            this.disabled = false;
+            this.textContent = 'Connettiti';
+          }
+        } catch {
+          showMsg('msg-ret', 'Errore di rete. Riprova.', 'error');
+          this.disabled = false;
+          this.textContent = 'Connettiti';
+        }
+      });
+
+    })();
+  </script>
+
+</body>
+</html>
