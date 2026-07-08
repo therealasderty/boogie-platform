@@ -111,10 +111,12 @@
       const omada = {
         clientMac:   qs.get('clientMac')   || '',
         apMac:       qs.get('apMac')       || '',
+        gatewayMac:  qs.get('gatewayMac')  || '',
         ssidName:    qs.get('ssidName')    || 'Boogie_Clienti',
         radioId:     qs.get('radioId')     || '',
+        vid:         qs.get('vid')         || '',
         site:        qs.get('site')        || '',
-        redirectUrl: qs.get('redirectUrl') || 'https://boogiebistrot.it',
+        redirectUrl: qs.get('redirectUrl') || qs.get('originUrl') || 'https://boogiebistrot.com',
       };
 
       // ── Popola hidden fields ────────────────────────────────────────
@@ -146,7 +148,47 @@
 
       // ── Redirect post-autorizzazione ────────────────────────────────
       function redirect(url) {
-        window.location.href = url || omada.redirectUrl || 'https://boogiebistrot.it';
+        window.location.href = url || omada.redirectUrl || 'https://boogiebistrot.com';
+      }
+
+      // ── Autorizza MAC sul controller Omada locale ────────────────────
+      // Il browser è sulla LAN → può raggiungere 192.168.10.1 direttamente.
+      // Chiamiamo /portal/auth con authType:0 (no password) dopo aver salvato i dati.
+      function omadaAuth(landingUrl) {
+        return new Promise(function (resolve) {
+          var done = false;
+          function finish() { if (!done) { done = true; resolve(); } }
+          setTimeout(finish, 4000); // fallback: redirect dopo 4s anche se auth fallisce
+
+          try {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'http://192.168.10.1/portal/auth', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.timeout = 5000;
+            xhr.ontimeout = finish;
+            xhr.onerror   = finish;
+            xhr.onreadystatechange = function () {
+              if (xhr.readyState !== 4) return;
+              try {
+                var r = JSON.parse(xhr.responseText);
+                if (r.errorCode === 0) {
+                  window.location.href = r.result || landingUrl;
+                  done = true;
+                } else { finish(); }
+              } catch (e) { finish(); }
+            };
+            xhr.send(JSON.stringify({
+              authType:   0,
+              clientMac:  omada.clientMac,
+              apMac:      omada.apMac,
+              gatewayMac: omada.gatewayMac,
+              ssidName:   omada.ssidName,
+              radioId:    omada.radioId ? Number(omada.radioId) : undefined,
+              vid:        omada.vid     ? Number(omada.vid)     : undefined,
+              originUrl:  landingUrl,
+            }));
+          } catch (e) { finish(); }
+        });
       }
 
       // ── 1. Controlla se cliente noto (cookie) ───────────────────────
@@ -217,7 +259,7 @@
 
           if (res.ok && data.success) {
             showMsg('msg-new', 'Connesso! Reindirizzamento…', 'success');
-            setTimeout(() => redirect(data.redirectUrl), 1200);
+            omadaAuth(data.redirectUrl).then(() => redirect(data.redirectUrl));
           } else {
             showMsg('msg-new', data.error || 'Errore. Riprova.', 'error');
             btn.disabled = false;
@@ -256,7 +298,7 @@
 
           if (res.ok && data.success) {
             showMsg('msg-ret', 'Connesso! Reindirizzamento…', 'success');
-            setTimeout(() => redirect(data.redirectUrl), 1200);
+            omadaAuth(data.redirectUrl).then(() => redirect(data.redirectUrl));
           } else {
             showMsg('msg-ret', data.error || 'Errore. Riprova.', 'error');
             this.disabled = false;
