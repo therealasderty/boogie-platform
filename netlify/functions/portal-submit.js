@@ -29,10 +29,6 @@ exports.handler = async (event) => {
   const BREVO_API_KEY        = process.env.BREVO_API_KEY;
   const BREVO_WIFI_LIST_ID   = parseInt(process.env.BREVO_WIFI_LIST_ID) || 0;
   const BREVO_DOI_TEMPLATE   = parseInt(process.env.BREVO_DOI_TEMPLATE_ID) || 0;
-  const OMADA_CONTROLLER_URL = process.env.OMADA_CONTROLLER_URL;   // es. https://192.168.1.X:8043
-  const OMADA_CONTROLLER_ID  = process.env.OMADA_CONTROLLER_ID;
-  const OMADA_OPERATOR_USER  = process.env.OMADA_OPERATOR_USERNAME;
-  const OMADA_OPERATOR_PASS  = process.env.OMADA_OPERATOR_PASSWORD;
   const PORTAL_COOKIE_SECRET = process.env.PORTAL_COOKIE_SECRET;
 
   // ── Parse body ──────────────────────────────────────────────────────
@@ -198,63 +194,10 @@ exports.handler = async (event) => {
     }
   }
 
-  // ── Autorizzazione Omada via Cloud API ────────────────────────────
-  // OMADA_CONTROLLER_URL = es. https://euw1-omada-cloud.tplinkcloud.com
-  // Il cloud controller espone le stesse API v2 del controller locale ma con SSL valido
-  // e raggiungibile da Netlify (nessun IP locale).
-  if (OMADA_CONTROLLER_URL && OMADA_CONTROLLER_ID && clientMac) {
-    try {
-      // Step 1: Login come Hotspot Operator
-      const loginUrl = `${OMADA_CONTROLLER_URL}/${OMADA_CONTROLLER_ID}/api/v2/hotspot/login`;
-      console.log('[Omada] login URL:', loginUrl);
-
-      const loginRes = await fetch(loginUrl, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ name: OMADA_OPERATOR_USER, password: OMADA_OPERATOR_PASS }),
-      });
-
-      const loginBody = await loginRes.text();
-      console.log('[Omada] login status:', loginRes.status, 'body:', loginBody);
-
-      if (loginRes.ok) {
-        const loginData     = JSON.parse(loginBody);
-        const csrfToken     = loginData?.result?.token;
-        const sessionCookie = loginRes.headers.get('set-cookie') || '';
-
-        console.log('[Omada] csrfToken:', csrfToken ? 'OK' : 'MISSING');
-
-        // Step 2: Autorizza MAC dispositivo (8 ore = 28800000 ms)
-        if (csrfToken) {
-          const authRes = await fetch(
-            `${OMADA_CONTROLLER_URL}/${OMADA_CONTROLLER_ID}/api/v2/hotspot/extPortal/auth`,
-            {
-              method:  'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Csrf-Token':   csrfToken,
-                'Cookie':       sessionCookie,
-              },
-              body: JSON.stringify({
-                clientMac,
-                apMac,
-                ssidName,
-                radioId:  radioId ? parseInt(radioId) : 1,
-                site:     site || '',
-                time:     28800000,
-                authType: 4,
-              }),
-            }
-          );
-          const authBody = await authRes.text();
-          console.log('[Omada] auth status:', authRes.status, 'body:', authBody);
-        }
-      }
-    } catch (err) {
-      console.error('[Omada] errore:', err?.message || err);
-      // Auth Omada non blocca il flusso principale (Airtable/Brevo già salvati)
-    }
-  }
+  // Nota: l'autorizzazione MAC Omada non viene fatta da qui.
+  // L'API hotspot Omada è esposta solo sull'IP locale del controller (192.168.10.1),
+  // non raggiungibile da Netlify. La modalità "No Authentication" su Omada gestisce
+  // l'autorizzazione autonomamente; questa function si occupa solo di Airtable + Brevo.
 
   // ── Cookie boogie_guest ────────────────────────────────────────────
   let setCookieHeader = '';
