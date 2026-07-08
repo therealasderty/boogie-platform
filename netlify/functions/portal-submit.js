@@ -1,42 +1,9 @@
 // netlify/functions/portal-submit.js
-// POST — salva dati cliente, sincronizza Brevo, autorizza su Omada, imposta cookie
+// POST — salva dati cliente, sincronizza Brevo, autorizza su Omada Cloud, imposta cookie
+// OMADA_CONTROLLER_URL deve puntare al cloud controller (es. https://euw1-omada-cloud.tplinkcloud.com)
+// NON usare IP locale — le Netlify Functions non raggiungono la LAN del ristorante.
 
 const crypto = require('crypto');
-const https  = require('https');
-
-// ── Helper: fetch con agente HTTPS custom (per Omada self-signed) ──────────────
-function fetchWithAgent(url, options = {}, agent) {
-  // Node 18+ fetch nativo non supporta http.Agent — usiamo il modulo https nativo
-  return new Promise((resolve, reject) => {
-    const parsedUrl = new URL(url);
-    const reqOptions = {
-      hostname: parsedUrl.hostname,
-      port:     parsedUrl.port || 443,
-      path:     parsedUrl.pathname + parsedUrl.search,
-      method:   options.method || 'GET',
-      headers:  options.headers || {},
-      agent,
-    };
-
-    const req = https.request(reqOptions, res => {
-      let body = '';
-      res.on('data', chunk => { body += chunk; });
-      res.on('end', () => {
-        resolve({
-          ok:      res.statusCode >= 200 && res.statusCode < 300,
-          status:  res.statusCode,
-          headers: res.headers,
-          json:    () => JSON.parse(body),
-          text:    () => body,
-        });
-      });
-    });
-
-    req.on('error', reject);
-    if (options.body) req.write(options.body);
-    req.end();
-  });
-}
 
 function normalizeEmail(raw) {
   return String(raw || '').trim().toLowerCase().replace(/,/g, '.');
@@ -231,30 +198,30 @@ exports.handler = async (event) => {
     }
   }
 
-  // ── Autorizzazione Omada ───────────────────────────────────────────
+  // ── Autorizzazione Omada via Cloud API ────────────────────────────
+  // OMADA_CONTROLLER_URL = es. https://euw1-omada-cloud.tplinkcloud.com
+  // Il cloud controller espone le stesse API v2 del controller locale ma con SSL valido
+  // e raggiungibile da Netlify (nessun IP locale).
   if (OMADA_CONTROLLER_URL && OMADA_CONTROLLER_ID && clientMac) {
     try {
-      const omadaAgent = new https.Agent({ rejectUnauthorized: false });
-
-      // Step 1: Login Hotspot Operator
-      const loginRes = await fetchWithAgent(
+      // Step 1: Login come Hotspot Operator
+      const loginRes = await fetch(
         `${OMADA_CONTROLLER_URL}/${OMADA_CONTROLLER_ID}/api/v2/hotspot/login`,
         {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
           body:    JSON.stringify({ name: OMADA_OPERATOR_USER, password: OMADA_OPERATOR_PASS }),
-        },
-        omadaAgent
+        }
       );
 
       if (loginRes.ok) {
-        const loginData    = loginRes.json();
-        const csrfToken    = loginData?.result?.token;
-        const sessionCookie = loginRes.headers['set-cookie']?.[0] || '';
+        const loginData     = await loginRes.json();
+        const csrfToken     = loginData?.result?.token;
+        const sessionCookie = loginRes.headers.get('set-cookie') || '';
 
-        // Step 2: Autorizza dispositivo (8 ore = 28800000 ms)
+        // Step 2: Autorizza MAC dispositivo (8 ore = 28800000 ms)
         if (csrfToken) {
-          await fetchWithAgent(
+          await fetch(
             `${OMADA_CONTROLLER_URL}/${OMADA_CONTROLLER_ID}/api/v2/hotspot/extPortal/auth`,
             {
               method:  'POST',
@@ -272,14 +239,12 @@ exports.handler = async (event) => {
                 time:     28800000,
                 authType: 4,
               }),
-            },
-            omadaAgent
+            }
           );
         }
       }
     } catch {
-      // L'autorizzazione Omada non blocca il flusso — il cliente riesce comunque
-      // a navigare se il controller è raggiungibile dalla sua rete al momento del redirect
+      // Auth Omada non blocca il flusso principale (Airtable/Brevo già salvati)
     }
   }
 
