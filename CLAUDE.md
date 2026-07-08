@@ -10,7 +10,7 @@ Monorepo in `/boogie-platform` su GitHub: therealasderty.
 
 - `website/` — Next.js 16.2.3, React 19, TypeScript, Tailwind CSS v4
 - `dashboard/` — React 18 + Vite, JSX, FullCalendar, Phosphor Icons, @dnd-kit, Tiptap
-- `netlify/functions/` — 42 funzioni serverless Node.js (backend + automazioni)
+- `netlify/functions/` — 44 funzioni serverless Node.js (backend + automazioni)
 
 **Deploy:** Netlify. `netlify.toml` nella root: `base=website`, `publish=.next`, `functions=../netlify/functions`.
 
@@ -401,6 +401,8 @@ Widget home: `AttesaWidget`, `MeteoWidget`, `RecensioniWidget`, `PrenotazioniWid
 - [x] **Risolto (2026-05-05)** — Doppia pubblicazione da cron concorrenti: introdotto lock per-record su `RisultatiPubblicazione.lockRunId` senza usare `Stato='In pubblicazione'`
 - [x] **Risolto (2026-05-05)** — Social Studio su eventi ricorrenti: popolamento testo periodo (es. `Da Mar a Dom (Escluso Sabato)`) usando `giorniEsclusione` + giorni di apertura da `Orari`
 - [ ] Testare flow Social Automation end-to-end (cron ora ogni 4 ore)
+- [ ] WiFi Portal: configurare lista Brevo + template Double Opt-In per clienti WiFi (`BREVO_WIFI_LIST_ID`, `BREVO_DOI_TEMPLATE_ID`)
+- [ ] WiFi Portal: test end-to-end su smartphone (connetti Boogie Clienti → portal appare → form → record su Airtable WiFi_Clienti)
 - [ ] Configurare dominio custom su Netlify
 - [ ] **Multilingua (futuro):** `next-intl`, prefisso `/en /fr /de /es`, campi Airtable `_EN/_FR/_DE/_ES`
 - [x] **Risolto (2026-06-03)** — Migrazione image hosting ImageKit → Cloudflare R2. Upload media dashboard ora su R2 (`upload-media.js`). Netlify Image CDN per ottimizzazione. 6 foto 404 da sostituire manualmente.
@@ -527,10 +529,26 @@ I vecchi path `1.webp` e `2.avif` (inesistenti) sono stati sostituiti globalment
 - **lib/orari.ts**: rimossa `buildOrariDisplay()` (mai chiamata, sostituita da `buildOrariLines()`)
 - **lib/media.ts**: rimossa `fetchMediaById()` (mai chiamata)
 
+### WiFi Captive Portal (2026-07-08)
+Rete fisica: Router TIM → TP-Link ER706W (WAN2, IP da TIM) → OC200 controller (LAN 192.168.10.1). SSID "Boogie Clienti": Guest Network, Open, 2.4+5GHz.
+
+**File:** `website/public/portal/index.html` + `portal/style.css` → live su `https://boogiebistrot.it/portal/`
+**Functions:** `portal-check.js` (verifica cookie `boogie_guest`), `portal-submit.js` (salva Airtable `WiFi_Clienti`, Brevo DOI, autorizza Omada Cloud API, cookie 90gg)
+**Airtable:** tabella `WiFi_Clienti` — Email, Nome, Prima visita, Ultima visita, Contatore visite, Consenso marketing, Consenso timestamp, MAC addresses, Fonte
+**Omada:** portale "Portale Boogie", Authentication Type: External Portal Server, URL: `https://boogiebistrot.it/portal/`, Timeout 8h
+**Env vars Netlify:**
+- `OMADA_CONTROLLER_URL` = `https://euw1-omada-cloud.tplinkcloud.com`
+- `OMADA_CONTROLLER_ID` = `dc8234c2e5d318455bab0ba38e3cb374`
+- `OMADA_OPERATOR_USERNAME` / `OMADA_OPERATOR_PASSWORD` = Device Account del sito Omada
+- `PORTAL_COOKIE_SECRET` = secret HMAC 64 char hex (generato 2026-07-08)
+- `BREVO_WIFI_LIST_ID` / `BREVO_DOI_TEMPLATE_ID` = da configurare (Brevo lista + template DOI)
+
+**Nota auth:** `portal-submit.js` chiama Omada Cloud API (non IP locale — Netlify non raggiunge la LAN). Stesso endpoint `/api/v2/hotspot/extPortal/auth` ma su `euw1-omada-cloud.tplinkcloud.com`.
+
 ### ⚠️ Problemi di sicurezza pendenti — richiedono azione manuale
 1. **`.env` nella root del monorepo** contiene credenziali reali (Airtable, Meta, Brevo). Il file è in `.gitignore` ma andrebbe eliminato — le Netlify Functions leggono le env vars dall'interfaccia Netlify in produzione.
 2. **`upload-media.js` e `upload-slide.js`** non hanno autenticazione: accettano POST senza `verifyToken` né header segreto. Chiunque conosca l'URL può caricare file su R2.
 3. **`VITE_IMAGEKIT_PRIVATE_KEY`** in `dashboard/.env.local` è esposta nel bundle Vite (prefisso `VITE_`). La migrazione a R2 è completata — il file `dashboard/src/lib/imagekit.js` può essere eliminato insieme alla env var.
 4. **`og-image.jpg`** mancante in `website/public/` — fallback 404 se Airtable non risponde al fetch `og-image` tag.
 
-*Aggiornato: 16 Giugno 2026*
+*Aggiornato: 8 Luglio 2026*
