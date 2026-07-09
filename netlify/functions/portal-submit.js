@@ -307,12 +307,8 @@ exports.handler = async (event) => {
     }
   }
 
-  // ── Autorizza MAC su Omada (server-to-server, non blocca il flusso) ──
-  const omadaResult = await omadaAuthorize({ clientMac, gatewayMac, vid, site });
-  if (!omadaResult.ok) {
-    console.warn('[portal-submit] Omada auth non riuscita:', omadaResult.reason);
-    // Non blocchiamo — il cliente riceve comunque il redirect
-  }
+  // Nota: l'autorizzazione Omada avviene lato browser (phone → OC200 locale).
+  // Netlify non può raggiungere 192.168.10.1 — la funzione gestisce solo Airtable + Brevo.
 
   // ── Cookie boogie_guest ────────────────────────────────────────────
   let setCookieHeader = '';

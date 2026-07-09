@@ -157,43 +157,21 @@
         window.location.href = url || omada.redirectUrl || 'https://boogiebistrot.it';
       }
 
-      // ── Autorizza MAC sul controller OC200 locale (browser → LAN) ──
-      // Il telefono è sulla LAN e può raggiungere 192.168.10.1 direttamente.
-      // Netlify Functions non possono farlo — quindi l'auth avviene qui lato client.
+      // ── Autorizza MAC sul controller OC200 locale (navigazione browser) ──
+      // XHR da HTTPS a HTTP è blocked (mixed content).
+      // window.location.href da HTTPS a HTTP è PERMESSO — il browser naviga
+      // direttamente all'endpoint auth dell'OC200, che autorizza il MAC
+      // e redirige alla landing page automaticamente.
       function omadaAuth(landingUrl) {
-        return new Promise(function (resolve) {
-          var done = false;
-          function finish() { if (!done) { done = true; resolve(); } }
-          setTimeout(finish, 4000); // fallback: redirect dopo 4s anche se auth fallisce
-
-          try {
-            var xhr = new XMLHttpRequest();
-            // OC200 espone il portal auth sull'IP locale, porta 8088
-            xhr.open('POST', 'http://192.168.10.1:8088/portal/auth', true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.timeout = 5000;
-            xhr.ontimeout = finish;
-            xhr.onerror   = finish;
-            xhr.onreadystatechange = function () {
-              if (xhr.readyState !== 4) return;
-              try {
-                var r = JSON.parse(xhr.responseText);
-                if (r.errorCode === 0) {
-                  done = true;
-                  window.location.href = r.result || landingUrl;
-                } else { finish(); }
-              } catch (e) { finish(); }
-            };
-            xhr.send(JSON.stringify({
-              clientMac:  omada.clientMac,
-              gatewayMac: omada.gatewayMac,
-              vid:        omada.vid  || '',
-              site:       omada.site || '',
-              time:       String(8 * 60 * 60 * 1000), // 8 ore in ms
-              authType:   '4',
-            }));
-          } catch (e) { finish(); }
-        });
+        var params = new URLSearchParams();
+        params.set('clientMac',  omada.clientMac);
+        params.set('gatewayMac', omada.gatewayMac);
+        params.set('vid',        omada.vid  || '');
+        params.set('site',       omada.site || '');
+        params.set('time',       String(8 * 60 * 60 * 1000));
+        params.set('authType',   '4');
+        params.set('redirectUrl', landingUrl || omada.redirectUrl || 'https://boogiebistrot.it');
+        window.location.href = 'http://192.168.10.1:8088/portal/auth?' + params.toString();
       }
 
       // ── 1. Controlla se cliente noto (cookie) ───────────────────────
