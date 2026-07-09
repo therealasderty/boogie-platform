@@ -121,11 +121,15 @@
       const qs = new URLSearchParams(window.location.search);
       const omada = {
         clientMac:   qs.get('clientMac')   || '',
+        clientIp:    qs.get('clientIp')    || '',
         gatewayMac:  qs.get('gatewayMac')  || '',
+        apMac:       qs.get('apMac')       || '',
+        ssidName:    qs.get('ssidName')    || '',
+        radioId:     qs.get('radioId')     || '',
         vid:         qs.get('vid')         || '',
         t:           qs.get('t')           || '',
         site:        qs.get('site')        || '',
-        redirectUrl: qs.get('redirectUrl') || 'https://boogiebistrot.it',
+        redirectUrl: qs.get('redirectUrl') || 'http://captive.apple.com/hotspot-detect.html',
       };
 
       // ── Popola hidden fields ────────────────────────────────────────
@@ -187,15 +191,17 @@
         form.method = 'GET';
         form.action = 'http://192.168.10.1/portal/auth';
 
-        // Converti MAC da trattini a due punti (formato atteso da OC200)
-        var clientMacColon = omada.clientMac.replace(/-/g, ':');
-
         var fields = {
-          clientMac:   clientMacColon,
-          site:        omada.site || '',
+          clientMac:   omada.clientMac,
+          clientIp:    omada.clientIp,
+          apMac:       omada.apMac,
+          ssidName:    omada.ssidName,
+          radioId:     omada.radioId,
+          site:        omada.site,
+          t:           omada.t,
           time:        String(8 * 60 * 60 * 1000),
           authType:    '1',
-          redirectUrl: omada.redirectUrl || 'http://captive.apple.com/hotspot-detect.html',
+          redirectUrl: 'https://boogiebistrot.com/portal/success/',
         };
 
         Object.keys(fields).forEach(function(k) {
