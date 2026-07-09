@@ -19,7 +19,7 @@
       <h1>WiFi Boogie Bistrot</h1>
     </div>
 
-    <!-- Spinner iniziale (mostrato finché /api/portal-check non risponde) -->
+    <!-- Spinner iniziale -->
     <div id="state-loading" class="spinner-wrap">
       <div class="spinner"></div>
       <p>Connessione in corso…</p>
@@ -31,14 +31,6 @@
         Inserisci i tuoi dati per connetterti gratuitamente.
       </p>
       <form class="form" id="form-new" novalidate>
-
-        <!-- Hidden fields Omada (Gateway mode: clientMac, gatewayMac, vid, t, site, redirectUrl) -->
-        <input type="hidden" id="h-clientMac"   name="clientMac" />
-        <input type="hidden" id="h-gatewayMac"  name="gatewayMac" />
-        <input type="hidden" id="h-vid"         name="vid" />
-        <input type="hidden" id="h-t"           name="t" />
-        <input type="hidden" id="h-site"        name="site" />
-        <input type="hidden" id="h-redirectUrl" name="redirectUrl" />
 
         <div class="field">
           <label for="nome">Nome *</label>
@@ -79,14 +71,6 @@
 
     <!-- Stato: utente di ritorno -->
     <div id="state-returning" style="display:none">
-      <!-- Hidden fields Omada (duplicati per il form di ritorno) -->
-      <input type="hidden" id="r-clientMac"   value="" />
-      <input type="hidden" id="r-gatewayMac"  value="" />
-      <input type="hidden" id="r-vid"         value="" />
-      <input type="hidden" id="r-t"           value="" />
-      <input type="hidden" id="r-site"        value="" />
-      <input type="hidden" id="r-redirectUrl" value="" />
-
       <div class="welcome">
         <span class="hello">Bentornato,</span>
         <span class="name" id="welcome-name">—</span>
@@ -100,8 +84,19 @@
       </button>
     </div>
 
-    <!-- DEBUG: mostra parametri Omada ricevuti -->
-    <div id="debug-params" style="font-size:0.7rem;color:#999;word-break:break-all;margin-top:1rem;padding:0.5rem;background:#f5f5f5;border-radius:4px;display:none;"></div>
+    <!-- Stato: connesso con successo -->
+    <div id="state-success" style="display:none; text-align:center;">
+      <div style="font-size:2.5rem; margin-bottom:0.75rem;">🎉</div>
+      <p style="font-size:1.1rem; font-weight:700; color:var(--text); margin-bottom:0.5rem;">
+        Benvenuto, <span id="success-name"></span>!
+      </p>
+      <p style="font-size:0.875rem; color:var(--text2); margin-bottom:1.5rem;">
+        Sei connesso a WiFi Boogie Bistrot. Buona navigazione!
+      </p>
+      <a href="https://boogiebistrot.it" class="btn-connect" style="display:block; text-decoration:none; text-align:center;">
+        Vai al sito Boogie Bistrot
+      </a>
+    </div>
 
     <!-- Note legali -->
     <p class="footer-note">
@@ -114,46 +109,13 @@
     (function () {
       'use strict';
 
-      // ── Lettura parametri Omada da querystring ──────────────────────
-      // SSID "Boogie Clienti" è di tipo Gateway (ER706W), quindi i parametri sono:
-      // clientMac, gatewayMac, vid, t, site, redirectUrl
-      // (NON apMac/ssidName/radioId che arrivano solo da SSID di tipo EAP)
+      // Leggi clientMac dall'URL se presente (Omada potrebbe passarlo anche in No Auth mode)
       const qs = new URLSearchParams(window.location.search);
-      const omada = {
-        clientMac:   qs.get('clientMac')   || '',
-        clientIp:    qs.get('clientIp')    || '',
-        gatewayMac:  qs.get('gatewayMac')  || '',
-        apMac:       qs.get('apMac')       || '',
-        ssidName:    qs.get('ssidName')    || '',
-        radioId:     qs.get('radioId')     || '',
-        vid:         qs.get('vid')         || '',
-        t:           qs.get('t')           || '',
-        site:        qs.get('site')        || '',
-        redirectUrl: qs.get('redirectUrl') || 'http://captive.apple.com/hotspot-detect.html',
-      };
-
-      // ── Popola hidden fields ────────────────────────────────────────
-      ['clientMac','gatewayMac','vid','t','site','redirectUrl'].forEach(k => {
-        const n = document.getElementById('h-' + k);
-        const r = document.getElementById('r-' + k);
-        if (n) n.value = omada[k];
-        if (r) r.value = omada[k];
-      });
-
-      // ── DEBUG: mostra parametri ricevuti ────────────────────────────
-      const dbg = document.getElementById('debug-params');
-      dbg.style.display = 'block';
-      dbg.textContent = 'clientMac=' + omada.clientMac
-        + ' | gatewayMac=' + omada.gatewayMac
-        + ' | vid=' + omada.vid
-        + ' | site=' + omada.site
-        + ' | t=' + omada.t
-        + ' | redirectUrl=' + omada.redirectUrl
-        + ' | FULLURL=' + window.location.href;
+      const clientMac = qs.get('clientMac') || '';
 
       // ── Helper: mostra stato ────────────────────────────────────────
       function showState(id) {
-        ['state-loading','state-new','state-returning'].forEach(s => {
+        ['state-loading','state-new','state-returning','state-success'].forEach(s => {
           document.getElementById(s).style.display = (s === id) ? '' : 'none';
         });
       }
@@ -170,50 +132,32 @@
         el.className = 'msg';
       }
 
-      // ── Redirect post-autorizzazione ────────────────────────────────
-      function redirect(url) {
-        window.location.href = url || omada.redirectUrl || 'https://boogiebistrot.it';
+      function showSuccess(name) {
+        document.getElementById('success-name').textContent = name || 'ospite';
+        showState('state-success');
       }
 
-      // ── Autorizza MAC sul controller OC200 locale (GET navigation) ───
-      // Form POST HTTPS→HTTP è bloccato (mixed content).
-      // GET navigation HTTPS→HTTP è permessa dal browser.
-      // I dati del form vengono salvati in localStorage prima di navigare,
-      // poi la success page li legge e chiama Netlify (con internet attivo).
-      function omadaAuth(pendingData) {
-        // Salva i dati in localStorage
-        try {
-          localStorage.setItem('boogie_portal_pending', JSON.stringify(pendingData));
-        } catch(e) {}
-
-        // Form nativo HTML — iOS non può intercettare il submit nativo
-        var form = document.createElement('form');
-        form.method = 'GET';
-        form.action = 'http://192.168.10.1/portal/auth';
-
-        var fields = {
-          clientMac:   omada.clientMac,
-          clientIp:    omada.clientIp,
-          apMac:       omada.apMac,
-          ssidName:    omada.ssidName,
-          radioId:     omada.radioId,
-          site:        omada.site,
-          t:           omada.t,
-          time:        '28800',  // secondi, non ms
-          authType:    '4',
-          // redirectUrl rimosso — lascia gestire a Omada Landing Page
-        };
-
-        Object.keys(fields).forEach(function(k) {
-          var input = document.createElement('input');
-          input.type  = 'hidden';
-          input.name  = k;
-          input.value = fields[k];
-          form.appendChild(input);
-        });
-
-        document.body.appendChild(form);
-        form.submit();
+      // ── Salva su Netlify e mostra successo ──────────────────────────
+      function submitToNetlify(payload, msgElId, btnEl) {
+        return fetch('/.netlify/functions/portal-submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ ...payload, clientMac }),
+        })
+          .then(r => r.json())
+          .then(data => {
+            if (data.success) {
+              showSuccess(data.name || payload.nome || '');
+            } else {
+              if (btnEl) { btnEl.disabled = false; btnEl.textContent = btnEl._origText; }
+              showMsg(msgElId, data.error || 'Errore. Riprova.', 'error');
+            }
+          })
+          .catch(() => {
+            if (btnEl) { btnEl.disabled = false; btnEl.textContent = btnEl._origText; }
+            showMsg(msgElId, 'Errore di rete. Riprova.', 'error');
+          });
       }
 
       // ── 1. Controlla se cliente noto (cookie) ───────────────────────
@@ -244,8 +188,6 @@
         });
 
       // ── 2. Submit nuovo utente ──────────────────────────────────────
-      // FLUSSO: valida → naviga a OC200 locale (auth) → OC200 redirige a /portal/success/
-      // La success page ha già internet e salva i dati su Airtable/Brevo.
       document.getElementById('form-new').addEventListener('submit', function (e) {
         e.preventDefault();
         clearMsg('msg-new');
@@ -264,19 +206,21 @@
         }
 
         const btn = document.getElementById('btn-new');
+        btn._origText = btn.textContent;
         btn.disabled = true;
-        btn.textContent = 'Connessione…';
+        btn.textContent = 'Salvataggio…';
 
-        omadaAuth({ nome, cognome, email, compleanno, consenso: consenso ? '1' : '0' });
+        submitToNetlify({ nome, cognome, email, compleanno, consenso }, 'msg-new', btn);
       });
 
       // ── 3. Submit utente di ritorno ─────────────────────────────────
       document.getElementById('btn-returning').addEventListener('click', function () {
         clearMsg('msg-ret');
+        this._origText = this.textContent;
         this.disabled = true;
         this.textContent = 'Connessione…';
 
-        omadaAuth({ returning: '1' });
+        submitToNetlify({ returning: true }, 'msg-ret', this);
       });
 
     })();
