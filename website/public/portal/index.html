@@ -180,10 +180,12 @@
           localStorage.setItem('boogie_portal_pending', JSON.stringify(pendingData));
         } catch(e) {}
 
+        // clientMac con trattini (formato Omada Gateway: XX-XX-XX-XX-XX-XX)
+        // gatewayMac vuoto — Omada Gateway non lo manda
+        // site = site ID (stringa esadecimale, non nome sito)
+        // redirectUrl = nostra success page (ignoriamo captive.apple.com)
         var params = new URLSearchParams();
         params.set('clientMac',   omada.clientMac);
-        params.set('gatewayMac',  omada.gatewayMac);
-        params.set('vid',         omada.vid  || '');
         params.set('site',        omada.site || '');
         params.set('time',        String(8 * 60 * 60 * 1000));
         params.set('authType',    '4');
