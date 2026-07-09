@@ -100,6 +100,9 @@
       </button>
     </div>
 
+    <!-- DEBUG: mostra parametri Omada ricevuti -->
+    <div id="debug-params" style="font-size:0.7rem;color:#999;word-break:break-all;margin-top:1rem;padding:0.5rem;background:#f5f5f5;border-radius:4px;display:none;"></div>
+
     <!-- Note legali -->
     <p class="footer-note">
       Connettendoti accetti i <a href="https://boogiebistrot.com/privacy" style="color:var(--accent);" target="_blank" rel="noopener">termini d'uso</a> della rete WiFi.
@@ -132,6 +135,15 @@
         if (n) n.value = omada[k];
         if (r) r.value = omada[k];
       });
+
+      // ── DEBUG: mostra parametri ricevuti ────────────────────────────
+      const dbg = document.getElementById('debug-params');
+      dbg.style.display = 'block';
+      dbg.textContent = 'clientMac=' + omada.clientMac
+        + ' | gatewayMac=' + omada.gatewayMac
+        + ' | vid=' + omada.vid
+        + ' | site=' + omada.site
+        + ' | redirectUrl=' + omada.redirectUrl;
 
       // ── Helper: mostra stato ────────────────────────────────────────
       function showState(id) {
