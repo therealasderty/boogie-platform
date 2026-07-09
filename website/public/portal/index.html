@@ -157,21 +157,35 @@
         window.location.href = url || omada.redirectUrl || 'https://boogiebistrot.it';
       }
 
-      // ── Autorizza MAC sul controller OC200 locale (navigazione browser) ──
-      // XHR da HTTPS a HTTP è blocked (mixed content).
-      // window.location.href da HTTPS a HTTP è PERMESSO — il browser naviga
-      // direttamente all'endpoint auth dell'OC200, che autorizza il MAC
-      // e redirige alla landing page automaticamente.
+      // ── Autorizza MAC sul controller OC200 locale via form POST ──────
+      // L'OC200 si aspetta una POST con form data (non querystring GET).
+      // Creiamo un form invisibile e lo submittiamo.
       function omadaAuth(landingUrl) {
-        var params = new URLSearchParams();
-        params.set('clientMac',  omada.clientMac);
-        params.set('gatewayMac', omada.gatewayMac);
-        params.set('vid',        omada.vid  || '');
-        params.set('site',       omada.site || '');
-        params.set('time',       String(8 * 60 * 60 * 1000));
-        params.set('authType',   '4');
-        params.set('redirectUrl', landingUrl || omada.redirectUrl || 'https://boogiebistrot.it');
-        window.location.href = 'http://192.168.10.1/portal/auth?' + params.toString();
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = 'http://192.168.10.1/portal/auth';
+        form.style.display = 'none';
+
+        var fields = {
+          clientMac:   omada.clientMac,
+          gatewayMac:  omada.gatewayMac,
+          vid:         omada.vid  || '',
+          site:        omada.site || '',
+          time:        String(8 * 60 * 60 * 1000),
+          authType:    '4',
+          redirectUrl: landingUrl || omada.redirectUrl || 'https://boogiebistrot.it',
+        };
+
+        Object.keys(fields).forEach(function(k) {
+          var input = document.createElement('input');
+          input.type  = 'hidden';
+          input.name  = k;
+          input.value = fields[k];
+          form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
       }
 
       // ── 1. Controlla se cliente noto (cookie) ───────────────────────
