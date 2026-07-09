@@ -157,35 +157,27 @@
         window.location.href = url || omada.redirectUrl || 'https://boogiebistrot.it';
       }
 
-      // ── Autorizza MAC sul controller OC200 locale via form POST ──────
-      // L'OC200 si aspetta una POST con form data (non querystring GET).
-      // Creiamo un form invisibile e lo submittiamo.
-      function omadaAuth(landingUrl) {
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.action = 'http://192.168.10.1/portal/auth';
-        form.style.display = 'none';
+      // ── Autorizza MAC sul controller OC200 locale (GET navigation) ───
+      // Form POST HTTPS→HTTP è bloccato (mixed content).
+      // GET navigation HTTPS→HTTP è permessa dal browser.
+      // I dati del form vengono salvati in localStorage prima di navigare,
+      // poi la success page li legge e chiama Netlify (con internet attivo).
+      function omadaAuth(pendingData) {
+        // Salva i dati in localStorage — sopravvivono alla navigazione
+        try {
+          localStorage.setItem('boogie_portal_pending', JSON.stringify(pendingData));
+        } catch(e) {}
 
-        var fields = {
-          clientMac:   omada.clientMac,
-          gatewayMac:  omada.gatewayMac,
-          vid:         omada.vid  || '',
-          site:        omada.site || '',
-          time:        String(8 * 60 * 60 * 1000),
-          authType:    '4',
-          redirectUrl: landingUrl || omada.redirectUrl || 'https://boogiebistrot.it',
-        };
+        var params = new URLSearchParams();
+        params.set('clientMac',   omada.clientMac);
+        params.set('gatewayMac',  omada.gatewayMac);
+        params.set('vid',         omada.vid  || '');
+        params.set('site',        omada.site || '');
+        params.set('time',        String(8 * 60 * 60 * 1000));
+        params.set('authType',    '4');
+        params.set('redirectUrl', 'https://boogiebistrot.com/portal/success/');
 
-        Object.keys(fields).forEach(function(k) {
-          var input = document.createElement('input');
-          input.type  = 'hidden';
-          input.name  = k;
-          input.value = fields[k];
-          form.appendChild(input);
-        });
-
-        document.body.appendChild(form);
-        form.submit();
+        window.location.href = 'http://192.168.10.1/portal/auth?' + params.toString();
       }
 
       // ── 1. Controlla se cliente noto (cookie) ───────────────────────
@@ -239,19 +231,7 @@
         btn.disabled = true;
         btn.textContent = 'Connessione…';
 
-        // Costruisci la success URL con i dati del form come parametri
-        const successUrl = new URL('https://boogiebistrot.com/portal/success/');
-        successUrl.searchParams.set('nome',       nome);
-        successUrl.searchParams.set('cognome',    cognome);
-        successUrl.searchParams.set('email',      email);
-        successUrl.searchParams.set('compleanno', compleanno);
-        successUrl.searchParams.set('consenso',   consenso ? '1' : '0');
-        successUrl.searchParams.set('clientMac',  omada.clientMac);
-        successUrl.searchParams.set('gatewayMac', omada.gatewayMac);
-        successUrl.searchParams.set('vid',        omada.vid  || '');
-        successUrl.searchParams.set('site',       omada.site || '');
-
-        omadaAuth(successUrl.toString());
+        omadaAuth({ nome, cognome, email, compleanno, consenso: consenso ? '1' : '0' });
       });
 
       // ── 3. Submit utente di ritorno ─────────────────────────────────
@@ -260,14 +240,7 @@
         this.disabled = true;
         this.textContent = 'Connessione…';
 
-        const successUrl = new URL('https://boogiebistrot.com/portal/success/');
-        successUrl.searchParams.set('returning',  '1');
-        successUrl.searchParams.set('clientMac',  document.getElementById('r-clientMac').value);
-        successUrl.searchParams.set('gatewayMac', document.getElementById('r-gatewayMac').value);
-        successUrl.searchParams.set('vid',        document.getElementById('r-vid').value  || '');
-        successUrl.searchParams.set('site',       document.getElementById('r-site').value || '');
-
-        omadaAuth(successUrl.toString());
+        omadaAuth({ returning: '1' });
       });
 
     })();

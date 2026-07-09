@@ -56,18 +56,22 @@
     (function () {
       'use strict';
 
-      const qs = new URLSearchParams(window.location.search);
+      // Leggi i dati dal localStorage (salvati dal portal prima della navigazione OC200)
+      let pending = {};
+      try {
+        const raw = localStorage.getItem('boogie_portal_pending');
+        if (raw) {
+          pending = JSON.parse(raw);
+          localStorage.removeItem('boogie_portal_pending');
+        }
+      } catch(e) {}
 
-      const nome       = qs.get('nome')       || '';
-      const cognome    = qs.get('cognome')     || '';
-      const email      = qs.get('email')       || '';
-      const compleanno = qs.get('compleanno')  || '';
-      const consenso   = qs.get('consenso') === '1';
-      const returning  = qs.get('returning') === '1';
-      const clientMac  = qs.get('clientMac')  || '';
-      const gatewayMac = qs.get('gatewayMac') || '';
-      const vid        = qs.get('vid')        || '';
-      const site       = qs.get('site')       || '';
+      const nome       = pending.nome       || '';
+      const cognome    = pending.cognome     || '';
+      const email      = pending.email       || '';
+      const compleanno = pending.compleanno  || '';
+      const consenso   = pending.consenso === '1';
+      const returning  = pending.returning  === '1';
 
       document.getElementById('nome-display').textContent = nome || 'ospite';
 
@@ -84,7 +88,6 @@
         credentials: 'include',
         body: JSON.stringify({
           returning, nome, cognome, email, compleanno, consenso,
-          clientMac, gatewayMac, vid, site,
           redirectUrl: 'https://boogiebistrot.it',
         }),
       })
