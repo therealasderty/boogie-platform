@@ -14,13 +14,9 @@
     <!-- Header sempre visibile -->
     <div class="header">
       <div class="logo">
-        <span class="logo-fallback">B</span>
+        <img src="../Logo-Gold.svg" alt="Boogie Bistrot" />
       </div>
       <h1>WiFi Boogie Bistrot</h1>
-      <span class="ssid">
-        <span class="ssid-dot"></span>
-        Boogie_Clienti
-      </span>
     </div>
 
     <!-- Spinner iniziale (mostrato finché /api/portal-check non risponde) -->
@@ -36,12 +32,12 @@
       </p>
       <form class="form" id="form-new" novalidate>
 
-        <!-- Hidden fields Omada -->
-        <input type="hidden" id="h-clientMac"  name="clientMac" />
-        <input type="hidden" id="h-apMac"      name="apMac" />
-        <input type="hidden" id="h-ssidName"   name="ssidName" />
-        <input type="hidden" id="h-radioId"    name="radioId" />
-        <input type="hidden" id="h-site"       name="site" />
+        <!-- Hidden fields Omada (Gateway mode: clientMac, gatewayMac, vid, t, site, redirectUrl) -->
+        <input type="hidden" id="h-clientMac"   name="clientMac" />
+        <input type="hidden" id="h-gatewayMac"  name="gatewayMac" />
+        <input type="hidden" id="h-vid"         name="vid" />
+        <input type="hidden" id="h-t"           name="t" />
+        <input type="hidden" id="h-site"        name="site" />
         <input type="hidden" id="h-redirectUrl" name="redirectUrl" />
 
         <div class="field">
@@ -50,8 +46,18 @@
         </div>
 
         <div class="field">
+          <label for="cognome">Cognome *</label>
+          <input type="text" id="cognome" name="cognome" placeholder="Il tuo cognome" autocomplete="family-name" required />
+        </div>
+
+        <div class="field">
           <label for="email">Email *</label>
           <input type="email" id="email" name="email" placeholder="tua@email.it" autocomplete="email" inputmode="email" required />
+        </div>
+
+        <div class="field">
+          <label for="compleanno">Data di nascita</label>
+          <input type="date" id="compleanno" name="compleanno" autocomplete="bday" />
         </div>
 
         <label class="checkbox-row">
@@ -59,7 +65,7 @@
           <span>
             Acconsento a ricevere comunicazioni promozionali da Boogie Bistrot
             (aggiornamenti eventi, offerte). Puoi disiscriverti in qualsiasi momento.
-            <a href="https://boogiebistrot.it/privacy" target="_blank" rel="noopener">Privacy policy</a>
+            <a href="https://boogiebistrot.com/privacy" target="_blank" rel="noopener">Privacy policy</a>
           </span>
         </label>
 
@@ -75,9 +81,9 @@
     <div id="state-returning" style="display:none">
       <!-- Hidden fields Omada (duplicati per il form di ritorno) -->
       <input type="hidden" id="r-clientMac"   value="" />
-      <input type="hidden" id="r-apMac"       value="" />
-      <input type="hidden" id="r-ssidName"    value="" />
-      <input type="hidden" id="r-radioId"     value="" />
+      <input type="hidden" id="r-gatewayMac"  value="" />
+      <input type="hidden" id="r-vid"         value="" />
+      <input type="hidden" id="r-t"           value="" />
       <input type="hidden" id="r-site"        value="" />
       <input type="hidden" id="r-redirectUrl" value="" />
 
@@ -96,8 +102,7 @@
 
     <!-- Note legali -->
     <p class="footer-note">
-      Connettendoti accetti i <a href="https://boogiebistrot.it/privacy" style="color:var(--accent);" target="_blank" rel="noopener">termini d'uso</a> della rete WiFi.
-      Sessione: 8 ore.
+      Connettendoti accetti i <a href="https://boogiebistrot.com/privacy" style="color:var(--accent);" target="_blank" rel="noopener">termini d'uso</a> della rete WiFi.
     </p>
 
   </div>
@@ -107,20 +112,21 @@
       'use strict';
 
       // ── Lettura parametri Omada da querystring ──────────────────────
+      // SSID "Boogie Clienti" è di tipo Gateway (ER706W), quindi i parametri sono:
+      // clientMac, gatewayMac, vid, t, site, redirectUrl
+      // (NON apMac/ssidName/radioId che arrivano solo da SSID di tipo EAP)
       const qs = new URLSearchParams(window.location.search);
       const omada = {
         clientMac:   qs.get('clientMac')   || '',
-        apMac:       qs.get('apMac')       || '',
         gatewayMac:  qs.get('gatewayMac')  || '',
-        ssidName:    qs.get('ssidName')    || 'Boogie_Clienti',
-        radioId:     qs.get('radioId')     || '',
         vid:         qs.get('vid')         || '',
+        t:           qs.get('t')           || '',
         site:        qs.get('site')        || '',
-        redirectUrl: qs.get('redirectUrl') || qs.get('originUrl') || 'https://boogiebistrot.com',
+        redirectUrl: qs.get('redirectUrl') || 'https://boogiebistrot.it',
       };
 
       // ── Popola hidden fields ────────────────────────────────────────
-      ['clientMac','apMac','ssidName','radioId','site','redirectUrl'].forEach(k => {
+      ['clientMac','gatewayMac','vid','t','site','redirectUrl'].forEach(k => {
         const n = document.getElementById('h-' + k);
         const r = document.getElementById('r-' + k);
         if (n) n.value = omada[k];
@@ -148,52 +154,10 @@
 
       // ── Redirect post-autorizzazione ────────────────────────────────
       function redirect(url) {
-        window.location.href = url || omada.redirectUrl || 'https://boogiebistrot.com';
-      }
-
-      // ── Autorizza MAC sul controller Omada locale ────────────────────
-      // Il browser è sulla LAN → può raggiungere 192.168.10.1 direttamente.
-      // Chiamiamo /portal/auth con authType:0 (no password) dopo aver salvato i dati.
-      function omadaAuth(landingUrl) {
-        return new Promise(function (resolve) {
-          var done = false;
-          function finish() { if (!done) { done = true; resolve(); } }
-          setTimeout(finish, 4000); // fallback: redirect dopo 4s anche se auth fallisce
-
-          try {
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', 'http://192.168.10.1/portal/auth', true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.timeout = 5000;
-            xhr.ontimeout = finish;
-            xhr.onerror   = finish;
-            xhr.onreadystatechange = function () {
-              if (xhr.readyState !== 4) return;
-              try {
-                var r = JSON.parse(xhr.responseText);
-                if (r.errorCode === 0) {
-                  window.location.href = r.result || landingUrl;
-                  done = true;
-                } else { finish(); }
-              } catch (e) { finish(); }
-            };
-            xhr.send(JSON.stringify({
-              authType:   0,
-              clientMac:  omada.clientMac,
-              apMac:      omada.apMac,
-              gatewayMac: omada.gatewayMac,
-              ssidName:   omada.ssidName,
-              radioId:    omada.radioId ? Number(omada.radioId) : undefined,
-              vid:        omada.vid     ? Number(omada.vid)     : undefined,
-              originUrl:  landingUrl,
-            }));
-          } catch (e) { finish(); }
-        });
+        window.location.href = url || omada.redirectUrl || 'https://boogiebistrot.it';
       }
 
       // ── 1. Controlla se cliente noto (cookie) ───────────────────────
-      // Timeout 5s: il browser captive non ha internet → la funzione potrebbe
-      // rispondere lentamente. Dopo 5s mostriamo direttamente il form.
       const checkController = new AbortController();
       const checkTimeout = setTimeout(() => checkController.abort(), 5000);
 
@@ -225,11 +189,14 @@
         e.preventDefault();
         clearMsg('msg-new');
 
-        const nome     = document.getElementById('nome').value.trim();
-        const email    = document.getElementById('email').value.trim().toLowerCase();
-        const consenso = document.getElementById('consenso').checked;
+        const nome       = document.getElementById('nome').value.trim();
+        const cognome    = document.getElementById('cognome').value.trim();
+        const email      = document.getElementById('email').value.trim().toLowerCase();
+        const compleanno = document.getElementById('compleanno').value || '';
+        const consenso   = document.getElementById('consenso').checked;
 
-        if (!nome) { showMsg('msg-new', 'Inserisci il tuo nome.', 'error'); return; }
+        if (!nome)    { showMsg('msg-new', 'Inserisci il tuo nome.', 'error'); return; }
+        if (!cognome) { showMsg('msg-new', 'Inserisci il tuo cognome.', 'error'); return; }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
           showMsg('msg-new', 'Inserisci un indirizzo email valido.', 'error');
           return;
@@ -245,11 +212,11 @@
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({
-              nome, email, consenso,
+              nome, cognome, email, compleanno, consenso,
               clientMac:   omada.clientMac,
-              apMac:       omada.apMac,
-              ssidName:    omada.ssidName,
-              radioId:     omada.radioId,
+              gatewayMac:  omada.gatewayMac,
+              vid:         omada.vid,
+              t:           omada.t,
               site:        omada.site,
               redirectUrl: omada.redirectUrl,
             }),
@@ -259,7 +226,7 @@
 
           if (res.ok && data.success) {
             showMsg('msg-new', 'Connesso! Reindirizzamento…', 'success');
-            omadaAuth(data.redirectUrl).then(() => redirect(data.redirectUrl));
+            redirect(data.redirectUrl);
           } else {
             showMsg('msg-new', data.error || 'Errore. Riprova.', 'error');
             btn.disabled = false;
@@ -286,9 +253,9 @@
             body: JSON.stringify({
               returning:   true,
               clientMac:   document.getElementById('r-clientMac').value,
-              apMac:       document.getElementById('r-apMac').value,
-              ssidName:    document.getElementById('r-ssidName').value,
-              radioId:     document.getElementById('r-radioId').value,
+              gatewayMac:  document.getElementById('r-gatewayMac').value,
+              vid:         document.getElementById('r-vid').value,
+              t:           document.getElementById('r-t').value,
               site:        document.getElementById('r-site').value,
               redirectUrl: document.getElementById('r-redirectUrl').value,
             }),
@@ -298,7 +265,7 @@
 
           if (res.ok && data.success) {
             showMsg('msg-ret', 'Connesso! Reindirizzamento…', 'success');
-            omadaAuth(data.redirectUrl).then(() => redirect(data.redirectUrl));
+            redirect(data.redirectUrl);
           } else {
             showMsg('msg-ret', data.error || 'Errore. Riprova.', 'error');
             this.disabled = false;
