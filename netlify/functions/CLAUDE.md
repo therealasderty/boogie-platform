@@ -69,7 +69,7 @@ Se la data ricade in un range → `Stato: In attesa`, email "Richiesta ricevuta"
 |----------|------|-------|
 | `contatta.js` | no | Form contatti → RichiesteContatti + email Brevo |
 | `contatta-evento-aziendale.js` | no | Form eventi aziendali → RichiesteEventi + email Brevo |
-| `feedback.js` | no | Invia email feedback post-cena. Bottone positivo: giorno pari → Google, dispari → TripAdvisor |
+| `feedback.js` | no | Invia email feedback post-cena a prenotazioni confermate + WiFi_Clienti di ieri (deduplicati per email). Bottone positivo: giorno pari → Google, dispari → TripAdvisor |
 | `salva-feedback.js` | no | Salva risposta negativa da `/feedback` |
 
 ---
