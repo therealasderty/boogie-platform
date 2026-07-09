@@ -202,7 +202,9 @@
         });
 
       // ── 2. Submit nuovo utente ──────────────────────────────────────
-      document.getElementById('form-new').addEventListener('submit', async function (e) {
+      // FLUSSO: valida → naviga a OC200 locale (auth) → OC200 redirige a /portal/success/
+      // La success page ha già internet e salva i dati su Airtable/Brevo.
+      document.getElementById('form-new').addEventListener('submit', function (e) {
         e.preventDefault();
         clearMsg('msg-new');
 
@@ -223,76 +225,35 @@
         btn.disabled = true;
         btn.textContent = 'Connessione…';
 
-        try {
-          const res = await fetch('/.netlify/functions/portal-submit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({
-              nome, cognome, email, compleanno, consenso,
-              clientMac:   omada.clientMac,
-              gatewayMac:  omada.gatewayMac,
-              vid:         omada.vid,
-              t:           omada.t,
-              site:        omada.site,
-              redirectUrl: omada.redirectUrl,
-            }),
-          });
+        // Costruisci la success URL con i dati del form come parametri
+        const successUrl = new URL('https://boogiebistrot.com/portal/success/');
+        successUrl.searchParams.set('nome',       nome);
+        successUrl.searchParams.set('cognome',    cognome);
+        successUrl.searchParams.set('email',      email);
+        successUrl.searchParams.set('compleanno', compleanno);
+        successUrl.searchParams.set('consenso',   consenso ? '1' : '0');
+        successUrl.searchParams.set('clientMac',  omada.clientMac);
+        successUrl.searchParams.set('gatewayMac', omada.gatewayMac);
+        successUrl.searchParams.set('vid',        omada.vid  || '');
+        successUrl.searchParams.set('site',       omada.site || '');
 
-          const data = await res.json();
-
-          if (res.ok && data.success) {
-            showMsg('msg-new', 'Connesso! Reindirizzamento…', 'success');
-            omadaAuth(data.redirectUrl).then(() => redirect(data.redirectUrl));
-          } else {
-            showMsg('msg-new', data.error || 'Errore. Riprova.', 'error');
-            btn.disabled = false;
-            btn.textContent = 'Connettiti gratis';
-          }
-        } catch {
-          showMsg('msg-new', 'Errore di rete. Riprova.', 'error');
-          btn.disabled = false;
-          btn.textContent = 'Connettiti gratis';
-        }
+        omadaAuth(successUrl.toString());
       });
 
       // ── 3. Submit utente di ritorno ─────────────────────────────────
-      document.getElementById('btn-returning').addEventListener('click', async function () {
+      document.getElementById('btn-returning').addEventListener('click', function () {
         clearMsg('msg-ret');
         this.disabled = true;
         this.textContent = 'Connessione…';
 
-        try {
-          const res = await fetch('/.netlify/functions/portal-submit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({
-              returning:   true,
-              clientMac:   document.getElementById('r-clientMac').value,
-              gatewayMac:  document.getElementById('r-gatewayMac').value,
-              vid:         document.getElementById('r-vid').value,
-              t:           document.getElementById('r-t').value,
-              site:        document.getElementById('r-site').value,
-              redirectUrl: document.getElementById('r-redirectUrl').value,
-            }),
-          });
+        const successUrl = new URL('https://boogiebistrot.com/portal/success/');
+        successUrl.searchParams.set('returning',  '1');
+        successUrl.searchParams.set('clientMac',  document.getElementById('r-clientMac').value);
+        successUrl.searchParams.set('gatewayMac', document.getElementById('r-gatewayMac').value);
+        successUrl.searchParams.set('vid',        document.getElementById('r-vid').value  || '');
+        successUrl.searchParams.set('site',       document.getElementById('r-site').value || '');
 
-          const data = await res.json();
-
-          if (res.ok && data.success) {
-            showMsg('msg-ret', 'Connesso! Reindirizzamento…', 'success');
-            omadaAuth(data.redirectUrl).then(() => redirect(data.redirectUrl));
-          } else {
-            showMsg('msg-ret', data.error || 'Errore. Riprova.', 'error');
-            this.disabled = false;
-            this.textContent = 'Connettiti';
-          }
-        } catch {
-          showMsg('msg-ret', 'Errore di rete. Riprova.', 'error');
-          this.disabled = false;
-          this.textContent = 'Connettiti';
-        }
+        omadaAuth(successUrl.toString());
       });
 
     })();

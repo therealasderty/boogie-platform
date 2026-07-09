@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Connesso — WiFi Boogie Bistrot</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+
+  <div class="card">
+    <div class="header">
+      <div class="logo">
+        <img src="../../Logo-Gold.svg" alt="Boogie Bistrot" />
+      </div>
+      <h1>WiFi Boogie Bistrot</h1>
+    </div>
+
+    <div id="state-loading" class="spinner-wrap">
+      <div class="spinner"></div>
+      <p>Salvataggio dati…</p>
+    </div>
+
+    <div id="state-success" style="display:none; text-align:center;">
+      <div style="font-size:2.5rem; margin-bottom:0.75rem;">🎉</div>
+      <p style="font-size:1.1rem; font-weight:700; color:var(--text); margin-bottom:0.5rem;">
+        Benvenuto, <span id="nome-display"></span>!
+      </p>
+      <p style="font-size:0.875rem; color:var(--text3); margin-bottom:1.5rem;">
+        Sei connesso a WiFi Boogie Bistrot. Buona navigazione!
+      </p>
+      <a href="https://boogiebistrot.it" class="btn-connect" style="display:block; text-decoration:none; text-align:center;">
+        Vai al sito Boogie Bistrot
+      </a>
+    </div>
+
+    <div id="state-error" style="display:none; text-align:center;">
+      <p style="font-size:1rem; font-weight:700; color:var(--text); margin-bottom:0.5rem;">
+        Sei connesso!
+      </p>
+      <p style="font-size:0.875rem; color:var(--text3); margin-bottom:1.5rem;">
+        Buona navigazione da Boogie Bistrot.
+      </p>
+      <a href="https://boogiebistrot.it" class="btn-connect" style="display:block; text-decoration:none; text-align:center;">
+        Vai al sito Boogie Bistrot
+      </a>
+    </div>
+
+    <p class="footer-note">
+      Connettendoti hai accettato i <a href="https://boogiebistrot.com/privacy" style="color:var(--accent);" target="_blank" rel="noopener">termini d'uso</a> della rete WiFi.
+    </p>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const qs = new URLSearchParams(window.location.search);
+
+      const nome       = qs.get('nome')       || '';
+      const cognome    = qs.get('cognome')     || '';
+      const email      = qs.get('email')       || '';
+      const compleanno = qs.get('compleanno')  || '';
+      const consenso   = qs.get('consenso') === '1';
+      const returning  = qs.get('returning') === '1';
+      const clientMac  = qs.get('clientMac')  || '';
+      const gatewayMac = qs.get('gatewayMac') || '';
+      const vid        = qs.get('vid')        || '';
+      const site       = qs.get('site')       || '';
+
+      document.getElementById('nome-display').textContent = nome || 'ospite';
+
+      function showState(id) {
+        ['state-loading', 'state-success', 'state-error'].forEach(s => {
+          document.getElementById(s).style.display = (s === id) ? '' : 'none';
+        });
+      }
+
+      // Chiama portal-submit ora che abbiamo internet
+      fetch('/.netlify/functions/portal-submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          returning, nome, cognome, email, compleanno, consenso,
+          clientMac, gatewayMac, vid, site,
+          redirectUrl: 'https://boogiebistrot.it',
+        }),
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            document.getElementById('nome-display').textContent = data.name || nome || 'ospite';
+            showState('state-success');
+          } else {
+            showState('state-error');
+          }
+        })
+        .catch(() => {
+          // Anche se il salvataggio fallisce, l'utente è connesso — mostriamo success
+          showState('state-error');
+        });
+
+    })();
+  </script>
+
+</body>
+</html>
