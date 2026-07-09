@@ -171,7 +171,7 @@
         params.set('time',       String(8 * 60 * 60 * 1000));
         params.set('authType',   '4');
         params.set('redirectUrl', landingUrl || omada.redirectUrl || 'https://boogiebistrot.it');
-        window.location.href = 'http://192.168.10.1:8088/portal/auth?' + params.toString();
+        window.location.href = 'http://192.168.10.1/portal/auth?' + params.toString();
       }
 
       // ── 1. Controlla se cliente noto (cookie) ───────────────────────
