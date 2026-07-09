@@ -199,9 +199,9 @@
           radioId:     omada.radioId,
           site:        omada.site,
           t:           omada.t,
-          time:        String(8 * 60 * 60 * 1000),
+          time:        '28800',  // secondi, non ms
           authType:    '1',
-          redirectUrl: omada.redirectUrl,
+          // redirectUrl rimosso — lascia gestire a Omada Landing Page
         };
 
         Object.keys(fields).forEach(function(k) {
