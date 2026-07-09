@@ -182,16 +182,20 @@ exports.handler = async (event) => {
 
   // ── Cerca record Airtable ──────────────────────────────────────────
   const filter = encodeURIComponent(`{Email} = '${resolvedEmail.replace(/'/g, "\\'")}'`);
+  console.log('[portal-submit] Airtable search per:', resolvedEmail, 'base:', AIRTABLE_BASE_ID);
   const searchRes = await fetch(
     `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/WiFi_Clienti?filterByFormula=${filter}&maxRecords=1`,
     { headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` } }
   );
 
   if (!searchRes.ok) {
+    const errText = await searchRes.text();
+    console.error('[portal-submit] Airtable search fallita:', searchRes.status, errText);
     return { statusCode: 502, headers, body: JSON.stringify({ error: 'Errore database. Riprova.' }) };
   }
 
   const searchData = await searchRes.json();
+  console.log('[portal-submit] Airtable search OK, records trovati:', searchData.records?.length);
   const existing   = searchData.records?.[0];
 
   let airtableRecordId = null;
@@ -256,6 +260,11 @@ exports.handler = async (event) => {
       }
     );
     const createData = await createRes.json();
+    if (!createRes.ok) {
+      console.error('[portal-submit] Airtable create fallito:', createRes.status, JSON.stringify(createData));
+    } else {
+      console.log('[portal-submit] Airtable create OK, id:', createData.id);
+    }
     airtableRecordId = createData.id;
   }
 
