@@ -188,7 +188,7 @@
 
         // Form nativo HTML — iOS non può intercettare il submit nativo
         var form = document.createElement('form');
-        form.method = 'GET';
+        form.method = 'POST';
         form.action = 'http://192.168.10.1/portal/auth';
 
         var fields = {
@@ -200,7 +200,7 @@
           site:        omada.site,
           t:           omada.t,
           time:        '28800',  // secondi, non ms
-          authType:    '3',
+          authType:    '4',
           // redirectUrl rimosso — lascia gestire a Omada Landing Page
         };
 
