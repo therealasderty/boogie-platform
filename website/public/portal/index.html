@@ -143,7 +143,9 @@
         + ' | gatewayMac=' + omada.gatewayMac
         + ' | vid=' + omada.vid
         + ' | site=' + omada.site
-        + ' | redirectUrl=' + omada.redirectUrl;
+        + ' | t=' + omada.t
+        + ' | redirectUrl=' + omada.redirectUrl
+        + ' | FULLURL=' + window.location.href;
 
       // ── Helper: mostra stato ────────────────────────────────────────
       function showState(id) {
@@ -185,13 +187,15 @@
         form.method = 'GET';
         form.action = 'http://192.168.10.1/portal/auth';
 
+        // Converti MAC da trattini a due punti (formato atteso da OC200)
+        var clientMacColon = omada.clientMac.replace(/-/g, ':');
+
         var fields = {
-          clientMac:   omada.clientMac,
+          clientMac:   clientMacColon,
           site:        omada.site || '',
-          t:           omada.t    || '',   // timestamp originale Omada
           time:        String(8 * 60 * 60 * 1000),
-          authType:    '0',               // 0 = No Auth (gateway mode)
-          redirectUrl: 'https://boogiebistrot.com/portal/success/',
+          authType:    '1',
+          redirectUrl: omada.redirectUrl || 'http://captive.apple.com/hotspot-detect.html',
         };
 
         Object.keys(fields).forEach(function(k) {
