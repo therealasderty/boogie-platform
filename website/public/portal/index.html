@@ -157,6 +157,45 @@
         window.location.href = url || omada.redirectUrl || 'https://boogiebistrot.it';
       }
 
+      // ── Autorizza MAC sul controller OC200 locale (browser → LAN) ──
+      // Il telefono è sulla LAN e può raggiungere 192.168.10.1 direttamente.
+      // Netlify Functions non possono farlo — quindi l'auth avviene qui lato client.
+      function omadaAuth(landingUrl) {
+        return new Promise(function (resolve) {
+          var done = false;
+          function finish() { if (!done) { done = true; resolve(); } }
+          setTimeout(finish, 4000); // fallback: redirect dopo 4s anche se auth fallisce
+
+          try {
+            var xhr = new XMLHttpRequest();
+            // OC200 espone il portal auth sull'IP locale, porta 8088
+            xhr.open('POST', 'http://192.168.10.1:8088/portal/auth', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.timeout = 5000;
+            xhr.ontimeout = finish;
+            xhr.onerror   = finish;
+            xhr.onreadystatechange = function () {
+              if (xhr.readyState !== 4) return;
+              try {
+                var r = JSON.parse(xhr.responseText);
+                if (r.errorCode === 0) {
+                  done = true;
+                  window.location.href = r.result || landingUrl;
+                } else { finish(); }
+              } catch (e) { finish(); }
+            };
+            xhr.send(JSON.stringify({
+              clientMac:  omada.clientMac,
+              gatewayMac: omada.gatewayMac,
+              vid:        omada.vid  || '',
+              site:       omada.site || '',
+              time:       String(8 * 60 * 60 * 1000), // 8 ore in ms
+              authType:   '4',
+            }));
+          } catch (e) { finish(); }
+        });
+      }
+
       // ── 1. Controlla se cliente noto (cookie) ───────────────────────
       const checkController = new AbortController();
       const checkTimeout = setTimeout(() => checkController.abort(), 5000);
@@ -226,7 +265,7 @@
 
           if (res.ok && data.success) {
             showMsg('msg-new', 'Connesso! Reindirizzamento…', 'success');
-            redirect(data.redirectUrl);
+            omadaAuth(data.redirectUrl).then(() => redirect(data.redirectUrl));
           } else {
             showMsg('msg-new', data.error || 'Errore. Riprova.', 'error');
             btn.disabled = false;
@@ -265,7 +304,7 @@
 
           if (res.ok && data.success) {
             showMsg('msg-ret', 'Connesso! Reindirizzamento…', 'success');
-            redirect(data.redirectUrl);
+            omadaAuth(data.redirectUrl).then(() => redirect(data.redirectUrl));
           } else {
             showMsg('msg-ret', data.error || 'Errore. Riprova.', 'error');
             this.disabled = false;
