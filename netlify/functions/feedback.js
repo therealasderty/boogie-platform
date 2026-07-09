@@ -33,44 +33,80 @@ exports.handler = async (event) => {
   console.log('Cerco prenotazioni del:', dataIeri);
 
   try {
-    // Recupera prenotazioni di ieri confermate
-    const filterFormula = encodeURIComponent(
+    // ── Fetch prenotazioni di ieri confermate ──────────────────────────
+    const filterPren = encodeURIComponent(
       `AND(DATETIME_FORMAT({Data},'YYYY-MM-DD')="${dataIeri}", {Stato}="Confermata")`
     );
-    const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}?filterByFormula=${filterFormula}&fields[]=Nome&fields[]=Email&fields[]=Data&fields[]=Ora`;
+    const urlPren = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}?filterByFormula=${filterPren}&fields[]=Nome&fields[]=Email&fields[]=Data&fields[]=Ora`;
 
-    const res = await fetch(url, {
-      headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` }
-    });
+    // ── Fetch WiFi clienti con Ultima visita = ieri ────────────────────
+    const filterWifi = encodeURIComponent(
+      `DATETIME_FORMAT({Ultima visita},'YYYY-MM-DD')="${dataIeri}"`
+    );
+    const urlWifi = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/WiFi_Clienti?filterByFormula=${filterWifi}&fields[]=Nome&fields[]=Email`;
 
-    if (!res.ok) {
-      console.error('Airtable error:', await res.text());
-      return { statusCode: 500, headers, body: 'Errore Airtable' };
+    const [resPren, resWifi] = await Promise.all([
+      fetch(urlPren, { headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` } }),
+      fetch(urlWifi, { headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` } }),
+    ]);
+
+    if (!resPren.ok) {
+      console.error('Airtable prenotazioni error:', await resPren.text());
+      return { statusCode: 500, headers, body: 'Errore Airtable prenotazioni' };
     }
 
-    const json = await res.json();
-    const prenotazioni = json.records || [];
+    const jsonPren = await resPren.json();
+    const prenotazioni = jsonPren.records || [];
     console.log('Prenotazioni trovate:', prenotazioni.length);
 
-    if (prenotazioni.length === 0) {
-      return { statusCode: 200, headers, body: JSON.stringify({ sent: 0, message: 'Nessuna prenotazione ieri' }) };
+    const jsonWifi = resWifi.ok ? await resWifi.json() : { records: [] };
+    const wifiClienti = jsonWifi.records || [];
+    console.log('WiFi clienti trovati:', wifiClienti.length);
+
+    // ── Costruisci mappa email → { nome, dataFormattata } ─────────────
+    // Le prenotazioni hanno priorità; i WiFi aggiungono chi non ha prenotato
+    const clientiMap = new Map(); // email → { nome, dataFormattata }
+
+    const dataFormattataIeri = new Date(dataIeri + 'T12:00:00').toLocaleDateString('it-IT', {
+      weekday: 'long', day: 'numeric', month: 'long',
+    });
+
+    for (const record of prenotazioni) {
+      const email = (record.fields['Email'] || '').toLowerCase().trim();
+      const nome  = (record.fields['Nome'] || '').split(' ')[0];
+      const data  = record.fields['Data'] || '';
+      if (!email) continue;
+      const dataFormattata = data
+        ? new Date(data + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
+        : dataFormattataIeri;
+      if (!clientiMap.has(email)) {
+        clientiMap.set(email, { nome, dataFormattata });
+      }
+    }
+
+    for (const record of wifiClienti) {
+      const email = (record.fields['Email'] || '').toLowerCase().trim();
+      const nome  = (record.fields['Nome'] || '').split(' ')[0];
+      if (!email) continue;
+      if (!clientiMap.has(email)) {
+        clientiMap.set(email, { nome, dataFormattata: dataFormattataIeri });
+      }
+    }
+
+    if (clientiMap.size === 0) {
+      return { statusCode: 200, headers, body: JSON.stringify({ sent: 0, message: 'Nessun cliente ieri' }) };
     }
 
     // Deduplica per email — manda una sola mail per cliente anche se ha più prenotazioni
     const emailInviate = new Set();
     let inviati = 0;
 
-    for (const record of prenotazioni) {
-      const nome  = (record.fields['Nome'] || '').split(' ')[0];
-      const email = record.fields['Email'] || '';
-      const data  = record.fields['Data'] || '';
+    for (const [email, { nome, dataFormattata: data }] of clientiMap) {
 
-      if (!email || emailInviate.has(email)) continue;
+      if (emailInviate.has(email)) continue;
       emailInviate.add(email);
 
-      const dataFormattata = data
-        ? new Date(data + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
-        : 'ieri sera';
+      const dataFormattata = data || dataFormattataIeri;
 
       const GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJr9H7A7enhkcRimfhn3EqfVU';
       const TRIPADVISOR_REVIEW_URL = process.env.TRIPADVISOR_REVIEW_URL || 'https://www.tripadvisor.it/UserReviewEdit-g2717697-d17786536-Boogie_Bistrot-Colle_Brianza_Province_of_Lecco_Lombardy.html';
