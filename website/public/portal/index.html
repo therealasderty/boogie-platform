@@ -68,6 +68,9 @@
           Connettiti gratis
         </button>
       </form>
+      <p style="text-align:center; margin-top:1rem;">
+        <a href="#" id="link-already-registered" style="font-size:0.8rem; color:var(--text2);">Sei già registrato?</a>
+      </p>
     </div>
 
     <!-- Stato: utente di ritorno -->
@@ -75,7 +78,6 @@
       <div class="welcome">
         <span class="hello">Bentornato,</span>
         <span class="name" id="welcome-name">—</span>
-        <span class="visits" id="welcome-visits"></span>
       </div>
 
       <div id="msg-ret" class="msg" style="margin-top:1rem;"></div>
@@ -83,6 +85,28 @@
       <button class="btn-connect" id="btn-returning" style="margin-top:1.25rem;">
         Connettiti
       </button>
+    </div>
+
+    <!-- Stato: lookup per email -->
+    <div id="state-email-lookup" style="display:none">
+      <p style="font-size:0.875rem; color:var(--text2); text-align:center; margin-bottom:1rem;">
+        Inserisci la tua email per connetterti.
+      </p>
+      <form class="form" id="form-email-lookup" novalidate>
+        <div class="field">
+          <label for="lookup-email">Email *</label>
+          <input type="email" id="lookup-email" name="lookup-email" placeholder="tua@email.it" autocomplete="email" inputmode="email" required />
+        </div>
+
+        <div id="msg-lookup" class="msg"></div>
+
+        <button type="submit" class="btn-connect" id="btn-lookup">
+          Connettiti
+        </button>
+      </form>
+      <p style="text-align:center; margin-top:1rem;">
+        <a href="#" id="link-back-to-new" style="font-size:0.8rem; color:var(--text2);">← Registrati</a>
+      </p>
     </div>
 
     <!-- Stato: connesso con successo -->
@@ -101,7 +125,7 @@
 
     <!-- Note legali -->
     <p class="footer-note">
-      Connettendoti accetti i <a href="https://boogiebistrot.com/privacy" style="color:var(--accent);" target="_blank" rel="noopener">termini d'uso</a> della rete WiFi.
+      Connettendoti accetti i <a href="https://boogiebistrot.com/privacy#wifi" style="color:var(--accent);" target="_blank" rel="noopener">termini d'uso</a> della rete WiFi.
     </p>
 
   </div>
@@ -116,7 +140,7 @@
 
       // ── Helper: mostra stato ────────────────────────────────────────
       function showState(id) {
-        ['state-loading','state-new','state-returning','state-success'].forEach(s => {
+        ['state-loading','state-new','state-returning','state-email-lookup','state-success'].forEach(s => {
           document.getElementById(s).style.display = (s === id) ? '' : 'none';
         });
       }
@@ -161,6 +185,58 @@
           });
       }
 
+      // ── Link "Sei già registrato?" ──────────────────────────────────
+      document.getElementById('link-already-registered').addEventListener('click', function (e) {
+        e.preventDefault();
+        clearMsg('msg-lookup');
+        document.getElementById('lookup-email').value = '';
+        showState('state-email-lookup');
+      });
+
+      document.getElementById('link-back-to-new').addEventListener('click', function (e) {
+        e.preventDefault();
+        showState('state-new');
+      });
+
+      // ── Form email lookup ───────────────────────────────────────────
+      document.getElementById('form-email-lookup').addEventListener('submit', function (e) {
+        e.preventDefault();
+        clearMsg('msg-lookup');
+
+        const email = document.getElementById('lookup-email').value.trim().toLowerCase();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          showMsg('msg-lookup', 'Inserisci un indirizzo email valido.', 'error');
+          return;
+        }
+
+        const btn = document.getElementById('btn-lookup');
+        btn._origText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Controllo…';
+
+        fetch('/.netlify/functions/portal-submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ emailLookup: true, email, clientMac }),
+        })
+          .then(r => r.json())
+          .then(data => {
+            if (data.success) {
+              showSuccess(data.name || '');
+            } else {
+              btn.disabled = false;
+              btn.textContent = btn._origText;
+              showMsg('msg-lookup', data.error || 'Errore. Riprova.', 'error');
+            }
+          })
+          .catch(() => {
+            btn.disabled = false;
+            btn.textContent = btn._origText;
+            showMsg('msg-lookup', 'Errore di rete. Riprova.', 'error');
+          });
+      });
+
       // ── 1. Controlla se cliente noto (cookie) ───────────────────────
       const checkController = new AbortController();
       const checkTimeout = setTimeout(() => checkController.abort(), 5000);
@@ -174,10 +250,6 @@
           clearTimeout(checkTimeout);
           if (data.returning) {
             document.getElementById('welcome-name').textContent = data.name || 'amico';
-            if (data.visits && data.visits > 1) {
-              document.getElementById('welcome-visits').textContent =
-                'Visita n. ' + data.visits + ' — grazie per essere tornato!';
-            }
             showState('state-returning');
           } else {
             showState('state-new');

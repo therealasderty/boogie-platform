@@ -96,8 +96,26 @@ export default function PrivacyPage() {
               </p>
             </div>
 
+            <div id="wifi">
+              <h2 className="font-raleway font-semibold text-white mb-3" style={{ fontSize: '1.25rem' }}>
+                Rete WiFi gratuita — Condizioni d'uso
+              </h2>
+              <p className="mb-3">
+                Boogie Bistrot mette a disposizione dei propri ospiti una rete WiFi gratuita. L'accesso è consentito esclusivamente ai clienti presenti nei locali e per uso personale durante la permanenza.
+              </p>
+              <p className="mb-3">
+                Per accedere alla rete è richiesta la registrazione con nome, cognome e indirizzo email. I dati raccolti sono utilizzati per gestire l'accesso, aggiornare le statistiche di utilizzo e, previo consenso, inviare comunicazioni promozionali. La sessione WiFi ha una durata massima di 8 ore.
+              </p>
+              <p className="mb-3">
+                È vietato utilizzare la rete per attività illecite, scaricare o distribuire contenuti protetti da copyright, effettuare attività che compromettano la sicurezza della rete o degli altri utenti. Boogie Bistrot si riserva il diritto di sospendere l'accesso in caso di utilizzo non conforme.
+              </p>
+              <p>
+                Il servizio WiFi è fornito senza garanzia di continuità o velocità. Boogie Bistrot non è responsabile per eventuali danni derivanti dall'utilizzo della rete o dall'interruzione del servizio.
+              </p>
+            </div>
+
             <p className="text-text-faint" style={{ fontSize: 'var(--text-meta)' }}>
-              Ultimo aggiornamento: aprile 2026
+              Ultimo aggiornamento: luglio 2026
             </p>
 
           </div>

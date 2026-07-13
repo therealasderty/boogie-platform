@@ -131,18 +131,25 @@ exports.handler = async (event) => {
   catch { return { statusCode: 400, headers, body: 'Invalid JSON' }; }
 
   const {
-    returning, nome, cognome, email: rawEmail, compleanno, consenso,
+    returning, emailLookup, nome, cognome, email: rawEmail, compleanno, consenso,
     clientMac, gatewayMac, vid, t, site, redirectUrl,
   } = body;
 
-  const isReturning = returning === true;
+  const isReturning   = returning === true;
+  const isEmailLookup = emailLookup === true;
 
-  // ── Validazione (solo per nuovi utenti) ────────────────────────────
+  // ── Validazione ────────────────────────────────────────────────────
   let resolvedEmail   = '';
   let resolvedNome    = '';
   let resolvedCognome = '';
 
-  if (!isReturning) {
+  if (isEmailLookup) {
+    // Solo email — cerca su Airtable, se non esiste → errore
+    resolvedEmail = normalizeEmail(rawEmail);
+    if (!isValidEmail(resolvedEmail)) {
+      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Email non valida.' }) };
+    }
+  } else if (!isReturning) {
     if (!rawEmail || !nome || !cognome) {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Nome, cognome e email obbligatori.' }) };
     }
@@ -206,6 +213,14 @@ exports.handler = async (event) => {
     const list = (current || '').split(',').map(m => m.trim()).filter(Boolean);
     if (!list.includes(newMac)) list.push(newMac);
     return list.join(', ');
+  }
+
+  if (!existing && isEmailLookup) {
+    return {
+      statusCode: 404,
+      headers,
+      body: JSON.stringify({ error: 'Email non trovata. Registrati con il form completo.' }),
+    };
   }
 
   if (existing) {

@@ -44,6 +44,7 @@ import {
   MapPin,
   ShareNetwork,
   Slideshow,
+  ArrowSquareOut,
 } from '@phosphor-icons/react'
 import GoogleIcon from './GoogleIcon.jsx'
 import TripAdvisorIcon from './TripAdvisorIcon.jsx'
@@ -124,3 +125,6 @@ export const IconSocialStudio = icon(ShareNetwork)
 
 // — Design / Grafiche
 export const IconDesign = icon(Slideshow)
+
+// — Tools (link esterni)
+export const IconExternalLink = icon(ArrowSquareOut)

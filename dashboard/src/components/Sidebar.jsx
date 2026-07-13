@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import styles from './Sidebar.module.css'
 import {
   IconHome, IconCalendar, IconLock, IconFidelity,
-  IconClienti, IconMarketing, IconLogout, IconMenu, IconClose, IconAnalytics, IconAgenda, IconClock, IconForkKnife, IconImages, IconFaq, IconBlog, IconLocalSeo, IconStar, IconSocialStudio, IconDesign,
+  IconClienti, IconMarketing, IconLogout, IconMenu, IconClose, IconAnalytics, IconAgenda, IconClock, IconForkKnife, IconImages, IconFaq, IconBlog, IconLocalSeo, IconStar, IconSocialStudio, IconDesign, IconExternalLink,
 } from '../icons/index.jsx'
 
 const NAV_ITEMS = [
@@ -27,6 +27,10 @@ const NAV_ITEMS = [
   { id: 'marketing',     Icon: IconMarketing,    label: 'Mail massive (Brevo)', href: 'https://app.brevo.com' },
   { id: 'social-studio', Icon: IconSocialStudio, label: 'Social Studio' },
   { id: 'design',        Icon: IconDesign,       label: 'Grafiche' },
+  { id: 'separator6', section: 'Tools' },
+  { id: 'tool-airtable', Icon: IconExternalLink, label: 'Airtable',  href: 'https://airtable.com/' },
+  { id: 'tool-netlify',  Icon: IconExternalLink, label: 'Netlify',   href: 'https://www.netlify.com/' },
+  { id: 'tool-brevo',    Icon: IconExternalLink, label: 'Brevo',     href: 'https://app.brevo.com/' },
 ]
 
 export default function Sidebar({ view, onNav, onLogout }) {
