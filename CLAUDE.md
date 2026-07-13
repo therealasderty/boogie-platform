@@ -72,7 +72,7 @@ Monorepo in `/boogie-platform` su GitHub: therealasderty.
 - [ ] Aggiornare Privacy Policy (raccolta dati personali Airtable)
 - [ ] Testare flow Social Automation end-to-end (cron ora ogni 4 ore)
 - [ ] WiFi Portal: configurare lista Brevo + template Double Opt-In (`BREVO_WIFI_LIST_ID`, `BREVO_DOI_TEMPLATE_ID`)
-- [ ] WiFi Portal: test end-to-end su smartphone
+- [ ] WiFi Portal: test end-to-end su smartphone (incluso flow "Sei già registrato?")
 - [ ] WiFi Portal Omada: uploadare template custom (`/tmp/omada-portal-boogie.zip`) su OC200 → Hotspot Manager → Portal → Custom Portal
 - [ ] Configurare dominio custom su Netlify
 - [ ] Multilingua (futuro): `next-intl`, prefisso `/en /fr /de /es`, campi Airtable `_EN/_FR/_DE/_ES`
@@ -86,4 +86,4 @@ Monorepo in `/boogie-platform` su GitHub: therealasderty.
 3. **`VITE_IMAGEKIT_PRIVATE_KEY`** in `dashboard/.env.local` è esposta nel bundle Vite. Migrazione R2 completata — `dashboard/src/lib/imagekit.js` può essere eliminato.
 4. **`og-image.jpg`** mancante in `website/public/` — fallback 404 se Airtable non risponde.
 
-*Aggiornato: 10 Luglio 2026*
+*Aggiornato: 13 Luglio 2026*

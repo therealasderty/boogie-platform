@@ -109,7 +109,7 @@ Se la data ricade in un range → `Stato: In attesa`, email "Richiesta ricevuta"
 | Funzione | Auth | Scopo |
 |----------|------|-------|
 | `portal-check.js` | — | Verifica cookie `boogie_guest` (HMAC) |
-| `portal-submit.js` | — | Salva Airtable `WiFi_Clienti`, Brevo DOI, autorizza Omada Cloud API, imposta cookie 90gg |
+| `portal-submit.js` | — | Salva Airtable `WiFi_Clienti`, Brevo DOI, autorizza Omada Cloud API, imposta cookie 90gg. 3 modalità: nuovo utente, `returning=true` (cookie), `emailLookup=true` (solo email — cerca su Airtable, errore 404 se non trovato) |
 
 **Env vars:**
 - `OMADA_CONTROLLER_URL` = `https://euw1-omada-cloud.tplinkcloud.com`
