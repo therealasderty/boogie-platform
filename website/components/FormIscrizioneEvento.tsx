@@ -17,17 +17,31 @@ export default function FormIscrizioneEvento({
   const [email, setEmail] = useState('')
   const [telefono, setTelefono] = useState('')
   const [dataNascita, setDataNascita] = useState('')
+  const [website, setWebsite] = useState('') // honeypot
   const [consensoPrivacy, setConsensoPrivacy] = useState(false)
+  const [loadedAt] = useState(() => Date.now())
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!consensoPrivacy) return
+
+    // Anti-spam: honeypot deve essere vuoto, e devono essere passati almeno 3s
+    if (website || Date.now() - loadedAt < 3000) {
+      setStato('successo')
+      return
+    }
+
     setStato('inviando')
     try {
       const res = await fetch('/api/iscriviti-aggiornamenti', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome, cognome, email, telefono, dataNascita: dataNascita || null, eventoTitolo }),
+        body: JSON.stringify({
+          nome, cognome, email, telefono,
+          dataNascita: dataNascita || null,
+          eventoTitolo,
+          website,
+        }),
       })
       if (!res.ok) throw new Error()
       setStato('successo')
@@ -89,6 +103,12 @@ export default function FormIscrizioneEvento({
       </div>
 
       <form onSubmit={handleSubmit} noValidate>
+        {/* Honeypot anti-spam — nascosto agli utenti, visibile ai bot */}
+        <div aria-hidden="true" tabIndex={-1} style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none' }}>
+          <label>Non compilare questo campo</label>
+          <input name="website" type="text" autoComplete="off" tabIndex={-1}
+            value={website} onChange={e => setWebsite(e.target.value)} />
+        </div>
         <p className="text-text-faint mb-6" style={{ fontSize: 'var(--text-meta)' }}>
           Vuoi prenotare un tavolo per un&apos;altra data?{' '}
           <a href="/prenota" className="text-brand underline underline-offset-2 hover:text-brand-hover transition-colors">

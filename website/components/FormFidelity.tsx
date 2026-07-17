@@ -4,22 +4,29 @@ import { useState } from 'react'
 
 import { inputClass, labelClass } from '@/lib/form-classes'
 
-const sectionLabelClass = 'block text-neutral-500 uppercase font-medium mb-3'
-
 export default function FormFidelity() {
   const [nome, setNome] = useState('')
   const [cognome, setCognome] = useState('')
   const [email, setEmail] = useState('')
   const [telefono, setTelefono] = useState('')
   const [dataNascita, setDataNascita] = useState('')
+  const [website, setWebsite] = useState('') // honeypot
   const [consensoPrivacy, setConsensoPrivacy] = useState(false)
   const [consensoMarketing, setConsensoMarketing] = useState(false)
   const [stato, setStato] = useState<'pronto' | 'inviando' | 'successo' | 'esistente' | 'errore'>('pronto')
   const [erroreMsg, setErroreMsg] = useState('')
+  const [loadedAt] = useState(() => Date.now())
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!consensoPrivacy) return
+
+    // Anti-spam: honeypot deve essere vuoto, e devono essere passati almeno 3s
+    if (website || Date.now() - loadedAt < 3000) {
+      setStato('successo') // risposta silenziosa: il bot crede di aver avuto successo
+      return
+    }
+
     setStato('inviando')
     setErroreMsg('')
     try {
@@ -31,6 +38,7 @@ export default function FormFidelity() {
           data_nascita: dataNascita || null,
           consenso_privacy: consensoPrivacy,
           consenso_marketing: consensoMarketing,
+          website, // honeypot
         }),
       })
       const json = await res.json()
@@ -67,6 +75,13 @@ export default function FormFidelity() {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
+
+      {/* Honeypot anti-spam — nascosto agli utenti, visibile ai bot */}
+      <div aria-hidden="true" tabIndex={-1} style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none' }}>
+        <label>Non compilare questo campo</label>
+        <input name="website" type="text" autoComplete="off" tabIndex={-1}
+          value={website} onChange={e => setWebsite(e.target.value)} />
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>

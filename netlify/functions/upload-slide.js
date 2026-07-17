@@ -101,6 +101,12 @@ exports.handler = async (event) => {
     return { statusCode: 405, headers: CORS, body: 'Method Not Allowed' }
   }
 
+  const { verifyToken } = require('./verifyToken')
+  if (!verifyToken(event)) {
+    return { statusCode: 401, headers: { ...CORS, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: 'Non autorizzato' }) }
+  }
+
   if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_BUCKET || !R2_PUBLIC_URL) {
     return { statusCode: 500, headers: { ...CORS, 'Content-Type': 'application/json' },
       body: JSON.stringify({ error: 'Env vars R2 non configurate' }) }

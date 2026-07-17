@@ -8,6 +8,18 @@ const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID
 const SITO_BASE        = 'https://boogiebistrot.com'
 const BREVO_DEBUG_LOGS = process.env.BREVO_DEBUG_LOGS === '1'
 
+// Rate limiting in-memory: max 3 iscrizioni per IP ogni 10 minuti
+const ipLog = new Map<string, number[]>()
+function isRateLimited(ip: string): boolean {
+  const now = Date.now()
+  const windowMs = 10 * 60 * 1000
+  const maxRequests = 3
+  const timestamps = (ipLog.get(ip) || []).filter(t => now - t < windowMs)
+  if (timestamps.length >= maxRequests) return true
+  ipLog.set(ip, [...timestamps, now])
+  return false
+}
+
 function normalizePhoneForBrevo(raw: unknown): string | null {
   const input = String(raw || '').trim()
   if (!input) return null
@@ -23,7 +35,24 @@ function normalizePhoneForBrevo(raw: unknown): string | null {
 }
 
 export async function POST(req: NextRequest) {
-  const { nome, cognome, email, telefono, dataNascita, eventoTitolo } = await req.json()
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || req.headers.get('x-real-ip')
+    || 'unknown'
+  if (isRateLimited(ip)) {
+    return NextResponse.json({ error: 'Troppe richieste. Riprova tra qualche minuto.' }, { status: 429 })
+  }
+
+  let body: Record<string, unknown>
+  try { body = await req.json() } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  }
+
+  const { nome, cognome, email, telefono, dataNascita, eventoTitolo, website } = body
+
+  // Anti-spam: honeypot deve essere vuoto
+  if (website) {
+    return NextResponse.json({ success: true })
+  }
 
   if (!email || !nome) {
     return NextResponse.json({ error: 'Email e nome sono obbligatori' }, { status: 400 })
@@ -53,14 +82,12 @@ export async function POST(req: NextRequest) {
     try {
       const normalizedPhone = normalizePhoneForBrevo(telefono)
       const attributes: Record<string, string> = {
-        NOME:      nome,
-        COGNOME:   cognome || '',
-        EVENTO:    eventoTitolo || '',
-        FIRSTNAME: nome,
-        LASTNAME:  cognome || '',
+        FIRSTNAME: String(nome),
+        LASTNAME:  String(cognome || ''),
+        EVENTO:    String(eventoTitolo || ''),
         ...(normalizedPhone ? { SMS: normalizedPhone } : {}),
       }
-      if (dataNascita) attributes.BIRTHDAY = dataNascita
+      if (dataNascita) attributes.BIRTHDAY = String(dataNascita)
 
       const brevoPayload = {
         email,

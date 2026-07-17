@@ -64,6 +64,21 @@ export default function FormContatti() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
+      {/* Disclaimer prenotazioni */}
+      <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-card px-4 py-3">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-amber-600 flex-shrink-0 mt-0.5" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
+          <path d="M12 8v4m0 4h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+        <p className="text-amber-800 font-light leading-relaxed" style={{ fontSize: 'var(--text-meta)' }}>
+          Per prenotare un tavolo utilizza il{' '}
+          <a href="/prenota" className="font-semibold underline underline-offset-2 hover:text-amber-900 transition-colors">
+            form di prenotazione
+          </a>
+          . Questo modulo è riservato a domande e richieste generali.
+        </p>
+      </div>
+
       {/* Honeypot anti-spam — nascosto agli utenti, visibile ai bot */}
       <div aria-hidden="true" tabIndex={-1} style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none' }}>
         <label>Non compilare questo campo</label>

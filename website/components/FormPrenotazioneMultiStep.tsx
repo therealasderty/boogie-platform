@@ -206,6 +206,7 @@ export default function FormPrenotazioneMultiStep({
   const [email, setEmail]       = useState('')
   const [telefono, setTelefono] = useState('')
   const [dataNascita, setDataNascita]     = useState('')
+  const [website, setWebsite]             = useState('') // honeypot
   const [preferenza, setPreferenza]       = useState<'pizza' | 'cucina' | ''>('')
   const [note, setNote]                   = useState('')
   const [consensoPrivacy, setConsensoPrivacy]     = useState(false)
@@ -336,6 +337,13 @@ export default function FormPrenotazioneMultiStep({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!consensoPrivacy || !oraSelezionata || !data) return
+
+    // Anti-spam: honeypot deve essere vuoto
+    if (website) {
+      setStato('successo')
+      return
+    }
+
     setStato('inviando')
     setErroreMsg('')
     try {
@@ -353,6 +361,7 @@ export default function FormPrenotazioneMultiStep({
           data_nascita: dataNascita || null,
           consenso_privacy: consensoPrivacy,
           consenso_marketing: consensoMarketing,
+          website, // honeypot
         }),
       })
       if (res.status === 409) {
@@ -444,6 +453,13 @@ export default function FormPrenotazioneMultiStep({
       <ProgressBar step={step} total={TOTAL_STEPS} />
 
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
+
+        {/* Honeypot anti-spam — nascosto agli utenti, visibile ai bot */}
+        <div aria-hidden="true" tabIndex={-1} style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none' }}>
+          <label>Non compilare questo campo</label>
+          <input name="website" type="text" autoComplete="off" tabIndex={-1}
+            value={website} onChange={e => setWebsite(e.target.value)} />
+        </div>
 
         {/* ── STEP 1: Ospiti ────────────────────────────────────────────── */}
         {step === 1 && (

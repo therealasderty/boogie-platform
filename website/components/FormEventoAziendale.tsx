@@ -14,6 +14,7 @@ import { inputClass } from '@/lib/form-classes'
 
 export default function FormEventoAziendale() {
   const [stato, setStato] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle')
+  const [loadedAt] = useState(() => Date.now())
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -21,6 +22,12 @@ export default function FormEventoAziendale() {
 
     const form = e.currentTarget
     const fd = new FormData(form)
+
+    // Anti-spam: honeypot deve essere vuoto, e devono essere passati almeno 3s
+    if (fd.get('website') || Date.now() - loadedAt < 3000) {
+      setStato('ok')
+      return
+    }
 
     const payload = {
       nome:                fd.get('nome'),
@@ -33,6 +40,7 @@ export default function FormEventoAziendale() {
       note:                fd.get('note'),
       consenso_privacy:    fd.get('consenso_privacy') === 'on',
       consenso_marketing:  fd.get('consenso_marketing') === 'on',
+      website:             fd.get('website'), // honeypot
     }
 
     try {
@@ -67,6 +75,12 @@ export default function FormEventoAziendale() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+
+      {/* Honeypot anti-spam — nascosto agli utenti, visibile ai bot */}
+      <div aria-hidden="true" tabIndex={-1} style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none' }}>
+        <label>Non compilare questo campo</label>
+        <input name="website" type="text" autoComplete="off" tabIndex={-1} />
+      </div>
 
       {/* Nome / Cognome */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

@@ -286,15 +286,26 @@ exports.handler = async (event) => {
   // ── Brevo ──────────────────────────────────────────────────────────
   if (BREVO_API_KEY) {
     const brevoAttrs = {
-      NOME:             resolvedNome,
+      FIRSTNAME:        resolvedNome,
       LASTNAME:         resolvedCognome,
       LAST_WIFI_VISIT:  now,
       WIFI_VISIT_COUNT: visitCount,
     };
-    // Compleanno → Brevo BIRTHDAY (Unix timestamp ms, mezzanotte UTC)
-    if (compleanno) {
-      const birthdayTs = new Date(compleanno + 'T00:00:00Z').getTime();
-      if (!isNaN(birthdayTs)) brevoAttrs.BIRTHDAY = birthdayTs;
+
+    // Compleanno: dal form oppure dal record Airtable già salvato
+    const birthdaySrc = compleanno || existing?.fields['Compleanno'] || '';
+    if (birthdaySrc) {
+      const dateStr = String(birthdaySrc).slice(0, 10); // YYYY-MM-DD
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        brevoAttrs.BIRTHDAY = dateStr;
+      }
+    }
+
+    // Consenso marketing: dal form oppure già presente su Airtable
+    const hasMarketingConsent =
+      consenso === true || !!existing?.fields['Consenso marketing'];
+    if (!isReturning || hasMarketingConsent) {
+      brevoAttrs.CONSENSO_MARKETING = hasMarketingConsent;
     }
 
     if (!isReturning && consenso && BREVO_WIFI_LIST_ID && BREVO_DOI_TEMPLATE && !existing) {

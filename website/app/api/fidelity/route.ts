@@ -5,6 +5,18 @@ const BREVO_LIST_ID = parseInt(process.env.BREVO_LIST_ID || '3')
 const EMAIL_FROM    = process.env.EMAIL_FROM
 const BREVO_DEBUG_LOGS = process.env.BREVO_DEBUG_LOGS === '1'
 
+// Rate limiting in-memory: max 3 iscrizioni per IP ogni 10 minuti
+const ipLog = new Map<string, number[]>()
+function isRateLimited(ip: string): boolean {
+  const now = Date.now()
+  const windowMs = 10 * 60 * 1000
+  const maxRequests = 3
+  const timestamps = (ipLog.get(ip) || []).filter(t => now - t < windowMs)
+  if (timestamps.length >= maxRequests) return true
+  ipLog.set(ip, [...timestamps, now])
+  return false
+}
+
 function normalizeEmail(raw: unknown): string {
   return String(raw || '').trim().toLowerCase().replace(/,/g, '.');
 }
@@ -34,12 +46,24 @@ const brevoHeaders = () => ({
 })
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || req.headers.get('x-real-ip')
+    || 'unknown'
+  if (isRateLimited(ip)) {
+    return NextResponse.json({ success: false, error: 'Troppe richieste. Riprova tra qualche minuto.' }, { status: 429 })
+  }
+
   let body: Record<string, unknown>
   try { body = await req.json() } catch { return NextResponse.json({ success: false }, { status: 400 }) }
 
-  const { nome, cognome, email: emailRaw, telefono, data_nascita, consenso_privacy, consenso_marketing } =
+  const { nome, cognome, email: emailRaw, telefono, data_nascita, consenso_privacy, consenso_marketing, website } =
     body as Record<string, unknown>
   const email = normalizeEmail(emailRaw)
+
+  // Anti-spam: honeypot deve essere vuoto
+  if (website) {
+    return NextResponse.json({ success: true, alreadyMember: false })
+  }
 
   if (!nome || !email || !consenso_privacy) {
     return NextResponse.json({ success: false, error: 'Campi obbligatori mancanti' }, { status: 400 })

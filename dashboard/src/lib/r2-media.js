@@ -3,6 +3,8 @@
  * Stessa logica di r2.js ma usa /.netlify/functions/upload-media (prefisso media/).
  */
 
+import { authFetch } from './authFetch'
+
 const UPLOAD_ENDPOINT = '/.netlify/functions/upload-media'
 
 /**
@@ -22,7 +24,7 @@ export async function uploadMediaToR2(file) {
   }
   const fileBase64 = btoa(binary)
 
-  const res = await fetch(UPLOAD_ENDPOINT, {
+  const res = await authFetch(UPLOAD_ENDPOINT, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({ fileName, contentType: file.type || 'image/jpeg', fileBase64 }),

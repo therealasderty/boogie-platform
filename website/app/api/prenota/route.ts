@@ -13,6 +13,18 @@ const SITO_URL         = process.env.SITO_URL || 'https://boogiebistrot.com'
 const NETLIFY_URL      = process.env.NETLIFY_URL || process.env.URL || SITO_URL
 const BREVO_DEBUG_LOGS = process.env.BREVO_DEBUG_LOGS === '1'
 
+// Rate limiting in-memory: max 5 prenotazioni per IP ogni 10 minuti
+const ipLog = new Map<string, number[]>()
+function isRateLimited(ip: string): boolean {
+  const now = Date.now()
+  const windowMs = 10 * 60 * 1000
+  const maxRequests = 5
+  const timestamps = (ipLog.get(ip) || []).filter(t => now - t < windowMs)
+  if (timestamps.length >= maxRequests) return true
+  ipLog.set(ip, [...timestamps, now])
+  return false
+}
+
 function normalizePhoneForBrevo(raw: unknown): string | null {
   const input = String(raw || '').trim()
   if (!input) return null
@@ -31,11 +43,23 @@ function normalizePhoneForBrevo(raw: unknown): string | null {
 }
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || req.headers.get('x-real-ip')
+    || 'unknown'
+  if (isRateLimited(ip)) {
+    return NextResponse.json({ success: false, error: 'Troppe richieste. Riprova tra qualche minuto.' }, { status: 429 })
+  }
+
   let body: Record<string, unknown>
   try { body = await req.json() } catch { return NextResponse.json({ success: false }, { status: 400 }) }
 
   const { nome, cognome, data, ora, persone, email, telefono, note, preferenza, evento,
-          data_nascita, consenso_privacy, consenso_marketing } = body as Record<string, unknown>
+          data_nascita, consenso_privacy, consenso_marketing, website } = body as Record<string, unknown>
+
+  // Anti-spam: honeypot deve essere vuoto
+  if (website) {
+    return NextResponse.json({ success: true })
+  }
 
   if (!nome || !data || !ora || !persone || !email || !telefono || !consenso_privacy) {
     return NextResponse.json({ success: false, error: 'Campi obbligatori mancanti' }, { status: 400 })

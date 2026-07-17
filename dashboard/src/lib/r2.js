@@ -6,6 +6,8 @@
  * /.netlify/functions/upload-slide che firma con AWS SigV4 server-side.
  */
 
+import { authFetch } from './authFetch'
+
 const UPLOAD_ENDPOINT = '/.netlify/functions/upload-slide'
 
 /**
@@ -26,7 +28,7 @@ export async function uploadToR2(file) {
   }
   const fileBase64 = btoa(binary)
 
-  const res = await fetch(UPLOAD_ENDPOINT, {
+  const res = await authFetch(UPLOAD_ENDPOINT, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({
