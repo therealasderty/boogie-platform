@@ -790,61 +790,65 @@ export function TemplatePrezzoStoriaEvento({
 
 // ─── Template Menù Evento (4:5 / 9:16) ─────────────────────────────────────────
 // Lista piatti da blocco "menu": { nome, descrizione?, prezzo? }
+// Supporta sia voci flat (legacy) che sezioni con macrocategorie (nuovo)
 
-function MenuVociList({ voci, nomeSize, descSize, prezzoSize, gap }) {
+function MenuVociList({ voci = [], sezioni = null, nomeSize, descSize, prezzoSize, gap }) {
+  function renderItem(v, i) {
+    const nome = typeof v === 'string' ? v : (v?.nome || '')
+    const descrizione = typeof v === 'object' ? (v?.descrizione || '') : ''
+    const prezzo = typeof v === 'object' ? (v?.prezzo || '') : ''
+    if (!nome) return null
+    return (
+      <div key={i} style={{ width: '100%' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, width: '100%' }}>
+          <span style={{ fontSize: nomeSize, fontWeight: 600, color: 'rgba(255,255,255,0.92)', lineHeight: 1.2, flexShrink: 1, minWidth: 0 }}>
+            {nome}
+          </span>
+          <span style={{ flex: 1, borderBottom: '1px dotted rgba(238,206,157,0.35)', minWidth: 24, transform: 'translateY(-6px)' }} />
+          {prezzo ? (
+            <span style={{ fontFamily: "'Alga', 'Georgia', serif", fontSize: prezzoSize, fontWeight: 600, color: BRAND_GOLD, flexShrink: 0, lineHeight: 1 }}>
+              {prezzo}
+            </span>
+          ) : null}
+        </div>
+        {descrizione ? (
+          <div style={{ marginTop: 6, fontSize: descSize, lineHeight: 1.35, color: 'rgba(255,255,255,0.55)', paddingRight: prezzo ? 80 : 0 }}>
+            {descrizione}
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
+  if (sezioni && sezioni.length > 0) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: Math.round(gap * 1.5), width: '100%' }}>
+        {sezioni.map((s, si) => (
+          <div key={si}>
+            {s.titolo && (
+              <div style={{
+                fontSize: Math.round(nomeSize * 0.52),
+                fontWeight: 700,
+                color: 'rgba(238,206,157,0.6)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.14em',
+                marginBottom: Math.round(gap * 0.45),
+              }}>
+                {s.titolo}
+              </div>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: Math.round(gap * 0.75) }}>
+              {(s.voci || []).map(renderItem)}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap, width: '100%' }}>
-      {voci.map((v, i) => {
-        const nome = typeof v === 'string' ? v : (v?.nome || '')
-        const descrizione = typeof v === 'object' ? (v?.descrizione || '') : ''
-        const prezzo = typeof v === 'object' ? (v?.prezzo || '') : ''
-        if (!nome) return null
-        return (
-          <div key={i} style={{ width: '100%' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, width: '100%' }}>
-              <span style={{
-                fontSize: nomeSize,
-                fontWeight: 600,
-                color: 'rgba(255,255,255,0.92)',
-                lineHeight: 1.2,
-                flexShrink: 1,
-                minWidth: 0,
-              }}>
-                {nome}
-              </span>
-              <span style={{
-                flex: 1,
-                borderBottom: '1px dotted rgba(238,206,157,0.35)',
-                minWidth: 24,
-                transform: 'translateY(-6px)',
-              }} />
-              {prezzo ? (
-                <span style={{
-                  fontFamily: "'Alga', 'Georgia', serif",
-                  fontSize: prezzoSize,
-                  fontWeight: 600,
-                  color: BRAND_GOLD,
-                  flexShrink: 0,
-                  lineHeight: 1,
-                }}>
-                  {prezzo}
-                </span>
-              ) : null}
-            </div>
-            {descrizione ? (
-              <div style={{
-                marginTop: 6,
-                fontSize: descSize,
-                lineHeight: 1.35,
-                color: 'rgba(255,255,255,0.55)',
-                paddingRight: prezzo ? 80 : 0,
-              }}>
-                {descrizione}
-              </div>
-            ) : null}
-          </div>
-        )
-      })}
+      {voci.map(renderItem)}
     </div>
   )
 }
@@ -857,11 +861,14 @@ export function TemplateMenuEvento({
   ora             = '',
   imageUrl        = '',
   voci            = [],
+  sezioni         = [],
   mostraIndirizzo = false,
   indirizzo       = BRAND_ADDRESS,
 }) {
   const heading = menuTitolo || titolo || 'Menù'
-  const n = Array.isArray(voci) ? voci.length : 0
+  const usaSezioni = Array.isArray(sezioni) && sezioni.length > 0
+  const tutteVoci = usaSezioni ? sezioni.flatMap(s => s.voci || []) : (Array.isArray(voci) ? voci : [])
+  const n = tutteVoci.length
   const nomeSize = n > 10 ? 28 : n > 7 ? 32 : 36
   const descSize = n > 10 ? 20 : 22
   const prezzoSize = n > 10 ? 30 : 34
@@ -914,7 +921,7 @@ export function TemplateMenuEvento({
         </div>
         <div style={{ width: '100%', height: 1, background: 'rgba(238,206,157,0.25)', marginBottom: 28 }} />
         <div style={{ flex: 1, overflow: 'hidden' }}>
-          <MenuVociList voci={list} nomeSize={nomeSize} descSize={descSize} prezzoSize={prezzoSize} gap={gap} />
+          <MenuVociList voci={list} sezioni={usaSezioni ? sezioni : null} nomeSize={nomeSize} descSize={descSize} prezzoSize={prezzoSize} gap={gap} />
         </div>
       </div>
 
@@ -947,11 +954,14 @@ export function TemplateMenuStoriaEvento({
   ora             = '',
   imageUrl        = '',
   voci            = [],
+  sezioni         = [],
   mostraIndirizzo = false,
   indirizzo       = BRAND_ADDRESS,
 }) {
   const heading = menuTitolo || titolo || 'Menù'
-  const n = Array.isArray(voci) ? voci.length : 0
+  const usaSezioni = Array.isArray(sezioni) && sezioni.length > 0
+  const tutteVoci = usaSezioni ? sezioni.flatMap(s => s.voci || []) : (Array.isArray(voci) ? voci : [])
+  const n = tutteVoci.length
   const nomeSize = n > 12 ? 30 : n > 8 ? 34 : 40
   const descSize = n > 12 ? 22 : 24
   const prezzoSize = n > 12 ? 32 : 38
@@ -1008,7 +1018,7 @@ export function TemplateMenuStoriaEvento({
         </div>
         <div style={{ width: '100%', height: 1, background: 'rgba(238,206,157,0.25)', marginBottom: 36 }} />
         <div style={{ flex: 1, overflow: 'hidden' }}>
-          <MenuVociList voci={list} nomeSize={nomeSize} descSize={descSize} prezzoSize={prezzoSize} gap={gap} />
+          <MenuVociList voci={list} sezioni={usaSezioni ? sezioni : null} nomeSize={nomeSize} descSize={descSize} prezzoSize={prezzoSize} gap={gap} />
         </div>
       </div>
 
@@ -1855,10 +1865,11 @@ export const TEMPLATES = {
       menuTitolo: 'Menù Alla Carta',
       data: '2026-08-15',
       ora: '12:30',
-      voci: [
-        { nome: 'Carpaccio di manzo', descrizione: 'rucola e grana', prezzo: '14€' },
-        { nome: 'Risotto ai funghi', prezzo: '16€' },
-        { nome: 'Tagliata di scottona', descrizione: 'contorno di stagione', prezzo: '22€' },
+      sezioni: [
+        { titolo: 'Antipasti', voci: [{ nome: 'Carpaccio di manzo', descrizione: 'rucola e grana', prezzo: '14€' }] },
+        { titolo: 'Primi', voci: [{ nome: 'Risotto ai funghi porcini', prezzo: '16€' }] },
+        { titolo: 'Secondi', voci: [{ nome: 'Tagliata di scottona', descrizione: 'contorno di stagione', prezzo: '22€' }] },
+        { titolo: 'Dolci', voci: [{ nome: 'Tiramisù della casa', prezzo: '7€' }] },
       ],
       imageUrl: '/sample.webp',
     },
@@ -1896,10 +1907,11 @@ foto_45: {
       menuTitolo: 'Menù Alla Carta',
       data: '2026-08-15',
       ora: '12:30',
-      voci: [
-        { nome: 'Carpaccio di manzo', descrizione: 'rucola e grana', prezzo: '14€' },
-        { nome: 'Risotto ai funghi', prezzo: '16€' },
-        { nome: 'Tagliata di scottona', descrizione: 'contorno di stagione', prezzo: '22€' },
+      sezioni: [
+        { titolo: 'Antipasti', voci: [{ nome: 'Carpaccio di manzo', descrizione: 'rucola e grana', prezzo: '14€' }] },
+        { titolo: 'Primi', voci: [{ nome: 'Risotto ai funghi porcini', prezzo: '16€' }] },
+        { titolo: 'Secondi', voci: [{ nome: 'Tagliata di scottona', descrizione: 'contorno di stagione', prezzo: '22€' }] },
+        { titolo: 'Dolci', voci: [{ nome: 'Tiramisù della casa', prezzo: '7€' }] },
       ],
       imageUrl: '/sample.webp',
     },

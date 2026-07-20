@@ -44,7 +44,13 @@ function RendererImmagine({ b }: { b: BloccoImmagine }) {
 
 // ─── Menù ────────────────────────────────────────────────────────────────────
 function RendererMenu({ b }: { b: BloccoMenu }) {
-  if (!b.voci?.length) return null
+  // Normalizza: sezioni (nuovo) o voci flat (legacy)
+  const sezioni = b.sezioni?.length
+    ? b.sezioni
+    : b.voci?.length
+    ? [{ voci: b.voci }]
+    : []
+  if (!sezioni.length) return null
   return (
     <section className="py-12 border-b border-neutral-200">
       {b.titolo && (
@@ -52,20 +58,31 @@ function RendererMenu({ b }: { b: BloccoMenu }) {
           {b.titolo}
         </h3>
       )}
-      <div className="flex flex-col">
-        {b.voci.map((v, i) => (
-          <div key={i} className="flex items-start justify-between gap-6 py-4 border-b border-neutral-200 last:border-0">
-            <div className="flex-1">
-              <span className="text-neutral-900 font-medium" style={{ fontSize: 'var(--text-body)' }}>{v.nome}</span>
-              {v.descrizione && (
-                <p className="text-neutral-500 mt-0.5" style={{ fontSize: 'var(--text-meta)' }}>{v.descrizione}</p>
-              )}
-            </div>
-            {v.prezzo && (
-              <span className="text-brand font-medium flex-shrink-0" style={{ fontSize: 'var(--text-body)' }}>
-                {v.prezzo}
-              </span>
+      <div className="flex flex-col gap-10">
+        {sezioni.map((s, si) => (
+          <div key={si}>
+            {s.titolo && (
+              <p className="uppercase font-semibold text-neutral-400 mb-4" style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}>
+                {s.titolo}
+              </p>
             )}
+            <div className="flex flex-col">
+              {(s.voci || []).map((v, i) => (
+                <div key={i} className="flex items-start justify-between gap-6 py-4 border-b border-neutral-200 last:border-0">
+                  <div className="flex-1">
+                    <span className="text-neutral-900 font-medium" style={{ fontSize: 'var(--text-body)' }}>{v.nome}</span>
+                    {v.descrizione && (
+                      <p className="text-neutral-500 mt-0.5" style={{ fontSize: 'var(--text-meta)' }}>{v.descrizione}</p>
+                    )}
+                  </div>
+                  {v.prezzo && (
+                    <span className="text-brand font-medium flex-shrink-0" style={{ fontSize: 'var(--text-body)' }}>
+                      {v.prezzo}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         ))}
       </div>

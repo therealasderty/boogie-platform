@@ -633,7 +633,22 @@ function fillSlideDataFromEvento(template, a, currentData, orari = [], bloccoId)
     const blocchi = parseBlocchiEvento(a)
     const preferred = bloccoId || currentData.bloccoMenuId
     const { blocco: bMenu } = pickBloccoByTipo(blocchi, 'menu', preferred)
-    const voci = Array.isArray(bMenu?.voci)
+    const hasSezioni = Array.isArray(bMenu?.sezioni) && bMenu.sezioni.length > 0
+    const sezioni = hasSezioni
+      ? bMenu.sezioni
+          .map(s => ({
+            titolo: String(s.titolo || ''),
+            voci: (Array.isArray(s.voci) ? s.voci : [])
+              .map(v => ({
+                nome: String(v?.nome || '').trim(),
+                descrizione: String(v?.descrizione || '').trim(),
+                prezzo: String(v?.prezzo || '').trim(),
+              }))
+              .filter(v => v.nome),
+          }))
+          .filter(s => s.voci.length > 0)
+      : []
+    const voci = !hasSezioni && Array.isArray(bMenu?.voci)
       ? bMenu.voci
           .map(v => ({
             nome: String(v?.nome || '').trim(),
@@ -651,6 +666,7 @@ function fillSlideDataFromEvento(template, a, currentData, orari = [], bloccoId)
       imageUrl:     a.fotoHero || '',
       bloccoMenuId: bMenu?.id || '',
       menuTitolo:   bMenu?.titolo || '',
+      sezioni,
       voci,
     }
   }
@@ -900,14 +916,36 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
   }
 
   if (template === 'menu_evento' || template === 'menu_storia') {
-    const voci = Array.isArray(data.voci) ? data.voci : []
     const evento = eventoCollegatoSlide(slide, appuntamenti, eventoGlobaleId)
-    function updateVoce(i, field, val) {
-      const next = voci.map((v, idx) => idx === i ? { ...v, [field]: val } : v)
-      update('voci', next)
+    // Normalizza: sezioni (nuovo) o voci flat legacy → singola sezione senza titolo
+    const sezioni = Array.isArray(data.sezioni)
+      ? data.sezioni
+      : (Array.isArray(data.voci) && data.voci.length > 0
+          ? [{ titolo: '', voci: data.voci }]
+          : [])
+    function updateSezioni(newSezioni) { update('sezioni', newSezioni) }
+    function aggiungiSezione(titolo = '') { updateSezioni([...sezioni, { titolo, voci: [] }]) }
+    function aggiornaSezione(si, titolo) {
+      const s = [...sezioni]; s[si] = { ...s[si], titolo }; updateSezioni(s)
     }
-    function aggiungiVoce() { update('voci', [...voci, { nome: '', descrizione: '', prezzo: '' }]) }
-    function rimuoviVoce(i) { update('voci', voci.filter((_, idx) => idx !== i)) }
+    function rimuoviSezione(si) {
+      const s = [...sezioni]; s.splice(si, 1); updateSezioni(s)
+    }
+    function aggiungiVoce(si) {
+      const s = [...sezioni]
+      s[si] = { ...s[si], voci: [...(s[si].voci || []), { nome: '', descrizione: '', prezzo: '' }] }
+      updateSezioni(s)
+    }
+    function aggiornaVoce(si, vi, field, val) {
+      const s = [...sezioni]
+      const voci = [...(s[si].voci || [])]; voci[vi] = { ...voci[vi], [field]: val }
+      s[si] = { ...s[si], voci }; updateSezioni(s)
+    }
+    function rimuoviVoce(si, vi) {
+      const s = [...sezioni]
+      const voci = [...(s[si].voci || [])]; voci.splice(vi, 1)
+      s[si] = { ...s[si], voci }; updateSezioni(s)
+    }
     return (
       <div className={styles.slideEditor}>
         <RecuperaEvento appuntamenti={appuntamenti} template={template} slide={slide} onChange={onChange} eventoGlobaleId={eventoGlobaleId} orari={orari} />
@@ -915,7 +953,7 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
           evento={evento}
           tipo="menu"
           value={data.bloccoMenuId}
-          labelFn={b => b.titolo || `Menù (${b.voci?.length || 0} voci)`}
+          labelFn={b => b.titolo || (b.sezioni?.length ? `Menù (${b.sezioni.length} sezioni)` : `Menù (${b.voci?.length || 0} voci)`)}
           onSelect={bloccoId => {
             if (!evento) return
             onChange({ ...slide, data: fillSlideDataFromEvento(template, evento, data, orari, bloccoId) })
@@ -940,21 +978,29 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
           </>
         )}
         <label className={styles.sectionLabel}>Piatti</label>
-        {voci.map((v, i) => (
-          <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 90px auto', gap: 6, marginBottom: 8 }}>
-            <input className={styles.edInput} value={v.nome || ''} onChange={e => updateVoce(i, 'nome', e.target.value)} placeholder="Nome piatto" style={{ margin: 0 }} />
-            <input className={styles.edInput} value={v.prezzo || ''} onChange={e => updateVoce(i, 'prezzo', e.target.value)} placeholder="14€" style={{ margin: 0 }} />
-            <button className="btn-icon" onClick={() => rimuoviVoce(i)} title="Rimuovi"><X size={13} /></button>
-            <input
-              className={styles.edInput}
-              value={v.descrizione || ''}
-              onChange={e => updateVoce(i, 'descrizione', e.target.value)}
-              placeholder="Descrizione (opzionale)"
-              style={{ margin: 0, gridColumn: '1 / -1' }}
-            />
+        {sezioni.map((s, si) => (
+          <div key={si} style={{ border: '1px solid var(--border2)', borderRadius: 6, padding: '8px 10px', marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <input className={styles.edInput} value={s.titolo || ''} onChange={e => aggiornaSezione(si, e.target.value)} placeholder="Sezione (es. Antipasti)" style={{ margin: 0, flex: 1 }} />
+              <button className="btn-icon" onClick={() => rimuoviSezione(si)} title="Rimuovi sezione"><X size={13} /></button>
+            </div>
+            {(s.voci || []).map((v, vi) => (
+              <div key={vi} style={{ display: 'grid', gridTemplateColumns: '1fr 80px auto', gap: 5 }}>
+                <input className={styles.edInput} value={v.nome || ''} onChange={e => aggiornaVoce(si, vi, 'nome', e.target.value)} placeholder="Nome piatto" style={{ margin: 0 }} />
+                <input className={styles.edInput} value={v.prezzo || ''} onChange={e => aggiornaVoce(si, vi, 'prezzo', e.target.value)} placeholder="14€" style={{ margin: 0 }} />
+                <button className="btn-icon" onClick={() => rimuoviVoce(si, vi)} title="Rimuovi"><X size={13} /></button>
+                <input className={styles.edInput} value={v.descrizione || ''} onChange={e => aggiornaVoce(si, vi, 'descrizione', e.target.value)} placeholder="Descrizione (opzionale)" style={{ margin: 0, gridColumn: '1 / -1' }} />
+              </div>
+            ))}
+            <button className="btn-secondary" style={{ fontSize: '0.78rem', alignSelf: 'flex-start' }} onClick={() => aggiungiVoce(si)}>+ Piatto</button>
           </div>
         ))}
-        <button className="btn-secondary" style={{ fontSize: '0.8rem', marginTop: 2 }} onClick={aggiungiVoce}>+ Aggiungi piatto</button>
+        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 4 }}>
+          {['Antipasti', 'Primi', 'Secondi', 'Dolci'].map(cat => (
+            <button key={cat} className="btn-secondary" style={{ fontSize: '0.78rem' }} onClick={() => aggiungiSezione(cat)}>+ {cat}</button>
+          ))}
+          <button className="btn-secondary" style={{ fontSize: '0.78rem' }} onClick={() => aggiungiSezione()}>+ Sezione…</button>
+        </div>
         <label className={styles.sectionLabel} style={{ marginTop: 8 }}>URL foto sfondo</label>
         <input className={styles.edInput} value={data.imageUrl || ''} placeholder="https://res.cloudinary.com/..." onChange={e => update('imageUrl', e.target.value)} />
         <IndirizzoToggle data={data} update={update} />

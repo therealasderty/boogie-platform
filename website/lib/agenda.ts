@@ -3,7 +3,8 @@ import { REVALIDATE_AGENDA_S } from '@/lib/revalidate'
 export type BloccoTesto        = { id: string; tipo: 'testo'; titolo?: string; contenuto: string }
 export type BloccoImmagine     = { id: string; tipo: 'immagine'; url: string; alt?: string }
 export type BloccoMenuVoce     = { nome: string; descrizione?: string; prezzo?: string }
-export type BloccoMenu         = { id: string; tipo: 'menu'; titolo?: string; voci: BloccoMenuVoce[] }
+export type BloccoMenuSezione  = { titolo?: string; voci: BloccoMenuVoce[] }
+export type BloccoMenu         = { id: string; tipo: 'menu'; titolo?: string; voci?: BloccoMenuVoce[]; sezioni?: BloccoMenuSezione[] }
 export type BloccoPrenotazione = { id: string; tipo: 'prenotazione'; titolo?: string; maxPosti?: number; slotMinuti?: number }
 export type BloccoArtista      = { id: string; tipo: 'artista'; nome: string; bio?: string; foto?: string }
 export type BloccoCardOfferte  = { id: string; tipo: 'card-offerte'; titolo?: string; voci: string[] }

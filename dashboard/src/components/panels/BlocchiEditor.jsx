@@ -20,7 +20,7 @@ function nuovoBlocco(tipo) {
   switch (tipo) {
     case 'testo':    return { id, tipo, titolo: '', contenuto: '' }
     case 'immagine': return { id, tipo, url: '', alt: '' }
-    case 'menu':     return { id, tipo, titolo: '', voci: [] }
+    case 'menu':     return { id, tipo, titolo: '', sezioni: [] }
     case 'artista':       return { id, tipo, nome: '', bio: '', foto: '' }
     case 'card-offerte':  return { id, tipo, titolo: '', voci: [] }
     case 'prezzo':        return { id, tipo, titolo: '', importo: '', voci: [] }
@@ -32,7 +32,13 @@ function sommario(b) {
   switch (b.tipo) {
     case 'testo':    return b.contenuto ? b.contenuto.slice(0, 55) + (b.contenuto.length > 55 ? '…' : '') : '(vuoto)'
     case 'immagine': return b.url || '(nessuna URL)'
-    case 'menu':     return `${b.voci?.length || 0} voci${b.titolo ? ` — "${b.titolo}"` : ''}`
+    case 'menu': {
+      if (b.sezioni?.length) {
+        const n = b.sezioni.reduce((acc, s) => acc + (s.voci?.length || 0), 0)
+        return `${b.sezioni.length} sezioni, ${n} piatti${b.titolo ? ` — "${b.titolo}"` : ''}`
+      }
+      return `${b.voci?.length || 0} voci${b.titolo ? ` — "${b.titolo}"` : ''}`
+    }
     case 'artista':      return b.nome || '(nessun nome)'
     case 'card-offerte': return b.voci?.length ? b.voci.join(' · ') : '(nessuna selezione)'
     case 'prezzo':       return b.importo ? `${b.importo}${b.titolo ? ` — ${b.titolo}` : ''}` : b.titolo || '(nessun prezzo)'
@@ -188,35 +194,79 @@ function FormImmagine({ b, onChange }) {
   )
 }
 
+const MACRO_CAT_MENU = ['Antipasti', 'Primi', 'Secondi', 'Dolci']
+
 function FormMenu({ b, onChange }) {
-  function aggiungiVoce() {
-    onChange({ ...b, voci: [...(b.voci || []), { nome: '', descrizione: '', prezzo: '' }] })
+  // Normalizza: sezioni (nuovo) ha priorità su voci flat (legacy)
+  const sezioni = b.sezioni !== undefined
+    ? b.sezioni
+    : (b.voci?.length ? [{ titolo: '', voci: b.voci }] : [])
+
+  function updateSezioni(newSezioni) {
+    onChange({ ...b, sezioni: newSezioni })
   }
-  function aggiornaVoce(i, field, val) {
-    const voci = [...(b.voci || [])]
-    voci[i] = { ...voci[i], [field]: val }
-    onChange({ ...b, voci })
+  function aggiungiSezione(titolo = '') {
+    updateSezioni([...sezioni, { titolo, voci: [] }])
   }
-  function rimuoviVoce(i) {
-    const voci = [...(b.voci || [])]
-    voci.splice(i, 1)
-    onChange({ ...b, voci })
+  function aggiornaSezione(si, titolo) {
+    const s = [...sezioni]; s[si] = { ...s[si], titolo }; updateSezioni(s)
+  }
+  function rimuoviSezione(si) {
+    const s = [...sezioni]; s.splice(si, 1); updateSezioni(s)
+  }
+  function aggiungiVoce(si) {
+    const s = [...sezioni]
+    s[si] = { ...s[si], voci: [...(s[si].voci || []), { nome: '', descrizione: '', prezzo: '' }] }
+    updateSezioni(s)
+  }
+  function aggiornaVoce(si, vi, field, val) {
+    const s = [...sezioni]
+    const voci = [...(s[si].voci || [])]; voci[vi] = { ...voci[vi], [field]: val }
+    s[si] = { ...s[si], voci }; updateSezioni(s)
+  }
+  function rimuoviVoce(si, vi) {
+    const s = [...sezioni]
+    const voci = [...(s[si].voci || [])]; voci.splice(vi, 1)
+    s[si] = { ...s[si], voci }; updateSezioni(s)
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <input style={inputStyle} value={b.titolo || ''} onChange={e => onChange({ ...b, titolo: e.target.value })} placeholder="Titolo sezione (es. Menù della serata)" />
-      {(b.voci || []).map((v, i) => (
-        <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 6, alignItems: 'start' }}>
-          <input style={{ ...inputStyle, gridColumn: '1 / 2' }} value={v.nome} onChange={e => aggiornaVoce(i, 'nome', e.target.value)} placeholder="Nome piatto" />
-          <input style={{ ...inputStyle, width: 90 }} value={v.prezzo} onChange={e => aggiornaVoce(i, 'prezzo', e.target.value)} placeholder="Prezzo" />
-          <button type="button" className="btn-icon danger" onClick={() => rimuoviVoce(i)} title="Rimuovi" style={{ padding: '4px 8px' }}>✕</button>
-          <input style={{ ...inputStyle, gridColumn: '1 / -1' }} value={v.descrizione} onChange={e => aggiornaVoce(i, 'descrizione', e.target.value)} placeholder="Descrizione (opzionale)" />
+      <input style={inputStyle} value={b.titolo || ''} onChange={e => onChange({ ...b, titolo: e.target.value })} placeholder="Titolo menù (es. Menù della serata)" />
+      {sezioni.map((s, si) => (
+        <div key={si} style={{ border: '1px solid var(--border2)', borderRadius: 'var(--radius-sm)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <input
+              style={{ ...inputStyle, flex: 1 }}
+              value={s.titolo || ''}
+              onChange={e => aggiornaSezione(si, e.target.value)}
+              placeholder="Nome sezione (es. Antipasti)"
+            />
+            <button type="button" className="btn-icon danger" onClick={() => rimuoviSezione(si)} style={{ padding: '4px 8px' }}>✕</button>
+          </div>
+          {(s.voci || []).map((v, vi) => (
+            <div key={vi} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 6, alignItems: 'start' }}>
+              <input style={{ ...inputStyle, gridColumn: '1 / 2' }} value={v.nome || ''} onChange={e => aggiornaVoce(si, vi, 'nome', e.target.value)} placeholder="Nome piatto" />
+              <input style={{ ...inputStyle, width: 90 }} value={v.prezzo || ''} onChange={e => aggiornaVoce(si, vi, 'prezzo', e.target.value)} placeholder="Prezzo" />
+              <button type="button" className="btn-icon danger" onClick={() => rimuoviVoce(si, vi)} style={{ padding: '4px 8px' }}>✕</button>
+              <input style={{ ...inputStyle, gridColumn: '1 / -1' }} value={v.descrizione || ''} onChange={e => aggiornaVoce(si, vi, 'descrizione', e.target.value)} placeholder="Descrizione (opzionale)" />
+            </div>
+          ))}
+          <button type="button" className="btn-secondary" onClick={() => aggiungiVoce(si)} style={{ alignSelf: 'flex-start', fontSize: '0.82rem' }}>
+            + Piatto
+          </button>
         </div>
       ))}
-      <button type="button" className="btn-secondary" onClick={aggiungiVoce} style={{ alignSelf: 'flex-start', fontSize: '0.82rem' }}>
-        + Aggiungi piatto
-      </button>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {MACRO_CAT_MENU.map(cat => (
+          <button key={cat} type="button" className="btn-secondary" onClick={() => aggiungiSezione(cat)} style={{ fontSize: '0.8rem', padding: '5px 11px' }}>
+            + {cat}
+          </button>
+        ))}
+        <button type="button" className="btn-secondary" onClick={() => aggiungiSezione()} style={{ fontSize: '0.8rem', padding: '5px 11px' }}>
+          + Sezione…
+        </button>
+      </div>
     </div>
   )
 }
