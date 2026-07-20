@@ -34,7 +34,7 @@ function sommario(b) {
     case 'immagine': return b.url || '(nessuna URL)'
     case 'menu': {
       if (b.sezioni?.length) {
-        const n = b.sezioni.reduce((acc, s) => acc + (s.voci?.length || 0), 0)
+        const n = b.sezioni.reduce((acc, s) => acc + (s.voci?.filter(v => v.tipo !== 'separatore').length || 0), 0)
         return `${b.sezioni.length} sezioni, ${n} piatti${b.titolo ? ` — "${b.titolo}"` : ''}`
       }
       return `${b.voci?.length || 0} voci${b.titolo ? ` — "${b.titolo}"` : ''}`
@@ -219,6 +219,11 @@ function FormMenu({ b, onChange }) {
     s[si] = { ...s[si], voci: [...(s[si].voci || []), { nome: '', descrizione: '', prezzo: '' }] }
     updateSezioni(s)
   }
+  function aggiungiSeparatore(si) {
+    const s = [...sezioni]
+    s[si] = { ...s[si], voci: [...(s[si].voci || []), { tipo: 'separatore', testo: 'In alternativa' }] }
+    updateSezioni(s)
+  }
   function aggiornaVoce(si, vi, field, val) {
     const s = [...sezioni]
     const voci = [...(s[si].voci || [])]; voci[vi] = { ...voci[vi], [field]: val }
@@ -227,6 +232,14 @@ function FormMenu({ b, onChange }) {
   function rimuoviVoce(si, vi) {
     const s = [...sezioni]
     const voci = [...(s[si].voci || [])]; voci.splice(vi, 1)
+    s[si] = { ...s[si], voci }; updateSezioni(s)
+  }
+  function spostaVoce(si, vi, dir) {
+    const s = [...sezioni]
+    const voci = [...(s[si].voci || [])]
+    const j = vi + dir
+    if (j < 0 || j >= voci.length) return
+    ;[voci[vi], voci[j]] = [voci[j], voci[vi]]
     s[si] = { ...s[si], voci }; updateSezioni(s)
   }
 
@@ -245,16 +258,42 @@ function FormMenu({ b, onChange }) {
             <button type="button" className="btn-icon danger" onClick={() => rimuoviSezione(si)} style={{ padding: '4px 8px' }}>✕</button>
           </div>
           {(s.voci || []).map((v, vi) => (
-            <div key={vi} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 6, alignItems: 'start' }}>
-              <input style={{ ...inputStyle, gridColumn: '1 / 2' }} value={v.nome || ''} onChange={e => aggiornaVoce(si, vi, 'nome', e.target.value)} placeholder="Nome piatto" />
-              <input style={{ ...inputStyle, width: 90 }} value={v.prezzo || ''} onChange={e => aggiornaVoce(si, vi, 'prezzo', e.target.value)} placeholder="Prezzo" />
-              <button type="button" className="btn-icon danger" onClick={() => rimuoviVoce(si, vi)} style={{ padding: '4px 8px' }}>✕</button>
-              <input style={{ ...inputStyle, gridColumn: '1 / -1' }} value={v.descrizione || ''} onChange={e => aggiornaVoce(si, vi, 'descrizione', e.target.value)} placeholder="Descrizione (opzionale)" />
+            <div key={vi} style={{ display: 'flex', gap: 4, alignItems: 'flex-start' }}>
+              {/* frecce riordino */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingTop: 2, flexShrink: 0 }}>
+                <button type="button" className="btn-icon" onClick={() => spostaVoce(si, vi, -1)} disabled={vi === 0} style={{ padding: '2px 5px', fontSize: '0.65rem' }}>↑</button>
+                <button type="button" className="btn-icon" onClick={() => spostaVoce(si, vi, 1)} disabled={vi === (s.voci || []).length - 1} style={{ padding: '2px 5px', fontSize: '0.65rem' }}>↓</button>
+              </div>
+              {v.tipo === 'separatore' ? (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, padding: '6px 0' }}>
+                  <div style={{ flex: 1, height: 1, background: 'var(--border2)' }} />
+                  <input
+                    style={{ ...inputStyle, width: 160, textAlign: 'center', fontSize: '0.8rem', fontStyle: 'italic' }}
+                    value={v.testo || ''}
+                    onChange={e => aggiornaVoce(si, vi, 'testo', e.target.value)}
+                    placeholder="In alternativa"
+                  />
+                  <div style={{ flex: 1, height: 1, background: 'var(--border2)' }} />
+                  <button type="button" className="btn-icon danger" onClick={() => rimuoviVoce(si, vi)} style={{ padding: '4px 8px', flexShrink: 0 }}>✕</button>
+                </div>
+              ) : (
+                <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 6, alignItems: 'start' }}>
+                  <input style={{ ...inputStyle, gridColumn: '1 / 2' }} value={v.nome || ''} onChange={e => aggiornaVoce(si, vi, 'nome', e.target.value)} placeholder="Nome piatto" />
+                  <input style={{ ...inputStyle, width: 90 }} value={v.prezzo || ''} onChange={e => aggiornaVoce(si, vi, 'prezzo', e.target.value)} placeholder="Prezzo" />
+                  <button type="button" className="btn-icon danger" onClick={() => rimuoviVoce(si, vi)} style={{ padding: '4px 8px' }}>✕</button>
+                  <input style={{ ...inputStyle, gridColumn: '1 / -1' }} value={v.descrizione || ''} onChange={e => aggiornaVoce(si, vi, 'descrizione', e.target.value)} placeholder="Descrizione (opzionale)" />
+                </div>
+              )}
             </div>
           ))}
-          <button type="button" className="btn-secondary" onClick={() => aggiungiVoce(si)} style={{ alignSelf: 'flex-start', fontSize: '0.82rem' }}>
-            + Piatto
-          </button>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button type="button" className="btn-secondary" onClick={() => aggiungiVoce(si)} style={{ fontSize: '0.82rem' }}>
+              + Piatto
+            </button>
+            <button type="button" className="btn-secondary" onClick={() => aggiungiSeparatore(si)} style={{ fontSize: '0.82rem', fontStyle: 'italic' }}>
+              — Separatore
+            </button>
+          </div>
         </div>
       ))}
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>

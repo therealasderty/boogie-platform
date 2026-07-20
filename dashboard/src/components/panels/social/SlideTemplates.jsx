@@ -794,6 +794,19 @@ export function TemplatePrezzoStoriaEvento({
 
 function MenuVociList({ voci = [], sezioni = null, nomeSize, descSize, prezzoSize, gap }) {
   function renderItem(v, i) {
+    if (v?.tipo === 'separatore') {
+      return (
+        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%', padding: '4px 0' }}>
+          <div style={{ flex: 1, borderBottom: '1px dashed rgba(238,206,157,0.3)' }} />
+          {v.testo && (
+            <span style={{ fontSize: Math.round(nomeSize * 0.5), color: 'rgba(238,206,157,0.5)', fontStyle: 'italic', letterSpacing: '0.06em', flexShrink: 0 }}>
+              {v.testo}
+            </span>
+          )}
+          <div style={{ flex: 1, borderBottom: '1px dashed rgba(238,206,157,0.3)' }} />
+        </div>
+      )
+    }
     const nome = typeof v === 'string' ? v : (v?.nome || '')
     const descrizione = typeof v === 'object' ? (v?.descrizione || '') : ''
     const prezzo = typeof v === 'object' ? (v?.prezzo || '') : ''
@@ -868,7 +881,7 @@ export function TemplateMenuEvento({
   const heading = menuTitolo || titolo || 'Menù'
   const usaSezioni = Array.isArray(sezioni) && sezioni.length > 0
   const tutteVoci = usaSezioni ? sezioni.flatMap(s => s.voci || []) : (Array.isArray(voci) ? voci : [])
-  const n = tutteVoci.length
+  const n = tutteVoci.filter(v => v?.tipo !== 'separatore').length
   const nomeSize = n > 10 ? 28 : n > 7 ? 32 : 36
   const descSize = n > 10 ? 20 : 22
   const prezzoSize = n > 10 ? 30 : 34
@@ -961,7 +974,7 @@ export function TemplateMenuStoriaEvento({
   const heading = menuTitolo || titolo || 'Menù'
   const usaSezioni = Array.isArray(sezioni) && sezioni.length > 0
   const tutteVoci = usaSezioni ? sezioni.flatMap(s => s.voci || []) : (Array.isArray(voci) ? voci : [])
-  const n = tutteVoci.length
+  const n = tutteVoci.filter(v => v?.tipo !== 'separatore').length
   const nomeSize = n > 12 ? 30 : n > 8 ? 34 : 40
   const descSize = n > 12 ? 22 : 24
   const prezzoSize = n > 12 ? 32 : 38

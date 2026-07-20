@@ -67,21 +67,32 @@ function RendererMenu({ b }: { b: BloccoMenu }) {
               </p>
             )}
             <div className="flex flex-col">
-              {(s.voci || []).map((v, i) => (
-                <div key={i} className="flex items-start justify-between gap-6 py-4 border-b border-neutral-200 last:border-0">
-                  <div className="flex-1">
-                    <span className="text-neutral-900 font-medium" style={{ fontSize: 'var(--text-body)' }}>{v.nome}</span>
-                    {v.descrizione && (
-                      <p className="text-neutral-500 mt-0.5" style={{ fontSize: 'var(--text-meta)' }}>{v.descrizione}</p>
+              {(s.voci || []).map((v, i) => {
+                if (v.tipo === 'separatore') {
+                  return (
+                    <div key={i} className="flex items-center gap-3 py-3">
+                      <div className="flex-1 h-px bg-neutral-200" />
+                      {v.testo && <span className="text-neutral-400 font-light italic flex-shrink-0" style={{ fontSize: 'var(--text-label)' }}>{v.testo}</span>}
+                      <div className="flex-1 h-px bg-neutral-200" />
+                    </div>
+                  )
+                }
+                return (
+                  <div key={i} className="flex items-start justify-between gap-6 py-4 border-b border-neutral-200 last:border-0">
+                    <div className="flex-1">
+                      <span className="text-neutral-900 font-medium" style={{ fontSize: 'var(--text-body)' }}>{v.nome}</span>
+                      {v.descrizione && (
+                        <p className="text-neutral-500 mt-0.5" style={{ fontSize: 'var(--text-meta)' }}>{v.descrizione}</p>
+                      )}
+                    </div>
+                    {v.prezzo && (
+                      <span className="text-brand font-medium flex-shrink-0" style={{ fontSize: 'var(--text-body)' }}>
+                        {v.prezzo}
+                      </span>
                     )}
                   </div>
-                  {v.prezzo && (
-                    <span className="text-brand font-medium flex-shrink-0" style={{ fontSize: 'var(--text-body)' }}>
-                      {v.prezzo}
-                    </span>
-                  )}
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         ))}
