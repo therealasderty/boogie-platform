@@ -104,9 +104,11 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
     .map(c => c.giorno as number)
   const giorniChiusi = [...new Set([...chiusiOrdinari, ...chiusiSettimanali])]
 
-  // Immagini carosello intro: solo da tagFotoIntro (libreria media)
+  // Immagini carosello intro: tagFotoIntro → fallback fotoHero
   const tagMedia = evento.tagFotoIntro ? await fetchMedia(evento.tagFotoIntro) : []
-  const introImages = tagMedia.map(m => ({ src: m.url, alt: m.alt || evento.titolo }))
+  const introImages = tagMedia.length > 0
+    ? tagMedia.map(m => ({ src: m.url, alt: m.alt || evento.titolo }))
+    : (evento.fotoHero ? [{ src: evento.fotoHero, alt: evento.titolo }] : [])
 
   const hasDescrizione = !!evento.descrizione
   const showSezioneIntro = !!evento.testoIntro || introImages.length > 0
