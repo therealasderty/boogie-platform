@@ -8,12 +8,45 @@
  *  - TemplateFoto     — foto pura 1:1 / 4:5 / 9:16
  *  - TemplateStoriaEvento — story 9:16 (1080×1920)
  *  - TemplateAgendaCover — teaser carosello agenda 4:5 (foto + copy, prima slide)
+ *  - TemplateMenuEvento / TemplateMenuStoriaEvento — lista piatti da blocco menu
  */
 
 // ─── Costanti brand ────────────────────────────────────────────────────────────
 const BRAND_GOLD     = '#eece9d'
 const DARK_BG        = '#13100a'
 const BRAND_ADDRESS  = 'Via Europa 2 · Colle Brianza (LC)'
+
+/** Sfondo foto: gradient sempre sotto; niente crossOrigin in preview (evita schermo nero se CORS fallisce).
+ *  La cattura PNG usa già imgToDataUrl come fallback in SocialStudioPanel. */
+function BgPhoto({ imageUrl, fallback }) {
+  return (
+    <>
+      {fallback || (
+        <div style={{
+          position:   'absolute',
+          inset:      0,
+          background: 'linear-gradient(160deg, #2e1c08 0%, #1a0f06 45%, #080503 100%)',
+        }} />
+      )}
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt=""
+          onError={e => { e.currentTarget.style.display = 'none' }}
+          style={{
+            position:  'absolute',
+            inset:     0,
+            width:     '100%',
+            height:    '100%',
+            objectFit: 'cover',
+            display:   'block',
+          }}
+        />
+      ) : null}
+    </>
+  )
+}
+
 
 // ─── Utility ──────────────────────────────────────────────────────────────────
 
@@ -44,7 +77,6 @@ function LogoBlock({ top = 72, logoW = 140, mostraIndirizzo = false, indirizzo =
     }}>
       <img
         src={LOGO_URL}
-        crossOrigin="anonymous"
         alt="Boogie Bistrot"
         style={{ width: logoW, display: 'block', flexShrink: 0 }}
       />
@@ -99,22 +131,8 @@ export function TemplateCover({
       }}
     >
       {/* Foto di sfondo */}
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          crossOrigin="anonymous"
-          alt=""
-          style={{
-            position:  'absolute',
-            inset:     0,
-            width:     '100%',
-            height:    '100%',
-            objectFit: 'cover',
-            display:   'block',
-          }}
-        />
-      ) : (
-        <div style={{
+      {/* Foto di sfondo */}
+      <BgPhoto imageUrl={imageUrl} fallback={<div style={{
           position:   'absolute',
           inset:      0,
           background: [
@@ -123,8 +141,7 @@ export function TemplateCover({
             'radial-gradient(ellipse at 55% 80%, rgba(220,160,60,0.2) 0%, transparent 35%)',
             'linear-gradient(160deg, #2e1c08 0%, #1a0f06 45%, #080503 100%)',
           ].join(', '),
-        }} />
-      )}
+        }} />} />
 
       {/* Overlay scuro uniforme */}
       <div style={{
@@ -221,22 +238,8 @@ export function TemplateAgendaCover({
         fontFamily:      "'SofiaPro', 'Helvetica Neue', sans-serif",
       }}
     >
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          crossOrigin="anonymous"
-          alt=""
-          style={{
-            position:  'absolute',
-            inset:     0,
-            width:     '100%',
-            height:    '100%',
-            objectFit: 'cover',
-            display:   'block',
-          }}
-        />
-      ) : (
-        <div style={{
+      {/* Foto di sfondo */}
+      <BgPhoto imageUrl={imageUrl} fallback={<div style={{
           position:   'absolute',
           inset:      0,
           background: [
@@ -244,8 +247,7 @@ export function TemplateAgendaCover({
             'radial-gradient(ellipse at 75% 65%, rgba(160,80,20,0.28) 0%, transparent 42%)',
             'linear-gradient(160deg, #2e1c08 0%, #1a0f06 45%, #080503 100%)',
           ].join(', '),
-        }} />
-      )}
+        }} />} />
 
       <div style={{
         position:   'absolute',
@@ -334,22 +336,8 @@ export function TemplateFoto({ imageUrl = '', mostraLogo = true }) {
         overflow:        'hidden',
       }}
     >
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          crossOrigin="anonymous"
-          alt=""
-          style={{
-            position:  'absolute',
-            inset:     0,
-            width:     '100%',
-            height:    '100%',
-            objectFit: 'cover',
-            display:   'block',
-          }}
-        />
-      ) : (
-        <div style={{
+      {/* Foto di sfondo */}
+      <BgPhoto imageUrl={imageUrl} fallback={<div style={{
           position:       'absolute',
           inset:          0,
           display:        'flex',
@@ -363,8 +351,7 @@ export function TemplateFoto({ imageUrl = '', mostraLogo = true }) {
         }}>
           <div style={{ fontSize: 64, opacity: 0.3 }}>🖼</div>
           Seleziona una foto
-        </div>
-      )}
+        </div>} />
 
       {mostraLogo && (
         <div style={{
@@ -377,7 +364,6 @@ export function TemplateFoto({ imageUrl = '', mostraLogo = true }) {
         }}>
           <img
             src={LOGO_URL}
-            crossOrigin="anonymous"
             alt="Boogie Bistrot"
             style={{ width: 90, opacity: 0.85, display: 'block' }}
           />
@@ -419,15 +405,7 @@ export function TemplatePrezzoEvento({
       }}
     >
       {/* Foto di sfondo */}
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          crossOrigin="anonymous"
-          alt=""
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-        />
-      ) : (
-        <div style={{
+      <BgPhoto imageUrl={imageUrl} fallback={<div style={{
           position:   'absolute',
           inset:      0,
           background: [
@@ -435,8 +413,7 @@ export function TemplatePrezzoEvento({
             'radial-gradient(ellipse at 75% 65%, rgba(140,70,15,0.25) 0%, transparent 42%)',
             'linear-gradient(160deg, #2e1c08 0%, #1a0f06 45%, #080503 100%)',
           ].join(', '),
-        }} />
-      )}
+        }} />} />
 
       {/* Overlay */}
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(12,6,0,0.74)' }} />
@@ -558,14 +535,7 @@ export function TemplateStoriaEvento({ titolo = 'Titolo Evento', data = '', data
         fontFamily:      "'SofiaPro', 'Helvetica Neue', sans-serif",
       }}
     >
-      {imageUrl && (
-        <img
-          src={imageUrl}
-          crossOrigin="anonymous"
-          alt=""
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-        />
-      )}
+      <BgPhoto imageUrl={imageUrl} />
 
       {/* Gradient overlay */}
       <div style={{
@@ -703,15 +673,8 @@ export function TemplatePrezzoStoriaEvento({
       fontFamily:      "'SofiaPro', 'Helvetica Neue', sans-serif",
     }}>
       {/* Foto di sfondo */}
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          crossOrigin="anonymous"
-          alt=""
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-        />
-      ) : (
-        <div style={{
+      {/* Foto di sfondo */}
+      <BgPhoto imageUrl={imageUrl} fallback={<div style={{
           position:   'absolute',
           inset:      0,
           background: [
@@ -719,8 +682,7 @@ export function TemplatePrezzoStoriaEvento({
             'radial-gradient(ellipse at 75% 55%, rgba(140,70,15,0.25) 0%, transparent 42%)',
             'linear-gradient(160deg, #2e1c08 0%, #1a0f06 45%, #080503 100%)',
           ].join(', '),
-        }} />
-      )}
+        }} />} />
 
       {/* Gradient overlay: quasi trasparente in alto, scuro solo in basso per il testo */}
       <div style={{
@@ -826,6 +788,252 @@ export function TemplatePrezzoStoriaEvento({
   )
 }
 
+// ─── Template Menù Evento (4:5 / 9:16) ─────────────────────────────────────────
+// Lista piatti da blocco "menu": { nome, descrizione?, prezzo? }
+
+function MenuVociList({ voci, nomeSize, descSize, prezzoSize, gap }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap, width: '100%' }}>
+      {voci.map((v, i) => {
+        const nome = typeof v === 'string' ? v : (v?.nome || '')
+        const descrizione = typeof v === 'object' ? (v?.descrizione || '') : ''
+        const prezzo = typeof v === 'object' ? (v?.prezzo || '') : ''
+        if (!nome) return null
+        return (
+          <div key={i} style={{ width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, width: '100%' }}>
+              <span style={{
+                fontSize: nomeSize,
+                fontWeight: 600,
+                color: 'rgba(255,255,255,0.92)',
+                lineHeight: 1.2,
+                flexShrink: 1,
+                minWidth: 0,
+              }}>
+                {nome}
+              </span>
+              <span style={{
+                flex: 1,
+                borderBottom: '1px dotted rgba(238,206,157,0.35)',
+                minWidth: 24,
+                transform: 'translateY(-6px)',
+              }} />
+              {prezzo ? (
+                <span style={{
+                  fontFamily: "'Alga', 'Georgia', serif",
+                  fontSize: prezzoSize,
+                  fontWeight: 600,
+                  color: BRAND_GOLD,
+                  flexShrink: 0,
+                  lineHeight: 1,
+                }}>
+                  {prezzo}
+                </span>
+              ) : null}
+            </div>
+            {descrizione ? (
+              <div style={{
+                marginTop: 6,
+                fontSize: descSize,
+                lineHeight: 1.35,
+                color: 'rgba(255,255,255,0.55)',
+                paddingRight: prezzo ? 80 : 0,
+              }}>
+                {descrizione}
+              </div>
+            ) : null}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+export function TemplateMenuEvento({
+  titolo          = '',
+  menuTitolo      = 'Menù',
+  data            = '',
+  dataTesto       = '',
+  ora             = '',
+  imageUrl        = '',
+  voci            = [],
+  mostraIndirizzo = false,
+  indirizzo       = BRAND_ADDRESS,
+}) {
+  const heading = menuTitolo || titolo || 'Menù'
+  const n = Array.isArray(voci) ? voci.length : 0
+  const nomeSize = n > 10 ? 28 : n > 7 ? 32 : 36
+  const descSize = n > 10 ? 20 : 22
+  const prezzoSize = n > 10 ? 30 : 34
+  const gap = n > 10 ? 14 : n > 7 ? 18 : 22
+  const titleSize = heading.length > 28 ? 56 : heading.length > 18 ? 68 : 80
+  const dataPart = dataTesto || (data ? formatDataIT(data) : '')
+  const dataOra = [dataPart, ora ? `ore ${ora}` : ''].filter(Boolean).join(' · ')
+  const list = Array.isArray(voci) ? voci : []
+
+  return (
+    <div style={{
+      position: 'relative',
+      width: W_COVER,
+      height: H_COVER,
+      backgroundColor: DARK_BG,
+      overflow: 'hidden',
+      fontFamily: "'SofiaPro', 'Helvetica Neue', sans-serif",
+    }}>
+      <BgPhoto imageUrl={imageUrl} fallback={<div style={{
+        position: 'absolute',
+        inset: 0,
+        background: [
+          'radial-gradient(ellipse at 25% 35%, rgba(200,130,40,0.3) 0%, transparent 45%)',
+          'radial-gradient(ellipse at 75% 65%, rgba(140,70,15,0.25) 0%, transparent 42%)',
+          'linear-gradient(160deg, #2e1c08 0%, #1a0f06 45%, #080503 100%)',
+        ].join(', '),
+      }} />} />
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(12,6,0,0.78)' }} />
+
+      <LogoBlock top={64} logoW={110} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} />
+
+      <div style={{
+        position: 'absolute',
+        top: 190,
+        left: 64,
+        right: 64,
+        bottom: 110,
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
+        <div style={{
+          fontFamily: "'Alga', 'Georgia', serif",
+          fontSize: titleSize,
+          fontWeight: 600,
+          lineHeight: 0.95,
+          color: BRAND_GOLD,
+          marginBottom: 28,
+        }}>
+          {heading}
+        </div>
+        <div style={{ width: '100%', height: 1, background: 'rgba(238,206,157,0.25)', marginBottom: 28 }} />
+        <div style={{ flex: 1, overflow: 'hidden' }}>
+          <MenuVociList voci={list} nomeSize={nomeSize} descSize={descSize} prezzoSize={prezzoSize} gap={gap} />
+        </div>
+      </div>
+
+      {dataOra && (
+        <div style={{ position: 'absolute', bottom: 56, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
+          <div style={{
+            display: 'inline-block',
+            padding: '10px 34px',
+            border: '1.5px solid rgba(238,206,157,0.4)',
+            borderRadius: 999,
+            fontSize: 28,
+            fontWeight: 400,
+            color: BRAND_GOLD,
+            letterSpacing: 0.4,
+            whiteSpace: 'nowrap',
+          }}>
+            {dataOra}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function TemplateMenuStoriaEvento({
+  titolo          = '',
+  menuTitolo      = 'Menù',
+  data            = '',
+  dataTesto       = '',
+  ora             = '',
+  imageUrl        = '',
+  voci            = [],
+  mostraIndirizzo = false,
+  indirizzo       = BRAND_ADDRESS,
+}) {
+  const heading = menuTitolo || titolo || 'Menù'
+  const n = Array.isArray(voci) ? voci.length : 0
+  const nomeSize = n > 12 ? 30 : n > 8 ? 34 : 40
+  const descSize = n > 12 ? 22 : 24
+  const prezzoSize = n > 12 ? 32 : 38
+  const gap = n > 12 ? 16 : n > 8 ? 20 : 26
+  const titleSize = heading.length > 28 ? 72 : heading.length > 18 ? 90 : 110
+  const dataPart = dataTesto || (data ? formatDataIT(data) : '')
+  const dataOra = [dataPart, ora ? `ore ${ora}` : ''].filter(Boolean).join(' · ')
+  const list = Array.isArray(voci) ? voci : []
+
+  return (
+    <div style={{
+      position: 'relative',
+      width: W_STORIA,
+      height: H_STORIA,
+      backgroundColor: DARK_BG,
+      overflow: 'hidden',
+      fontFamily: "'SofiaPro', 'Helvetica Neue', sans-serif",
+    }}>
+      <BgPhoto imageUrl={imageUrl} fallback={<div style={{
+        position: 'absolute',
+        inset: 0,
+        background: [
+          'radial-gradient(ellipse at 25% 30%, rgba(200,130,40,0.32) 0%, transparent 45%)',
+          'radial-gradient(ellipse at 75% 55%, rgba(140,70,15,0.25) 0%, transparent 42%)',
+          'linear-gradient(160deg, #2e1c08 0%, #1a0f06 45%, #080503 100%)',
+        ].join(', '),
+      }} />} />
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'linear-gradient(to bottom, rgba(12,6,0,0.2) 0%, rgba(12,6,0,0.55) 40%, rgba(12,6,0,0.88) 100%)',
+      }} />
+
+      <LogoBlock top={100} logoW={120} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} />
+
+      <div style={{
+        position: 'absolute',
+        top: H_STORIA * 0.28,
+        left: 80,
+        right: 80,
+        bottom: 150,
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
+        <div style={{
+          fontFamily: "'Alga', 'Georgia', serif",
+          fontSize: titleSize,
+          fontWeight: 600,
+          lineHeight: 0.95,
+          color: BRAND_GOLD,
+          marginBottom: 36,
+        }}>
+          {heading}
+        </div>
+        <div style={{ width: '100%', height: 1, background: 'rgba(238,206,157,0.25)', marginBottom: 36 }} />
+        <div style={{ flex: 1, overflow: 'hidden' }}>
+          <MenuVociList voci={list} nomeSize={nomeSize} descSize={descSize} prezzoSize={prezzoSize} gap={gap} />
+        </div>
+      </div>
+
+      {dataOra && (
+        <div style={{ position: 'absolute', bottom: 56, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
+          <div style={{
+            display: 'inline-block',
+            padding: '10px 36px',
+            border: '1.5px solid rgba(238,206,157,0.4)',
+            borderRadius: 999,
+            fontSize: 30,
+            fontWeight: 400,
+            color: BRAND_GOLD,
+            letterSpacing: 0.4,
+            whiteSpace: 'nowrap',
+          }}>
+            {dataOra}
+          </div>
+        </div>
+      )}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 6, backgroundColor: BRAND_GOLD }} />
+    </div>
+  )
+}
+
 // ─── Template Chiusura (4:5 — 1080×1350) ─────────────────────────────────────
 // Slide finale con foto locale + invito a prenotare con contatti.
 
@@ -850,15 +1058,8 @@ export function TemplateChiusura({
       fontFamily:      "'SofiaPro', 'Helvetica Neue', sans-serif",
     }}>
       {/* Foto full-bleed */}
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          crossOrigin="anonymous"
-          alt=""
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-        />
-      ) : (
-        <div style={{
+      {/* Foto di sfondo */}
+      <BgPhoto imageUrl={imageUrl} fallback={<div style={{
           position:   'absolute',
           inset:      0,
           background: [
@@ -866,8 +1067,7 @@ export function TemplateChiusura({
             'radial-gradient(ellipse at 72% 25%, rgba(120,60,10,0.22) 0%, transparent 45%)',
             'linear-gradient(160deg, #2a1a08 0%, #160e05 55%, #0a0603 100%)',
           ].join(', '),
-        }} />
-      )}
+        }} />} />
 
       {/* Leggero scuro in cima per leggibilità logo */}
       <div style={{
@@ -1351,15 +1551,8 @@ export function TemplateOffertaSerata({
       fontFamily:      "'SofiaPro', 'Helvetica Neue', sans-serif",
     }}>
       {/* Foto sfondo */}
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          crossOrigin="anonymous"
-          alt=""
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-        />
-      ) : (
-        <div style={{
+      {/* Foto di sfondo */}
+      <BgPhoto imageUrl={imageUrl} fallback={<div style={{
           position:   'absolute',
           inset:      0,
           background: [
@@ -1367,8 +1560,7 @@ export function TemplateOffertaSerata({
             'radial-gradient(ellipse at 75% 65%, rgba(160,80,20,0.28) 0%, transparent 42%)',
             'linear-gradient(160deg, #2e1c08 0%, #1a0f06 45%, #080503 100%)',
           ].join(', '),
-        }} />
-      )}
+        }} />} />
 
       {/* Overlay scuro */}
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(12,6,0,0.72)' }} />
@@ -1492,15 +1684,8 @@ export function TemplateOffertaSerataStoria({
       fontFamily:      "'SofiaPro', 'Helvetica Neue', sans-serif",
     }}>
       {/* Foto sfondo */}
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          crossOrigin="anonymous"
-          alt=""
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-        />
-      ) : (
-        <div style={{
+      {/* Foto di sfondo */}
+      <BgPhoto imageUrl={imageUrl} fallback={<div style={{
           position:   'absolute',
           inset:      0,
           background: [
@@ -1508,8 +1693,7 @@ export function TemplateOffertaSerataStoria({
             'radial-gradient(ellipse at 75% 55%, rgba(140,70,15,0.25) 0%, transparent 42%)',
             'linear-gradient(160deg, #2e1c08 0%, #1a0f06 45%, #080503 100%)',
           ].join(', '),
-        }} />
-      )}
+        }} />} />
 
       {/* Gradient: trasparente in alto, scuro in basso */}
       <div style={{
@@ -1665,6 +1849,20 @@ export const TEMPLATES = {
       imageUrl:      '/sample.webp',
     },
   },
+  menu_evento: {
+    label: 'Menù evento', Component: TemplateMenuEvento, bgDark: true, size: '4:5',
+    demoProps: {
+      menuTitolo: 'Menù Alla Carta',
+      data: '2026-08-15',
+      ora: '12:30',
+      voci: [
+        { nome: 'Carpaccio di manzo', descrizione: 'rucola e grana', prezzo: '14€' },
+        { nome: 'Risotto ai funghi', prezzo: '16€' },
+        { nome: 'Tagliata di scottona', descrizione: 'contorno di stagione', prezzo: '22€' },
+      ],
+      imageUrl: '/sample.webp',
+    },
+  },
   chiusura: {
     label: 'Chiusura', Component: TemplateChiusura, bgDark: true, size: '4:5',
     demoProps: { nomeSerata: 'Serata Paella', imageUrl: '/sample.webp' },
@@ -1690,6 +1888,20 @@ foto_45: {
       prezzoLabel:   'Menù Paella',
       voci:          ['Stuzzichini misti', 'Primo dello chef', 'Drink a scelta'],
       imageUrl:      '/sample.webp',
+    },
+  },
+  menu_storia: {
+    label: 'Menù Story', Component: TemplateMenuStoriaEvento, bgDark: true, size: '9:16',
+    demoProps: {
+      menuTitolo: 'Menù Alla Carta',
+      data: '2026-08-15',
+      ora: '12:30',
+      voci: [
+        { nome: 'Carpaccio di manzo', descrizione: 'rucola e grana', prezzo: '14€' },
+        { nome: 'Risotto ai funghi', prezzo: '16€' },
+        { nome: 'Tagliata di scottona', descrizione: 'contorno di stagione', prezzo: '22€' },
+      ],
+      imageUrl: '/sample.webp',
     },
   },
   offerta_serata: {

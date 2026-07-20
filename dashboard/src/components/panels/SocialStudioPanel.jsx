@@ -112,7 +112,13 @@ function buildSlide(template, sorgente, record, orari = []) {
     }
   }
   const data = record ? fillSlideDataFromEvento(template, record, {}, orari) : {}
-  return { id, template: template || 'cover', eventoLocked: locked, data }
+  return {
+    id,
+    template: template || 'cover',
+    eventoLocked: locked,
+    eventoSorgenteId: record?.id || '',
+    data,
+  }
 }
 
 function buildAgendaEvents(appuntamenti, orari = []) {
@@ -264,10 +270,13 @@ function SlidePreview({ slide }) {
   const { w, h } = TEMPLATE_SIZES[T.size] || TEMPLATE_SIZES['1:1']
   const scale = PREVIEW_W / w
   const previewH = Math.round(h * scale)
+  const data = { ...(slide.data || {}) }
+  // Cloudinary disabilitato: non passare URL morti al template (schermo nero)
+  if (data.imageUrl && data.imageUrl.includes('res.cloudinary.com')) data.imageUrl = ''
   return (
     <div className={styles.previewScaleWrap} style={{ width: PREVIEW_W, height: previewH }}>
       <div style={{ width: w, height: h, transform: `scale(${scale})`, transformOrigin: 'top left', flexShrink: 0 }}>
-        <Component {...(slide.data || {})} />
+        <Component {...data} />
       </div>
     </div>
   )
@@ -545,7 +554,18 @@ function campiDataSlideDaEvento(a, orari = []) {
   return { data: '', dataTesto: descriviGiorniPerSocial(uniq) }
 }
 
-function fillSlideDataFromEvento(template, a, currentData, orari = []) {
+function parseBlocchiEvento(a) {
+  try { return JSON.parse(a?.blocchi || '[]') } catch { return [] }
+}
+
+function pickBloccoByTipo(blocchi, tipo, preferredId) {
+  const list = (blocchi || []).filter(b => b?.tipo === tipo)
+  if (!list.length) return { list, blocco: null }
+  const blocco = (preferredId && list.find(b => b.id === preferredId)) || list[0]
+  return { list, blocco }
+}
+
+function fillSlideDataFromEvento(template, a, currentData, orari = [], bloccoId) {
   const { data, dataTesto } = campiDataSlideDaEvento(a, orari)
   if (template === 'cover') {
     return {
@@ -572,19 +592,45 @@ function fillSlideDataFromEvento(template, a, currentData, orari = []) {
     return { ...currentData, nomeSerata: a.title || a.titolo || '' }
   }
   if (template === 'prezzo_evento' || template === 'prezzo_storia') {
-    let blocchi = []
-    try { blocchi = JSON.parse(a.blocchi || '[]') } catch {}
-    const bPrezzo = blocchi.find(b => b.tipo === 'prezzo') || {}
+    const blocchi = parseBlocchiEvento(a)
+    const preferred = bloccoId || currentData.bloccoPrezzoId
+    const { blocco: bPrezzo } = pickBloccoByTipo(blocchi, 'prezzo', preferred)
     return {
       ...currentData,
-      titolo:        a.title || a.titolo || '',
+      titolo:          a.title || a.titolo || '',
       data,
       dataTesto,
-      ora:           a.ora || '',
-      imageUrl:      a.fotoHero || '',
-      prezzoImporto: bPrezzo.importo || '',
-      prezzoLabel:   bPrezzo.titolo  || '',
-      voci:          Array.isArray(bPrezzo.voci) ? bPrezzo.voci.filter(v => typeof v === 'string' && v) : [],
+      ora:             a.ora || '',
+      imageUrl:        a.fotoHero || '',
+      bloccoPrezzoId:  bPrezzo?.id || '',
+      prezzoImporto:   bPrezzo?.importo || '',
+      prezzoLabel:     bPrezzo?.titolo  || '',
+      voci:            Array.isArray(bPrezzo?.voci) ? bPrezzo.voci.filter(v => typeof v === 'string' && v) : [],
+    }
+  }
+  if (template === 'menu_evento' || template === 'menu_storia') {
+    const blocchi = parseBlocchiEvento(a)
+    const preferred = bloccoId || currentData.bloccoMenuId
+    const { blocco: bMenu } = pickBloccoByTipo(blocchi, 'menu', preferred)
+    const voci = Array.isArray(bMenu?.voci)
+      ? bMenu.voci
+          .map(v => ({
+            nome: String(v?.nome || '').trim(),
+            descrizione: String(v?.descrizione || '').trim(),
+            prezzo: String(v?.prezzo || '').trim(),
+          }))
+          .filter(v => v.nome)
+      : []
+    return {
+      ...currentData,
+      titolo:       a.title || a.titolo || '',
+      data,
+      dataTesto,
+      ora:          a.ora || '',
+      imageUrl:     a.fotoHero || '',
+      bloccoMenuId: bMenu?.id || '',
+      menuTitolo:   bMenu?.titolo || '',
+      voci,
     }
   }
   if (template === 'offerta_serata' || template === 'offerta_serata_storia') {
@@ -603,6 +649,33 @@ function fillSlideDataFromEvento(template, a, currentData, orari = []) {
     }
   }
   return currentData
+}
+
+function SelezionaBloccoEvento({ evento, tipo, value, onSelect, labelFn }) {
+  if (!evento) return null
+  const list = parseBlocchiEvento(evento).filter(b => b?.tipo === tipo)
+  if (list.length <= 1) return null
+  return (
+    <>
+      <label className={styles.sectionLabel}>Quale blocco usare</label>
+      <select
+        className={styles.select}
+        value={value || list[0]?.id || ''}
+        onChange={e => onSelect(e.target.value)}
+        style={{ marginBottom: 8 }}
+      >
+        {list.map(b => (
+          <option key={b.id} value={b.id}>{labelFn(b)}</option>
+        ))}
+      </select>
+    </>
+  )
+}
+
+function eventoCollegatoSlide(slide, appuntamenti, eventoGlobaleId) {
+  const locked = eventoGlobaleId && slide?.eventoLocked !== false
+  const id = locked ? eventoGlobaleId : (slide?.eventoSorgenteId || null)
+  return id ? (appuntamenti || []).find(a => a.id === id) : null
 }
 
 function RecuperaEvento({ appuntamenti, template, slide, onChange, eventoGlobaleId, orari = [] }) {
@@ -636,7 +709,12 @@ function RecuperaEvento({ appuntamenti, template, slide, onChange, eventoGlobale
       onChange={e => {
         const a = appuntamenti.find(a => a.id === e.target.value)
         if (!a) return
-        onChange({ ...slide, data: fillSlideDataFromEvento(template, a, slide.data || {}, orari), eventoLocked: false })
+        onChange({
+          ...slide,
+          data: fillSlideDataFromEvento(template, a, slide.data || {}, orari),
+          eventoLocked: false,
+          eventoSorgenteId: a.id,
+        })
       }}
       style={{ marginBottom: 10 }}
     >
@@ -666,7 +744,7 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
   const { template, data = {} } = slide
   function update(key, val) { onChange({ ...slide, data: { ...data, [key]: val } }) }
 
-  const usaEvento = ['cover', 'storia_evento', 'prezzo_evento', 'prezzo_storia', 'chiusura', 'offerta_serata', 'offerta_serata_storia'].includes(template)
+  const usaEvento = ['cover', 'storia_evento', 'prezzo_evento', 'prezzo_storia', 'menu_evento', 'menu_storia', 'chiusura', 'offerta_serata', 'offerta_serata_storia'].includes(template)
 
   if (template === 'foto_11' || template === 'foto_45' || template === 'foto_916') {
     return <SlideEditorFoto slide={slide} onChange={onChange} />
@@ -740,6 +818,7 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
 
   if (template === 'prezzo_evento' || template === 'prezzo_storia') {
     const voci = Array.isArray(data.voci) ? data.voci : []
+    const evento = eventoCollegatoSlide(slide, appuntamenti, eventoGlobaleId)
     function updateVoce(i, val) {
       const next = [...voci]; next[i] = val; update('voci', next)
     }
@@ -748,6 +827,16 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
     return (
       <div className={styles.slideEditor}>
         <RecuperaEvento appuntamenti={appuntamenti} template={template} slide={slide} onChange={onChange} eventoGlobaleId={eventoGlobaleId} orari={orari} />
+        <SelezionaBloccoEvento
+          evento={evento}
+          tipo="prezzo"
+          value={data.bloccoPrezzoId}
+          labelFn={b => b.titolo ? `${b.titolo}${b.importo ? ` — ${b.importo}` : ''}` : (b.importo || 'Prezzo')}
+          onSelect={bloccoId => {
+            if (!evento) return
+            onChange({ ...slide, data: fillSlideDataFromEvento(template, evento, data, orari, bloccoId) })
+          }}
+        />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           <div>
             <label className={styles.sectionLabel}>Data</label>
@@ -782,6 +871,69 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
           </div>
         ))}
         <button className="btn-secondary" style={{ fontSize: '0.8rem', marginTop: 2 }} onClick={aggiungiVoce}>+ Aggiungi voce</button>
+        <label className={styles.sectionLabel} style={{ marginTop: 8 }}>URL foto sfondo</label>
+        <input className={styles.edInput} value={data.imageUrl || ''} placeholder="https://res.cloudinary.com/..." onChange={e => update('imageUrl', e.target.value)} />
+        <IndirizzoToggle data={data} update={update} />
+      </div>
+    )
+  }
+
+  if (template === 'menu_evento' || template === 'menu_storia') {
+    const voci = Array.isArray(data.voci) ? data.voci : []
+    const evento = eventoCollegatoSlide(slide, appuntamenti, eventoGlobaleId)
+    function updateVoce(i, field, val) {
+      const next = voci.map((v, idx) => idx === i ? { ...v, [field]: val } : v)
+      update('voci', next)
+    }
+    function aggiungiVoce() { update('voci', [...voci, { nome: '', descrizione: '', prezzo: '' }]) }
+    function rimuoviVoce(i) { update('voci', voci.filter((_, idx) => idx !== i)) }
+    return (
+      <div className={styles.slideEditor}>
+        <RecuperaEvento appuntamenti={appuntamenti} template={template} slide={slide} onChange={onChange} eventoGlobaleId={eventoGlobaleId} orari={orari} />
+        <SelezionaBloccoEvento
+          evento={evento}
+          tipo="menu"
+          value={data.bloccoMenuId}
+          labelFn={b => b.titolo || `Menù (${b.voci?.length || 0} voci)`}
+          onSelect={bloccoId => {
+            if (!evento) return
+            onChange({ ...slide, data: fillSlideDataFromEvento(template, evento, data, orari, bloccoId) })
+          }}
+        />
+        <label className={styles.sectionLabel}>Titolo menù</label>
+        <input className={styles.edInput} value={data.menuTitolo || ''} placeholder="Menù Alla Carta" onChange={e => update('menuTitolo', e.target.value)} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div>
+            <label className={styles.sectionLabel}>Data</label>
+            <input className={styles.edInput} type="date" value={data.data || ''} onChange={e => { update('data', e.target.value); if (e.target.value) update('dataTesto', '') }} />
+          </div>
+          <div>
+            <label className={styles.sectionLabel}>Ora</label>
+            <input className={styles.edInput} value={data.ora || ''} placeholder="12:30" onChange={e => update('ora', e.target.value)} />
+          </div>
+        </div>
+        {!!data.dataTesto && (
+          <>
+            <label className={styles.sectionLabel}>Periodo / ricorrenza (testo in slide)</label>
+            <input className={styles.edInput} value={data.dataTesto} onChange={e => update('dataTesto', e.target.value)} />
+          </>
+        )}
+        <label className={styles.sectionLabel}>Piatti</label>
+        {voci.map((v, i) => (
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 90px auto', gap: 6, marginBottom: 8 }}>
+            <input className={styles.edInput} value={v.nome || ''} onChange={e => updateVoce(i, 'nome', e.target.value)} placeholder="Nome piatto" style={{ margin: 0 }} />
+            <input className={styles.edInput} value={v.prezzo || ''} onChange={e => updateVoce(i, 'prezzo', e.target.value)} placeholder="14€" style={{ margin: 0 }} />
+            <button className="btn-icon" onClick={() => rimuoviVoce(i)} title="Rimuovi"><X size={13} /></button>
+            <input
+              className={styles.edInput}
+              value={v.descrizione || ''}
+              onChange={e => updateVoce(i, 'descrizione', e.target.value)}
+              placeholder="Descrizione (opzionale)"
+              style={{ margin: 0, gridColumn: '1 / -1' }}
+            />
+          </div>
+        ))}
+        <button className="btn-secondary" style={{ fontSize: '0.8rem', marginTop: 2 }} onClick={aggiungiVoce}>+ Aggiungi piatto</button>
         <label className={styles.sectionLabel} style={{ marginTop: 8 }}>URL foto sfondo</label>
         <input className={styles.edInput} value={data.imageUrl || ''} placeholder="https://res.cloudinary.com/..." onChange={e => update('imageUrl', e.target.value)} />
         <IndirizzoToggle data={data} update={update} />
@@ -1789,31 +1941,52 @@ const STATO_COLORI_DOT = {
   'Bozza':       '#7A6448',
 }
 
+function isUsableMediaUrl(url) {
+  if (!url || typeof url !== 'string') return false
+  // Cloudinary account disabilitato → 401
+  if (url.includes('res.cloudinary.com')) return false
+  return true
+}
+
+function pickSlideThumbUrl(slide) {
+  const rendered = slide?.cloudinaryUrl || ''
+  const bg = slide?.data?.imageUrl || ''
+  // Preferisci render R2 se presente
+  if (rendered.includes('r2.dev') || rendered.includes('r2.cloudflarestorage.com')) return rendered
+  if (isUsableMediaUrl(bg)) return bg
+  if (isUsableMediaUrl(rendered)) return rendered
+  return ''
+}
+
 function FeedCell({ post, onClick }) {
   const slides = (() => { try { return JSON.parse(post.slides || '[]') } catch { return [] } })()
   const firstSlide = slides[0]
   const isStoria = slides.length > 0 && slides.every(s => TEMPLATES[s.template]?.size === '9:16')
   const dotColor = STATO_COLORI_DOT[post.stato] || '#7A6448'
 
-  // Determine thumbnail content — imageUrl è dentro firstSlide.data
-  const firstImageUrl = firstSlide?.data?.imageUrl || ''
+  const thumbUrl = pickSlideThumbUrl(firstSlide)
   let thumb = null
-  if (firstSlide?.template && TEMPLATES[firstSlide.template]) {
+  if (thumbUrl && (thumbUrl.includes('r2.dev') || thumbUrl.endsWith('.png') || firstSlide?.cloudinaryUrl === thumbUrl)) {
+    thumb = <img src={thumbUrl} alt="" className={styles.feedCellThumb} onError={e => { e.currentTarget.style.display = 'none' }} />
+  }
+  if (!thumb && firstSlide?.template && TEMPLATES[firstSlide.template]) {
     const T = TEMPLATES[firstSlide.template]
     const { w, h } = TEMPLATE_SIZES[T.size || '1:1']
     const scale = 200 / w
+    // Evita di ripassare URL Cloudinary morti al template
+    const data = { ...(firstSlide.data || {}) }
+    if (data.imageUrl && !isUsableMediaUrl(data.imageUrl)) data.imageUrl = ''
     thumb = (
       <div className={styles.feedCellTemplate}>
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
           <div style={{ width: w, height: h, transform: `scale(${scale})`, transformOrigin: 'center center', pointerEvents: 'none', flexShrink: 0 }}>
-            <T.Component {...(firstSlide.data || {})} />
+            <T.Component {...data} />
           </div>
         </div>
       </div>
     )
-  } else if (firstImageUrl) {
-    thumb = <img src={firstImageUrl} alt="" className={styles.feedCellThumb} />
-  } else {
+  }
+  if (!thumb) {
     thumb = (
       <div style={{ width: '100%', height: '100%', background: 'var(--bg3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Slideshow size={28} weight="thin" style={{ opacity: 0.2 }} />
