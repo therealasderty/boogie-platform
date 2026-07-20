@@ -38,7 +38,13 @@ export async function uploadToR2(file) {
     }),
   })
 
-  const data = await res.json()
+  let data
+  try {
+    data = await res.json()
+  } catch {
+    throw new Error(`Upload R2 fallito: risposta non valida (${res.status})`)
+  }
   if (!res.ok || data.error) throw new Error(data.error || `Upload R2 fallito: ${res.status}`)
+  if (!data.url) throw new Error('Upload R2 riuscito ma senza URL')
   return data.url
 }

@@ -7,6 +7,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import { flushSync } from 'react-dom'
 import { toPng } from 'html-to-image'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin  from '@fullcalendar/daygrid'
@@ -60,6 +61,28 @@ function uid() {
   return Math.random().toString(36).slice(2, 9)
 }
 
+function errMsg(e) {
+  if (e == null) return 'errore sconosciuto'
+  if (typeof e === 'string') return e
+  if (typeof e?.message === 'string' && e.message.trim()) return e.message
+  if (typeof e?.error === 'string' && e.error.trim()) return e.error
+  try {
+    const s = JSON.stringify(e)
+    if (s && s !== '{}' && s !== 'null') return s
+  } catch { /* ignore */ }
+  return String(e)
+}
+
+/** Rimuove URL Cloudinary morti e normalizza i dati prima di preview/cattura. */
+function sanitizeSlideDataForCapture(data = {}) {
+  const next = { ...data }
+  // Account Cloudinary disabilitato → 401 / schermo nero / fallimento html-to-image
+  if (next.imageUrl && next.imageUrl.includes('res.cloudinary.com')) {
+    next.imageUrl = ''
+  }
+  return next
+}
+
 function formatData(dateStr) {
   if (!dateStr) return ''
   try {
@@ -95,7 +118,7 @@ function datetimeLocalToIso(localStr) {
 function buildSlide(template, sorgente, record, orari = []) {
   const id = uid()
   const locked = !!record
-  if (template === 'foto_11' || template === 'foto_45' || template === 'foto_916') {
+  if (template === 'foto_45' || template === 'foto_916') {
     return { id, template, data: { imageUrl: '', mostraLogo: true } }
   }
   if (template === 'agenda_cover') {
@@ -270,9 +293,7 @@ function SlidePreview({ slide }) {
   const { w, h } = TEMPLATE_SIZES[T.size] || TEMPLATE_SIZES['1:1']
   const scale = PREVIEW_W / w
   const previewH = Math.round(h * scale)
-  const data = { ...(slide.data || {}) }
-  // Cloudinary disabilitato: non passare URL morti al template (schermo nero)
-  if (data.imageUrl && data.imageUrl.includes('res.cloudinary.com')) data.imageUrl = ''
+  const data = sanitizeSlideDataForCapture(slide.data || {})
   return (
     <div className={styles.previewScaleWrap} style={{ width: PREVIEW_W, height: previewH }}>
       <div style={{ width: w, height: h, transform: `scale(${scale})`, transformOrigin: 'top left', flexShrink: 0 }}>
@@ -746,7 +767,7 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
 
   const usaEvento = ['cover', 'storia_evento', 'prezzo_evento', 'prezzo_storia', 'menu_evento', 'menu_storia', 'chiusura', 'offerta_serata', 'offerta_serata_storia'].includes(template)
 
-  if (template === 'foto_11' || template === 'foto_45' || template === 'foto_916') {
+  if (template === 'foto_45' || template === 'foto_916') {
     return <SlideEditorFoto slide={slide} onChange={onChange} />
   }
 
@@ -1261,10 +1282,11 @@ function CaptureContainer({ captureRef, slide }) {
   if (!T) return null
   const { Component } = T
   const { w, h } = TEMPLATE_SIZES[T.size || '1:1']
+  const data = sanitizeSlideDataForCapture(slide.data || {})
   return (
     <div style={{ position: 'fixed', left: -9999, top: 0, width: w, height: h, zIndex: -1, overflow: 'hidden' }}>
       <div ref={captureRef} style={{ width: w, height: h }}>
-        <Component {...(slide.data || {})} />
+        <Component {...data} />
       </div>
     </div>
   )
@@ -1436,69 +1458,89 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
     if (!url || url.startsWith('data:')) return url
     try {
       const res  = await fetch(url, { cache: 'no-cache', mode: 'cors' })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const blob = await res.blob()
       return await new Promise((resolve, reject) => {
         const reader = new FileReader()
         reader.onload  = () => resolve(reader.result)
-        reader.onerror = reject
+        reader.onerror = () => reject(new Error('Lettura immagine fallita'))
         reader.readAsDataURL(blob)
       })
-    } catch {
-      return url
+    } catch (e) {
+      throw new Error(`Impossibile caricare sfondo: ${errMsg(e)}`)
     }
   }
 
-function isCorsLikeCaptureError(err) {
-  const msg = String(err?.message || '').toLowerCase()
-  return (
-    msg.includes('tainted') ||
-    msg.includes('cors') ||
-    msg.includes('cross-origin') ||
-    msg.includes('failed to fetch')
-  )
-}
+  async function prepareSlideForCapture(slide) {
+    const data = sanitizeSlideDataForCapture(slide.data || {})
+    if (data.imageUrl && !data.imageUrl.startsWith('data:')) {
+      try {
+        data.imageUrl = await imgToDataUrl(data.imageUrl)
+      } catch (e) {
+        // Senza sfondo remoto la slide resta leggibile (gradient brand)
+        console.warn('Sfondo non convertibile, cattura senza foto:', e)
+        data.imageUrl = ''
+      }
+    }
+    return { ...slide, data }
+  }
 
-async function renderSlideToPng(captureRef, slide, templateSizes) {
-  const T = TEMPLATES[slide.template]
-  const { w, h } = templateSizes[(T?.size) || '1:1']
-  return toPng(captureRef.current, { width: w, height: h, pixelRatio: 1 })
-}
+  async function mountCaptureSlide(slide) {
+    flushSync(() => setCaptureSlide(slide))
+    for (let attempt = 0; attempt < 30; attempt++) {
+      await new Promise(r => requestAnimationFrame(r))
+      if (captureRef.current) return
+      await new Promise(r => setTimeout(r, 50))
+    }
+    throw new Error(
+      TEMPLATES[slide?.template]
+        ? 'Impossibile montare la slide per la cattura (ref assente)'
+        : `Template sconosciuto: ${slide?.template || '(vuoto)'}`,
+    )
+  }
+
+  async function renderSlideToPng(slide) {
+    const T = TEMPLATES[slide.template]
+    if (!T) throw new Error(`Template sconosciuto: ${slide.template}`)
+    const { w, h } = TEMPLATE_SIZES[T.size || '1:1']
+    if (!captureRef.current) throw new Error('Nodo cattura non pronto')
+    await document.fonts.ready
+    // Breve attesa per decode immagini data-url / font
+    await new Promise(r => setTimeout(r, 120))
+    return toPng(captureRef.current, {
+      width: w,
+      height: h,
+      pixelRatio: 1,
+      cacheBust: true,
+    })
+  }
 
   async function catturaTutteLeSlide(slidesInput) {
     const aggiornate = [...slidesInput]
     for (let i = 0; i < aggiornate.length; i++) {
       const slide = aggiornate[i]
-    // Non saltare mai — ri-cattura sempre per garantire che le immagini siano incluse
-    // Primo tentativo: URL originale (piu' stabile con html-to-image).
-    // Fallback: converte in data URL solo per errori CORS/canvas tainted.
-    setCaptureSlide(slide)
-      await new Promise(r => setTimeout(r, 600))
-      if (!captureRef.current) continue
       try {
-        await document.fonts.ready
-      let dataUrl
-      try {
-        dataUrl = await renderSlideToPng(captureRef, slide, TEMPLATE_SIZES)
-      } catch (firstErr) {
-        if (!isCorsLikeCaptureError(firstErr) || !slide?.data?.imageUrl) throw firstErr
-        const fallbackData = {
-          ...(slide.data || {}),
-          imageUrl: await imgToDataUrl(slide.data.imageUrl),
+        if (!TEMPLATES[slide?.template]) {
+          throw new Error(`Template sconosciuto: ${slide?.template || '(vuoto)'}`)
         }
-        setCaptureSlide({ ...slide, data: fallbackData })
-        await new Promise(r => setTimeout(r, 350))
-        dataUrl = await renderSlideToPng(captureRef, slide, TEMPLATE_SIZES)
-      }
+        const ready = await prepareSlideForCapture(slide)
+        await mountCaptureSlide(ready)
+        const dataUrl = await renderSlideToPng(ready)
+        if (!dataUrl || typeof dataUrl !== 'string') {
+          throw new Error('Cattura PNG non riuscita (output vuoto)')
+        }
         const blob = await (await fetch(dataUrl)).blob()
-        const url  = await uploadBlob(blob)
+        if (!blob || blob.size < 100) throw new Error('PNG catturato troppo piccolo / vuoto')
+        const url = await uploadBlob(blob)
+        if (!url) throw new Error('Upload R2 senza URL di ritorno')
         aggiornate[i] = { ...slide, cloudinaryUrl: url }
         setSlides(prev => prev.map(s => s.id === slide.id ? { ...s, cloudinaryUrl: url } : s))
       } catch (e) {
         console.error(`Cattura slide ${i} fallita:`, e)
-        throw new Error(`Slide ${i + 1}: ${e.message}`)
+        throw new Error(`Slide ${i + 1}: ${errMsg(e)}`)
       }
     }
-    setCaptureSlide(null)
+    flushSync(() => setCaptureSlide(null))
     return aggiornate
   }
 
@@ -1536,7 +1578,7 @@ async function renderSlideToPng(captureRef, slide, templateSizes) {
           : 'Bozza salvata.',
       })
       setTimeout(() => onSalva(), 1000)
-    } catch (e) { setMsg({ tipo: 'err', testo: e.message }) }
+    } catch (e) { setMsg({ tipo: 'err', testo: errMsg(e) }) }
     finally { setSalvando(false) }
   }
 
@@ -1546,7 +1588,7 @@ async function renderSlideToPng(captureRef, slide, templateSizes) {
     if (piattaformeAttive.length === 0) { setMsg({ tipo: 'err', testo: 'Seleziona almeno una piattaforma.' }); return }
     if (!window.confirm('Catturare le slide e pubblicare ora?')) return
 
-    setCatturando(true); setMsg(null)
+    flushSync(() => { setCatturando(true); setMsg(null) })
     try {
       const slidesConUrl = await catturaTutteLeSlide(slides)
       const imageUrls    = slidesConUrl.map(s => s.cloudinaryUrl).filter(Boolean)
@@ -1561,6 +1603,7 @@ async function renderSlideToPng(captureRef, slide, templateSizes) {
         body: JSON.stringify({ id: postIniziale?.id, titolo: titolo || 'Post carosello', stato: 'Bozza', caption, slides: JSON.stringify(slidesConUrl), piattaforme: piattaformeStr, tipoContenuto }),
       })
       const saveJson = await saveRes.json()
+      if (!saveJson.success) throw new Error(saveJson.error || 'Salvataggio post fallito prima della pubblicazione')
       const postId   = saveJson.post?.id
 
       const res  = await authFetch('/.netlify/functions/pubblica-social?action=pubblica-carosello', {
@@ -1582,7 +1625,7 @@ async function renderSlideToPng(captureRef, slide, templateSizes) {
           : json.error || 'Errore sconosciuto — controlla i log Netlify'
         setMsg({ tipo: 'parziale', testo: errs })
       }
-    } catch (e) { setMsg({ tipo: 'err', testo: e.message }) }
+    } catch (e) { setMsg({ tipo: 'err', testo: errMsg(e) }) }
     finally { setCatturando(false) }
   }
 
@@ -1851,7 +1894,7 @@ async function renderSlideToPng(captureRef, slide, templateSizes) {
         </div>
       </div>
 
-      {catturando && captureSlide && TEMPLATES[captureSlide.template] && (
+      {captureSlide && TEMPLATES[captureSlide.template] && (
         <CaptureContainer captureRef={captureRef} slide={captureSlide} />
       )}
 
