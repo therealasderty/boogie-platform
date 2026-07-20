@@ -83,6 +83,18 @@ function sanitizeSlideDataForCapture(data = {}) {
   return next
 }
 
+function parsePiattaforme(raw) {
+  const list = String(raw || '')
+    .split(',')
+    .map(s => s.trim().toLowerCase())
+    .filter(Boolean)
+  if (list.length === 0) return { instagram: true, facebook: true }
+  return {
+    instagram: list.includes('instagram'),
+    facebook: list.includes('facebook'),
+  }
+}
+
 function formatData(dateStr) {
   if (!dateStr) return ''
   try {
@@ -1461,10 +1473,7 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
   const [selectedSlideId, setSelectedSlideId] = useState(null)
   const dragIndex = useRef(null)
   const [caption,         setCaption]         = useState(postIniziale?.caption || '')
-  const [piattaforme,     setPiattaforme]     = useState(() => {
-    const p = (postIniziale?.piattaforme || 'instagram,facebook').split(',').filter(Boolean)
-    return { instagram: p.includes('instagram'), facebook: p.includes('facebook') }
-  })
+  const [piattaforme,     setPiattaforme]     = useState(() => parsePiattaforme(postIniziale?.piattaforme))
   const [dataProgrammata, setDataProgrammata] = useState(postIniziale?.dataProgrammata || '')
   const [titolo,          setTitolo]          = useState(postIniziale?.titolo || '')
   const [presetDrawerOpen,  setPresetDrawerOpen]  = useState(false)
@@ -1481,6 +1490,7 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
   const dataSuggerita = postIniziale?.dataSuggerita || ''
   const [generando,       setGenerando]       = useState(false)
   const [catturando,      setCatturando]      = useState(false)
+  const [captureProgress, setCaptureProgress] = useState('')
   const [salvando,        setSalvando]        = useState(false)
   const [msg,             setMsg]             = useState(null)
   const captureRef = useRef(null)
@@ -1524,8 +1534,10 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
 
   async function imgToDataUrl(url) {
     if (!url || url.startsWith('data:')) return url
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), 12000)
     try {
-      const res  = await fetch(url, { cache: 'no-cache', mode: 'cors' })
+      const res  = await fetch(url, { cache: 'no-cache', mode: 'cors', signal: ctrl.signal })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const blob = await res.blob()
       return await new Promise((resolve, reject) => {
@@ -1535,7 +1547,10 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
         reader.readAsDataURL(blob)
       })
     } catch (e) {
+      if (e?.name === 'AbortError') throw new Error('Timeout caricamento sfondo (12s)')
       throw new Error(`Impossibile caricare sfondo: ${errMsg(e)}`)
+    } finally {
+      clearTimeout(timer)
     }
   }
 
@@ -1555,10 +1570,10 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
 
   async function mountCaptureSlide(slide) {
     flushSync(() => setCaptureSlide(slide))
-    for (let attempt = 0; attempt < 30; attempt++) {
+    for (let attempt = 0; attempt < 40; attempt++) {
       await new Promise(r => requestAnimationFrame(r))
       if (captureRef.current) return
-      await new Promise(r => setTimeout(r, 50))
+      await new Promise(r => setTimeout(r, 40))
     }
     throw new Error(
       TEMPLATES[slide?.template]
@@ -1573,20 +1588,24 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
     const { w, h } = TEMPLATE_SIZES[T.size || '1:1']
     if (!captureRef.current) throw new Error('Nodo cattura non pronto')
     await document.fonts.ready
-    // Breve attesa per decode immagini data-url / font
     await new Promise(r => setTimeout(r, 120))
-    return toPng(captureRef.current, {
+    const pngPromise = toPng(captureRef.current, {
       width: w,
       height: h,
       pixelRatio: 1,
       cacheBust: true,
     })
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Timeout cattura PNG (20s)')), 20000)
+    })
+    return Promise.race([pngPromise, timeoutPromise])
   }
 
   async function catturaTutteLeSlide(slidesInput) {
     const aggiornate = [...slidesInput]
     for (let i = 0; i < aggiornate.length; i++) {
       const slide = aggiornate[i]
+      setCaptureProgress(`Cattura slide ${i + 1}/${aggiornate.length}…`)
       try {
         if (!TEMPLATES[slide?.template]) {
           throw new Error(`Template sconosciuto: ${slide?.template || '(vuoto)'}`)
@@ -1599,6 +1618,7 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
         }
         const blob = await (await fetch(dataUrl)).blob()
         if (!blob || blob.size < 100) throw new Error('PNG catturato troppo piccolo / vuoto')
+        setCaptureProgress(`Upload slide ${i + 1}/${aggiornate.length}…`)
         const url = await uploadBlob(blob)
         if (!url) throw new Error('Upload R2 senza URL di ritorno')
         aggiornate[i] = { ...slide, cloudinaryUrl: url }
@@ -1609,6 +1629,7 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
       }
     }
     flushSync(() => setCaptureSlide(null))
+    setCaptureProgress('')
     return aggiornate
   }
 
@@ -1625,10 +1646,12 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
       // Senza cattura PNG le slide template non hanno URL pubblicabili → il post resta "Programmato" o va in Errore.
       if (stato === 'Programmato') {
         setCatturando(true)
+        setCaptureProgress('Preparazione immagini…')
         try {
           slidesToSave = await catturaTutteLeSlide(slides)
         } finally {
           setCatturando(false)
+          setCaptureProgress('')
         }
       }
       const piattaformeStr = Object.entries(piattaforme).filter(([, v]) => v).map(([k]) => k).join(',')
@@ -1652,16 +1675,27 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
 
   async function handlePubblica() {
     if (slides.length === 0) { setMsg({ tipo: 'err', testo: 'Aggiungi almeno una slide.' }); return }
-    const piattaformeAttive = Object.entries(piattaforme).filter(([, v]) => v).map(([k]) => k)
-    if (piattaformeAttive.length === 0) { setMsg({ tipo: 'err', testo: 'Seleziona almeno una piattaforma.' }); return }
-    if (!window.confirm('Catturare le slide e pubblicare ora?')) return
+    const piattaformeAttive = Object.entries(piattaforme)
+      .filter(([k, v]) => v && !(k === 'facebook' && tipoContenuto === 'storia'))
+      .map(([k]) => k)
+    if (piattaformeAttive.length === 0) {
+      setMsg({ tipo: 'err', testo: tipoContenuto === 'storia'
+        ? 'Seleziona Instagram (le Storie non sono supportate su Facebook).'
+        : 'Seleziona almeno una piattaforma (Instagram / Facebook).' })
+      return
+    }
 
-    flushSync(() => { setCatturando(true); setMsg(null) })
+    flushSync(() => {
+      setCatturando(true)
+      setCaptureProgress('Avvio pubblicazione…')
+      setMsg({ tipo: 'parziale', testo: 'Cattura slide in corso…' })
+    })
     try {
       const slidesConUrl = await catturaTutteLeSlide(slides)
       const imageUrls    = slidesConUrl.map(s => s.cloudinaryUrl).filter(Boolean)
       if (imageUrls.length === 0) throw new Error('Nessuna immagine catturata — verifica le slide.')
 
+      setCaptureProgress('Salvataggio post…')
       const piattaformeStr = piattaformeAttive.join(',')
       const isStoria = slidesConUrl.every(s => TEMPLATES[s.template]?.size === '9:16')
       const linkUrls = isStoria ? slidesConUrl.map(s => s.data?.linkUrl || '') : []
@@ -1674,6 +1708,8 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
       if (!saveJson.success) throw new Error(saveJson.error || 'Salvataggio post fallito prima della pubblicazione')
       const postId   = saveJson.post?.id
 
+      setCaptureProgress('Invio a Meta…')
+      setMsg({ tipo: 'parziale', testo: 'Pubblicazione su Meta in corso…' })
       const res  = await authFetch('/.netlify/functions/pubblica-social?action=pubblica-carosello', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ caption, imageUrls, piattaforme: piattaformeAttive, postId, mediaType: isStoria ? 'STORIES' : 'CAROUSEL', linkUrls }),
@@ -1694,7 +1730,10 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
         setMsg({ tipo: 'parziale', testo: errs })
       }
     } catch (e) { setMsg({ tipo: 'err', testo: errMsg(e) }) }
-    finally { setCatturando(false) }
+    finally {
+      setCatturando(false)
+      setCaptureProgress('')
+    }
   }
 
   const piattaformeAttive = Object.entries(piattaforme).filter(([k, v]) => v && !(k === 'facebook' && tipoContenuto === 'storia')).map(([k]) => k)
@@ -1806,13 +1845,24 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
               </>
             )}
           </div>
-          <button type="button" className="btn-accent" onClick={handlePubblica} disabled={salvando || catturando || piattaformeAttive.length === 0}>
-            {catturando ? 'Cattura in corso…' : <><PaperPlaneTilt size={14} weight="fill" /> Pubblica ora</>}
+          <button
+            type="button"
+            className="btn-accent"
+            onClick={handlePubblica}
+            disabled={salvando || catturando}
+            title={piattaformeAttive.length === 0 ? 'Seleziona almeno una piattaforma sotto' : 'Cattura le slide e pubblica ora'}
+          >
+            {catturando
+              ? (captureProgress || 'Cattura in corso…')
+              : <><PaperPlaneTilt size={14} weight="fill" /> Pubblica ora</>}
           </button>
         </div>
       </div>
 
       {msg && <div className={msg.tipo === 'ok' ? styles.msgOk : msg.tipo === 'parziale' ? styles.msgParz : styles.msgErr}>{msg.testo}</div>}
+      {catturando && captureProgress && !msg && (
+        <div className={styles.msgParz}>{captureProgress}</div>
+      )}
 
       <div className={styles.editorBody}>
 
