@@ -137,8 +137,11 @@ export async function GET(req: NextRequest) {
         const f = r.fields
         if (f['Tipo apertura'] !== 'Apertura straordinaria') continue
         if (f['Tipo'] !== 'Data specifica' || !f['Data inizio']) continue
-        const fine = (f['Data fine'] as string) || (f['Data inizio'] as string)
-        if (data >= (f['Data inizio'] as string) && data <= fine) {
+        const inizio = f['Data inizio'] as string
+        // Se Data fine < inizio (errore di compilazione), tratta come giorno singolo
+        let fine = (f['Data fine'] as string) || inizio
+        if (fine < inizio) fine = inizio
+        if (data >= inizio && data <= fine) {
           aperturaStaordinaria = true
           const fascia = f['Fascia']
           if (Array.isArray(fascia) && fascia.length > 0) fascia.forEach(x => fasceAperte.add(x))
@@ -154,8 +157,10 @@ export async function GET(req: NextRequest) {
           const tipo = f['Tipo'] as string
           let match = false
           if (tipo === 'Data specifica' && f['Data inizio']) {
-            const fine = (f['Data fine'] as string) || (f['Data inizio'] as string)
-            match = data >= (f['Data inizio'] as string) && data <= fine
+            const inizio = f['Data inizio'] as string
+            let fine = (f['Data fine'] as string) || inizio
+            if (fine < inizio) fine = inizio
+            match = data >= inizio && data <= fine
           }
           if (tipo === 'Giorno della settimana' && f['Giorno'] != null) {
             match = Number(f['Giorno']) === giornoSettimana
@@ -203,9 +208,13 @@ export async function GET(req: NextRequest) {
 
         if (aperturaStaordinaria) {
           if (fasceAperte.size > 0) {
-            if (!fasceAperte.has(fascia)) continue
+            // Apertura con fasce specifiche: AGGIUNGE quelle fasce (anche fuori giorno),
+            // senza togliere le fasce già aperte di solito quel giorno.
+            const forced = fasceAperte.has(fascia)
+            const normal = giorniContiene(giorni, giornoSettimana)
+            if (!forced && !normal) continue
           } else if (!giorniContiene(giorni, giornoSettimana)) {
-            // Apertura straordinaria senza elenco fasce: non mostrare tutti gli orari di tutti i giorni
+            // Apertura straordinaria senza elenco fasce: tieni solo gli orari del giorno
             continue
           }
         } else {

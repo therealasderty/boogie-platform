@@ -1,5 +1,14 @@
 // netlify/functions/disponibilita.js
 
+/** Airtable può restituire 1, "1" o "01" nel campo Giorni. */
+function giorniContiene(giorniRaw, giornoSettimana) {
+  if (!Array.isArray(giorniRaw) || giorniRaw.length === 0) return false;
+  return giorniRaw.some((g) => {
+    const n = typeof g === 'number' && Number.isFinite(g) ? Math.trunc(g) : parseInt(String(g).trim(), 10);
+    return Number.isFinite(n) && n === giornoSettimana;
+  });
+}
+
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -46,7 +55,9 @@ exports.handler = async (event) => {
         const fascia       = record.fields['Fascia']; // ora è array
 
         if (tipoApertura === 'Apertura straordinaria' && tipo === 'Data specifica' && dataInizio) {
-          const fine = dataFine || dataInizio;
+          // Se Data fine < inizio (errore di compilazione), tratta come giorno singolo
+          let fine = dataFine || dataInizio;
+          if (fine < dataInizio) fine = dataInizio;
           if (data >= dataInizio && data <= fine) {
             aperturaStaordinaria = true;
             // Fascia è ora un array — se vuoto apre tutto, altrimenti solo le fasce selezionate
@@ -73,7 +84,8 @@ exports.handler = async (event) => {
           let match = false;
 
           if (tipo === 'Data specifica' && dataInizio) {
-            const fine = dataFine || dataInizio;
+            let fine = dataFine || dataInizio;
+            if (fine < dataInizio) fine = dataInizio;
             match = data >= dataInizio && data <= fine;
           }
 
@@ -116,14 +128,17 @@ exports.handler = async (event) => {
         const intervallo = parseInt(record.fields['Intervallo minuti']) || 15;
         const fascia     = record.fields['Fascia'] || 'Cena';
 
-        // Per apertura straordinaria: usa gli orari delle fasce selezionate
-        // ignorando il giorno della settimana
+        // Per apertura straordinaria: AGGIUNGE le fasce selezionate senza togliere
+        // quelle già aperte di solito quel giorno.
         if (aperturaStaordinaria) {
-          // Se fasceAperte è vuoto apre tutto, altrimenti solo le fasce selezionate
-          if (fasceAperte.size > 0 && !fasceAperte.has(fascia)) continue;
-          // Non filtrare per giorno — l'apertura straordinaria override il giorno
+          if (fasceAperte.size > 0) {
+            const forced = fasceAperte.has(fascia);
+            const normal = giorniContiene(giorni, giornoSettimana);
+            if (!forced && !normal) continue;
+          }
+          // fasceAperte vuoto: apre tutte le fasce degli Orari (comportamento storico dashboard)
         } else {
-          if (!giorni.includes(String(giornoSettimana))) continue;
+          if (!giorniContiene(giorni, giornoSettimana)) continue;
           if (fasceChiuse.has(fascia)) continue;
         }
 

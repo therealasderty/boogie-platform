@@ -161,6 +161,9 @@ export default function ChiusurePanel() {
   async function handleSubmitNew(e) {
     e.preventDefault()
     if (!form.descrizione) { setMsg({ type: 'err', text: 'Inserisci una descrizione' }); return }
+    if (form.dataInizio && form.dataFine && form.dataFine < form.dataInizio) {
+      setMsg({ type: 'err', text: 'La data fine non può essere prima della data inizio' }); return
+    }
     setSubmitting(true)
     const payload = { descrizione: form.descrizione, tipo: 'Data specifica', dataInizio: form.dataInizio || null, dataFine: form.dataFine || null, fasce: form.fasce, tipoApertura: form.tipoApertura }
     const res = await salva(payload, null)
@@ -171,6 +174,9 @@ export default function ChiusurePanel() {
 
   async function handleSubmitEdit() {
     if (!editForm.descrizione) { setEditMsg({ type: 'err', text: 'Inserisci una descrizione' }); return }
+    if (editForm.dataInizio && editForm.dataFine && editForm.dataFine < editForm.dataInizio) {
+      setEditMsg({ type: 'err', text: 'La data fine non può essere prima della data inizio' }); return
+    }
     setSubmitting(true)
     const payload = { descrizione: editForm.descrizione, tipo: 'Data specifica', dataInizio: editForm.dataInizio || null, dataFine: editForm.dataFine || null, fasce: editForm.fasce, tipoApertura: editForm.tipoApertura }
     const res = await salva(payload, editId)
