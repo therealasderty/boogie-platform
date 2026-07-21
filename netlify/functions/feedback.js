@@ -108,14 +108,11 @@ exports.handler = async (event) => {
 
       const dataFormattata = data || dataFormattataIeri;
 
-      const GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJr9H7A7enhkcRimfhn3EqfVU';
-      const TRIPADVISOR_REVIEW_URL = process.env.TRIPADVISOR_REVIEW_URL || 'https://www.tripadvisor.it/UserReviewEdit-g2717697-d17786536-Boogie_Bistrot-Colle_Brianza_Province_of_Lecco_Lombardy.html';
-
-      const giornoIeri = ieri.getDate();
-      const isGiornoPari = giornoIeri % 2 === 0;
-      const linkPositivo = isGiornoPari ? GOOGLE_REVIEW_URL : TRIPADVISOR_REVIEW_URL;
-      const labelPiattaforma = isGiornoPari ? 'su Google' : 'su TripAdvisor';
-      const linkNegativo = `${SITO_URL}/feedback?nome=${encodeURIComponent(nome)}&data=${data}`;
+      const GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJr9H7A7enhkcRimfhn3EqfVU'
+      // Temporaneo: solo Google — TripAdvisor aveva conversioni basse sull'alternanza pari/dispari
+      const linkPositivo = GOOGLE_REVIEW_URL
+      const labelPiattaforma = 'su Google'
+      const linkNegativo = `${SITO_URL}/feedback?nome=${encodeURIComponent(nome)}&data=${data}`
 
       const emailHtml = `
 <!DOCTYPE html>
