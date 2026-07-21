@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import styles from './Sidebar.module.css'
 import {
-  IconHome, IconCalendar, IconLock, IconFidelity,
-  IconClienti, IconMarketing, IconLogout, IconMenu, IconClose, IconAnalytics, IconAgenda, IconClock, IconForkKnife, IconImages, IconFaq, IconBlog, IconLocalSeo, IconStar, IconSocialStudio, IconDesign, IconExternalLink,
+  IconHome, IconCalendar, IconFidelity,
+  IconClienti, IconLogout, IconMenu, IconClose, IconAnalytics, IconAgenda, IconClock, IconForkKnife, IconImages, IconFaq, IconBlog, IconLocalSeo, IconStar, IconSocialStudio, IconDesign, IconExternalLink,
 } from '../icons/index.jsx'
 
 const NAV_ITEMS = [
@@ -24,7 +24,6 @@ const NAV_ITEMS = [
   { id: 'separator4', section: 'Statistiche' },
   { id: 'analytics',  Icon: IconAnalytics, label: 'Analytics' },
   { id: 'separator5', section: 'Marketing' },
-  { id: 'marketing',     Icon: IconMarketing,    label: 'Mail massive (Brevo)', href: 'https://app.brevo.com' },
   { id: 'social-studio', Icon: IconSocialStudio, label: 'Social Studio' },
   { id: 'design',        Icon: IconDesign,       label: 'Grafiche' },
   { id: 'separator6', section: 'Tools' },
