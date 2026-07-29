@@ -52,17 +52,21 @@ async function fetchClientiPerData({ token, baseId, tablePren, dataYmd }) {
   for (const record of prenotazioni) {
     const email = (record.fields['Email'] || '').toLowerCase().trim()
     const nome = (record.fields['Nome'] || '').split(' ')[0]
-    const data = record.fields['Data'] || ''
+    const dataRaw = record.fields['Data'] || ''
     if (!email) continue
-    const dataFormattata = data ? formatDataIT(data) : dataFormattataDefault
-    if (!clientiMap.has(email)) clientiMap.set(email, { nome, dataFormattata })
+    // ISO YYYY-MM-DD per il link /feedback; testo IT solo in mail
+    const dataIso = dataRaw || dataYmd
+    const dataFormattata = formatDataIT(dataIso)
+    if (!clientiMap.has(email)) clientiMap.set(email, { nome, dataFormattata, dataIso })
   }
 
   for (const record of wifiClienti) {
     const email = (record.fields['Email'] || '').toLowerCase().trim()
     const nome = (record.fields['Nome'] || '').split(' ')[0]
     if (!email) continue
-    if (!clientiMap.has(email)) clientiMap.set(email, { nome, dataFormattata: dataFormattataDefault })
+    if (!clientiMap.has(email)) {
+      clientiMap.set(email, { nome, dataFormattata: dataFormattataDefault, dataIso: dataYmd })
+    }
   }
 
   return clientiMap
@@ -127,8 +131,9 @@ async function upsertSnapshotOggi({ token, baseId, table, oggi, count, rating })
   if (!createRes.ok) console.error('Create snapshot error:', await createRes.text())
 }
 
-function emailHtmlPrima({ nome, dataFormattata, sitoUrl }) {
-  const linkNegativo = `${sitoUrl}/feedback?nome=${encodeURIComponent(nome)}&data=${dataFormattata}`
+function emailHtmlPrima({ nome, dataFormattata, dataIso, sitoUrl }) {
+  // /feedback si aspetta data in YYYY-MM-DD (poi la formatta in italiano)
+  const linkNegativo = `${sitoUrl}/feedback?nome=${encodeURIComponent(nome)}&data=${encodeURIComponent(dataIso)}`
   return `
 <!DOCTYPE html>
 <html lang="it">
@@ -318,7 +323,7 @@ exports.handler = async (event) => {
     console.log('Clienti ieri:', clientiIeri.size)
 
     let inviatiPrima = 0
-    for (const [email, { nome, dataFormattata }] of clientiIeri) {
+    for (const [email, { nome, dataFormattata, dataIso }] of clientiIeri) {
       try {
         await inviaBrevo({
           apiKey: BREVO_API_KEY,
@@ -326,7 +331,7 @@ exports.handler = async (event) => {
           toEmail: email,
           toName: nome,
           subject: `Come è andata ${dataFormattata}? 😊`,
-          htmlContent: emailHtmlPrima({ nome, dataFormattata, sitoUrl: SITO_URL }),
+          htmlContent: emailHtmlPrima({ nome, dataFormattata, dataIso, sitoUrl: SITO_URL }),
         })
         inviatiPrima++
         console.log('Prima mail →', email)

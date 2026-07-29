@@ -15,9 +15,18 @@ function FeedbackContent() {
   const [commento, setCommento] = useState('')
   const [stato, setStato] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle')
 
-  const dataFormattata = data
-    ? new Date(data + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
-    : 'la tua visita'
+  const dataFormattata = (() => {
+    if (!data) return 'la tua visita'
+    // Atteso YYYY-MM-DD; fallback se arriva testo già formattato (mail vecchie)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+      const d = new Date(data + 'T12:00:00')
+      if (!Number.isNaN(d.getTime())) {
+        return d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
+      }
+    }
+    if (data !== 'Invalid Date') return data
+    return 'la tua visita'
+  })()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
