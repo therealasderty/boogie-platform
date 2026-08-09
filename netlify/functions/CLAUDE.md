@@ -56,7 +56,7 @@ Se la data ricade in un range → `Stato: In attesa`, email "Richiesta ricevuta"
 
 | Funzione | Auth | Scopo |
 |----------|------|-------|
-| `statistiche-settimanali.mjs` | — | **CRON** domenica 23:00 — KPI settimana → Airtable Statistiche. Fetcha in parallelo: prenotazioni, meteo, eventi, Umami web stats |
+| `statistiche-settimanali.mjs` | — | **CRON** domenica 23:00 — KPI settimana → Airtable Statistiche. Fetcha in parallelo: prenotazioni, meteo, eventi |
 | `get-statistiche.js` | sì | GET statistiche con trend |
 | `genera-analisi.js` | sì | Gemini API → report (PRO, CRITICITÀ, OPPORTUNITÀ) → AnalisiIA |
 | `genera-analisi-background.js` | — | Background function (15min), rigenera analisi storiche |
@@ -123,7 +123,7 @@ Nota: `portal-submit.js` chiama Omada **Cloud** API (non IP locale — Netlify n
 
 ## Misc
 
-`auth.js`, `verifyToken.js`, `note.js`, `dati-dashboard.js`, `get-umami-stats.js`
+`auth.js`, `verifyToken.js`, `note.js`, `dati-dashboard.js`
 
 > **`send-reminders.mjs`** — schedule rimosso dal `netlify.toml` (2026-06-01). Per riabilitare: aggiungere `[functions.send-reminders] schedule = "30 9 * * *"` in `netlify.toml`.
 

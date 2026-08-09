@@ -99,7 +99,7 @@ overlay: rgba(0,0,0,0.45)
 
 ## Hooks (`src/hooks/`)
 
-`useAppuntamenti`, `useBlog`, `useCalendario`, `useChiusure`, `useConfigurazione`, `useFaq`, `useFidelity`, `useLocalita`, `useMedia`, `useMenu`, `useMeteo`, `useNote`, `useOrari`, `usePrenotazioni`, `usePrenotazioniGiornaliere`, `useRecensioni`, `useRecensioniSito`, `useTag`, `useAnalytics`, `useUmamiStats`
+`useAppuntamenti`, `useBlog`, `useCalendario`, `useChiusure`, `useConfigurazione`, `useFaq`, `useFidelity`, `useLocalita`, `useMedia`, `useMenu`, `useMeteo`, `useNote`, `useOrari`, `usePrenotazioni`, `usePrenotazioniGiornaliere`, `useRecensioni`, `useRecensioniSito`, `useTag`, `useAnalytics`
 
 **Cache in-memory TTL 5 min** (`src/lib/cache.js` — `cacheGet`, `cacheSet`, `cacheInvalidate`, `cacheInvalidatePrefix`). Applicata a: `useAppuntamenti`, `useOrari`, `useMedia`, `useFaq`, `useMenu`. Invalidata automaticamente su ogni scrittura.
 

@@ -92,12 +92,10 @@ Mappa completa delle 49 functions: chi le chiama, quando e cosa fanno.
 
 | Function | Tipo | Metodi | Auth | Chi la chiama | Cosa fa |
 |----------|------|--------|------|---------------|---------|
-| `statistiche-settimanali.mjs` | CRON | — | STATS_SECRET | Netlify Scheduler (domenica 23:00) | Calcola KPI settimana (prenotazioni, coperti, cancellazioni, clienti unici), fetcha Umami web stats, salva su Airtable Statistiche |
-| `genera-analisi.js` | HTTP | POST | sì | Dashboard AnalyticsPanel (su richiesta) | Gemini API genera report PRO/CRITICITÀ/OPPORTUNITÀ su KPI + dati Umami → salva AnalisiIA su Airtable |
+| `statistiche-settimanali.mjs` | CRON | — | STATS_SECRET | Netlify Scheduler (domenica 23:00) | Calcola KPI settimana (prenotazioni, coperti, cancellazioni, clienti unici), salva su Airtable Statistiche |
+| `genera-analisi.js` | HTTP | POST | sì | Dashboard AnalyticsPanel (su richiesta) | Gemini API genera report PRO/CRITICITÀ/OPPORTUNITÀ su KPI → salva AnalisiIA su Airtable |
 | `genera-analisi-background.js` | HTTP | POST | sì | Dashboard (background, timeout 15min) | Rigenera tutte le analisi storiche su Airtable |
 | `get-statistiche.js` | HTTP | GET | sì | Dashboard `useAnalytics` | KPI settimanali con trend % vs settimana precedente |
-| `get-umami-stats.js` | HTTP | GET | sì | Chiamato da `statistiche-settimanali.mjs` | Proxy autenticato verso Umami Cloud API (visite, visitatori, bounce rate, top pages, conversioni /prenota) |
-
 ---
 
 ## Contatti e email

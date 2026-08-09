@@ -20,6 +20,8 @@ type Chiusura = {
   dataInizio: string
   dataFine: string
   fasce: string[]
+  /** Prefabbricato in layout considerando orari ordinari (es. " anche a Pranzo"). */
+  fascePart?: string
 }
 
 type PopupData = {
@@ -114,7 +116,7 @@ function chiusuraMarkDismissed() {
 function buildTestoChiusura(ev: Chiusura): string {
   const isApertura  = ev.tipo === 'Apertura straordinaria'
   const isSingleDay = !ev.dataFine || ev.dataFine === ev.dataInizio
-  const fascePart   = ev.fasce.length > 0 ? ` (solo ${ev.fasce.join(' e ')})` : ''
+  const fascePart   = ev.fascePart ?? (ev.fasce.length > 0 ? ` (solo ${ev.fasce.join(' e ')})` : '')
 
   if (isSingleDay) {
     const d = new Date(ev.dataInizio + 'T12:00:00')

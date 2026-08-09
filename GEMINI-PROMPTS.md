@@ -51,7 +51,6 @@ Strategia di Crescita: [azione concreta — max 15 parole]
 **Note:**
 - Il blocco `CONTESTO SETTIMANA` è omesso se non ci sono festività, eventi o meteo disponibili.
 - Il blocco `Appuntamenti con prenotazioni` appare solo se la settimana aveva eventi con prenotazioni.
-- Il blocco `Sito web` appare solo se Umami ha restituito dati.
 - La sezione `📍 CONTESTO` non compare se `righeContesto` è vuoto (nessun meteo/festività/eventi).
 - Festività riconosciute: Capodanno, Epifania, Festa della Liberazione, Festa del Lavoro, Festa della Repubblica, Ferragosto, Ognissanti, Immacolata, Natale, Santo Stefano, Pasqua, Pasquetta (2024-2028).
 - Meteo: da Open-Meteo API storica (lat 45.7833, lon 9.3667 = Colle Brianza).

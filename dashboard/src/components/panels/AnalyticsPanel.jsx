@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { useAnalytics } from '../../hooks/useAnalytics'
-import { useUmamiStats } from '../../hooks/useUmamiStats'
 import { IconAnalytics } from '../../icons/index.jsx'
 import styles from './AnalyticsPanel.module.css'
 
@@ -42,28 +41,6 @@ function KpiCard({ label, value, sub, trend }) {
       </div>
       <div className={styles.kpiLabel}>{label}</div>
       {sub && <div className={styles.kpiSub}>{sub}</div>}
-    </div>
-  )
-}
-
-function BarChart({ items, maxVal }) {
-  const max = maxVal ?? Math.max(...items.filter(i => !i.closed).map(i => i.value), 1)
-  return (
-    <div className={styles.barChart}>
-      {items.map(({ label, value, accent, closed }) => (
-        <div key={label} className={`${styles.barRow} ${closed ? styles.barRowClosed : ''}`}>
-          <div className={styles.barLabel}>{label}</div>
-          <div className={styles.barTrack}>
-            {!closed && (
-              <div
-                className={`${styles.barFill} ${accent ? styles.barAccent : ''}`}
-                style={{ width: `${Math.round((value / max) * 100)}%` }}
-              />
-            )}
-          </div>
-          <div className={styles.barValue}>{closed ? 'chiuso' : value}</div>
-        </div>
-      ))}
     </div>
   )
 }
@@ -297,24 +274,7 @@ function vsMedia(value, media) {
 // Mappa da nome abbreviato (Mon-first) al nome completo
 const GIORNI_TO_NOME = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
 
-function UmamiKpi({ data, loading, prenotazioniSito }) {
-  if (loading) return <div className={styles.kpiCard} style={{ opacity: 0.4, fontSize: '0.75rem', color: 'var(--text3)' }}>Caricamento dati web…</div>
-  if (!data) return null
-  const pxPerVisit = data.visite > 0 ? (data.pageviews / data.visite).toFixed(1) : '—'
-  const convRate = data.visitePrenota > 0 && prenotazioniSito > 0
-    ? Math.min(100, Math.round(prenotazioniSito / data.visitePrenota * 100)) + '%'
-    : '—'
-  return (
-    <>
-      <KpiCard label="Visite sito" value={data.visite} sub="sessioni nel periodo" />
-      <KpiCard label="Visitatori unici" value={data.visitatori} sub={data.bounceRate ? `bounce ${data.bounceRate}%` : undefined} />
-      <KpiCard label="Pagine per visita" value={pxPerVisit} sub={`${data.pageviews} pageviews tot.`} />
-      <KpiCard label="Conv. /prenota" value={convRate} sub={data.visitePrenota ? `${data.visitePrenota} visite` : undefined} />
-    </>
-  )
-}
-
-function VistaSettimana({ s, medie, umami, umamiLoading }) {
+function VistaSettimana({ s, medie }) {
   const chiusiSet = new Set(s.giorniChiusi ? s.giorniChiusi.split(', ') : [])
   const nGiorniAperti = s.mediaCopertiGiorno > 0 ? Math.round(s.persone / s.mediaCopertiGiorno) : 1
   const fasceBarre = [
@@ -348,7 +308,6 @@ function VistaSettimana({ s, medie, umami, umamiLoading }) {
         <KpiCard label="Anticipo medio prenotazione" value={`${s.leadTime}g`} sub="giorni prima dell'arrivo" />
         <KpiCard label="Dim. media gruppo" value={s.dimGruppo} sub="persone" />
         <KpiCard label="Clienti unici"     value={s.clientiUnici} sub={s.clientiDiRitorno > 0 ? `${s.clientiDiRitorno} di ritorno` : undefined} />
-        <UmamiKpi data={umami} loading={umamiLoading} prenotazioniSito={s.prenotazioniSito} />
       </div>
       <div className={`${styles.card} ${styles.cardFullWidth}`}>
         <div className={styles.cardTitle}>Insights settimana</div>
@@ -380,7 +339,7 @@ function VistaSettimana({ s, medie, umami, umamiLoading }) {
 }
 
 // — Vista globale con medie
-function VistaGlobale({ settimane, umami, umamiLoading }) {
+function VistaGlobale({ settimane }) {
   const n = settimane.length
 
   const stats = useMemo(() => {
@@ -445,8 +404,7 @@ function VistaGlobale({ settimane, umami, umamiLoading }) {
 
   const {
     mediaPrenotazioni, mediaCoperti, mediaCancellaz, mediaLeadTime, mediaDimGruppo,
-    mediaClienti, mediaClientiRitorno, totPrenSito, totPrenTel, totEventi,
-    totPranzo, totCena, totCoperti, mediaGiorni, mediaGiorniDual,
+    mediaClienti, mediaClientiRitorno, mediaGiorniDual,
     giornoFrequente, giornoVuoto, slotFrequente, fasciaPocoRichiesta,
     mediaLastMinute, canaliPie, fasceBarre,
   } = stats
@@ -464,13 +422,6 @@ function VistaGlobale({ settimane, umami, umamiLoading }) {
         <KpiCard label="Anticipo medio prenotazione" value={`${mediaLeadTime}g`} sub="giorni prima dell'arrivo" />
         <KpiCard label="Dim. media gruppo"       value={mediaDimGruppo} sub="persone" />
         <KpiCard label="Clienti unici/sett."     value={mediaClienti} sub={mediaClientiRitorno > 0 ? `media ${mediaClientiRitorno} di ritorno` : undefined} />
-        {!umamiLoading && umami && (
-          <>
-            <KpiCard label="Visite sito" value={umami.visite} sub="nel periodo" />
-            <KpiCard label="Pagine per visita" value={umami.visite > 0 ? (umami.pageviews / umami.visite).toFixed(1) : '—'} sub={`${umami.pageviews} pageviews tot.`} />
-            <KpiCard label="Conv. /prenota" value={umami.visitePrenota > 0 && totPrenSito > 0 ? Math.min(100, Math.round(totPrenSito / umami.visitePrenota * 100)) + '%' : '—'} sub={umami.visitePrenota ? `${umami.visitePrenota} visite prenota` : undefined} />
-          </>
-        )}
       </div>
       <div className={`${styles.card} ${styles.cardFullWidth}`}>
         <div className={styles.cardTitle}>Pattern ricorrenti</div>
@@ -502,42 +453,6 @@ function VistaGlobale({ settimane, umami, umamiLoading }) {
           <LineChart settimane={settimane} />
         </div>
       )}
-
-      {/* ── Dati digitali Umami ── */}
-      {(umamiLoading || umami) && (
-        <div className={styles.chartsGrid}>
-          <div className={styles.card}>
-            <div className={styles.cardTitle}>Top pagine</div>
-            {umamiLoading && <div style={{ fontSize: '0.75rem', color: 'var(--text3)', padding: '1rem 0' }}>Caricamento…</div>}
-            {umami?.pages?.length > 0 && (
-              <BarChart items={umami.pages.map(p => ({
-                label: p.url.replace(/^https?:\/\/[^/]+/, '') || '/',
-                value: p.visite,
-              }))} />
-            )}
-            {!umamiLoading && !umami?.pages?.length && <div style={{ fontSize: '0.75rem', color: 'var(--text3)', padding: '1rem 0' }}>Nessun dato</div>}
-          </div>
-          <div className={styles.card}>
-            <div className={styles.cardTitle}>Sorgenti di traffico</div>
-            {umamiLoading && <div style={{ fontSize: '0.75rem', color: 'var(--text3)', padding: '1rem 0' }}>Caricamento…</div>}
-            {umami?.sources?.length > 0 && (
-              <BarChart items={umami.sources.map(s => ({
-                label: s.sorgente,
-                value: s.visite,
-              }))} />
-            )}
-            {!umamiLoading && !umami?.sources?.length && <div style={{ fontSize: '0.75rem', color: 'var(--text3)', padding: '1rem 0' }}>Nessun dato</div>}
-          </div>
-          <div className={styles.card}>
-            <div className={styles.cardTitle}>Dispositivi</div>
-            {umamiLoading && <div style={{ fontSize: '0.75rem', color: 'var(--text3)', padding: '1rem 0' }}>Caricamento…</div>}
-            {umami?.devices?.length > 0 && (
-              <PieChart items={umami.devices.map(d => ({ label: d.device, value: d.visite }))} />
-            )}
-            {!umamiLoading && !umami?.devices?.length && <div style={{ fontSize: '0.75rem', color: 'var(--text3)', padding: '1rem 0' }}>Nessun dato</div>}
-          </div>
-        </div>
-      )}
     </>
   )
 }
@@ -552,17 +467,6 @@ export default function AnalyticsPanel() {
     prenotazioni: avg(settimane.map(s => s.prenotazioni)),
     persone:      avg(settimane.map(s => s.persone)),
   } : null
-
-  // Umami — settimana corrente
-  const { data: umamiWeek, loading: umamiWeekLoading } = useUmamiStats(
-    s?.dataInizio || null,
-    s?.dataFine   || null
-  )
-
-  // Umami — intero periodo (vista globale)
-  const startGlobal = settimane.length > 0 ? settimane[settimane.length - 1].dataInizio : null
-  const endGlobal   = settimane.length > 0 ? settimane[0].dataFine                      : null
-  const { data: umamiGlobal, loading: umamiGlobalLoading } = useUmamiStats(startGlobal, endGlobal)
 
   return (
     <div className={styles.panel}>
@@ -612,8 +516,8 @@ export default function AnalyticsPanel() {
 
       {!loading && settimane.length > 0 && (
         <div className={styles.body}>
-          {vista === 'settimana' && s && <VistaSettimana s={s} medie={medie} umami={umamiWeek} umamiLoading={umamiWeekLoading} />}
-          {vista === 'globale' && <VistaGlobale settimane={settimane} umami={umamiGlobal} umamiLoading={umamiGlobalLoading} />}
+          {vista === 'settimana' && s && <VistaSettimana s={s} medie={medie} />}
+          {vista === 'globale' && <VistaGlobale settimane={settimane} />}
         </div>
       )}
     </div>

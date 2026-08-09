@@ -33,7 +33,7 @@ Monorepo in `/boogie-platform` su GitHub: therealasderty.
 | `Chiusure` | campo `Fascia` è **Multi-select** con valori `Pranzo`/`Cena` — restituisce `fasce[]` (array) |
 | `Prenotazioni` | Nome, Email, Telefono, Data, Ora, Persone, Fascia, Note, Stato, ConsensoMarketing |
 | `ClientiFidelity` | Nome, Cognome, Email, Telefono, Crediti, DataIscrizione, Tag |
-| `Statistiche` | Settimana, Prenotazioni, Coperti, Cancellazioni, ClientiUnici, LeadTime, AnalisiIA, Visite sito, Visitatori unici web, Pageviews, Bounce rate, Visite pagina prenota, Pagina più visitata |
+| `Statistiche` | Settimana, Prenotazioni, Coperti, Cancellazioni, ClientiUnici, LeadTime, AnalisiIA |
 | `RichiesteEventi` | Nome, Cognome, Email, Telefono, TipoEvento, NumOspiti, DataEvento, Note, ConsensoMarketing |
 | `RichiesteContatti` | Nome, Cognome, Email, Telefono, Messaggio, ConsensoMarketing |
 | `Configurazione` | `Chiave` (primary), `Valore` — impostazioni runtime. Record: `conferma_manuale_date` (JSON `[{id, descrizione, dataInizio, dataFine}]`) |
@@ -53,7 +53,7 @@ Monorepo in `/boogie-platform` su GitHub: therealasderty.
 | **Meta Graph API** | Pubblica post su Facebook Page + Instagram Business. Token = **Page Access Token** (NON User Token) |
 | **Google Business Profile** | Pubblica Local Post (OAuth2 refresh token) |
 | **Telegram** | Notifiche nuove prenotazioni |
-| **Umami** | Analytics pageview + API stats settimanali persistiti su Airtable |
+| **Umami** | Analytics pageview sul sito (solo UI Umami Cloud; nessuna API/dashboard — richiede Pro) |
 | **Cloudflare R2** | Storage permanente immagini media + slide social. Zero egress |
 | **ImageKit** | CDN per immagini vecchie (pre-migrazione). Bandwidth limit raggiunto — nessun nuovo upload |
 | **Open-Meteo** | Meteo widget dashboard (no API key) |

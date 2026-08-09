@@ -5,6 +5,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar"
 import CookieBanner from "@/components/CookieBanner";
 import { fetchOrari, fetchChiusure, buildOrariLines } from "@/lib/orari";
+import { buildFasceOrdinarieMap, buildFascePart } from "@/lib/chiusureMessaggio";
 import { fetchEventi } from "@/lib/agenda";
 import type { EventoAgenda } from "@/lib/agenda";
 import { PageContextProvider } from "@/lib/page-context"
@@ -54,15 +55,20 @@ export default async function RootLayout({
   const orariDisplay = buildOrariLines(orari, chiusure)
   const oggi = new Date().toISOString().split('T')[0]
   const fra7gg = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  const fasceOrdinarie = buildFasceOrdinarieMap(orari)
   const eventiBanner = chiusure
     .filter(c => c.tipo === 'Data specifica' && c.dataInizio && c.dataInizio <= fra7gg && (c.dataFine || c.dataInizio) >= oggi)
-    .map(c => ({
-      tipo: c.tipoApertura,
-      descrizione: c.descrizione,
-      dataInizio: c.dataInizio,
-      dataFine: c.dataFine || c.dataInizio,
-      fasce: c.fasce,
-    }))
+    .map(c => {
+      const dataFine = c.dataFine || c.dataInizio
+      return {
+        tipo: c.tipoApertura,
+        descrizione: c.descrizione,
+        dataInizio: c.dataInizio,
+        dataFine,
+        fasce: c.fasce,
+        fascePart: buildFascePart(c.tipoApertura, c.fasce, c.dataInizio, dataFine, fasceOrdinarie),
+      }
+    })
   const eventiNavbar: EventoAgenda[] = [
     ...eventiRaw.filter(e => !e.ricorrente && e.data && e.data >= oggi && e.stato === 'attivo').slice(0, 3),
     ...eventiRaw.filter(e => e.ricorrente && e.stato === 'attivo').slice(0, 2),
