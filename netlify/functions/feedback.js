@@ -194,7 +194,7 @@ function emailHtmlFollowup({ nome, dataFormattata }) {
         <tr><td style="padding:40px 40px 20px;">
           <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Boogie Bistrot</p>
           <h1 style="font-size:26px;color:#1A1610;margin:0 0 4px;font-weight:400;line-height:1.3;">Ciao ${nome},</h1>
-          <h1 style="font-size:24px;color:#1A1610;margin:0 0 24px;font-weight:400;line-height:1.3;">un piccolo sollecito sulla tua sera al Boogie</h1>
+          <h1 style="font-size:24px;color:#1A1610;margin:0 0 24px;font-weight:400;line-height:1.3;">un piccolo sollecito sulla tua esperienza al Boogie</h1>
           <p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 16px;">
             Ti abbiamo scritto dopo la tua visita del ${dataFormattata}. Se l'esperienza ti è piaciuta, una recensione su Google ci aiuta davvero tanto.
           </p>
