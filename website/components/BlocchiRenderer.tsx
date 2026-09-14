@@ -52,21 +52,13 @@ function RendererMenu({ b }: { b: BloccoMenu }) {
     : []
   const notePrezzo = (b.notePrezzo || []).map(n => n.trim()).filter(Boolean)
   if (!sezioni.length && !b.importo && !notePrezzo.length) return null
+  const haPrezzo = !!(b.importo || notePrezzo.length)
   return (
     <section className="py-12 border-b border-neutral-200">
-      {(b.titolo || b.importo) && (
-        <div className="flex items-baseline justify-between gap-6 mb-8">
-          {b.titolo ? (
-            <h3 className="font-raleway font-semibold text-neutral-900" style={{ fontSize: '1.75rem' }}>
-              {b.titolo}
-            </h3>
-          ) : <span />}
-          {b.importo && (
-            <span className="font-raleway font-semibold text-brand flex-shrink-0" style={{ fontSize: '1.75rem' }}>
-              {b.importo}
-            </span>
-          )}
-        </div>
+      {b.titolo && (
+        <h3 className="font-raleway font-semibold text-neutral-900 mb-8" style={{ fontSize: '1.75rem' }}>
+          {b.titolo}
+        </h3>
       )}
       <div className="flex flex-col gap-10">
         {sezioni.map((s, si) => (
@@ -107,15 +99,27 @@ function RendererMenu({ b }: { b: BloccoMenu }) {
           </div>
         ))}
       </div>
-      {notePrezzo.length > 0 && (
-        <ul className="flex flex-col gap-2 mt-8">
-          {notePrezzo.map((n, i) => (
-            <li key={i} className="flex items-start gap-3 text-neutral-500" style={{ fontSize: 'var(--text-meta)' }}>
-              <span className="text-brand flex-shrink-0 mt-px">✓</span>
-              {n}
-            </li>
-          ))}
-        </ul>
+      {haPrezzo && (
+        <div className="mt-8 inline-flex w-full sm:w-auto flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 rounded-card border border-neutral-200 bg-surface-warm px-5 py-3.5">
+          {b.importo && (
+            <span className="font-raleway font-semibold text-neutral-900 leading-none" style={{ fontSize: '1.35rem' }}>
+              {b.importo}
+            </span>
+          )}
+          {b.importo && notePrezzo.length > 0 && (
+            <span className="hidden sm:block w-px self-stretch bg-neutral-200 min-h-5" aria-hidden />
+          )}
+          {notePrezzo.length > 0 && (
+            <ul className="flex flex-wrap gap-x-4 gap-y-1">
+              {notePrezzo.map((n, i) => (
+                <li key={i} className="flex items-center gap-1.5 text-neutral-500" style={{ fontSize: 'var(--text-meta)' }}>
+                  <span className="text-brand flex-shrink-0" aria-hidden>✓</span>
+                  {n}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
     </section>
   )
