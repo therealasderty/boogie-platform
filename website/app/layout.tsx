@@ -6,7 +6,7 @@ import Navbar from "@/components/Navbar"
 import CookieBanner from "@/components/CookieBanner";
 import { fetchOrari, fetchChiusure, buildOrariLines } from "@/lib/orari";
 import { buildFasceOrdinarieMap, buildFascePart } from "@/lib/chiusureMessaggio";
-import { fetchEventi } from "@/lib/agenda";
+import { fetchEventi, selezionaEventiNavbar } from "@/lib/agenda";
 import type { EventoAgenda } from "@/lib/agenda";
 import { PageContextProvider } from "@/lib/page-context"
 import PopupManager from "@/components/PopupManager";
@@ -69,10 +69,7 @@ export default async function RootLayout({
         fascePart: buildFascePart(c.tipoApertura, c.fasce, c.dataInizio, dataFine, fasceOrdinarie),
       }
     })
-  const eventiNavbar: EventoAgenda[] = [
-    ...eventiRaw.filter(e => !e.ricorrente && e.data && e.data >= oggi && e.stato === 'attivo').slice(0, 3),
-    ...eventiRaw.filter(e => e.ricorrente && e.stato === 'attivo').slice(0, 2),
-  ]
+  const eventiNavbar: EventoAgenda[] = selezionaEventiNavbar(eventiRaw, oggi)
 
   const localBusinessJsonLd = {
     '@context': 'https://schema.org',

@@ -15,7 +15,7 @@ export async function GET() {
 
   try {
     const res = await fetch(
-      `https://api.airtable.com/v0/${base}/${encodeURIComponent(TABLE)}?filterByFormula={Stato}="attivo"&sort[0][field]=Data&sort[0][direction]=asc&maxRecords=50`,
+      `https://api.airtable.com/v0/${base}/${encodeURIComponent(TABLE)}?filterByFormula=${encodeURIComponent('OR({Stato}="attivo",{Stato}="futuro",{InPrimoPiano}=1)')}&sort[0][field]=Data&sort[0][direction]=asc&maxRecords=50`,
       { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 3600 } }
     )
     if (!res.ok) throw new Error(await res.text())
@@ -26,17 +26,19 @@ export async function GET() {
     const oggi      = new Date().toISOString().split('T')[0]
     const in7giorni = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
 
+    const inEvidenza = records.find(r => r.fields['InPrimoPiano'] && r.fields['Stato'] !== 'bozza')
+
     const imminenti = records
-      .filter(r => !isRicorrente(r.fields) && (r.fields['Data'] as string) >= oggi && (r.fields['Data'] as string) <= in7giorni)
+      .filter(r => r.fields['Stato'] === 'attivo' && !isRicorrente(r.fields) && (r.fields['Data'] as string) >= oggi && (r.fields['Data'] as string) <= in7giorni)
       .sort((a, b) => ((a.fields['Data'] as string) || '').localeCompare((b.fields['Data'] as string) || ''))
 
     const futuri = records
-      .filter(r => !isRicorrente(r.fields) && (r.fields['Data'] as string) > in7giorni)
+      .filter(r => r.fields['Stato'] === 'attivo' && !isRicorrente(r.fields) && (r.fields['Data'] as string) > in7giorni)
       .sort((a, b) => ((a.fields['Data'] as string) || '').localeCompare((b.fields['Data'] as string) || ''))
 
-    const ricorrenti = records.filter(r => isRicorrente(r.fields))
+    const ricorrenti = records.filter(r => r.fields['Stato'] === 'attivo' && isRicorrente(r.fields))
 
-    const selected = imminenti[0] || futuri[0] || ricorrenti[0] || null
+    const selected = inEvidenza || imminenti[0] || futuri[0] || ricorrenti[0] || null
 
     if (!selected) return NextResponse.json({ success: true, popup: null })
 
@@ -50,6 +52,7 @@ export async function GET() {
         fotoHero:         f['FotoHero'] || '',
         data:             f['Data'] || null,
         ricorrente:       isRicorrente(f),
+        stato:            (f['Stato'] as string) || 'attivo',
       },
     })
   } catch (e) {

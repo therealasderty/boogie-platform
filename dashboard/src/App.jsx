@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Sidebar from './components/Sidebar'
 import Login from './components/Login'
 import AttesaWidget from './components/home/AttesaWidget'
@@ -28,6 +28,15 @@ export default function App() {
   const [authed, setAuthed] = useState(() => !!localStorage.getItem('bb-auth-token'))
   const [modalOpen, setModalOpen] = useState(false)
   const [refreshCalendario, setRefreshCalendario] = useState(0)
+
+  useEffect(() => {
+    function onExpired() {
+      localStorage.removeItem('bb-auth-token')
+      setAuthed(false)
+    }
+    window.addEventListener('bb-auth-expired', onExpired)
+    return () => window.removeEventListener('bb-auth-expired', onExpired)
+  }, [])
 
   if (!authed) return <Login onLogin={() => setAuthed(true)} />
 

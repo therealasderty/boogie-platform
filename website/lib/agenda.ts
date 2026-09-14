@@ -14,6 +14,7 @@ export type BloccoPrezzo       = { id: string; tipo: 'prezzo'; titolo?: string; 
 export type Blocco = BloccoTesto | BloccoImmagine | BloccoMenu | BloccoPrenotazione | BloccoArtista | BloccoCardOfferte | BloccoPrezzo
 
 export interface EventoAgenda {
+  id:              string
   data:            string | null
   dataFine:        string | null
   giornoSettimana: string
@@ -33,6 +34,7 @@ export interface EventoAgenda {
   testoIntro:      string
   blocchi:         Blocco[]
   stato:           'attivo' | 'futuro' | 'passato' | 'bozza'
+  inPrimoPiano:    boolean
   mostraInNews:    boolean
   bloccaGiorno:    boolean
   metaTitle:       string
@@ -56,10 +58,11 @@ export async function fetchEventi(): Promise<EventoAgenda[]> {
     const json = await res.json()
     return (json.records ?? [])
     .filter((r: { fields: Record<string, unknown> }) => (r.fields['Stato'] as string) !== 'bozza')
-    .map((r: { fields: Record<string, unknown> }) => {
+    .map((r: { id: string; fields: Record<string, unknown> }) => {
       const f = r.fields
       const ricorrente = !!f['Ricorrenza'] && f['Ricorrenza'] !== 'nessuna'
       return {
+        id:              r.id,
         data:            (f['Data'] as string) ?? null,
         dataFine:        (f['DataFineRicorrenza'] as string) ?? null,
         giornoSettimana: (f['GiorniSettimana'] as string) ?? '',
@@ -88,6 +91,7 @@ export async function fetchEventi(): Promise<EventoAgenda[]> {
           return 'attivo'
         })() as 'attivo' | 'futuro' | 'passato' | 'bozza',
         mostraInNews:    !!(f['MostraInNews'] as boolean),
+        inPrimoPiano:    !!(f['InPrimoPiano'] as boolean),
         bloccaGiorno:    !!(f['BloccaGiorno'] as boolean),
         metaTitle:       (f['MetaTitle'] as string) ?? '',
         metaDescription: (f['MetaDescription'] as string) ?? '',
@@ -101,6 +105,28 @@ export async function fetchEventi(): Promise<EventoAgenda[]> {
 export async function fetchEventoBySlug(slug: string): Promise<EventoAgenda | null> {
   const eventi = await fetchEventi()
   return eventi.find(e => e.slug === slug) ?? null
+}
+
+/** Voce navbar: tutti gli appuntamenti attivi/futuri con pagina pubblica. In evidenza per primo. */
+export function selezionaEventiNavbar(eventi: EventoAgenda[], oggi: string): EventoAgenda[] {
+  const visibili = eventi.filter(e => {
+    if (!e.slug) return false
+    if (e.stato === 'bozza' || e.stato === 'passato') return false
+    if (e.stato === 'futuro') return true
+    if (e.ricorrente) return true
+    return !!e.data && e.data >= oggi
+  })
+
+  visibili.sort((a, b) => {
+    if (a.inPrimoPiano !== b.inPrimoPiano) return a.inPrimoPiano ? -1 : 1
+    if (a.mostraInNews !== b.mostraInNews) return a.mostraInNews ? -1 : 1
+    const aRic = a.ricorrente ? 1 : 0
+    const bRic = b.ricorrente ? 1 : 0
+    if (aRic !== bRic) return aRic - bRic
+    return (b.data || '').localeCompare(a.data || '')
+  })
+
+  return visibili
 }
 
 const ORDINE_SETT   = [1, 2, 3, 4, 5, 6, 0]

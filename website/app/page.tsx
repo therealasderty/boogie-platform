@@ -117,6 +117,7 @@ export default async function Home() {
   const heroNews = eventi
     .filter(e => e.fotoHero && e.descrizioneBreve && (e.stato === 'attivo' || e.stato === 'futuro' || (e.stato === 'passato' && e.mostraInNews)))
     .sort((a, b) => {
+      if (a.inPrimoPiano !== b.inPrimoPiano) return a.inPrimoPiano ? -1 : 1
       // Priorità: 1) attivi futuri datati, 2) futuri (TBD), 3) tutto il resto
       const aFuturo = a.stato === 'attivo' && !a.ricorrente && a.data && a.data >= oggi
       const bFuturo = b.stato === 'attivo' && !b.ricorrente && b.data && b.data >= oggi

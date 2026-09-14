@@ -44,6 +44,7 @@ export async function uploadToR2(file) {
   } catch {
     throw new Error(`Upload R2 fallito: risposta non valida (${res.status})`)
   }
+  if (res.status === 401) throw new Error('Sessione scaduta. Esci e rientra nel gestionale, poi riprova.')
   if (!res.ok || data.error) throw new Error(data.error || `Upload R2 fallito: ${res.status}`)
   if (!data.url) throw new Error('Upload R2 riuscito ma senza URL')
   return data.url

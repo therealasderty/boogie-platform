@@ -14,6 +14,31 @@ const SITO_BASE            = 'https://boogiebistrot.com'
 
 const MESI = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre']
 
+async function assegnaInPrimoPiano(keepId) {
+  const url = `${BASE_URL}?filterByFormula=${encodeURIComponent('{InPrimoPiano}=1')}&maxRecords=50`
+  const res = await fetch(url, { headers: AT_HEADERS })
+  if (!res.ok) return
+  const json = await res.json()
+  const daTogliere = (json.records || []).filter(r => r.id !== keepId)
+  for (let i = 0; i < daTogliere.length; i += 10) {
+    const chunk = daTogliere.slice(i, i + 10)
+    await fetch(BASE_URL, {
+      method: 'PATCH',
+      headers: AT_HEADERS,
+      body: JSON.stringify({
+        records: chunk.map(r => ({ id: r.id, fields: { InPrimoPiano: false } })),
+      }),
+    })
+  }
+  if (keepId) {
+    await fetch(`${BASE_URL}/${keepId}`, {
+      method: 'PATCH',
+      headers: AT_HEADERS,
+      body: JSON.stringify({ fields: { InPrimoPiano: true } }),
+    })
+  }
+}
+
 async function notificaRitornoEvento(titolo, slug, data, ora) {
   if (!BREVO_API_KEY || !EMAIL_FROM || !AIRTABLE_TOKEN || !AIRTABLE_BASE_ID) return 0
 
@@ -218,6 +243,7 @@ exports.handler = async (event) => {
           body: JSON.stringify({ fields })
         })
         if (!res.ok) throw new Error(await res.text())
+        if (body.inPrimoPiano) await assegnaInPrimoPiano(body.id)
         return { statusCode: 200, headers: CORS, body: JSON.stringify({ success: true, notificati }) }
       }
 
@@ -229,6 +255,7 @@ exports.handler = async (event) => {
       })
       if (!res.ok) throw new Error(await res.text())
       const json = await res.json()
+      if (body.inPrimoPiano && json.id) await assegnaInPrimoPiano(json.id)
       return { statusCode: 200, headers: CORS, body: JSON.stringify({ success: true, id: json.id }) }
     } catch (e) {
       return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: e.message }) }
@@ -239,6 +266,11 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'PATCH') {
     try {
       const body = JSON.parse(event.body)
+      if (body.setInEvidenza !== undefined) {
+        const keepId = body.setInEvidenza || null
+        await assegnaInPrimoPiano(keepId)
+        return { statusCode: 200, headers: CORS, body: JSON.stringify({ success: true }) }
+      }
       if (!body.id) return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'id mancante' }) }
       const fields = {}
       if (body.socialCopy  !== undefined) fields['SocialCopy']  = body.socialCopy
@@ -253,6 +285,7 @@ exports.handler = async (event) => {
         body: JSON.stringify({ fields }),
       })
       if (!res.ok) throw new Error(await res.text())
+      if (body.inPrimoPiano) await assegnaInPrimoPiano(body.id)
       return { statusCode: 200, headers: CORS, body: JSON.stringify({ success: true }) }
     } catch (e) {
       return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: e.message }) }

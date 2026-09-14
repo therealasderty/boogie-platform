@@ -38,6 +38,9 @@ exports.handler = async (event) => {
     const attivi  = records.filter(r => r.fields['Stato'] === 'attivo')
     const futuriTBD = records.filter(r => r.fields['Stato'] === 'futuro')
 
+    // 0. Scelta manuale dal gestionale (un solo record InPrimoPiano)
+    const inEvidenza = records.find(r => r.fields['InPrimoPiano'] && r.fields['Stato'] !== 'bozza')
+
     // 1. Una tantum attivi nei prossimi 7 giorni (priorità assoluta)
     const imminenti = attivi
       .filter(r => !isRicorrente(r) && r.fields['Data'] >= oggi && r.fields['Data'] <= in7giorni)
@@ -56,7 +59,7 @@ exports.handler = async (event) => {
     // 4. Ricorrenti attivi (fallback)
     const ricorrenti = attivi.filter(r => isRicorrente(r))
 
-    const selected = imminenti[0] || futuriDatati[0] || futuriTBD[0] || passatiInPrimoPiano[0] || ricorrenti[0] || null
+    const selected = inEvidenza || imminenti[0] || futuriDatati[0] || futuriTBD[0] || passatiInPrimoPiano[0] || ricorrenti[0] || null
 
     if (!selected) {
       return { statusCode: 200, headers: CORS, body: JSON.stringify({ success: true, popup: null }) }

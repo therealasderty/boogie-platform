@@ -58,5 +58,17 @@ export function useAppuntamenti() {
     await carica()
   }
 
-  return { appuntamenti, loading, carica, aggiungi, aggiorna, elimina }
+  async function setInEvidenza(id) {
+    cacheInvalidate(CACHE_KEY)
+    const res = await authFetch(API, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ setInEvidenza: id || null }),
+    })
+    const json = await res.json()
+    if (json.success) await carica()
+    return json
+  }
+
+  return { appuntamenti, loading, carica, aggiungi, aggiorna, elimina, setInEvidenza }
 }

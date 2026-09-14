@@ -368,8 +368,13 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
                 </label>
                 <label className={styles.checkLabel}>
                   <input type="checkbox" checked={inPrimoPiano} onChange={e => setInPrimoPiano(e.target.checked)} />
-                  Mostra nel pop-up "In primo piano"
+                  In evidenza sul sito
                 </label>
+                {inPrimoPiano && (
+                  <p style={{ margin: '-4px 0 0 26px', fontSize: '0.78rem', color: 'var(--text3)' }}>
+                    Popup, prima voce in navbar e prima slide news. Sostituisce l’appuntamento già in evidenza.
+                  </p>
+                )}
                 <label className={styles.checkLabel}>
                   <input type="checkbox" checked={mostraInNews} onChange={e => setMostraInNews(e.target.checked)} />
                   Mostra nel carousel news (visibile anche se passato o futuro)
@@ -643,6 +648,11 @@ function CardAppuntamento({ a, onEdit }) {
           </p>
         )}
       </div>
+      {a.inPrimoPiano && (
+        <span style={{ fontSize: '0.68rem', padding: '2px 7px', borderRadius: 999, background: 'rgba(184,130,10,0.15)', color: 'var(--accent)', border: '1px solid var(--accent)', flexShrink: 0 }}>
+          in evidenza
+        </span>
+      )}
       {isFuturo && (
         <span style={{ fontSize: '0.68rem', padding: '2px 7px', borderRadius: 999, background: 'rgba(124,58,237,0.12)', color: '#a78bfa', border: '1px solid rgba(124,58,237,0.25)', flexShrink: 0 }}>
           futuro
@@ -752,7 +762,7 @@ function faseSpons(dataEvento) {
 
 // ─── Pannello principale ─────────────────────────────────────────────────────
 export default function AgendaPanel() {
-  const { appuntamenti, loading, aggiungi, aggiorna, elimina } = useAppuntamenti()
+  const { appuntamenti, loading, aggiungi, aggiorna, elimina, setInEvidenza } = useAppuntamenti()
   const { dati: meteo } = useMeteo()
   const { orari } = useOrari()
   const { chiusure } = useChiusure()
@@ -776,6 +786,9 @@ export default function AgendaPanel() {
   const [ignorateAperte, setIgnorateAperte] = useState(false)
   const calRef = useRef(null)
   const editorRef = useRef(null)
+  const [savingEvidenza, setSavingEvidenza] = useState(false)
+  const evidenzaId = appuntamenti.find(a => a.inPrimoPiano)?.id || ''
+  const candidatiEvidenza = appuntamenti.filter(a => a.stato !== 'bozza')
 
   useEffect(() => {
     if (modal && editorRef.current) {
@@ -961,6 +974,16 @@ export default function AgendaPanel() {
     setModal(null)
   }
 
+  async function handleEvidenza(e) {
+    const id = e.target.value
+    setSavingEvidenza(true)
+    try {
+      await setInEvidenza(id || null)
+    } finally {
+      setSavingEvidenza(false)
+    }
+  }
+
   return (
     <div className={styles.panel}>
       {toastNotificati > 0 && (
@@ -986,6 +1009,24 @@ export default function AgendaPanel() {
             <span className={styles.btnAiLabel}>Radar Festività</span>
           </button>
         </div>
+      </div>
+
+      <div className={styles.evidenzaBar}>
+        <div className={styles.evidenzaLabel}>
+          <span>In evidenza sul sito</span>
+          <span className={styles.evidenzaHint}>Popup, navbar e prima slide news. Un solo appuntamento alla volta.</span>
+        </div>
+        <select
+          className={styles.evidenzaSelect}
+          value={evidenzaId}
+          disabled={savingEvidenza || loading}
+          onChange={handleEvidenza}
+        >
+          <option value="">Nessuno — scelta automatica</option>
+          {candidatiEvidenza.map(a => (
+            <option key={a.id} value={a.id}>{a.title}</option>
+          ))}
+        </select>
       </div>
 
       <div className={`${styles.contentLayout} ${aiAperto ? styles.contentLayoutAi : ''}`}>
