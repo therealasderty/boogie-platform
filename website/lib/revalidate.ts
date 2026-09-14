@@ -10,5 +10,12 @@ export const REVALIDATE_3_GIORNI_S = 3 * SECONDI_GIORNO
 
 export const REVALIDATE_BLOG_S = REVALIDATE_3_GIORNI_S
 
-/** Eventi in vetrina, menu, orari */
+/** Menu, orari — aggiornati raramente */
 export const REVALIDATE_AGENDA_S = SECONDI_GIORNO
+
+/**
+ * Eventi in navbar/hero. Deve restare basso: un fetch Airtable vuoto o fallito
+ * cacherato per un giorno lascia homepage e dropdown senza appuntamenti,
+ * mentre /api/agenda (client) continua a mostrarli.
+ */
+export const REVALIDATE_EVENTI_S = 120

@@ -16,6 +16,8 @@ import NavbarShell from "@/components/NavbarShell";
 import { fetchMedia } from "@/lib/media";
 import { openGraphImageUrl } from "@/lib/imagekit-delivery";
 
+export const revalidate = 120
+
 const raleway = Raleway({
   variable: "--font-raleway",
   subsets: ["latin"],

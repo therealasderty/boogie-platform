@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Hero from '@/components/Hero'
 
-export const revalidate = 86400
+export const revalidate = 120
 
 export const metadata: Metadata = {
   title: 'Boogie Bistrot | Ristorante con Giardino a Colle Brianza | Cucina e Pizza',

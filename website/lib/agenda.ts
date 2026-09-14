@@ -1,4 +1,4 @@
-import { REVALIDATE_AGENDA_S } from '@/lib/revalidate'
+import { REVALIDATE_EVENTI_S } from '@/lib/revalidate'
 
 export type BloccoTesto        = { id: string; tipo: 'testo'; titolo?: string; contenuto: string }
 export type BloccoImmagine     = { id: string; tipo: 'immagine'; url: string; alt?: string }
@@ -41,63 +41,94 @@ export interface EventoAgenda {
   metaDescription: string
 }
 
+function parseBlocchi(raw: unknown): Blocco[] {
+  if (Array.isArray(raw)) return raw as Blocco[]
+  if (typeof raw !== 'string' || !raw.trim()) return []
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function mapStato(f: Record<string, unknown>): EventoAgenda['stato'] {
+  const s = f['Stato'] as string
+  if (s === 'bozza') return 'bozza'
+  if (s === 'futuro') return 'futuro'
+  if (s === 'passato') return 'passato'
+  if (s === 'dormiente') return 'passato'
+  if (s === 'attivo' && f['DataTBD']) return 'futuro'
+  return 'attivo'
+}
+
+function mapRecord(r: { id: string; fields?: Record<string, unknown> }): EventoAgenda | null {
+  const f = r.fields
+  if (!f) return null
+  if ((f['Stato'] as string) === 'bozza') return null
+  const ricorrente = !!f['Ricorrenza'] && f['Ricorrenza'] !== 'nessuna'
+  return {
+    id:               r.id,
+    data:             (f['Data'] as string) ?? null,
+    dataFine:         (f['DataFineRicorrenza'] as string) ?? null,
+    giornoSettimana:  (f['GiorniSettimana'] as string) ?? '',
+    titolo:           (f['Titolo'] as string) ?? '',
+    descrizione:      (f['Note'] as string) ?? '',
+    descrizioneBreve: (f['DescrizioneBreve'] as string) ?? '',
+    orario:           (f['Ora'] as string) ?? '',
+    orarioFine:       (f['OraFine'] as string) ?? '',
+    ricorrente,
+    ricorrenza:       (f['Ricorrenza'] as string) ?? 'nessuna',
+    giorniEsclusione: (f['GiorniEsclusione'] as string) ?? '',
+    evidenza:         f['Tipo'] !== 'Appuntamento',
+    slug:             (f['Slug'] as string) ?? '',
+    fotoHero:         (f['FotoHero'] as string) ?? '',
+    tagFotoIntro:     (f['TagFotoIntro'] as string) ?? '',
+    titoloIntro:      (f['TitoloIntro'] as string) ?? '',
+    testoIntro:       (f['TestoIntro'] as string) ?? '',
+    blocchi:          parseBlocchi(f['Blocchi']),
+    stato:            mapStato(f),
+    mostraInNews:     !!(f['MostraInNews'] as boolean),
+    inPrimoPiano:     !!(f['InPrimoPiano'] as boolean),
+    bloccaGiorno:     !!(f['BloccaGiorno'] as boolean),
+    metaTitle:        (f['MetaTitle'] as string) ?? '',
+    metaDescription:  (f['MetaDescription'] as string) ?? '',
+  }
+}
+
 export async function fetchEventi(): Promise<EventoAgenda[]> {
   const token = process.env.AIRTABLE_TOKEN
   const base  = process.env.AIRTABLE_BASE_ID
   const table = process.env.AIRTABLE_AGENDA || 'Agenda'
 
-  if (!token || !base) return []
+  if (!token || !base) {
+    console.error('[agenda] AIRTABLE_TOKEN o AIRTABLE_BASE_ID mancanti')
+    return []
+  }
 
   try {
     const res = await fetch(
       `https://api.airtable.com/v0/${base}/${encodeURIComponent(table)}?sort[0][field]=Data&sort[0][direction]=asc&maxRecords=200`,
-      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: REVALIDATE_AGENDA_S } }
+      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: REVALIDATE_EVENTI_S, tags: ['agenda'] } }
     )
-    if (!res.ok) return []
+    if (!res.ok) {
+      console.error('[agenda] Airtable', res.status, await res.text().catch(() => ''))
+      return []
+    }
 
     const json = await res.json()
-    return (json.records ?? [])
-    .filter((r: { fields: Record<string, unknown> }) => (r.fields['Stato'] as string) !== 'bozza')
-    .map((r: { id: string; fields: Record<string, unknown> }) => {
-      const f = r.fields
-      const ricorrente = !!f['Ricorrenza'] && f['Ricorrenza'] !== 'nessuna'
-      return {
-        id:              r.id,
-        data:            (f['Data'] as string) ?? null,
-        dataFine:        (f['DataFineRicorrenza'] as string) ?? null,
-        giornoSettimana: (f['GiorniSettimana'] as string) ?? '',
-        titolo:          (f['Titolo'] as string) ?? '',
-        descrizione:     (f['Note'] as string) ?? '',
-        descrizioneBreve: (f['DescrizioneBreve'] as string) ?? '',
-        orario:          (f['Ora'] as string) ?? '',
-        orarioFine:      (f['OraFine'] as string) ?? '',
-        ricorrente,
-        ricorrenza:       (f['Ricorrenza'] as string) ?? 'nessuna',
-        giorniEsclusione: (f['GiorniEsclusione'] as string) ?? '',
-        evidenza:        f['Tipo'] !== 'Appuntamento',
-        slug:            (f['Slug'] as string) ?? '',
-        fotoHero:        (f['FotoHero'] as string) ?? '',
-        tagFotoIntro:    (f['TagFotoIntro'] as string) ?? '',
-        titoloIntro:     (f['TitoloIntro'] as string) ?? '',
-        testoIntro:      (f['TestoIntro'] as string) ?? '',
-        blocchi:         (() => { try { return JSON.parse((f['Blocchi'] as string) || '[]') } catch { return [] } })(),
-        stato:           (() => {
-          const s = f['Stato'] as string
-          if (s === 'bozza')   return 'bozza'
-          if (s === 'futuro')  return 'futuro'
-          if (s === 'passato') return 'passato'
-          if (s === 'dormiente') return 'passato'            // backward compat
-          if (s === 'attivo' && f['DataTBD']) return 'futuro' // backward compat
-          return 'attivo'
-        })() as 'attivo' | 'futuro' | 'passato' | 'bozza',
-        mostraInNews:    !!(f['MostraInNews'] as boolean),
-        inPrimoPiano:    !!(f['InPrimoPiano'] as boolean),
-        bloccaGiorno:    !!(f['BloccaGiorno'] as boolean),
-        metaTitle:       (f['MetaTitle'] as string) ?? '',
-        metaDescription: (f['MetaDescription'] as string) ?? '',
+    const mapped: EventoAgenda[] = []
+    for (const r of json.records ?? []) {
+      try {
+        const evento = mapRecord(r)
+        if (evento) mapped.push(evento)
+      } catch (err) {
+        console.error('[agenda] record saltato', r?.id, err)
       }
-    })
-  } catch {
+    }
+    return mapped
+  } catch (err) {
+    console.error('[agenda] fetchEventi', err)
     return []
   }
 }
@@ -126,7 +157,7 @@ export function selezionaEventiNavbar(eventi: EventoAgenda[], oggi: string): Eve
     return (b.data || '').localeCompare(a.data || '')
   })
 
-  return visibili
+  return visibili.map(e => ({ ...e, blocchi: [], testoIntro: '' }))
 }
 
 const ORDINE_SETT   = [1, 2, 3, 4, 5, 6, 0]
