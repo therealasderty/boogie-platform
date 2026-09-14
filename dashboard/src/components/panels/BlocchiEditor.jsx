@@ -20,7 +20,7 @@ function nuovoBlocco(tipo) {
   switch (tipo) {
     case 'testo':    return { id, tipo, titolo: '', contenuto: '' }
     case 'immagine': return { id, tipo, url: '', alt: '' }
-    case 'menu':     return { id, tipo, titolo: '', sezioni: [] }
+    case 'menu':     return { id, tipo, titolo: '', importo: '', notePrezzo: [], sezioni: [] }
     case 'artista':       return { id, tipo, nome: '', bio: '', foto: '' }
     case 'card-offerte':  return { id, tipo, titolo: '', voci: [] }
     case 'prezzo':        return { id, tipo, titolo: '', importo: '', voci: [] }
@@ -33,11 +33,12 @@ function sommario(b) {
     case 'testo':    return b.contenuto ? b.contenuto.slice(0, 55) + (b.contenuto.length > 55 ? '…' : '') : '(vuoto)'
     case 'immagine': return b.url || '(nessuna URL)'
     case 'menu': {
+      const prezzo = b.importo ? ` · ${b.importo}` : ''
       if (b.sezioni?.length) {
         const n = b.sezioni.reduce((acc, s) => acc + (s.voci?.filter(v => v.tipo !== 'separatore').length || 0), 0)
-        return `${b.sezioni.length} sezioni, ${n} piatti${b.titolo ? ` — "${b.titolo}"` : ''}`
+        return `${b.sezioni.length} sezioni, ${n} piatti${b.titolo ? ` — "${b.titolo}"` : ''}${prezzo}`
       }
-      return `${b.voci?.length || 0} voci${b.titolo ? ` — "${b.titolo}"` : ''}`
+      return `${b.voci?.length || 0} voci${b.titolo ? ` — "${b.titolo}"` : ''}${prezzo}`
     }
     case 'artista':      return b.nome || '(nessun nome)'
     case 'card-offerte': return b.voci?.length ? b.voci.join(' · ') : '(nessuna selezione)'
@@ -304,6 +305,43 @@ function FormMenu({ b, onChange }) {
         ))}
         <button type="button" className="btn-secondary" onClick={() => aggiungiSezione()} style={{ fontSize: '0.8rem', padding: '5px 11px' }}>
           + Sezione…
+        </button>
+      </div>
+      <div style={{ border: '1px solid var(--border2)', borderRadius: 'var(--radius-sm)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 600, color: 'var(--text3)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Prezzo del menù</p>
+        <input
+          style={{ ...inputStyle, maxWidth: 160 }}
+          value={b.importo || ''}
+          onChange={e => onChange({ ...b, importo: e.target.value })}
+          placeholder="es. 40€"
+        />
+        {(b.notePrezzo || []).map((n, i) => (
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 6 }}>
+            <input
+              style={inputStyle}
+              value={n}
+              onChange={e => {
+                const note = [...(b.notePrezzo || [])]
+                note[i] = e.target.value
+                onChange({ ...b, notePrezzo: note })
+              }}
+              placeholder="es. Acqua inclusa"
+            />
+            <button
+              type="button"
+              className="btn-icon danger"
+              onClick={() => onChange({ ...b, notePrezzo: (b.notePrezzo || []).filter((_, j) => j !== i) })}
+              style={{ padding: '4px 8px' }}
+            >✕</button>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={() => onChange({ ...b, notePrezzo: [...(b.notePrezzo || []), ''] })}
+          style={{ alignSelf: 'flex-start', fontSize: '0.82rem' }}
+        >
+          + Nota (acqua inclusa, bevande escluse…)
         </button>
       </div>
     </div>

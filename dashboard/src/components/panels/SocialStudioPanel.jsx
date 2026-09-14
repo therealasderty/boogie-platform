@@ -598,6 +598,20 @@ function pickBloccoByTipo(blocchi, tipo, preferredId) {
   return { list, blocco }
 }
 
+function notePrezzoDaMenu(bMenu) {
+  return Array.isArray(bMenu?.notePrezzo)
+    ? bMenu.notePrezzo.filter(n => typeof n === 'string' && n.trim())
+    : []
+}
+
+function prezzoDaBloccoMenu(bMenu) {
+  if (!bMenu) return null
+  const importo = String(bMenu.importo || '').trim()
+  const note = notePrezzoDaMenu(bMenu)
+  if (!importo && !note.length) return null
+  return { id: bMenu.id, titolo: bMenu.titolo || '', importo, voci: note }
+}
+
 function fillSlideDataFromEvento(template, a, currentData, orari = [], bloccoId) {
   const { data, dataTesto } = campiDataSlideDaEvento(a, orari)
   if (template === 'cover') {
@@ -628,6 +642,8 @@ function fillSlideDataFromEvento(template, a, currentData, orari = [], bloccoId)
     const blocchi = parseBlocchiEvento(a)
     const preferred = bloccoId || currentData.bloccoPrezzoId
     const { blocco: bPrezzo } = pickBloccoByTipo(blocchi, 'prezzo', preferred)
+    const fallbackMenu = !bPrezzo?.importo ? prezzoDaBloccoMenu(pickBloccoByTipo(blocchi, 'menu').blocco) : null
+    const src = bPrezzo?.importo ? bPrezzo : (fallbackMenu || bPrezzo)
     return {
       ...currentData,
       titolo:          a.title || a.titolo || '',
@@ -635,10 +651,10 @@ function fillSlideDataFromEvento(template, a, currentData, orari = [], bloccoId)
       dataTesto,
       ora:             a.ora || '',
       imageUrl:        a.fotoHero || '',
-      bloccoPrezzoId:  bPrezzo?.id || '',
-      prezzoImporto:   bPrezzo?.importo || '',
-      prezzoLabel:     bPrezzo?.titolo  || '',
-      voci:            Array.isArray(bPrezzo?.voci) ? bPrezzo.voci.filter(v => typeof v === 'string' && v) : [],
+      bloccoPrezzoId:  src?.id || '',
+      prezzoImporto:   src?.importo || '',
+      prezzoLabel:     src?.titolo  || '',
+      voci:            Array.isArray(src?.voci) ? src.voci.filter(v => typeof v === 'string' && v) : [],
     }
   }
   if (template === 'menu_evento' || template === 'menu_storia') {
@@ -670,6 +686,8 @@ function fillSlideDataFromEvento(template, a, currentData, orari = [], bloccoId)
       imageUrl:     a.fotoHero || '',
       bloccoMenuId: bMenu?.id || '',
       menuTitolo:   bMenu?.titolo || '',
+      importo:      String(bMenu?.importo || '').trim(),
+      notePrezzo:   notePrezzoDaMenu(bMenu),
       sezioni,
       voci,
     }
@@ -969,7 +987,11 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
           evento={evento}
           tipo="menu"
           value={data.bloccoMenuId}
-          labelFn={b => b.titolo || (b.sezioni?.length ? `Menù (${b.sezioni.length} sezioni)` : `Menù (${b.voci?.length || 0} voci)`)}
+          labelFn={b => {
+            const n = b.sezioni?.length ? `${b.sezioni.length} sezioni` : `${b.voci?.length || 0} voci`
+            const prezzo = b.importo ? ` · ${b.importo}` : ''
+            return `${b.titolo || 'Menù'} (${n})${prezzo}`
+          }}
           onSelect={bloccoId => {
             if (!evento) return
             onChange({ ...slide, data: fillSlideDataFromEvento(template, evento, data, orari, bloccoId) })
@@ -977,6 +999,31 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
         />
         <label className={styles.sectionLabel}>Titolo menù</label>
         <input className={styles.edInput} value={data.menuTitolo || ''} placeholder="Menù Alla Carta" onChange={e => update('menuTitolo', e.target.value)} />
+        <label className={styles.sectionLabel}>Prezzo del menù</label>
+        <input className={styles.edInput} value={data.importo || ''} placeholder="40€" onChange={e => update('importo', e.target.value)} />
+        {(Array.isArray(data.notePrezzo) ? data.notePrezzo : []).map((n, i) => (
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 6 }}>
+            <input
+              className={styles.edInput}
+              value={n}
+              placeholder="es. Acqua inclusa"
+              onChange={e => {
+                const note = [...(data.notePrezzo || [])]
+                note[i] = e.target.value
+                update('notePrezzo', note)
+              }}
+              style={{ margin: 0 }}
+            />
+            <button className="btn-icon" onClick={() => update('notePrezzo', (data.notePrezzo || []).filter((_, j) => j !== i))} title="Rimuovi"><X size={13} /></button>
+          </div>
+        ))}
+        <button
+          className="btn-secondary"
+          style={{ fontSize: '0.78rem', alignSelf: 'flex-start' }}
+          onClick={() => update('notePrezzo', [...(data.notePrezzo || []), ''])}
+        >
+          + Nota (acqua inclusa, bevande escluse…)
+        </button>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           <div>
             <label className={styles.sectionLabel}>Data</label>

@@ -875,6 +875,8 @@ export function TemplateMenuEvento({
   imageUrl        = '',
   voci            = [],
   sezioni         = [],
+  importo         = '',
+  notePrezzo      = [],
   mostraIndirizzo = false,
   indirizzo       = BRAND_ADDRESS,
 }) {
@@ -890,6 +892,8 @@ export function TemplateMenuEvento({
   const dataPart = dataTesto || (data ? formatDataIT(data) : '')
   const dataOra = [dataPart, ora ? `ore ${ora}` : ''].filter(Boolean).join(' · ')
   const list = Array.isArray(voci) ? voci : []
+  const notes = (Array.isArray(notePrezzo) ? notePrezzo : []).map(x => String(x || '').trim()).filter(Boolean)
+  const notesLine = notes.join(' · ')
 
   return (
     <div style={{
@@ -918,19 +922,40 @@ export function TemplateMenuEvento({
         top: 190,
         left: 64,
         right: 64,
-        bottom: 110,
+        bottom: notesLine || dataOra ? 150 : 110,
         display: 'flex',
         flexDirection: 'column',
       }}>
         <div style={{
-          fontFamily: "'Alga', 'Georgia', serif",
-          fontSize: titleSize,
-          fontWeight: 600,
-          lineHeight: 0.95,
-          color: BRAND_GOLD,
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: 24,
           marginBottom: 28,
         }}>
-          {heading}
+          <div style={{
+            fontFamily: "'Alga', 'Georgia', serif",
+            fontSize: titleSize,
+            fontWeight: 600,
+            lineHeight: 0.95,
+            color: BRAND_GOLD,
+            flex: 1,
+            minWidth: 0,
+          }}>
+            {heading}
+          </div>
+          {importo ? (
+            <div style={{
+              fontFamily: "'Alga', 'Georgia', serif",
+              fontSize: Math.max(52, titleSize - 8),
+              fontWeight: 600,
+              color: BRAND_GOLD,
+              flexShrink: 0,
+              lineHeight: 0.95,
+            }}>
+              {importo}
+            </div>
+          ) : null}
         </div>
         <div style={{ width: '100%', height: 1, background: 'rgba(238,206,157,0.25)', marginBottom: 28 }} />
         <div style={{ flex: 1, overflow: 'hidden' }}>
@@ -938,21 +963,28 @@ export function TemplateMenuEvento({
         </div>
       </div>
 
-      {dataOra && (
-        <div style={{ position: 'absolute', bottom: 56, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
-          <div style={{
-            display: 'inline-block',
-            padding: '10px 34px',
-            border: '1.5px solid rgba(238,206,157,0.4)',
-            borderRadius: 999,
-            fontSize: 28,
-            fontWeight: 400,
-            color: BRAND_GOLD,
-            letterSpacing: 0.4,
-            whiteSpace: 'nowrap',
-          }}>
-            {dataOra}
-          </div>
+      {(notesLine || dataOra) && (
+        <div style={{ position: 'absolute', bottom: 48, left: 64, right: 64, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+          {notesLine ? (
+            <div style={{ fontSize: 24, fontWeight: 400, color: 'rgba(238,206,157,0.75)', textAlign: 'center', letterSpacing: 0.2 }}>
+              {notesLine}
+            </div>
+          ) : null}
+          {dataOra ? (
+            <div style={{
+              display: 'inline-block',
+              padding: '10px 34px',
+              border: '1.5px solid rgba(238,206,157,0.4)',
+              borderRadius: 999,
+              fontSize: 28,
+              fontWeight: 400,
+              color: BRAND_GOLD,
+              letterSpacing: 0.4,
+              whiteSpace: 'nowrap',
+            }}>
+              {dataOra}
+            </div>
+          ) : null}
         </div>
       )}
     </div>
@@ -968,6 +1000,8 @@ export function TemplateMenuStoriaEvento({
   imageUrl        = '',
   voci            = [],
   sezioni         = [],
+  importo         = '',
+  notePrezzo      = [],
   mostraIndirizzo = false,
   indirizzo       = BRAND_ADDRESS,
 }) {
@@ -983,6 +1017,8 @@ export function TemplateMenuStoriaEvento({
   const dataPart = dataTesto || (data ? formatDataIT(data) : '')
   const dataOra = [dataPart, ora ? `ore ${ora}` : ''].filter(Boolean).join(' · ')
   const list = Array.isArray(voci) ? voci : []
+  const notes = (Array.isArray(notePrezzo) ? notePrezzo : []).map(x => String(x || '').trim()).filter(Boolean)
+  const notesLine = notes.join(' · ')
 
   return (
     <div style={{
@@ -1015,19 +1051,40 @@ export function TemplateMenuStoriaEvento({
         top: H_STORIA * 0.28,
         left: 80,
         right: 80,
-        bottom: 150,
+        bottom: notesLine || dataOra ? 200 : 150,
         display: 'flex',
         flexDirection: 'column',
       }}>
         <div style={{
-          fontFamily: "'Alga', 'Georgia', serif",
-          fontSize: titleSize,
-          fontWeight: 600,
-          lineHeight: 0.95,
-          color: BRAND_GOLD,
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: 28,
           marginBottom: 36,
         }}>
-          {heading}
+          <div style={{
+            fontFamily: "'Alga', 'Georgia', serif",
+            fontSize: titleSize,
+            fontWeight: 600,
+            lineHeight: 0.95,
+            color: BRAND_GOLD,
+            flex: 1,
+            minWidth: 0,
+          }}>
+            {heading}
+          </div>
+          {importo ? (
+            <div style={{
+              fontFamily: "'Alga', 'Georgia', serif",
+              fontSize: Math.max(70, titleSize - 16),
+              fontWeight: 600,
+              color: BRAND_GOLD,
+              flexShrink: 0,
+              lineHeight: 0.95,
+            }}>
+              {importo}
+            </div>
+          ) : null}
         </div>
         <div style={{ width: '100%', height: 1, background: 'rgba(238,206,157,0.25)', marginBottom: 36 }} />
         <div style={{ flex: 1, overflow: 'hidden' }}>
@@ -1035,21 +1092,28 @@ export function TemplateMenuStoriaEvento({
         </div>
       </div>
 
-      {dataOra && (
-        <div style={{ position: 'absolute', bottom: 56, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
-          <div style={{
-            display: 'inline-block',
-            padding: '10px 36px',
-            border: '1.5px solid rgba(238,206,157,0.4)',
-            borderRadius: 999,
-            fontSize: 30,
-            fontWeight: 400,
-            color: BRAND_GOLD,
-            letterSpacing: 0.4,
-            whiteSpace: 'nowrap',
-          }}>
-            {dataOra}
-          </div>
+      {(notesLine || dataOra) && (
+        <div style={{ position: 'absolute', bottom: 56, left: 80, right: 80, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
+          {notesLine ? (
+            <div style={{ fontSize: 26, fontWeight: 400, color: 'rgba(238,206,157,0.75)', textAlign: 'center', letterSpacing: 0.2 }}>
+              {notesLine}
+            </div>
+          ) : null}
+          {dataOra ? (
+            <div style={{
+              display: 'inline-block',
+              padding: '10px 36px',
+              border: '1.5px solid rgba(238,206,157,0.4)',
+              borderRadius: 999,
+              fontSize: 30,
+              fontWeight: 400,
+              color: BRAND_GOLD,
+              letterSpacing: 0.4,
+              whiteSpace: 'nowrap',
+            }}>
+              {dataOra}
+            </div>
+          ) : null}
         </div>
       )}
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 6, backgroundColor: BRAND_GOLD }} />
@@ -1876,6 +1940,8 @@ export const TEMPLATES = {
     label: 'Menù evento', Component: TemplateMenuEvento, bgDark: true, size: '4:5',
     demoProps: {
       menuTitolo: 'Menù Alla Carta',
+      importo: '40€',
+      notePrezzo: ['Acqua inclusa', 'Bevande escluse'],
       data: '2026-08-15',
       ora: '12:30',
       sezioni: [
@@ -1918,6 +1984,8 @@ foto_45: {
     label: 'Menù Story', Component: TemplateMenuStoriaEvento, bgDark: true, size: '9:16',
     demoProps: {
       menuTitolo: 'Menù Alla Carta',
+      importo: '40€',
+      notePrezzo: ['Acqua inclusa', 'Bevande escluse'],
       data: '2026-08-15',
       ora: '12:30',
       sezioni: [

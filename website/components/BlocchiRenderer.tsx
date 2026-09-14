@@ -50,13 +50,23 @@ function RendererMenu({ b }: { b: BloccoMenu }) {
     : b.voci?.length
     ? [{ voci: b.voci }]
     : []
-  if (!sezioni.length) return null
+  const notePrezzo = (b.notePrezzo || []).map(n => n.trim()).filter(Boolean)
+  if (!sezioni.length && !b.importo && !notePrezzo.length) return null
   return (
     <section className="py-12 border-b border-neutral-200">
-      {b.titolo && (
-        <h3 className="font-raleway font-semibold text-neutral-900 mb-8" style={{ fontSize: '1.75rem' }}>
-          {b.titolo}
-        </h3>
+      {(b.titolo || b.importo) && (
+        <div className="flex items-baseline justify-between gap-6 mb-8">
+          {b.titolo ? (
+            <h3 className="font-raleway font-semibold text-neutral-900" style={{ fontSize: '1.75rem' }}>
+              {b.titolo}
+            </h3>
+          ) : <span />}
+          {b.importo && (
+            <span className="font-raleway font-semibold text-brand flex-shrink-0" style={{ fontSize: '1.75rem' }}>
+              {b.importo}
+            </span>
+          )}
+        </div>
       )}
       <div className="flex flex-col gap-10">
         {sezioni.map((s, si) => (
@@ -97,6 +107,16 @@ function RendererMenu({ b }: { b: BloccoMenu }) {
           </div>
         ))}
       </div>
+      {notePrezzo.length > 0 && (
+        <ul className="flex flex-col gap-2 mt-8">
+          {notePrezzo.map((n, i) => (
+            <li key={i} className="flex items-start gap-3 text-neutral-500" style={{ fontSize: 'var(--text-meta)' }}>
+              <span className="text-brand flex-shrink-0 mt-px">✓</span>
+              {n}
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   )
 }
