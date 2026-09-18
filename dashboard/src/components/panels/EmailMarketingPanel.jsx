@@ -11,7 +11,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   EnvelopeSimple, Plus, ArrowLeft, Trash,
   TextT, Image, Images, CursorClick, Minus, ArrowUp, ArrowDown,
-  UploadSimple, Eye, FloppyDisk, ListBullets, Quotes,
+  UploadSimple, Eye, FloppyDisk, ListBullets, Quotes, Users,
 } from '@phosphor-icons/react'
 import { authFetch } from '../../lib/authFetch'
 import { MediaLibraryModal } from './BlocchiEditor'
@@ -429,6 +429,9 @@ function ContattiTab({ campagna }) {
 
   return (
     <div className={styles.contattiTab}>
+      {/* Importa da lista globale */}
+      <AggiungiDaGlobaliBox campagnaId={campagna.id} onAdded={() => { loadContatti(); loadStats() }} />
+
       {/* Stats */}
       {stats && (
         <div className={styles.statsRow}>
@@ -540,6 +543,240 @@ function ContattiTab({ campagna }) {
             </table>
             {nextCursor && (
               <button className="btn-secondary btn-sm" onClick={() => loadContatti(nextCursor, false)} disabled={loadingMore}>
+                {loadingMore ? 'Caricamento...' : 'Carica altri'}
+              </button>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Aggiungi contatti da lista globale (dentro ContattiTab) ─────────────────
+
+function AggiungiDaGlobaliBox({ campagnaId, onAdded }) {
+  const [expanded, setExpanded]       = useState(false)
+  const [countGlobali, setCountGlobali] = useState(null)
+  const [maxPerGiorno, setMaxPerGiorno] = useState(200)
+  const [copying, setCopying]         = useState(false)
+  const [msg, setMsg]                 = useState(null)
+
+  useEffect(() => {
+    authFetch('/.netlify/functions/gestisci-campagne-mail?tipo=statistiche&campagnaId=global')
+      .then(r => r.json())
+      .then(d => { if (d.success) setCountGlobali(d.stats.totale) })
+  }, [])
+
+  async function handleCopia() {
+    setCopying(true); setMsg(null)
+    try {
+      const res  = await authFetch('/.netlify/functions/gestisci-campagne-mail', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ tipo: 'copia-globali-in-campagna', campagnaId, maxPerGiorno }),
+      })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error)
+      if (data.copiati === 0) {
+        setMsg({ tipo: 'errore', testo: 'Lista globale vuota. Vai nella scheda Contatti dalla home per aggiungerne.' })
+      } else {
+        setMsg({ tipo: 'ok', testo: `${data.copiati} contatti copiati con scheduling automatico.` })
+        onAdded()
+      }
+    } catch (e) {
+      setMsg({ tipo: 'errore', testo: e.message })
+    } finally {
+      setCopying(false)
+    }
+  }
+
+  return (
+    <div className={styles.globaliBox}>
+      <div className={styles.globaliBoxTitle}>
+        <span className={styles.globaliLabel}>
+          <Users size={15} /> Lista globale
+          {countGlobali !== null && (
+            <span className={styles.countBadge}>{countGlobali} contatti</span>
+          )}
+        </span>
+        <button className="btn-secondary btn-sm" onClick={() => setExpanded(e => !e)}>
+          {expanded ? 'Chiudi' : 'Importa da lista globale'}
+        </button>
+      </div>
+      {expanded && (
+        <div className={styles.globaliBoxExpanded}>
+          {countGlobali === 0 ? (
+            <p className={styles.importHint}>
+              La lista globale è vuota. Vai nella scheda <strong>Contatti</strong> dalla home per aggiungere contatti.
+            </p>
+          ) : (
+            <>
+              <p className={styles.importHint}>
+                Copia tutti i {countGlobali} contatti dalla lista globale in questa campagna con scheduling automatico.
+              </p>
+              <div className={styles.importRow}>
+                <label className={styles.maxLabel}>
+                  Max per giorno:
+                  <input
+                    type="number" min={1} max={200}
+                    className={styles.maxInput}
+                    value={maxPerGiorno}
+                    onChange={e => setMaxPerGiorno(Math.min(200, Math.max(1, Number(e.target.value))))}
+                  />
+                </label>
+                <button className="btn-accent" onClick={handleCopia} disabled={copying}>
+                  <Users size={14} /> {copying ? 'Copia in corso...' : 'Copia in questa campagna'}
+                </button>
+              </div>
+            </>
+          )}
+          {msg && (
+            <p className={msg.tipo === 'ok' ? styles.msgOk : styles.msgErr}>{msg.testo}</p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Lista contatti globali (home) ────────────────────────────────────────────
+
+function ContattiGlobali() {
+  const [contatti, setContatti]       = useState([])
+  const [totale, setTotale]           = useState(0)
+  const [nextCursor, setNextCursor]   = useState(null)
+  const [loading, setLoading]         = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [csvText, setCsvText]         = useState('')
+  const [importing, setImporting]     = useState(false)
+  const [importMsg, setImportMsg]     = useState(null)
+
+  const loadAll = useCallback(async (cursor = null, replace = true) => {
+    if (replace) setLoading(true); else setLoadingMore(true)
+    try {
+      const url = `/.netlify/functions/gestisci-campagne-mail?tipo=contatti&campagnaId=global${cursor ? '&cursor=' + cursor : ''}`
+      const [contattiRes, statsRes] = await Promise.all([
+        authFetch(url),
+        replace ? authFetch('/.netlify/functions/gestisci-campagne-mail?tipo=statistiche&campagnaId=global') : Promise.resolve(null),
+      ])
+      const contattiData = await contattiRes.json()
+      if (contattiData.success) {
+        setContatti(prev => replace ? contattiData.contatti : [...prev, ...contattiData.contatti])
+        setNextCursor(contattiData.nextCursor || null)
+      }
+      if (statsRes) {
+        const statsData = await statsRes.json()
+        if (statsData.success) setTotale(statsData.stats.totale)
+      }
+    } finally {
+      setLoading(false); setLoadingMore(false)
+    }
+  }, [])
+
+  useEffect(() => { loadAll() }, [loadAll])
+
+  async function handleImport() {
+    const lines = csvText.trim().split('\n').filter(Boolean)
+    if (!lines.length) return
+    const parsed = lines.map(line => {
+      const [email, nome, azienda] = line.split(',').map(s => s.trim())
+      return { email, nome: nome || '', azienda: azienda || '' }
+    }).filter(c => c.email && c.email.includes('@'))
+    if (!parsed.length) {
+      setImportMsg({ tipo: 'errore', testo: 'Nessun email valida trovata.' })
+      return
+    }
+    setImporting(true); setImportMsg(null)
+    try {
+      const res  = await authFetch('/.netlify/functions/gestisci-campagne-mail', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ tipo: 'importa-contatti', campagnaId: 'global', contatti: parsed, maxPerGiorno: 99999 }),
+      })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error)
+      setImportMsg({ tipo: 'ok', testo: `${data.importati} contatti aggiunti alla lista.` })
+      setCsvText('')
+      await loadAll()
+    } catch (e) {
+      setImportMsg({ tipo: 'errore', testo: e.message })
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  async function eliminaContatto(id) {
+    if (!confirm('Rimuovere questo contatto dalla lista globale?')) return
+    await authFetch(`/.netlify/functions/gestisci-campagne-mail?tipo=contatto&id=${id}`, { method: 'DELETE' })
+    setContatti(prev => prev.filter(c => c.id !== id))
+    setTotale(prev => prev - 1)
+  }
+
+  return (
+    <div>
+      <div className={styles.importBox}>
+        <h3 className={styles.importTitle}>
+          <UploadSimple size={16} /> Aggiungi contatti
+        </h3>
+        <p className={styles.importHint}>
+          Un contatto per riga: <code>email,nome,azienda</code>
+        </p>
+        <textarea
+          className={styles.csvTextarea}
+          value={csvText}
+          onChange={e => setCsvText(e.target.value)}
+          rows={5}
+          placeholder={'mario@esempio.it,Mario Rossi\nluisa@esempio.it,Luisa Bianchi,Studio Bianchi'}
+        />
+        <div className={styles.importRow}>
+          <span />
+          <button className="btn-accent" onClick={handleImport} disabled={importing || !csvText.trim()}>
+            <UploadSimple size={14} /> {importing ? 'Aggiunta...' : 'Aggiungi alla lista'}
+          </button>
+        </div>
+        {importMsg && (
+          <p className={importMsg.tipo === 'ok' ? styles.msgOk : styles.msgErr}>
+            {importMsg.testo}
+          </p>
+        )}
+      </div>
+
+      <div className={styles.contattiList}>
+        <h3 className={styles.listTitle}>Contatti ({totale})</h3>
+        {loading ? (
+          <p className={styles.loading}>Caricamento...</p>
+        ) : contatti.length === 0 ? (
+          <p className={styles.emptyList}>Nessun contatto ancora. Aggiungi il primo lotto sopra.</p>
+        ) : (
+          <>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Nome / Azienda</th>
+                  <th>Email</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {contatti.map(c => (
+                  <tr key={c.id}>
+                    <td>
+                      <div className={styles.contattoNome}>{c.nome || '—'}</div>
+                      {c.azienda && <div className={styles.contattoAzienda}>{c.azienda}</div>}
+                    </td>
+                    <td>{c.email}</td>
+                    <td>
+                      <button className="btn-icon btn-sm danger" onClick={() => eliminaContatto(c.id)}>
+                        <Trash size={13} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {nextCursor && (
+              <button className="btn-secondary btn-sm" onClick={() => loadAll(nextCursor, false)} disabled={loadingMore}>
                 {loadingMore ? 'Caricamento...' : 'Carica altri'}
               </button>
             )}
@@ -750,6 +987,7 @@ function ListaCampagne({ onSelect }) {
   const [campagne, setCampagne] = useState([])
   const [loading, setLoading]   = useState(true)
   const [creating, setCreating] = useState(false)
+  const [homeTab, setHomeTab]   = useState('campagne')
 
   useEffect(() => {
     authFetch('/.netlify/functions/gestisci-campagne-mail?tipo=campagne')
@@ -784,39 +1022,61 @@ function ListaCampagne({ onSelect }) {
           <h1 className={styles.pageTitle}>Email Marketing</h1>
           <p className={styles.pageSubtitle}>Crea campagne, costruisci template e invia fino a 200 email al giorno.</p>
         </div>
-        <button className="btn-outline-accent" onClick={nuovaCampagna} disabled={creating}>
-          <Plus size={15} /> {creating ? 'Creazione...' : 'Nuova campagna'}
+        {homeTab === 'campagne' && (
+          <button className="btn-outline-accent" onClick={nuovaCampagna} disabled={creating}>
+            <Plus size={15} /> {creating ? 'Creazione...' : 'Nuova campagna'}
+          </button>
+        )}
+      </div>
+
+      {/* Tab home */}
+      <div className={styles.tabs} style={{ marginBottom: '28px' }}>
+        <button
+          className={`btn-toggle ${homeTab === 'campagne' ? 'active' : ''}`}
+          onClick={() => setHomeTab('campagne')}
+        >
+          <EnvelopeSimple size={14} /> Campagne
+        </button>
+        <button
+          className={`btn-toggle ${homeTab === 'contatti' ? 'active' : ''}`}
+          onClick={() => setHomeTab('contatti')}
+        >
+          <Users size={14} /> Contatti
         </button>
       </div>
 
-      {loading ? (
-        <p className={styles.loading}>Caricamento...</p>
-      ) : campagne.length === 0 ? (
-        <div className={styles.empty}>
-          <EnvelopeSimple size={40} weight="light" />
-          <p>Nessuna campagna. Creane una per iniziare.</p>
-        </div>
-      ) : (
-        <div className={styles.campagneGrid}>
-          {campagne.map(c => (
-            <div key={c.id} className={styles.campagnaCard} onClick={() => onSelect(c)}>
-              <div className={styles.cardTop}>
-                <h3 className={styles.cardTitolo}>{c.titolo}</h3>
-                <StatoBadge stato={c.stato} />
-              </div>
-              {c.oggettoMail && (
-                <p className={styles.cardOggetto}>"{c.oggettoMail}"</p>
-              )}
-              <div className={styles.cardMeta}>
-                <span>{c.totaleInviati} inviati</span>
-                {c.dataCreazione && (
-                  <span>{new Date(c.dataCreazione).toLocaleDateString('it-IT', { day:'numeric', month:'short', year:'numeric' })}</span>
+      {homeTab === 'campagne' && (
+        loading ? (
+          <p className={styles.loading}>Caricamento...</p>
+        ) : campagne.length === 0 ? (
+          <div className={styles.empty}>
+            <EnvelopeSimple size={40} weight="light" />
+            <p>Nessuna campagna. Creane una per iniziare.</p>
+          </div>
+        ) : (
+          <div className={styles.campagneGrid}>
+            {campagne.map(c => (
+              <div key={c.id} className={styles.campagnaCard} onClick={() => onSelect(c)}>
+                <div className={styles.cardTop}>
+                  <h3 className={styles.cardTitolo}>{c.titolo}</h3>
+                  <StatoBadge stato={c.stato} />
+                </div>
+                {c.oggettoMail && (
+                  <p className={styles.cardOggetto}>"{c.oggettoMail}"</p>
                 )}
+                <div className={styles.cardMeta}>
+                  <span>{c.totaleInviati} inviati</span>
+                  {c.dataCreazione && (
+                    <span>{new Date(c.dataCreazione).toLocaleDateString('it-IT', { day:'numeric', month:'short', year:'numeric' })}</span>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )
       )}
+
+      {homeTab === 'contatti' && <ContattiGlobali />}
     </div>
   )
 }

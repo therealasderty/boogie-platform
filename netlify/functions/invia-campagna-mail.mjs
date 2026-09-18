@@ -132,7 +132,7 @@ export const handler = async () => {
   try {
     // 1. Leggi contatti DaInviare con DataProgrammata <= oggi, ordina per data
     const params = new URLSearchParams({
-      filterByFormula: `{Stato}='DaInviare'`,
+      filterByFormula: `AND({Stato}='DaInviare',{CampagnaId}!='global')`,
       'sort[0][field]':     'DataProgrammata',
       'sort[0][direction]': 'asc',
       maxRecords: String(MAX_PER_GIORNO * 3), // buffer abbondante, filtriamo in JS

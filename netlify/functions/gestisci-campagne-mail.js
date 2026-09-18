@@ -277,6 +277,33 @@ exports.handler = async (event) => {
         return ok({ success: true, importati: records.length })
       }
 
+      // Copia contatti globali in una campagna con scheduling
+      if (body.tipo === 'copia-globali-in-campagna') {
+        const { campagnaId, maxPerGiorno = 200 } = body
+        if (!campagnaId) return err('campagnaId mancante', 400)
+        const globali = await fetchAll(T_CONT, `{CampagnaId}='global'`, ['Email', 'Nome', 'Azienda'])
+        if (!globali.length) return ok({ success: true, copiati: 0 })
+        const oggi = new Date()
+        const max  = Math.min(Math.max(1, maxPerGiorno), 200)
+        const records = globali.map(({ fields }, i) => {
+          const giornoOffset = Math.floor(i / max)
+          const data = new Date(oggi)
+          data.setDate(data.getDate() + giornoOffset)
+          return {
+            fields: {
+              'CampagnaId':      campagnaId,
+              'Email':           fields['Email']   || '',
+              'Nome':            fields['Nome']    || '',
+              'Azienda':         fields['Azienda'] || '',
+              'Stato':           'DaInviare',
+              'DataProgrammata': data.toISOString().split('T')[0],
+            },
+          }
+        })
+        await createBatch(T_CONT, records)
+        return ok({ success: true, copiati: records.length })
+      }
+
       return err('tipo non valido', 400)
     } catch (e) {
       return err(e.message)
