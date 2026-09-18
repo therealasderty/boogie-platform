@@ -120,6 +120,75 @@
   border-bottom-color: var(--accent);
 }
 
+/* ── Progresso campagna ────────────────────────────────────────────────────── */
+.progressBox {
+  background: var(--bg2);
+  border: var(--border-style);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+.progressBarWrap {
+  background: var(--bg3);
+  border-radius: 99px;
+  height: 10px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.progressBar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 99px;
+  transition: width 0.4s ease;
+  min-width: 2px;
+}
+.progressPct {
+  font-size: 0.72rem;
+  color: var(--text3);
+  text-align: right;
+  margin-bottom: 16px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.progressStats {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.progressStat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.progressNum {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+.progressLabel {
+  font-size: 0.68rem;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.progressDate {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  font-size: 0.78rem;
+  color: var(--text3);
+  padding-top: 12px;
+  border-top: 1px solid var(--border2);
+}
+.giorniRimanenti {
+  color: var(--accent);
+}
+.oggiLabel {
+  color: var(--text2);
+}
+
 /* ── Tab Info ──────────────────────────────────────────────────────────────── */
 .infoTab {
   max-width: 560px;
@@ -449,6 +518,16 @@
 }
 .table tr:last-child td { border-bottom: none; }
 .table tr:hover td { background: var(--bg3); }
+.contattoNome {
+  font-weight: 500;
+  color: var(--text);
+  font-size: 0.82rem;
+}
+.contattoAzienda {
+  font-size: 0.73rem;
+  color: var(--text3);
+  margin-top: 1px;
+}
 .contattoStato {
   font-weight: 600;
   font-size: 0.75rem;

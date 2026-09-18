@@ -388,12 +388,12 @@ function ContattiTab({ campagna }) {
     if (!lines.length) return
 
     const contatti = lines.map(line => {
-      const [email, nome] = line.split(',').map(s => s.trim())
-      return { email, nome: nome || '' }
+      const [email, nome, azienda] = line.split(',').map(s => s.trim())
+      return { email, nome: nome || '', azienda: azienda || '' }
     }).filter(c => c.email && c.email.includes('@'))
 
     if (!contatti.length) {
-      setImportMsg({ tipo: 'errore', testo: 'Nessun email valida trovata. Formato: email,nome (uno per riga)' })
+      setImportMsg({ tipo: 'errore', testo: 'Nessun email valida trovata. Formato: email,nome,azienda (uno per riga)' })
       return
     }
 
@@ -465,15 +465,15 @@ function ContattiTab({ campagna }) {
           <UploadSimple size={16} /> Importa contatti
         </h3>
         <p className={styles.importHint}>
-          Un contatto per riga, formato: <code>email,nome</code><br />
-          Es: <code>mario@esempio.it,Mario</code>
+          Un contatto per riga, formato: <code>email,nome,azienda</code><br />
+          Es: <code>mario@esempio.it,Mario Rossi,Rossi &amp; Co.</code>
         </p>
         <textarea
           className={styles.csvTextarea}
           value={csvText}
           onChange={e => setCsvText(e.target.value)}
           rows={6}
-          placeholder={'mario@esempio.it,Mario\nluisa@esempio.it,Luisa\n...'}
+          placeholder={'mario@esempio.it,Mario Rossi,Rossi & Co.\nluisa@esempio.it,Luisa Bianchi,Studio Bianchi\n...'}
         />
         <div className={styles.importRow}>
           <label className={styles.maxLabel}>
@@ -508,8 +508,8 @@ function ContattiTab({ campagna }) {
             <table className={styles.table}>
               <thead>
                 <tr>
+                  <th>Nome / Azienda</th>
                   <th>Email</th>
-                  <th>Nome</th>
                   <th>Stato</th>
                   <th>Data programm.</th>
                   <th></th>
@@ -518,8 +518,11 @@ function ContattiTab({ campagna }) {
               <tbody>
                 {contatti.map(c => (
                   <tr key={c.id}>
+                    <td>
+                      <div className={styles.contattoNome}>{c.nome || '—'}</div>
+                      {c.azienda && <div className={styles.contattoAzienda}>{c.azienda}</div>}
+                    </td>
                     <td>{c.email}</td>
-                    <td>{c.nome || '—'}</td>
                     <td>
                       <span className={styles.contattoStato} style={{ color: STATO_COLOR[c.stato] }}>
                         {c.stato === 'DaInviare' ? 'In coda' : c.stato}
@@ -541,6 +544,75 @@ function ContattiTab({ campagna }) {
               </button>
             )}
           </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Progresso campagna ───────────────────────────────────────────────────────
+
+function fmt(dateStr) {
+  if (!dateStr) return '—'
+  return new Date(dateStr).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function ProgressoCampagna({ campagnaId }) {
+  const [stats, setStats] = useState(null)
+
+  useEffect(() => {
+    authFetch(`/.netlify/functions/gestisci-campagne-mail?tipo=statistiche&campagnaId=${campagnaId}`)
+      .then(r => r.json())
+      .then(d => { if (d.success) setStats(d.stats) })
+  }, [campagnaId])
+
+  if (!stats || stats.totale === 0) return null
+
+  const pct = stats.totale > 0 ? Math.round((stats.Inviato / stats.totale) * 100) : 0
+
+  return (
+    <div className={styles.progressBox}>
+      {/* Barra */}
+      <div className={styles.progressBarWrap}>
+        <div className={styles.progressBar} style={{ width: `${pct}%` }} />
+      </div>
+      <div className={styles.progressPct}>{pct}% completata</div>
+
+      {/* Contatori */}
+      <div className={styles.progressStats}>
+        <div className={styles.progressStat}>
+          <span className={styles.progressNum} style={{ color: 'var(--success)' }}>{stats.Inviato}</span>
+          <span className={styles.progressLabel}>Inviati</span>
+        </div>
+        <div className={styles.progressStat}>
+          <span className={styles.progressNum} style={{ color: 'var(--accent)' }}>{stats.DaInviare}</span>
+          <span className={styles.progressLabel}>Rimanenti</span>
+        </div>
+        <div className={styles.progressStat}>
+          <span className={styles.progressNum}>{stats.totale}</span>
+          <span className={styles.progressLabel}>Totale</span>
+        </div>
+        {stats.Errore > 0 && (
+          <div className={styles.progressStat}>
+            <span className={styles.progressNum} style={{ color: 'var(--danger)' }}>{stats.Errore}</span>
+            <span className={styles.progressLabel}>Errori</span>
+          </div>
+        )}
+      </div>
+
+      {/* Date */}
+      <div className={styles.progressDate}>
+        <span>Inizio: <strong>{fmt(stats.dataInizio)}</strong></span>
+        <span>Fine stimata: <strong>{fmt(stats.dataFine)}</strong></span>
+        {stats.giorniRimanenti > 0 && (
+          <span className={styles.giorniRimanenti}>
+            Ancora <strong>{stats.giorniRimanenti}</strong> {stats.giorniRimanenti === 1 ? 'giorno' : 'giorni'}
+          </span>
+        )}
+        {stats.oggiDaInviare > 0 && (
+          <span className={styles.oggiLabel}>
+            Oggi: <strong>{stats.oggiDaInviare}</strong> da inviare
+          </span>
         )}
       </div>
     </div>
@@ -579,6 +651,8 @@ function InfoTab({ campagna, onSaved }) {
 
   return (
     <div className={styles.infoTab}>
+      <ProgressoCampagna campagnaId={campagna.id} />
+
       <div className={styles.formGrid}>
         <div className={styles.formGroup}>
           <label className={styles.fieldLabel}>Nome campagna</label>

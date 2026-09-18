@@ -65,6 +65,7 @@ function mapContatto(r) {
     campagnaId:      r.fields['CampagnaId']      || '',
     email:           r.fields['Email']            || '',
     nome:            r.fields['Nome']             || '',
+    azienda:         r.fields['Azienda']          || '',
     stato:           r.fields['Stato']            || 'DaInviare',
     dataProgrammata: r.fields['DataProgrammata']  || '',
     dataInvio:       r.fields['DataInvio']        || '',
@@ -192,16 +193,28 @@ exports.handler = async (event) => {
         )
         const stats = { totale: 0, DaInviare: 0, Inviato: 0, Errore: 0 }
         const oggi  = new Date().toISOString().split('T')[0]
+        const tutteDate = []
         for (const r of records) {
           stats.totale++
           const s = r.fields['Stato'] || 'DaInviare'
           if (stats[s] !== undefined) stats[s]++
+          const d = r.fields['DataProgrammata']
+          if (d) tutteDate.push(d)
         }
-        // Quanti sono in coda per oggi (DataProgrammata <= oggi AND Stato=DaInviare)
+        tutteDate.sort()
+        stats.dataInizio = tutteDate[0] || null
+        stats.dataFine   = tutteDate[tutteDate.length - 1] || null
+        // Quanti sono in coda per oggi
         stats.oggiDaInviare = records.filter(r =>
           r.fields['Stato'] === 'DaInviare' &&
           (r.fields['DataProgrammata'] || '') <= oggi
         ).length
+        // Giorni unici futuri ancora con DaInviare
+        stats.giorniRimanenti = new Set(
+          records
+            .filter(r => r.fields['Stato'] === 'DaInviare' && (r.fields['DataProgrammata'] || '') > oggi)
+            .map(r => r.fields['DataProgrammata'])
+        ).size
         return ok({ success: true, stats })
       }
 
@@ -244,7 +257,7 @@ exports.handler = async (event) => {
 
         // Calcola DataProgrammata per ogni contatto (200 al giorno partendo da oggi)
         const oggi = new Date()
-        const records = contatti.map(({ email, nome }, i) => {
+        const records = contatti.map(({ email, nome, azienda }, i) => {
           const giornoOffset = Math.floor(i / maxPerGiorno)
           const data = new Date(oggi)
           data.setDate(data.getDate() + giornoOffset)
@@ -252,7 +265,8 @@ exports.handler = async (event) => {
             fields: {
               'CampagnaId':      campagnaId,
               'Email':           email.trim().toLowerCase(),
-              'Nome':            (nome || '').trim(),
+              'Nome':            (nome    || '').trim(),
+              'Azienda':         (azienda || '').trim(),
               'Stato':           'DaInviare',
               'DataProgrammata': data.toISOString().split('T')[0],
             },
