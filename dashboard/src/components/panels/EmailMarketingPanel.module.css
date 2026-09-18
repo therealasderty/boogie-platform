@@ -269,6 +269,19 @@
   flex-direction: column;
   gap: 10px;
 }
+.imgRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.imgRow .fieldInput { flex: 1; }
+.imgPreview {
+  width: 100%;
+  max-height: 130px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
 .separatorNote {
   font-size: 0.78rem;
   color: var(--text3);

@@ -9,11 +9,12 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
-  EnvelopeSimple, Plus, ArrowLeft, Trash, PencilSimple,
-  TextT, Image, CursorClick, Minus, ArrowUp, ArrowDown,
-  UploadSimple, Eye, FloppyDisk, Play, Pause, CheckCircle,
+  EnvelopeSimple, Plus, ArrowLeft, Trash,
+  TextT, Image, Images, CursorClick, Minus, ArrowUp, ArrowDown,
+  UploadSimple, Eye, FloppyDisk, ListBullets, Quotes,
 } from '@phosphor-icons/react'
 import { authFetch } from '../../lib/authFetch'
+import { MediaLibraryModal } from './BlocchiEditor'
 import styles from './EmailMarketingPanel.module.css'
 
 // ─── Costanti ─────────────────────────────────────────────────────────────────
@@ -29,19 +30,25 @@ const STATI_BADGE = {
 }
 
 const BLOCK_TYPES = [
-  { type: 'intestazione', label: 'Intestazione',  Icon: TextT },
-  { type: 'testo',        label: 'Testo',          Icon: TextT },
-  { type: 'immagine',     label: 'Immagine',       Icon: Image },
-  { type: 'pulsante',     label: 'Pulsante CTA',   Icon: CursorClick },
-  { type: 'separatore',   label: 'Separatore',     Icon: Minus },
+  { type: 'intestazione',        label: 'Titolo',        Icon: TextT },
+  { type: 'intestazione-piccola',label: 'Sottotitolo',   Icon: TextT },
+  { type: 'testo',               label: 'Testo',         Icon: TextT },
+  { type: 'immagine',            label: 'Immagine',      Icon: Image },
+  { type: 'evidenza',            label: 'Evidenza',      Icon: Quotes },
+  { type: 'lista',               label: 'Lista',         Icon: ListBullets },
+  { type: 'pulsante',            label: 'Pulsante CTA',  Icon: CursorClick },
+  { type: 'separatore',          label: 'Separatore',    Icon: Minus },
 ]
 
 const DEFAULT_BLOCKS = {
-  intestazione: { type: 'intestazione', testo: 'Ciao {nome},' },
-  testo:        { type: 'testo', contenuto: 'Scrivi il tuo messaggio qui...' },
-  immagine:     { type: 'immagine', url: '', alt: '', link: '' },
-  pulsante:     { type: 'pulsante', testo: 'Scopri di più', href: 'https://boogiebistrot.com', stile: 'brand' },
-  separatore:   { type: 'separatore' },
+  intestazione:         { type: 'intestazione',         testo: 'Ciao {nome},' },
+  'intestazione-piccola':{ type: 'intestazione-piccola', testo: 'Sottotitolo sezione' },
+  testo:                { type: 'testo',                contenuto: 'Scrivi il tuo messaggio qui...' },
+  immagine:             { type: 'immagine',             url: '', alt: '', link: '' },
+  evidenza:             { type: 'evidenza',             contenuto: 'Testo in evidenza, offerta speciale o informazione importante.' },
+  lista:                { type: 'lista',                voci: 'Prima voce\nSeconda voce\nTerza voce' },
+  pulsante:             { type: 'pulsante',             testo: 'Scopri di più', href: 'https://boogiebistrot.com', stile: 'brand' },
+  separatore:           { type: 'separatore' },
 }
 
 function uid() { return Math.random().toString(36).slice(2, 9) }
@@ -58,12 +65,21 @@ function renderBlockHtml(b, nome = 'Mario') {
   switch (b.type) {
     case 'intestazione':
       return `<h2 style="font-family:${FONT_STACK};font-size:22px;font-weight:600;color:${CD};margin:0 0 20px;text-align:center;">${sub(b.testo)}</h2>`
+    case 'intestazione-piccola':
+      return `<h3 style="font-family:${FONT_STACK};font-size:16px;font-weight:600;color:${CD};margin:0 0 12px;text-transform:uppercase;letter-spacing:0.06em;">${sub(b.testo)}</h3>`
     case 'testo':
       return `<p style="font-family:${FONT_STACK};font-size:15px;line-height:1.8;color:${CB};margin:0 0 20px;">${sub(b.contenuto || '').replace(/\n/g, '<br>')}</p>`
     case 'immagine': {
       if (!b.url) return `<p style="font-size:12px;color:${CMUTED};font-style:italic;text-align:center;margin-bottom:20px;">[Immagine: inserisci URL]</p>`
       const img = `<img src="${b.url}" alt="${b.alt || ''}" width="440" style="display:block;width:100%;max-width:440px;border:0;margin:0 auto 20px;">`
       return b.link ? `<a href="${b.link}" style="display:block;text-decoration:none;">${img}</a>` : img
+    }
+    case 'evidenza':
+      return `<table cellpadding="0" cellspacing="0" width="100%" style="background:${CBG};border-left:3px solid ${CG};margin-bottom:24px;"><tr><td style="padding:16px 20px;"><p style="font-family:${FONT_STACK};font-size:15px;line-height:1.7;color:${CB};margin:0;">${sub(b.contenuto || '').replace(/\n/g, '<br>')}</p></td></tr></table>`
+    case 'lista': {
+      const voci = (b.voci || '').split('\n').filter(v => v.trim())
+      const items = voci.map(v => `<li style="font-family:${FONT_STACK};font-size:15px;line-height:1.8;color:${CB};margin-bottom:6px;">${sub(v.trim())}</li>`).join('')
+      return `<ul style="margin:0 0 20px;padding-left:20px;">${items}</ul>`
     }
     case 'pulsante': {
       let bg = CG, color = CD, border = ''
@@ -109,6 +125,7 @@ function StatoBadge({ stato }) {
 // ─── Editor singolo blocco ────────────────────────────────────────────────────
 
 function BlockEditor({ block, onChange }) {
+  const [mostraMedia, setMostraMedia] = useState(false)
   function set(key, val) { onChange({ ...block, [key]: val }) }
 
   switch (block.type) {
@@ -117,6 +134,13 @@ function BlockEditor({ block, onChange }) {
         <div className={styles.blockFields}>
           <label className={styles.fieldLabel}>Testo <span className={styles.hint}>(usa {'{nome}'} per il nome)</span></label>
           <input className={styles.fieldInput} value={block.testo || ''} onChange={e => set('testo', e.target.value)} placeholder="Ciao {nome}," />
+        </div>
+      )
+    case 'intestazione-piccola':
+      return (
+        <div className={styles.blockFields}>
+          <label className={styles.fieldLabel}>Testo sottotitolo</label>
+          <input className={styles.fieldInput} value={block.testo || ''} onChange={e => set('testo', e.target.value)} placeholder="Sottotitolo sezione" />
         </div>
       )
     case 'testo':
@@ -129,12 +153,40 @@ function BlockEditor({ block, onChange }) {
     case 'immagine':
       return (
         <div className={styles.blockFields}>
-          <label className={styles.fieldLabel}>URL immagine</label>
-          <input className={styles.fieldInput} value={block.url || ''} onChange={e => set('url', e.target.value)} placeholder="https://..." />
+          <label className={styles.fieldLabel}>Immagine</label>
+          <div className={styles.imgRow}>
+            <input className={styles.fieldInput} value={block.url || ''} onChange={e => set('url', e.target.value)} placeholder="https://..." />
+            <button className="btn-secondary btn-sm" type="button" onClick={() => setMostraMedia(true)}>
+              <Images size={14} /> Libreria
+            </button>
+          </div>
+          {block.url && (
+            <img src={block.url} alt={block.alt || ''} className={styles.imgPreview} />
+          )}
           <label className={styles.fieldLabel}>Testo alternativo (alt)</label>
           <input className={styles.fieldInput} value={block.alt || ''} onChange={e => set('alt', e.target.value)} placeholder="Descrizione immagine" />
           <label className={styles.fieldLabel}>Link (opzionale)</label>
           <input className={styles.fieldInput} value={block.link || ''} onChange={e => set('link', e.target.value)} placeholder="https://boogiebistrot.com" />
+          {mostraMedia && (
+            <MediaLibraryModal
+              onSelect={m => { onChange({ ...block, url: m.url, alt: m.alt || m.nome }); setMostraMedia(false) }}
+              onClose={() => setMostraMedia(false)}
+            />
+          )}
+        </div>
+      )
+    case 'evidenza':
+      return (
+        <div className={styles.blockFields}>
+          <label className={styles.fieldLabel}>Testo in evidenza <span className={styles.hint}>(usa {'{nome}'} per il nome)</span></label>
+          <textarea className={styles.fieldTextarea} value={block.contenuto || ''} onChange={e => set('contenuto', e.target.value)} rows={3} placeholder="Offerta speciale, informazione importante..." />
+        </div>
+      )
+    case 'lista':
+      return (
+        <div className={styles.blockFields}>
+          <label className={styles.fieldLabel}>Voci <span className={styles.hint}>(una per riga)</span></label>
+          <textarea className={styles.fieldTextarea} value={block.voci || ''} onChange={e => set('voci', e.target.value)} rows={5} placeholder={'Prima voce\nSeconda voce\nTerza voce'} />
         </div>
       )
     case 'pulsante':

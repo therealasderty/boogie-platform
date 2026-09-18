@@ -37,13 +37,17 @@ const CB = '#4A4030'
 
 function renderBlocks(blocks = [], nome = '') {
   const sub = s => (s || '').replace(/\{nome\}/gi, nome || 'amico')
+  const CBG = '#F5F0E8', CLINE = '#D4C9B0'
   return blocks.map(b => {
     switch (b.type) {
       case 'intestazione':
         return `<h2 style="font-family:${F};font-size:22px;font-weight:600;color:${CD};margin:0 0 20px;text-align:center;">${sub(b.testo)}</h2>`
 
+      case 'intestazione-piccola':
+        return `<h3 style="font-family:${F};font-size:16px;font-weight:600;color:${CD};margin:0 0 12px;text-transform:uppercase;letter-spacing:0.06em;">${sub(b.testo)}</h3>`
+
       case 'testo':
-        return `<p style="font-family:${F};font-size:15px;line-height:1.8;color:${CB};margin:0 0 20px;">${sub(b.contenuto).replace(/\n/g, '<br>')}</p>`
+        return `<p style="font-family:${F};font-size:15px;line-height:1.8;color:${CB};margin:0 0 20px;">${sub(b.contenuto || '').replace(/\n/g, '<br>')}</p>`
 
       case 'immagine': {
         if (!b.url) return ''
@@ -51,15 +55,24 @@ function renderBlocks(blocks = [], nome = '') {
         return b.link ? `<a href="${b.link}" style="display:block;text-decoration:none;">${img}</a>` : img
       }
 
+      case 'evidenza':
+        return `<table cellpadding="0" cellspacing="0" width="100%" style="background:${CBG};border-left:3px solid ${CG};margin-bottom:24px;"><tr><td style="padding:16px 20px;"><p style="font-family:${F};font-size:15px;line-height:1.7;color:${CB};margin:0;">${sub(b.contenuto || '').replace(/\n/g, '<br>')}</p></td></tr></table>`
+
+      case 'lista': {
+        const voci = (b.voci || '').split('\n').filter(v => v.trim())
+        const items = voci.map(v => `<li style="font-family:${F};font-size:15px;line-height:1.8;color:${CB};margin-bottom:6px;">${sub(v.trim())}</li>`).join('')
+        return `<ul style="margin:0 0 20px;padding-left:20px;">${items}</ul>`
+      }
+
       case 'pulsante': {
         let bg = CG, color = CD, border = ''
-        if (b.stile === 'dark')  { bg = CD;       color = 'white' }
-        if (b.stile === 'light') { bg = '#F5F0E8'; color = CD; border = ';border:1px solid #D4C9B0' }
+        if (b.stile === 'dark')  { bg = CD;   color = 'white' }
+        if (b.stile === 'light') { bg = CBG;  border = ';border:1px solid ' + CLINE }
         return `<p style="text-align:center;margin:0 0 24px;"><a href="${b.href || '#'}" style="display:inline-block;background:${bg};color:${color};text-decoration:none;padding:12px 28px;font-family:${F};font-size:13px;font-weight:600;letter-spacing:0.05em;border-radius:4px${border};">${b.testo || 'Clicca qui'}</a></p>`
       }
 
       case 'separatore':
-        return `<hr style="border:none;border-top:1px solid #D4C9B0;margin:24px 0;">`
+        return `<hr style="border:none;border-top:1px solid ${CLINE};margin:24px 0;">`
 
       default:
         return ''
