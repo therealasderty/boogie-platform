@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import styles from './Sidebar.module.css'
 import {
   IconHome, IconCalendar, IconFidelity,
-  IconClienti, IconLogout, IconMenu, IconClose, IconAnalytics, IconAgenda, IconClock, IconForkKnife, IconImages, IconFaq, IconBlog, IconLocalSeo, IconStar, IconSocialStudio, IconDesign, IconExternalLink,
+  IconClienti, IconLogout, IconMenu, IconClose, IconAnalytics, IconAgenda, IconClock, IconForkKnife, IconImages, IconFaq, IconBlog, IconLocalSeo, IconStar, IconSocialStudio, IconDesign, IconExternalLink, IconMarketing,
 } from '../icons/index.jsx'
 
 const NAV_ITEMS = [
