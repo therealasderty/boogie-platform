@@ -1,0 +1,476 @@
+/* EmailMarketingPanel.module.css */
+
+/* ── Header pagina ─────────────────────────────────────────────────────────── */
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.pageTitle {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 4px;
+}
+.pageSubtitle {
+  font-size: 0.8rem;
+  color: var(--text3);
+  margin: 0;
+}
+
+/* ── Stati badge ───────────────────────────────────────────────────────────── */
+.statoBadge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+}
+
+/* ── Grid campagne ─────────────────────────────────────────────────────────── */
+.campagneGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.campagnaCard {
+  background: var(--bg2);
+  border: var(--border-style);
+  border-radius: var(--radius);
+  padding: 20px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.campagnaCard:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow);
+}
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.cardTitolo {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+.cardOggetto {
+  font-size: 0.78rem;
+  color: var(--text3);
+  margin: 0 0 12px;
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cardMeta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--text3);
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border2);
+}
+
+/* ── Dettaglio campagna ────────────────────────────────────────────────────── */
+.dettaglio {}
+.dettaglioHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.dettaglioTitolo {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dettaglioTitolo .pageTitle {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+/* ── Tabs ──────────────────────────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border2);
+  padding-bottom: 0;
+}
+.tabs .btn-toggle {
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  margin-bottom: -1px;
+}
+.tabs .btn-toggle.active {
+  border-bottom-color: var(--accent);
+}
+
+/* ── Tab Info ──────────────────────────────────────────────────────────────── */
+.infoTab {
+  max-width: 560px;
+}
+.formGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.infoNote {
+  background: var(--bg3);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  font-size: 0.8rem;
+  color: var(--text2);
+  line-height: 1.6;
+}
+.infoNote p { margin: 0 0 4px; }
+.infoNote p:last-child { margin: 0; }
+
+/* ── Form fields (condivisi) ───────────────────────────────────────────────── */
+.fieldLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text2);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.fieldInput,
+.fieldSelect {
+  background: var(--bg-input);
+  border: var(--border-style);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: var(--text);
+  font-family: var(--font-body);
+  width: 100%;
+  box-sizing: border-box;
+}
+.fieldInput:focus,
+.fieldSelect:focus,
+.fieldTextarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.fieldTextarea {
+  background: var(--bg-input);
+  border: var(--border-style);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  color: var(--text);
+  font-family: var(--font-body);
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  line-height: 1.6;
+}
+.hint {
+  font-size: 0.7rem;
+  color: var(--text3);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ── Tab Template ──────────────────────────────────────────────────────────── */
+.templateTab {
+  max-width: 640px;
+}
+.blockToolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: var(--bg3);
+  border-radius: var(--radius);
+}
+.toolbarLabel {
+  font-size: 0.75rem;
+  color: var(--text3);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: 4px;
+}
+.blockList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.emptyBlocks {
+  font-size: 0.82rem;
+  color: var(--text3);
+  text-align: center;
+  padding: 32px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}
+.blockCard {
+  border: var(--border-style);
+  border-radius: var(--radius);
+  background: var(--bg2);
+  overflow: hidden;
+}
+.blockCardOpen {
+  border-color: var(--accent);
+}
+.blockHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  background: var(--bg2);
+}
+.blockHeader:hover { background: var(--bg3); }
+.blockType {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text2);
+}
+.blockActions {
+  display: flex;
+  gap: 4px;
+}
+.blockBody {
+  padding: 14px 16px;
+  border-top: 1px solid var(--border2);
+  background: var(--bg);
+}
+.blockFields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.separatorNote {
+  font-size: 0.78rem;
+  color: var(--text3);
+  margin: 0;
+}
+.templateActions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.previewWrap {
+  border: var(--border-style);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.previewLabel {
+  font-size: 0.72rem;
+  color: var(--text3);
+  padding: 8px 14px;
+  background: var(--bg3);
+  margin: 0;
+  border-bottom: 1px solid var(--border2);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.previewIframe {
+  width: 100%;
+  height: 600px;
+  border: none;
+  background: white;
+  display: block;
+}
+
+/* ── Tab Contatti ──────────────────────────────────────────────────────────── */
+.contattiTab {}
+.statsRow {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.statCard {
+  background: var(--bg2);
+  border: var(--border-style);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  text-align: center;
+  min-width: 80px;
+}
+.statCardOggi {
+  border-color: var(--accent);
+}
+.statNum {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.statLabel {
+  font-size: 0.7rem;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.importBox {
+  background: var(--bg2);
+  border: var(--border-style);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+.importTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 8px;
+}
+.importHint {
+  font-size: 0.78rem;
+  color: var(--text3);
+  margin: 0 0 12px;
+  line-height: 1.6;
+}
+.importHint code {
+  background: var(--bg3);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 0.85em;
+}
+.csvTextarea {
+  background: var(--bg-input);
+  border: var(--border-style);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 0.83rem;
+  font-family: monospace;
+  color: var(--text);
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  margin-bottom: 12px;
+}
+.csvTextarea:focus { outline: none; border-color: var(--accent); }
+.importRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+}
+.maxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text2);
+}
+.maxInput {
+  background: var(--bg-input);
+  border: var(--border-style);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  color: var(--text);
+  width: 70px;
+  text-align: center;
+}
+.maxInput:focus { outline: none; border-color: var(--accent); }
+.msgOk  { font-size: 0.8rem; color: var(--success); margin: 10px 0 0; }
+.msgErr { font-size: 0.8rem; color: var(--danger);  margin: 10px 0 0; }
+
+.listTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 12px;
+}
+.contattiList {}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.table th {
+  text-align: left;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text3);
+  font-weight: 600;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border2);
+}
+.table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border2);
+  color: var(--text2);
+}
+.table tr:last-child td { border-bottom: none; }
+.table tr:hover td { background: var(--bg3); }
+.contattoStato {
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+/* ── Stato vuoto / loading ─────────────────────────────────────────────────── */
+.loading {
+  font-size: 0.82rem;
+  color: var(--text3);
+  padding: 32px 0;
+}
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--text3);
+  padding: 64px 0;
+  text-align: center;
+}
+.empty p { font-size: 0.9rem; margin: 0; }
+.emptyList {
+  font-size: 0.82rem;
+  color: var(--text3);
+  padding: 24px 0;
+  text-align: center;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .pageHeader { flex-direction: column; }
+  .campagneGrid { grid-template-columns: 1fr; }
+  .statsRow { gap: 8px; }
+  .statCard { min-width: 60px; padding: 10px 12px; }
+  .importRow { flex-direction: column; align-items: flex-start; }
+  .templateActions { flex-direction: column; align-items: stretch; }
+  .previewIframe { height: 400px; }
+}

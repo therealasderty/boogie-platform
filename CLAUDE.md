@@ -38,6 +38,8 @@ Monorepo in `/boogie-platform` su GitHub: therealasderty.
 | `RichiesteContatti` | Nome, Cognome, Email, Telefono, Messaggio, ConsensoMarketing |
 | `Configurazione` | `Chiave` (primary), `Valore` — impostazioni runtime. Record: `conferma_manuale_date` (JSON `[{id, descrizione, dataInizio, dataFine}]`) |
 | `WiFi_Clienti` | Email, Nome, Prima visita, Ultima visita, Contatore visite, Consenso marketing, MAC addresses, Fonte |
+| `CampagneMail` | Titolo, Stato (Bozza/Programmata/InCorso/Completata/Pausa), OggettoMail, Template (JSON array blocchi), DataCreazione, TotaleInviati |
+| `CampagneMailContatti` | CampagnaId (text), Email, Nome, Stato (DaInviare/Inviato/Errore), DataProgrammata (Date YYYY-MM-DD), DataInvio (text ISO), ErroreMsg |
 
 **Env var:** `AIRTABLE_TOKEN` / `AIRTABLE_BASE_ID` nelle Netlify Functions. `VITE_AIRTABLE_TOKEN` / `VITE_AIRTABLE_BASE_ID` nel dashboard Vite (separate).
 
