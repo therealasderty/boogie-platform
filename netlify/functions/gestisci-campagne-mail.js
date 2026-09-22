@@ -10,9 +10,14 @@
 //   TotaleInviati   (Number)
 //
 // ── Airtable: tabella "CampagneMailContatti" ──────────────────────────────────
-//   CampagnaId      (Single line text — record ID campagna)
+//   CampagnaId      (Single line text — record ID campagna, oppure "global")
 //   Email           (Email)
 //   Nome            (Single line text)
+//   Azienda         (Single line text)
+//   Indirizzo       (Long text)
+//   SitoWeb         (URL o Single line text)
+//   DistanzaKm      (Number)
+//   Ambito          (Single line text)
 //   Stato           (Single select): DaInviare | Inviato | Errore
 //   DataProgrammata (Date — YYYY-MM-DD, no time)
 //   DataInvio       (Single line text — ISO)
@@ -24,7 +29,10 @@
 // GET  ?tipo=statistiche&campagnaId=recXXX
 // POST {tipo:'campagna', titolo, oggettoMail, template}
 // PATCH{tipo:'campagna', id, titolo?, oggettoMail?, template?, stato?}
-// POST {tipo:'importa-contatti', campagnaId, contatti:[{email,nome}], maxPerGiorno:200}
+// POST {tipo:'importa-contatti', campagnaId, contatti:[...], maxPerGiorno:200}
+// POST {tipo:'copia-globali-in-campagna', campagnaId, maxPerGiorno:200}
+// POST {tipo:'avvia-campagna', campagnaId, maxPerGiorno:200}
+//       → copia globali mancanti, schedule 200/giorno da oggi, stato InCorso
 // DELETE ?tipo=campagna&id=recXXX
 // DELETE ?tipo=contatto&id=recXXX
 
@@ -66,12 +74,56 @@ function mapContatto(r) {
     email:           r.fields['Email']            || '',
     nome:            r.fields['Nome']             || '',
     azienda:         r.fields['Azienda']          || '',
+    indirizzo:       r.fields['Indirizzo']        || '',
+    sitoWeb:         r.fields['SitoWeb']          || '',
+    distanzaKm:      r.fields['DistanzaKm']       ?? null,
+    ambito:          r.fields['Ambito']           || '',
     stato:           r.fields['Stato']            || 'DaInviare',
     dataProgrammata: r.fields['DataProgrammata']  || '',
     dataInvio:       r.fields['DataInvio']        || '',
     erroreMsg:       r.fields['ErroreMsg']        || '',
   }
 }
+
+function sanitizeEmail(raw) {
+  if (!raw) return ''
+  let e = String(raw).trim()
+  try { e = decodeURIComponent(e.replace(/\+/g, ' ')) } catch { /* keep */ }
+  return e.replace(/\s+/g, '').toLowerCase()
+}
+
+function isValidEmail(email) {
+  return Boolean(email && email.includes('@') && email.includes('.') && !email.includes(' '))
+}
+
+/** Costruisce i fields Airtable per un contatto importato. */
+function buildContattoFields(c, campagnaId, dataProgrammata) {
+  const email = sanitizeEmail(c.email)
+  const azienda = String(c.azienda || c.nome || '').trim()
+  const nome = String(c.nome || c.azienda || '').trim()
+  const fields = {
+    'CampagnaId':      campagnaId,
+    'Email':           email,
+    'Nome':            nome,
+    'Azienda':         azienda,
+    'Stato':           'DaInviare',
+    'DataProgrammata': dataProgrammata,
+  }
+  const indirizzo = String(c.indirizzo || '').trim()
+  const sitoWeb = String(c.sitoWeb || '').trim()
+  const ambito = String(c.ambito || '').trim()
+  if (indirizzo) fields['Indirizzo'] = indirizzo
+  if (sitoWeb) fields['SitoWeb'] = sitoWeb
+  if (ambito) fields['Ambito'] = ambito
+  if (c.distanzaKm != null && c.distanzaKm !== '') {
+    const n = Number(String(c.distanzaKm).replace(',', '.'))
+    if (Number.isFinite(n)) fields['DistanzaKm'] = n
+  }
+  return fields
+}
+
+const CONTATTO_COPY_FIELDS = ['Email', 'Nome', 'Azienda', 'Indirizzo', 'SitoWeb', 'DistanzaKm', 'Ambito']
+
 
 // Esegui N richieste Airtable in parallelo rispettando il rate limit (5 req/s)
 async function batchParallel(items, chunkSize, fn) {
@@ -125,7 +177,9 @@ async function fetchAll(table, formula, fields = [], sort = []) {
   let records = []
   let offset  = null
   do {
-    const params = new URLSearchParams({ maxRecords: '200' })
+    // pageSize = records per pagina (max 100). NON usare maxRecords:
+    // maxRecords taglia il totale complessivo e ferma la paginazione a N.
+    const params = new URLSearchParams({ pageSize: '100' })
     if (formula) params.set('filterByFormula', formula)
     if (offset)  params.set('offset', offset)
     fields.forEach((f, i)  => params.set(`fields[${i}]`, f))
@@ -255,33 +309,39 @@ exports.handler = async (event) => {
         if (!campagnaId) return err('campagnaId mancante', 400)
         if (!contatti.length) return err('nessun contatto', 400)
 
-        // Calcola DataProgrammata per ogni contatto (200 al giorno partendo da oggi)
+        // Dedup per email (tiene il primo)
+        const seen = new Set()
+        const unici = []
+        let scartati = 0
+        for (const c of contatti) {
+          const email = sanitizeEmail(c.email)
+          if (!isValidEmail(email)) { scartati++; continue }
+          if (seen.has(email)) { scartati++; continue }
+          seen.add(email)
+          unici.push({ ...c, email })
+        }
+        if (!unici.length) return err('nessuna email valida trovata', 400)
+
         const oggi = new Date()
-        const records = contatti.map(({ email, nome, azienda }, i) => {
-          const giornoOffset = Math.floor(i / maxPerGiorno)
+        const max = Math.max(1, Number(maxPerGiorno) || 200)
+        const records = unici.map((c, i) => {
+          const giornoOffset = Math.floor(i / max)
           const data = new Date(oggi)
           data.setDate(data.getDate() + giornoOffset)
           return {
-            fields: {
-              'CampagnaId':      campagnaId,
-              'Email':           email.trim().toLowerCase(),
-              'Nome':            (nome    || '').trim(),
-              'Azienda':         (azienda || '').trim(),
-              'Stato':           'DaInviare',
-              'DataProgrammata': data.toISOString().split('T')[0],
-            },
+            fields: buildContattoFields(c, campagnaId, data.toISOString().split('T')[0]),
           }
         })
 
         await createBatch(T_CONT, records)
-        return ok({ success: true, importati: records.length })
+        return ok({ success: true, importati: records.length, scartati })
       }
 
       // Copia contatti globali in una campagna con scheduling
       if (body.tipo === 'copia-globali-in-campagna') {
         const { campagnaId, maxPerGiorno = 200 } = body
         if (!campagnaId) return err('campagnaId mancante', 400)
-        const globali = await fetchAll(T_CONT, `{CampagnaId}='global'`, ['Email', 'Nome', 'Azienda'])
+        const globali = await fetchAll(T_CONT, `{CampagnaId}='global'`, CONTATTO_COPY_FIELDS)
         if (!globali.length) return ok({ success: true, copiati: 0 })
         const oggi = new Date()
         const max  = Math.min(Math.max(1, maxPerGiorno), 200)
@@ -290,18 +350,121 @@ exports.handler = async (event) => {
           const data = new Date(oggi)
           data.setDate(data.getDate() + giornoOffset)
           return {
-            fields: {
-              'CampagnaId':      campagnaId,
-              'Email':           fields['Email']   || '',
-              'Nome':            fields['Nome']    || '',
-              'Azienda':         fields['Azienda'] || '',
-              'Stato':           'DaInviare',
-              'DataProgrammata': data.toISOString().split('T')[0],
-            },
+            fields: buildContattoFields({
+              email:      fields['Email'],
+              nome:       fields['Nome'],
+              azienda:    fields['Azienda'],
+              indirizzo:  fields['Indirizzo'],
+              sitoWeb:    fields['SitoWeb'],
+              distanzaKm: fields['DistanzaKm'],
+              ambito:     fields['Ambito'],
+            }, campagnaId, data.toISOString().split('T')[0]),
           }
         })
         await createBatch(T_CONT, records)
         return ok({ success: true, copiati: records.length })
+      }
+
+      // Avvia campagna: copia globali mancanti + schedule + InCorso
+      if (body.tipo === 'avvia-campagna') {
+        const { campagnaId, maxPerGiorno = 200 } = body
+        if (!campagnaId || campagnaId === 'global') return err('campagnaId mancante', 400)
+
+        const campRes = await fetch(`${atUrl(T_CAMP)}/${campagnaId}`, { headers: AT_HEADERS })
+        if (!campRes.ok) return err('Campagna non trovata', 404)
+        const campData = await campRes.json()
+        if (!(campData.fields['OggettoMail'] || '').trim()) {
+          return err('Imposta prima l’oggetto email', 400)
+        }
+
+        const max = Math.min(Math.max(1, Number(maxPerGiorno) || 200), 200)
+        const esistenti = await fetchAll(T_CONT, `{CampagnaId}='${campagnaId}'`, ['Email', 'Stato', 'DataProgrammata'])
+        const emailsGia = new Set(
+          esistenti.map(r => sanitizeEmail(r.fields['Email'])).filter(Boolean)
+        )
+        const inCoda = esistenti.filter(r => (r.fields['Stato'] || '') === 'DaInviare')
+
+        const globali = await fetchAll(T_CONT, `{CampagnaId}='global'`, CONTATTO_COPY_FIELDS)
+        const daCopiare = globali.filter(r => {
+          const email = sanitizeEmail(r.fields['Email'])
+          return email && !emailsGia.has(email)
+        })
+
+        // Scheduling: chunk da `max` a partire da oggi (o dall’ultima data in coda se non piena)
+        const oggiStr = new Date().toISOString().split('T')[0]
+        let cursorDay = oggiStr
+        let slotNelGiorno = 0
+
+        if (inCoda.length) {
+          const byDay = {}
+          for (const r of inCoda) {
+            const d = r.fields['DataProgrammata'] || oggiStr
+            byDay[d] = (byDay[d] || 0) + 1
+          }
+          const giorni = Object.keys(byDay).sort()
+          const lastDay = giorni[giorni.length - 1]
+          const filled = byDay[lastDay] || 0
+          if (filled < max) {
+            cursorDay = lastDay
+            slotNelGiorno = filled
+          } else {
+            const next = new Date(lastDay + 'T12:00:00')
+            next.setDate(next.getDate() + 1)
+            cursorDay = next.toISOString().split('T')[0]
+            slotNelGiorno = 0
+          }
+        }
+
+        let copiati = 0
+        if (daCopiare.length) {
+          const records = daCopiare.map(({ fields }) => {
+            if (slotNelGiorno >= max) {
+              const next = new Date(cursorDay + 'T12:00:00')
+              next.setDate(next.getDate() + 1)
+              cursorDay = next.toISOString().split('T')[0]
+              slotNelGiorno = 0
+            }
+            const dataProgrammata = cursorDay
+            slotNelGiorno++
+            return {
+              fields: buildContattoFields({
+                email:      fields['Email'],
+                nome:       fields['Nome'],
+                azienda:    fields['Azienda'],
+                indirizzo:  fields['Indirizzo'],
+                sitoWeb:    fields['SitoWeb'],
+                distanzaKm: fields['DistanzaKm'],
+                ambito:     fields['Ambito'],
+              }, campagnaId, dataProgrammata),
+            }
+          })
+          await createBatch(T_CONT, records)
+          copiati = records.length
+        }
+
+        const daInviareDopo = inCoda.length + copiati
+        if (daInviareDopo === 0 && esistenti.length === 0) {
+          return err('Nessun contatto: importa la lista globale o aggiungi contatti alla campagna', 400)
+        }
+
+        const nuovoStato = daInviareDopo === 0 ? 'Completata' : 'InCorso'
+        const patchRes = await fetch(`${atUrl(T_CAMP)}/${campagnaId}`, {
+          method: 'PATCH', headers: AT_HEADERS,
+          body: JSON.stringify({ fields: { Stato: nuovoStato } }),
+        })
+        if (!patchRes.ok) throw new Error(await patchRes.text())
+        const patchJson = await patchRes.json()
+
+        return ok({
+          success: true,
+          copiati,
+          giaPresenti: esistenti.length,
+          daInviare: daInviareDopo,
+          maxPerGiorno: max,
+          giorniStimati: daInviareDopo ? Math.ceil(daInviareDopo / max) : 0,
+          stato: nuovoStato,
+          campagna: mapCampagna(patchJson),
+        })
       }
 
       return err('tipo non valido', 400)
