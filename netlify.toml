@@ -42,7 +42,8 @@
   schedule = "0 4 1 * *"
 
 [functions.invia-campagna-mail]
-  schedule = "55 16 * * *"
+  schedule = "0 8 * * *"
+  timeout = 26
 
 [functions."pubblica-social"]
   timeout = 26

@@ -21,6 +21,9 @@ import { toJpeg } from 'html-to-image'
 import { jsPDF } from 'jspdf'
 import styles from './EmailMarketingPanel.module.css'
 
+/** Bump a ogni release del modulo — confronta con l’online dopo il deploy Netlify. */
+export const EMAIL_MKTG_VERSION = '2026.09.24-a'
+
 // ─── Costanti ─────────────────────────────────────────────────────────────────
 
 const STATI_CAMPAGNA = ['Bozza', 'Programmata', 'InCorso', 'Completata', 'Pausa']
@@ -922,7 +925,7 @@ function CampagnaTab({ campagna, onSaved, onContinuaAvvio }) {
                 />
               </div>
               <p className={styles.editorHint}>
-                Invio automatico alle 10:00, max 200 email/giorno.
+                Invio: prime 200 subito all’avvio, poi max 200/giorno alle 10:00.
                 Quando la grafica è pronta, passa allo step <strong>Avvio</strong>.
               </p>
             </div>
@@ -1107,8 +1110,8 @@ function AvvioStep({ campagna, onCampagnaUpdate, onTornaGrafica }) {
 
       <div className={styles.avvioNote}>
         <p>
-          All’avvio i contatti della <strong>lista globale</strong> vengono copiati in questa campagna
-          e programmati a 200 al giorno (alle 10:00).
+          All’avvio i contatti della <strong>lista globale</strong> vengono copiati in questa campagna:
+          le <strong>prime 200 partono subito</strong>, le altre a 200 al giorno alle 10:00.
           {countGlobali === 0 && (
             <> La lista è vuota: aggiungili dalla scheda <strong>Contatti</strong> in home Email Marketing.</>
           )}
@@ -1173,7 +1176,8 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
     if (!confirm(
       `Avviare la campagna?\n\n` +
       `• Copia i contatti dalla lista globale (già presenti vengono saltati)\n` +
-      `• Programma max 200 email/giorno\n` +
+      `• Invia subito le prime 200 email\n` +
+      `• Dal giorno dopo: max 200/giorno alle 10:00\n` +
       `• Imposta stato In corso\n\n` +
       `Contatti in lista globale: ${n}`
     )) return
@@ -1188,15 +1192,43 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
       })
       const data = await res.json()
       if (!data.success) throw new Error(data.error)
+
+      onAvviata?.(data.campagna)
+
+      if (data.stato === 'Completata') {
+        setMsg({ tipo: 'ok', testo: 'Nessun contatto da inviare — campagna completata.' })
+        return
+      }
+
+      // Primo lotto subito (a chunk da 40 per restare entro il timeout Netlify)
+      setMsg({ tipo: 'ok', testo: 'Campagna avviata. Invio del primo lotto in corso…' })
+      let inviatiSubito = 0
+      let erroriSubito = 0
+      for (let i = 0; i < 5; i++) {
+        const invRes = await authFetch('/.netlify/functions/invia-campagna-mail', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ campagnaId: campagna.id, limit: 40 }),
+        })
+        const invData = await invRes.json().catch(() => ({}))
+        if (!invRes.ok || !invData.success) {
+          if (i === 0 && invData.error) throw new Error(invData.error || 'Invio immediato fallito')
+          break
+        }
+        inviatiSubito += invData.inviati || 0
+        erroriSubito += invData.errori || 0
+        if (!invData.inviati || invData.inviati < 40) break
+      }
+
       const giorni = data.giorniStimati || 0
       setMsg({
         tipo: 'ok',
-        testo: data.stato === 'Completata'
-          ? 'Nessun contatto da inviare — campagna completata.'
-          : `Campagna in corso. ${data.copiati} nuovi contatti in coda` +
-            (data.giaPresenti ? ` (${data.giaPresenti} già presenti)` : '') +
-            (giorni ? ` · ~${giorni} ${giorni === 1 ? 'giorno' : 'giorni'} di invio` : '') +
-            '.',
+        testo:
+          `Campagna in corso. Inviate subito ${inviatiSubito} email` +
+          (erroriSubito ? ` (${erroriSubito} errori)` : '') +
+          (data.copiati ? ` · ${data.copiati} nuovi in coda` : '') +
+          (giorni > 1 ? ` · resto in ~${giorni - 1} giorni (cron 10:00)` : '') +
+          '.',
       })
       onAvviata?.(data.campagna)
     } catch (e) {
@@ -1240,7 +1272,7 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
                 {countGlobali > 0 && <> → ~{Math.ceil(countGlobali / 200)} giorni</>}
               </>
             )}
-            . Invio automatico alle 10:00.
+            . All’avvio le prime 200 partono subito; dal giorno dopo alle 10:00.
           </p>
         </div>
         <div className={styles.avviaActions}>
@@ -1567,6 +1599,7 @@ function DettaglioCampagna({ campagna: initialCampagna, onBack, onDeleted }) {
         <div className={styles.dettaglioTitolo}>
           <h2 className={styles.pageTitle}>{campagna.titolo}</h2>
           <StatoBadge stato={campagna.stato} />
+          <span className={styles.versionTagInline}>v{EMAIL_MKTG_VERSION}</span>
         </div>
         <div className={styles.dettaglioActions}>
           <button className="btn-icon danger" onClick={elimina} disabled={deleting} title="Elimina campagna">
@@ -1656,6 +1689,7 @@ function ListaCampagne({ onSelect }) {
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.pageTitle}>Email Marketing</h1>
+          <p className={styles.versionTag}>v{EMAIL_MKTG_VERSION}</p>
         </div>
         {homeTab === 'campagne' && (
           <button className="btn-outline-accent" onClick={nuovaCampagna} disabled={creating}>

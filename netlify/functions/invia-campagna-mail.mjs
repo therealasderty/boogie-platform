@@ -1,10 +1,12 @@
 // netlify/functions/invia-campagna-mail.mjs
 // Scheduled function — ogni giorno alle 10:00 (Europe/Rome)
 // Invia le email di marketing in coda: max 200 al giorno (risparmio per transazionali).
+// Chiamabile anche via POST dal dashboard all’avvio campagna (primo lotto immediato).
 //
-// Schedule (da aggiungere in netlify.toml):
+// Schedule (netlify.toml):
 //   [functions.invia-campagna-mail]
 //   schedule = "0 8 * * *"   ← 10:00 Europe/Rome = 08:00 UTC in estate
+//   timeout = 26
 //
 // Env vars richieste:
 //   AIRTABLE_TOKEN, AIRTABLE_BASE_ID
@@ -271,136 +273,200 @@ async function sendBrevo(toEmail, toName, subject, htmlContent) {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
-export const handler = async () => {
-  const oggi = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+function oggiRome() {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Rome',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date()) // YYYY-MM-DD
+}
 
-  console.log(`[invia-campagna-mail] ${oggi} — avvio, max ${MAX_PER_GIORNO} email`)
+/**
+ * Invia fino a `limit` email con DataProgrammata <= oggi per campagne InCorso/Programmata.
+ * @param {{ limit?: number, campagnaId?: string }} opts
+ */
+export async function runInvioCampagna(opts = {}) {
+  const limit = Math.min(Math.max(1, Number(opts.limit) || MAX_PER_GIORNO), MAX_PER_GIORNO)
+  const onlyCampagna = (opts.campagnaId || '').trim() || null
+  const oggi = oggiRome()
+
+  console.log(`[invia-campagna-mail] ${oggi} — avvio, max ${limit} email` +
+    (onlyCampagna ? ` (campagna ${onlyCampagna})` : ''))
+
+  const formulaParts = [
+    `{Stato}='DaInviare'`,
+    `{CampagnaId}!='global'`,
+  ]
+  if (onlyCampagna) formulaParts.push(`{CampagnaId}='${onlyCampagna}'`)
+
+  const params = new URLSearchParams({
+    filterByFormula: `AND(${formulaParts.join(',')})`,
+    'sort[0][field]':     'DataProgrammata',
+    'sort[0][direction]': 'asc',
+    maxRecords: String(limit * 5),
+  })
+  const res  = await fetch(`${atUrl(T_CONT)}?${params}`, { headers: AT_HEADERS })
+  if (!res.ok) throw new Error(`Airtable contatti: ${await res.text()}`)
+  const json = await res.json()
+
+  const candidati = (json.records || [])
+    .filter(r => (r.fields['DataProgrammata'] || '') <= oggi)
+
+  if (!candidati.length) {
+    console.log('[invia-campagna-mail] Nessuna email da inviare oggi.')
+    return { inviati: 0, errori: 0, rimanentiOggi: 0 }
+  }
+
+  const campagneCache = {}
+  const campagneIds = [...new Set(candidati.map(r => r.fields['CampagnaId']).filter(Boolean))]
+  await Promise.all(campagneIds.map(async (campagnaId) => {
+    const cres = await fetch(`${atUrl(T_CAMP)}/${campagnaId}`, { headers: AT_HEADERS })
+    if (!cres.ok) { console.error(`Campagna ${campagnaId} non trovata`); return }
+    const data = await cres.json()
+    campagneCache[campagnaId] = {
+      id:          campagnaId,
+      stato:       data.fields['Stato'] || 'Bozza',
+      oggettoMail: data.fields['OggettoMail'] || '(nessun oggetto)',
+      template:    data.fields['Template'] || '[]',
+      titolo:      data.fields['Titolo'] || '',
+      totaleInviati: data.fields['TotaleInviati'] || 0,
+    }
+  }))
+
+  const ATTIVE = new Set(['InCorso', 'Programmata'])
+  const daInviare = candidati
+    .filter(r => {
+      const c = campagneCache[r.fields['CampagnaId']]
+      return c && ATTIVE.has(c.stato)
+    })
+    .slice(0, limit)
+
+  if (!daInviare.length) {
+    console.log('[invia-campagna-mail] Contatti in coda ma nessuna campagna InCorso/Programmata.')
+    return { inviati: 0, errori: 0, rimanentiOggi: candidati.length }
+  }
+
+  console.log(`[invia-campagna-mail] Da inviare: ${daInviare.length}`)
+
+  let inviati = 0, errori = 0
+  const campagneTotaliInviati = {}
+
+  for (const r of daInviare) {
+    const campagnaId = r.fields['CampagnaId']
+    const campagna   = campagneCache[campagnaId]
+    if (!campagna) {
+      await atPatch(T_CONT, r.id, { Stato: 'Errore', ErroreMsg: 'Campagna non trovata' })
+      errori++
+      continue
+    }
+
+    const email  = r.fields['Email'] || ''
+    const nome   = r.fields['Nome'] || r.fields['Azienda'] || ''
+    const html   = buildHtml(campagna, nome)
+
+    try {
+      await sendBrevo(email, nome, campagna.oggettoMail, html)
+      await atPatch(T_CONT, r.id, {
+        Stato:     'Inviato',
+        DataInvio: new Date().toISOString(),
+        ErroreMsg: '',
+      })
+      campagneTotaliInviati[campagnaId] = (campagneTotaliInviati[campagnaId] || 0) + 1
+      inviati++
+    } catch (e) {
+      console.error(`[invia-campagna-mail] Errore invio a ${email}:`, e.message)
+      await atPatch(T_CONT, r.id, {
+        Stato:     'Errore',
+        ErroreMsg: e.message.slice(0, 500),
+      })
+      errori++
+    }
+
+    await new Promise(r => setTimeout(r, 80))
+  }
+
+  await Promise.all(Object.entries(campagneTotaliInviati).map(([campagnaId, count]) => {
+    const c = campagneCache[campagnaId]
+    const attuale = (c?.totaleInviati || 0) + count
+    if (c) c.totaleInviati = attuale
+    return atPatch(T_CAMP, campagnaId, { TotaleInviati: attuale })
+      .catch(e => console.error(`Aggiornamento TotaleInviati campagna ${campagnaId}:`, e.message))
+  }))
+
+  const campagneDaVerificare = new Set([
+    ...Object.keys(campagneTotaliInviati),
+    ...campagneIds.filter(id => ATTIVE.has(campagneCache[id]?.stato)),
+  ])
+  await Promise.all([...campagneDaVerificare].map(async (campagnaId) => {
+    const c = campagneCache[campagnaId]
+    if (!c || !ATTIVE.has(c.stato)) return
+    const check = new URLSearchParams({
+      filterByFormula: `AND({CampagnaId}='${campagnaId}',{Stato}='DaInviare')`,
+      maxRecords: '1',
+    })
+    const cres = await fetch(`${atUrl(T_CONT)}?${check}`, { headers: AT_HEADERS })
+    if (!cres.ok) return
+    const cjson = await cres.json()
+    if ((cjson.records || []).length === 0) {
+      console.log(`[invia-campagna-mail] Campagna ${campagnaId} completata`)
+      await atPatch(T_CAMP, campagnaId, { Stato: 'Completata' })
+    }
+  }))
+
+  const rimanentiOggi = Math.max(0, candidati.filter(r => {
+    const c = campagneCache[r.fields['CampagnaId']]
+    return c && ATTIVE.has(c.stato)
+  }).length - inviati)
+
+  console.log(`[invia-campagna-mail] Completato: ${inviati} inviati, ${errori} errori`)
+  return { inviati, errori, rimanentiOggi, oggi }
+}
+
+const CORS = {
+  'Access-Control-Allow-Origin':  '*',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Content-Type': 'application/json',
+}
+
+export const handler = async (event = {}) => {
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers: CORS, body: '' }
+  }
+
+  const isSchedule = (event.headers?.['x-netlify-event'] || event.headers?.['X-Netlify-Event'] || '') === 'schedule'
+  if (!isSchedule && event.httpMethod) {
+    try {
+      const { verifyToken } = require('./verifyToken')
+      if (!verifyToken(event)) {
+        return { statusCode: 401, headers: CORS, body: JSON.stringify({ success: false, error: 'Non autorizzato' }) }
+      }
+    } catch (e) {
+      console.warn('[invia-campagna-mail] verifyToken non disponibile:', e.message)
+    }
+  }
+
+  let opts = {}
+  try {
+    if (event.body) opts = JSON.parse(event.body)
+  } catch { /* ignore */ }
+  if (event.queryStringParameters?.campagnaId) opts.campagnaId = event.queryStringParameters.campagnaId
+  if (event.queryStringParameters?.limit) opts.limit = Number(event.queryStringParameters.limit)
 
   try {
-    // 1. Contatti DaInviare (esclude lista globale), buffer per filtrare per stato campagna
-    const params = new URLSearchParams({
-      filterByFormula: `AND({Stato}='DaInviare',{CampagnaId}!='global')`,
-      'sort[0][field]':     'DataProgrammata',
-      'sort[0][direction]': 'asc',
-      maxRecords: String(MAX_PER_GIORNO * 5),
-    })
-    const res  = await fetch(`${atUrl(T_CONT)}?${params}`, { headers: AT_HEADERS })
-    if (!res.ok) throw new Error(`Airtable contatti: ${await res.text()}`)
-    const json = await res.json()
-
-    const candidati = (json.records || [])
-      .filter(r => (r.fields['DataProgrammata'] || '') <= oggi)
-
-    if (!candidati.length) {
-      console.log('[invia-campagna-mail] Nessuna email da inviare oggi.')
-      return { statusCode: 200 }
+    const result = await runInvioCampagna(opts)
+    return {
+      statusCode: 200,
+      headers: CORS,
+      body: JSON.stringify({ success: true, ...result }),
     }
-
-    // 2. Carica campagne e tieni solo InCorso / Programmata
-    const campagneCache = {}
-    const campagneIds = [...new Set(candidati.map(r => r.fields['CampagnaId']).filter(Boolean))]
-    await Promise.all(campagneIds.map(async (campagnaId) => {
-      const cres = await fetch(`${atUrl(T_CAMP)}/${campagnaId}`, { headers: AT_HEADERS })
-      if (!cres.ok) { console.error(`Campagna ${campagnaId} non trovata`); return }
-      const data = await cres.json()
-      campagneCache[campagnaId] = {
-        id:          campagnaId,
-        stato:       data.fields['Stato'] || 'Bozza',
-        oggettoMail: data.fields['OggettoMail'] || '(nessun oggetto)',
-        template:    data.fields['Template'] || '[]',
-        titolo:      data.fields['Titolo'] || '',
-        totaleInviati: data.fields['TotaleInviati'] || 0,
-      }
-    }))
-
-    const ATTIVE = new Set(['InCorso', 'Programmata'])
-    const daInviare = candidati
-      .filter(r => {
-        const c = campagneCache[r.fields['CampagnaId']]
-        return c && ATTIVE.has(c.stato)
-      })
-      .slice(0, MAX_PER_GIORNO)
-
-    if (!daInviare.length) {
-      console.log('[invia-campagna-mail] Contatti in coda ma nessuna campagna InCorso/Programmata.')
-      return { statusCode: 200 }
-    }
-
-    console.log(`[invia-campagna-mail] Da inviare: ${daInviare.length}`)
-
-    // 3. Invia — sequenziale per non saturare Brevo
-    let inviati = 0, errori = 0
-    const campagneTotaliInviati = {}
-
-    for (const r of daInviare) {
-      const campagnaId = r.fields['CampagnaId']
-      const campagna   = campagneCache[campagnaId]
-      if (!campagna) {
-        await atPatch(T_CONT, r.id, { Stato: 'Errore', ErroreMsg: 'Campagna non trovata' })
-        errori++
-        continue
-      }
-
-      const email  = r.fields['Email'] || ''
-      const nome   = r.fields['Nome'] || r.fields['Azienda'] || ''
-      const html   = buildHtml(campagna, nome)
-
-      try {
-        await sendBrevo(email, nome, campagna.oggettoMail, html)
-        await atPatch(T_CONT, r.id, {
-          Stato:     'Inviato',
-          DataInvio: new Date().toISOString(),
-          ErroreMsg: '',
-        })
-        campagneTotaliInviati[campagnaId] = (campagneTotaliInviati[campagnaId] || 0) + 1
-        inviati++
-      } catch (e) {
-        console.error(`[invia-campagna-mail] Errore invio a ${email}:`, e.message)
-        await atPatch(T_CONT, r.id, {
-          Stato:     'Errore',
-          ErroreMsg: e.message.slice(0, 500),
-        })
-        errori++
-      }
-
-      await new Promise(r => setTimeout(r, 150))
-    }
-
-    // 4. Aggiorna TotaleInviati
-    await Promise.all(Object.entries(campagneTotaliInviati).map(([campagnaId, count]) => {
-      const c = campagneCache[campagnaId]
-      const attuale = (c?.totaleInviati || 0) + count
-      if (c) c.totaleInviati = attuale
-      return atPatch(T_CAMP, campagnaId, { TotaleInviati: attuale })
-        .catch(e => console.error(`Aggiornamento TotaleInviati campagna ${campagnaId}:`, e.message))
-    }))
-
-    // 5. Auto-Completata se non restano DaInviare
-    const campagneDaVerificare = new Set([
-      ...Object.keys(campagneTotaliInviati),
-      ...campagneIds.filter(id => ATTIVE.has(campagneCache[id]?.stato)),
-    ])
-    await Promise.all([...campagneDaVerificare].map(async (campagnaId) => {
-      const c = campagneCache[campagnaId]
-      if (!c || !ATTIVE.has(c.stato)) return
-      const check = new URLSearchParams({
-        filterByFormula: `AND({CampagnaId}='${campagnaId}',{Stato}='DaInviare')`,
-        maxRecords: '1',
-      })
-      const cres = await fetch(`${atUrl(T_CONT)}?${check}`, { headers: AT_HEADERS })
-      if (!cres.ok) return
-      const cjson = await cres.json()
-      if ((cjson.records || []).length === 0) {
-        console.log(`[invia-campagna-mail] Campagna ${campagnaId} completata`)
-        await atPatch(T_CAMP, campagnaId, { Stato: 'Completata' })
-      }
-    }))
-
-    console.log(`[invia-campagna-mail] Completato: ${inviati} inviati, ${errori} errori`)
-    return { statusCode: 200 }
-
   } catch (e) {
     console.error('[invia-campagna-mail] Errore fatale:', e)
-    return { statusCode: 500 }
+    return {
+      statusCode: 500,
+      headers: CORS,
+      body: JSON.stringify({ success: false, error: e.message }),
+    }
   }
 }

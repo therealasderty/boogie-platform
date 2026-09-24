@@ -33,6 +33,7 @@
 // POST {tipo:'copia-globali-in-campagna', campagnaId, maxPerGiorno:200}
 // POST {tipo:'avvia-campagna', campagnaId, maxPerGiorno:200}
 //       → copia globali mancanti, schedule 200/giorno da oggi, stato InCorso
+//       → il client triggera subito invia-campagna-mail per il primo lotto
 // DELETE ?tipo=campagna&id=recXXX
 // DELETE ?tipo=contatto&id=recXXX
 
@@ -54,6 +55,23 @@ function atUrl(table) {
 
 function ok(body)  { return { statusCode: 200, headers: CORS, body: JSON.stringify(body) } }
 function err(msg, code = 500) { return { statusCode: code, headers: CORS, body: JSON.stringify({ success: false, error: msg }) } }
+
+/** Data calendario Europe/Rome (YYYY-MM-DD). */
+function oggiRome() {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Rome',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date())
+}
+
+/** Somma giorni a una data YYYY-MM-DD senza ambiguità di fuso. */
+function addDaysYmd(ymd, days) {
+  const [y, m, d] = ymd.split('-').map(Number)
+  const dt = new Date(Date.UTC(y, m - 1, d + days))
+  return dt.toISOString().slice(0, 10)
+}
 
 function mapCampagna(r) {
   return {
@@ -246,7 +264,7 @@ exports.handler = async (event) => {
           ['Stato', 'DataProgrammata'],
         )
         const stats = { totale: 0, DaInviare: 0, Inviato: 0, Errore: 0 }
-        const oggi  = new Date().toISOString().split('T')[0]
+        const oggi  = oggiRome()
         const tutteDate = []
         for (const r of records) {
           stats.totale++
@@ -391,7 +409,7 @@ exports.handler = async (event) => {
         })
 
         // Scheduling: chunk da `max` a partire da oggi (o dall’ultima data in coda se non piena)
-        const oggiStr = new Date().toISOString().split('T')[0]
+        const oggiStr = oggiRome()
         let cursorDay = oggiStr
         let slotNelGiorno = 0
 
@@ -408,9 +426,7 @@ exports.handler = async (event) => {
             cursorDay = lastDay
             slotNelGiorno = filled
           } else {
-            const next = new Date(lastDay + 'T12:00:00')
-            next.setDate(next.getDate() + 1)
-            cursorDay = next.toISOString().split('T')[0]
+            cursorDay = addDaysYmd(lastDay, 1)
             slotNelGiorno = 0
           }
         }
@@ -419,9 +435,7 @@ exports.handler = async (event) => {
         if (daCopiare.length) {
           const records = daCopiare.map(({ fields }) => {
             if (slotNelGiorno >= max) {
-              const next = new Date(cursorDay + 'T12:00:00')
-              next.setDate(next.getDate() + 1)
-              cursorDay = next.toISOString().split('T')[0]
+              cursorDay = addDaysYmd(cursorDay, 1)
               slotNelGiorno = 0
             }
             const dataProgrammata = cursorDay

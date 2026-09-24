@@ -15,6 +15,22 @@
   color: var(--text);
   margin: 0 0 4px;
 }
+.versionTag {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text3);
+  font-variant-numeric: tabular-nums;
+}
+.versionTagInline {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--text3);
+  opacity: 0.85;
+  flex-shrink: 0;
+}
 .pageSubtitle {
   font-size: 0.8rem;
   color: var(--text3);
