@@ -22,7 +22,7 @@ import { jsPDF } from 'jspdf'
 import styles from './EmailMarketingPanel.module.css'
 
 /** Bump a ogni release del modulo — confronta con l’online dopo il deploy Netlify. */
-export const EMAIL_MKTG_VERSION = '2026.09.24-c'
+export const EMAIL_MKTG_VERSION = '2026.09.24-d'
 
 // ─── Costanti ─────────────────────────────────────────────────────────────────
 
@@ -1235,7 +1235,8 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
       let inviati = 0
       let errori = 0
       let lastErr = null
-      for (let i = 0; i < 8; i++) {
+      const TARGET = 200
+      for (let i = 0; i < 12; i++) {
         const res = await authFetch('/.netlify/functions/gestisci-campagne-mail', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1244,19 +1245,29 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
         const data = await res.json().catch(() => ({}))
         if (!res.ok || !data.success) {
           lastErr = data.error || `HTTP ${res.status}`
-          if (i === 0) {
+          if (i === 0 && inviati === 0) {
             setMsg({ tipo: 'err', testo: `Invio non partito: ${lastErr}` })
             return { ok: false, error: lastErr }
           }
+          // Chunk fallito a metà strada: tieni quanto già inviato e segnala
           break
         }
-        inviati += data.inviati || 0
-        errori += data.errori || 0
+        const chunkInviati = data.inviati || 0
+        const chunkErrori = data.errori || 0
+        const processed = chunkInviati + chunkErrori
+        inviati += chunkInviati
+        errori += chunkErrori
         setMsg({
           tipo: 'ok',
-          testo: `Invio in corso… ${inviati} inviate` + (errori ? `, ${errori} errori` : ''),
+          testo: `Invio in corso… ${inviati} inviate` + (errori ? `, ${errori} errori` : '') +
+            ` (obiettivo oggi ${TARGET})`,
         })
-        if (!data.inviati || data.inviati < 25) break
+        // Nessun contatto processato → coda di oggi vuota
+        if (processed === 0) break
+        // Chunk parziale → non ci sono altre 25 in coda per oggi
+        if (processed < 25) break
+        // Raggiunto tetto giornaliero di questa sessione
+        if (inviati + errori >= TARGET) break
       }
       if (inviati === 0 && errori === 0) {
         const msg = lastErr || 'Nessuna email da inviare per oggi (già inviate o data non dovuta).'
@@ -1265,7 +1276,9 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
       }
       setMsg({
         tipo: inviati > 0 ? 'ok' : 'err',
-        testo: `Fatto: ${inviati} email inviate` + (errori ? ` (${errori} errori)` : '') + '.',
+        testo: `Fatto: ${inviati} email inviate` + (errori ? ` (${errori} errori)` : '') +
+          (lastErr ? ` — ultimo errore chunk: ${lastErr}` : '') +
+          '. Se restano email per oggi, ripremi «Invia lotto di oggi».',
       })
       onAvviata?.(campagna)
       return { ok: inviati > 0, inviati, errori }
