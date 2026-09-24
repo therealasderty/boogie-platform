@@ -13,3 +13,7 @@
 
 [functions."pubblica-social-schedulato"]
   schedule = "0 * * * *"
+
+[functions.invia-campagna-mail]
+  schedule = "0 8 * * *"
+  timeout = 26

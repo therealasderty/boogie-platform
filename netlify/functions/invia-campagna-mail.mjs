@@ -287,6 +287,9 @@ function oggiRome() {
  * @param {{ limit?: number, campagnaId?: string }} opts
  */
 export async function runInvioCampagna(opts = {}) {
+  if (!BREVO_KEY) throw new Error('BREVO_API_KEY mancante nelle env Netlify')
+  if (!AT_TOKEN || !AT_BASE) throw new Error('AIRTABLE_TOKEN / AIRTABLE_BASE_ID mancanti')
+
   const limit = Math.min(Math.max(1, Number(opts.limit) || MAX_PER_GIORNO), MAX_PER_GIORNO)
   const onlyCampagna = (opts.campagnaId || '').trim() || null
   const oggi = oggiRome()

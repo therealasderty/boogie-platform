@@ -22,7 +22,7 @@ import { jsPDF } from 'jspdf'
 import styles from './EmailMarketingPanel.module.css'
 
 /** Bump a ogni release del modulo — confronta con l’online dopo il deploy Netlify. */
-export const EMAIL_MKTG_VERSION = '2026.09.24-a'
+export const EMAIL_MKTG_VERSION = '2026.09.24-b'
 
 // ─── Costanti ─────────────────────────────────────────────────────────────────
 
@@ -1200,39 +1200,96 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
         return
       }
 
-      // Primo lotto subito (a chunk da 40 per restare entro il timeout Netlify)
-      setMsg({ tipo: 'ok', testo: 'Campagna avviata. Invio del primo lotto in corso…' })
-      let inviatiSubito = 0
-      let erroriSubito = 0
-      for (let i = 0; i < 5; i++) {
-        const invRes = await authFetch('/.netlify/functions/invia-campagna-mail', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ campagnaId: campagna.id, limit: 40 }),
+      const trigger = data.invioTrigger
+      if (trigger?.ok) {
+        const syncInviati = trigger.data?.inviati
+        setMsg({
+          tipo: 'ok',
+          testo: syncInviati != null
+            ? `Campagna avviata. Inviate subito ${syncInviati} email` +
+              (trigger.data?.errori ? ` (${trigger.data.errori} errori)` : '') + '.'
+            : 'Campagna avviata. Invio del primo lotto avviato in background — tra 1–2 minuti aggiorna i progressi.',
         })
-        const invData = await invRes.json().catch(() => ({}))
-        if (!invRes.ok || !invData.success) {
-          if (i === 0 && invData.error) throw new Error(invData.error || 'Invio immediato fallito')
-          break
+      } else {
+        // Fallback client: prova invio diretto
+        setMsg({ tipo: 'ok', testo: 'Campagna avviata. Avvio invio primo lotto…' })
+        const inv = await inviaLottoOra(false)
+        if (!inv.ok) {
+          setMsg({
+            tipo: 'err',
+            testo: `Campagna in coda, ma invio immediato non partito: ${inv.error || trigger?.error || 'errore sconosciuto'}. Usa «Invia lotto di oggi».`,
+          })
         }
-        inviatiSubito += invData.inviati || 0
-        erroriSubito += invData.errori || 0
-        if (!invData.inviati || invData.inviati < 40) break
       }
-
-      const giorni = data.giorniStimati || 0
-      setMsg({
-        tipo: 'ok',
-        testo:
-          `Campagna in corso. Inviate subito ${inviatiSubito} email` +
-          (erroriSubito ? ` (${erroriSubito} errori)` : '') +
-          (data.copiati ? ` · ${data.copiati} nuovi in coda` : '') +
-          (giorni > 1 ? ` · resto in ~${giorni - 1} giorni (cron 10:00)` : '') +
-          '.',
-      })
       onAvviata?.(data.campagna)
     } catch (e) {
       setMsg({ tipo: 'err', testo: e.message })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function inviaLottoOra(confirmFirst = true) {
+    if (confirmFirst && !confirm('Inviare ora fino a 200 email in coda per oggi?')) {
+      return { ok: false, error: 'annullato' }
+    }
+    setBusy(true)
+    setMsg(null)
+    try {
+      // Preferisci background (15 min), poi sync a chunk
+      const bgRes = await authFetch('/.netlify/functions/invia-campagna-mail-background', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ campagnaId: campagna.id, limit: 200 }),
+      })
+      if (bgRes.status === 202) {
+        setMsg({ tipo: 'ok', testo: 'Invio avviato in background. Tra 1–2 minuti ricarica per vedere i progressi.' })
+        return { ok: true, background: true }
+      }
+      const bgData = await bgRes.json().catch(() => ({}))
+      if (bgRes.ok && bgData.success) {
+        setMsg({
+          tipo: 'ok',
+          testo: `Inviate ${bgData.inviati || 0} email` +
+            (bgData.errori ? ` (${bgData.errori} errori)` : '') + '.',
+        })
+        onAvviata?.(campagna)
+        return { ok: true, ...bgData }
+      }
+
+      // Fallback sync a chunk da 25
+      let inviati = 0, errori = 0
+      let lastErr = bgData.error || `background ${bgRes.status}`
+      for (let i = 0; i < 8; i++) {
+        const invRes = await authFetch('/.netlify/functions/invia-campagna-mail', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ campagnaId: campagna.id, limit: 25 }),
+        })
+        const invData = await invRes.json().catch(() => ({}))
+        if (!invRes.ok || !invData.success) {
+          lastErr = invData.error || `HTTP ${invRes.status}`
+          if (i === 0) break
+          break
+        }
+        inviati += invData.inviati || 0
+        errori += invData.errori || 0
+        if (!invData.inviati || invData.inviati < 25) break
+      }
+      if (inviati === 0 && errori === 0) {
+        setMsg({ tipo: 'err', testo: `Invio non partito: ${lastErr}` })
+        return { ok: false, error: lastErr }
+      }
+      setMsg({
+        tipo: inviati > 0 ? 'ok' : 'err',
+        testo: `Inviate ${inviati} email` + (errori ? ` (${errori} errori)` : '') +
+          (inviati === 0 ? ` — ${lastErr}` : ''),
+      })
+      onAvviata?.(campagna)
+      return { ok: inviati > 0, inviati, errori, error: lastErr }
+    } catch (e) {
+      setMsg({ tipo: 'err', testo: e.message })
+      return { ok: false, error: e.message }
     } finally {
       setBusy(false)
     }
@@ -1277,9 +1334,14 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
         </div>
         <div className={styles.avviaActions}>
           {attiva ? (
-            <button type="button" className="btn-secondary" onClick={mettiInPausa} disabled={busy}>
-              <Pause size={15} /> {busy ? '...' : 'Pausa'}
-            </button>
+            <>
+              <button type="button" className="btn-primary" onClick={() => inviaLottoOra(true)} disabled={busy}>
+                <Play size={15} /> {busy ? 'Invio…' : 'Invia lotto di oggi'}
+              </button>
+              <button type="button" className="btn-secondary" onClick={mettiInPausa} disabled={busy}>
+                <Pause size={15} /> {busy ? '...' : 'Pausa'}
+              </button>
+            </>
           ) : (
             <button type="button" className="btn-primary" onClick={avvia} disabled={busy}>
               <Play size={15} /> {busy ? 'Avvio...' : 'Avvia campagna'}

@@ -73,6 +73,56 @@ function addDaysYmd(ymd, days) {
   return dt.toISOString().slice(0, 10)
 }
 
+/**
+ * Avvia l’invio del lotto in background (risposta 202 veloce).
+ * Preferisce la *-background; fallback sulla funzione sync.
+ */
+async function triggerInvioImmediato(event, campagnaId, limit = 200) {
+  const headers = event.headers || {}
+  const proto = headers['x-forwarded-proto'] || headers['X-Forwarded-Proto'] || 'https'
+  const host  = headers['x-forwarded-host'] || headers['X-Forwarded-Host'] || headers.host || headers.Host
+  const base  = process.env.URL || process.env.DEPLOY_PRIME_URL || (host ? `${proto}://${host}` : '')
+  if (!base) {
+    return { ok: false, error: 'URL sito non disponibile per trigger invio' }
+  }
+
+  const auth = headers.authorization || headers.Authorization || ''
+  const body = JSON.stringify({ campagnaId, limit })
+  const endpoints = [
+    `${base.replace(/\/$/, '')}/.netlify/functions/invia-campagna-mail-background`,
+    `${base.replace(/\/$/, '')}/.netlify/functions/invia-campagna-mail`,
+  ]
+
+  let lastErr = 'nessuna risposta'
+  for (const url of endpoints) {
+    try {
+      const controller = new AbortController()
+      const t = setTimeout(() => controller.abort(), 8000)
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(auth ? { Authorization: auth } : {}),
+        },
+        body,
+        signal: controller.signal,
+      })
+      clearTimeout(t)
+      // Background → 202; sync → 200
+      if (res.status === 202 || res.ok) {
+        let data = null
+        try { data = await res.json() } catch { /* background può non avere body utile */ }
+        return { ok: true, status: res.status, url, data }
+      }
+      const txt = await res.text()
+      lastErr = `${res.status} ${txt.slice(0, 200)}`
+    } catch (e) {
+      lastErr = e.message || String(e)
+    }
+  }
+  return { ok: false, error: lastErr }
+}
+
 function mapCampagna(r) {
   return {
     id:            r.id,
@@ -469,6 +519,12 @@ exports.handler = async (event) => {
         if (!patchRes.ok) throw new Error(await patchRes.text())
         const patchJson = await patchRes.json()
 
+        // Trigger invio immediato del primo lotto (background, non blocca)
+        let invioTrigger = null
+        if (nuovoStato === 'InCorso') {
+          invioTrigger = await triggerInvioImmediato(event, campagnaId, max)
+        }
+
         return ok({
           success: true,
           copiati,
@@ -478,7 +534,20 @@ exports.handler = async (event) => {
           giorniStimati: daInviareDopo ? Math.ceil(daInviareDopo / max) : 0,
           stato: nuovoStato,
           campagna: mapCampagna(patchJson),
+          invioTrigger,
         })
+      }
+
+      // Invio manuale lotto di oggi (stesso path dell’avvio)
+      if (body.tipo === 'invia-lotto-ora') {
+        const { campagnaId, maxPerGiorno = 200 } = body
+        if (!campagnaId || campagnaId === 'global') return err('campagnaId mancante', 400)
+        const max = Math.min(Math.max(1, Number(maxPerGiorno) || 200), 200)
+        const invioTrigger = await triggerInvioImmediato(event, campagnaId, max)
+        if (!invioTrigger?.ok) {
+          return err(invioTrigger?.error || 'Impossibile avviare l’invio', 502)
+        }
+        return ok({ success: true, invioTrigger })
       }
 
       return err('tipo non valido', 400)
