@@ -15,5 +15,8 @@
   schedule = "0 * * * *"
 
 [functions.invia-campagna-mail]
+  timeout = 26
+
+[functions.cron-invia-campagna-mail]
   schedule = "0 8 * * *"
   timeout = 26

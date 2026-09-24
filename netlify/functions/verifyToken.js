@@ -46,6 +46,8 @@ function verifyToken(event) {
   const auth = (headers.authorization || headers.Authorization || '').trim()
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : auth
   if (process.env.NETLIFY_DEV === 'true') return true
+  // Bypass usato dal dashboard in Vite DEV (authFetch)
+  if (token === 'dev-bypass' && process.env.CONTEXT !== 'production') return true
   return isValidToken(token)
 }
 

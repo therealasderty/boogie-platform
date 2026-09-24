@@ -22,7 +22,7 @@ import { jsPDF } from 'jspdf'
 import styles from './EmailMarketingPanel.module.css'
 
 /** Bump a ogni release del modulo — confronta con l’online dopo il deploy Netlify. */
-export const EMAIL_MKTG_VERSION = '2026.09.24-b'
+export const EMAIL_MKTG_VERSION = '2026.09.24-c'
 
 // ─── Costanti ─────────────────────────────────────────────────────────────────
 
@@ -1175,10 +1175,9 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
     const n = countGlobali ?? '?'
     if (!confirm(
       `Avviare la campagna?\n\n` +
-      `• Copia i contatti dalla lista globale (già presenti vengono saltati)\n` +
-      `• Invia subito le prime 200 email\n` +
-      `• Dal giorno dopo: max 200/giorno alle 10:00\n` +
-      `• Imposta stato In corso\n\n` +
+      `• Copia i contatti dalla lista globale\n` +
+      `• Invia subito le prime ~200 email\n` +
+      `• Dal giorno dopo: max 200/giorno alle 10:00\n\n` +
       `Contatti in lista globale: ${n}`
     )) return
 
@@ -1200,26 +1199,22 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
         return
       }
 
-      const trigger = data.invioTrigger
-      if (trigger?.ok) {
-        const syncInviati = trigger.data?.inviati
+      if (data.invioTrigger && !data.invioTrigger.ok) {
         setMsg({
-          tipo: 'ok',
-          testo: syncInviati != null
-            ? `Campagna avviata. Inviate subito ${syncInviati} email` +
-              (trigger.data?.errori ? ` (${trigger.data.errori} errori)` : '') + '.'
-            : 'Campagna avviata. Invio del primo lotto avviato in background — tra 1–2 minuti aggiorna i progressi.',
+          tipo: 'err',
+          testo: `Campagna in coda, ma primo invio fallito: ${data.invioTrigger.error}. Prova «Invia lotto di oggi».`,
         })
-      } else {
-        // Fallback client: prova invio diretto
-        setMsg({ tipo: 'ok', testo: 'Campagna avviata. Avvio invio primo lotto…' })
-        const inv = await inviaLottoOra(false)
-        if (!inv.ok) {
-          setMsg({
-            tipo: 'err',
-            testo: `Campagna in coda, ma invio immediato non partito: ${inv.error || trigger?.error || 'errore sconosciuto'}. Usa «Invia lotto di oggi».`,
-          })
-        }
+        return
+      }
+
+      // Continua i chunk fino a ~200 di oggi
+      setMsg({ tipo: 'ok', testo: 'Campagna avviata. Invio del primo lotto in corso…' })
+      const inv = await inviaLottoOra(false)
+      if (!inv.ok) {
+        setMsg({
+          tipo: 'err',
+          testo: `Primo lotto incompleto: ${inv.error || 'errore'}. Usa «Invia lotto di oggi».`,
+        })
       }
       onAvviata?.(data.campagna)
     } catch (e) {
@@ -1229,64 +1224,51 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
     }
   }
 
+  /** Invia fino a 200 email di oggi a chunk da 25 via gestisci (HTTP, non cron). */
   async function inviaLottoOra(confirmFirst = true) {
     if (confirmFirst && !confirm('Inviare ora fino a 200 email in coda per oggi?')) {
       return { ok: false, error: 'annullato' }
     }
     setBusy(true)
-    setMsg(null)
+    setMsg({ tipo: 'ok', testo: 'Invio in corso…' })
     try {
-      // Preferisci background (15 min), poi sync a chunk
-      const bgRes = await authFetch('/.netlify/functions/invia-campagna-mail-background', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ campagnaId: campagna.id, limit: 200 }),
-      })
-      if (bgRes.status === 202) {
-        setMsg({ tipo: 'ok', testo: 'Invio avviato in background. Tra 1–2 minuti ricarica per vedere i progressi.' })
-        return { ok: true, background: true }
-      }
-      const bgData = await bgRes.json().catch(() => ({}))
-      if (bgRes.ok && bgData.success) {
-        setMsg({
-          tipo: 'ok',
-          testo: `Inviate ${bgData.inviati || 0} email` +
-            (bgData.errori ? ` (${bgData.errori} errori)` : '') + '.',
-        })
-        onAvviata?.(campagna)
-        return { ok: true, ...bgData }
-      }
-
-      // Fallback sync a chunk da 25
-      let inviati = 0, errori = 0
-      let lastErr = bgData.error || `background ${bgRes.status}`
+      let inviati = 0
+      let errori = 0
+      let lastErr = null
       for (let i = 0; i < 8; i++) {
-        const invRes = await authFetch('/.netlify/functions/invia-campagna-mail', {
+        const res = await authFetch('/.netlify/functions/gestisci-campagne-mail', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ campagnaId: campagna.id, limit: 25 }),
+          body:    JSON.stringify({ tipo: 'invia-lotto-ora', campagnaId: campagna.id, limit: 25 }),
         })
-        const invData = await invRes.json().catch(() => ({}))
-        if (!invRes.ok || !invData.success) {
-          lastErr = invData.error || `HTTP ${invRes.status}`
-          if (i === 0) break
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok || !data.success) {
+          lastErr = data.error || `HTTP ${res.status}`
+          if (i === 0) {
+            setMsg({ tipo: 'err', testo: `Invio non partito: ${lastErr}` })
+            return { ok: false, error: lastErr }
+          }
           break
         }
-        inviati += invData.inviati || 0
-        errori += invData.errori || 0
-        if (!invData.inviati || invData.inviati < 25) break
+        inviati += data.inviati || 0
+        errori += data.errori || 0
+        setMsg({
+          tipo: 'ok',
+          testo: `Invio in corso… ${inviati} inviate` + (errori ? `, ${errori} errori` : ''),
+        })
+        if (!data.inviati || data.inviati < 25) break
       }
       if (inviati === 0 && errori === 0) {
-        setMsg({ tipo: 'err', testo: `Invio non partito: ${lastErr}` })
-        return { ok: false, error: lastErr }
+        const msg = lastErr || 'Nessuna email da inviare per oggi (già inviate o data non dovuta).'
+        setMsg({ tipo: 'err', testo: msg })
+        return { ok: false, error: msg }
       }
       setMsg({
         tipo: inviati > 0 ? 'ok' : 'err',
-        testo: `Inviate ${inviati} email` + (errori ? ` (${errori} errori)` : '') +
-          (inviati === 0 ? ` — ${lastErr}` : ''),
+        testo: `Fatto: ${inviati} email inviate` + (errori ? ` (${errori} errori)` : '') + '.',
       })
       onAvviata?.(campagna)
-      return { ok: inviati > 0, inviati, errori, error: lastErr }
+      return { ok: inviati > 0, inviati, errori }
     } catch (e) {
       setMsg({ tipo: 'err', testo: e.message })
       return { ok: false, error: e.message }

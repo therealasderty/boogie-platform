@@ -1,19 +1,13 @@
 // netlify/functions/invia-campagna-mail.mjs
-// Scheduled function — ogni giorno alle 10:00 (Europe/Rome)
-// Invia le email di marketing in coda: max 200 al giorno (risparmio per transazionali).
-// Chiamabile anche via POST dal dashboard all’avvio campagna (primo lotto immediato).
-//
-// Schedule (netlify.toml):
-//   [functions.invia-campagna-mail]
-//   schedule = "0 8 * * *"   ← 10:00 Europe/Rome = 08:00 UTC in estate
-//   timeout = 26
+// Funzione HTTP (chiamabile dal dashboard) — invio lotto campagne.
+// Il cron giornaliero è in `cron-invia-campagna-mail.mjs` (schedule separato:
+// le scheduled function Netlify NON accettano HTTP in produzione).
 //
 // Env vars richieste:
 //   AIRTABLE_TOKEN, AIRTABLE_BASE_ID
 //   BREVO_API_KEY
 //   BREVO_SENDER_EMAIL  (default: info@boogiebistrot.com)
 //   BREVO_SENDER_NAME   (default: Boogie Bistrot)
-//   CRON_SECRET         (opzionale — protezione esecuzione manuale)
 
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
