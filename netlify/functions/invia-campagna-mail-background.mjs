@@ -29,7 +29,7 @@ export const handler = async (event = {}) => {
   let opts = {}
   try { opts = JSON.parse(event.body || '{}') } catch { /* ignore */ }
 
-  const limit = Math.min(Math.max(1, Number(opts.limit) || 200), 200)
+  const limit = Math.min(Math.max(1, Number(opts.limit) || 250), 250)
   const campagnaId = (opts.campagnaId || '').trim() || undefined
 
   console.log(`[invia-campagna-mail-background] start limit=${limit} campagna=${campagnaId || 'all'}`)

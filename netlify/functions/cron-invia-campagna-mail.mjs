@@ -7,7 +7,7 @@ import { runInvioCampagna } from './invia-campagna-mail.mjs'
 export const handler = async () => {
   console.log('[cron-invia-campagna-mail] tick')
   try {
-    const result = await runInvioCampagna({ limit: 200 })
+    const result = await runInvioCampagna({ limit: 250 })
     console.log('[cron-invia-campagna-mail] done', result)
     return { statusCode: 200, body: JSON.stringify({ success: true, ...result }) }
   } catch (e) {

@@ -22,7 +22,7 @@ import { jsPDF } from 'jspdf'
 import styles from './EmailMarketingPanel.module.css'
 
 /** Bump a ogni release del modulo — confronta con l’online dopo il deploy Netlify. */
-export const EMAIL_MKTG_VERSION = '2026.09.24-d'
+export const EMAIL_MKTG_VERSION = '2026.09.24-e'
 
 // ─── Costanti ─────────────────────────────────────────────────────────────────
 
@@ -925,7 +925,7 @@ function CampagnaTab({ campagna, onSaved, onContinuaAvvio }) {
                 />
               </div>
               <p className={styles.editorHint}>
-                Invio: prime 200 subito all’avvio, poi max 200/giorno alle 10:00.
+                Invio: prime 250 subito all’avvio, poi max 250/giorno alle 10:00.
                 Quando la grafica è pronta, passa allo step <strong>Avvio</strong>.
               </p>
             </div>
@@ -1067,7 +1067,7 @@ function AvvioStep({ campagna, onCampagnaUpdate, onTornaGrafica }) {
   const inCoda = stats?.DaInviare ?? 0
   const giaInCampagna = stats?.totale ?? 0
   const destinatariStimati = inCoda > 0 ? inCoda : (countGlobali ?? 0)
-  const giorniStimati = destinatariStimati > 0 ? Math.ceil(destinatariStimati / 200) : 0
+  const giorniStimati = destinatariStimati > 0 ? Math.ceil(destinatariStimati / 250) : 0
   const attiva = campagna.stato === 'InCorso' || campagna.stato === 'Programmata'
 
   return (
@@ -1102,7 +1102,7 @@ function AvvioStep({ campagna, onCampagnaUpdate, onTornaGrafica }) {
             </span>
           </div>
           <div className={styles.statCard}>
-            <span className={styles.statNum}>200</span>
+            <span className={styles.statNum}>250</span>
             <span className={styles.statLabel}>Max / giorno</span>
           </div>
         </div>
@@ -1111,7 +1111,7 @@ function AvvioStep({ campagna, onCampagnaUpdate, onTornaGrafica }) {
       <div className={styles.avvioNote}>
         <p>
           All’avvio i contatti della <strong>lista globale</strong> vengono copiati in questa campagna:
-          le <strong>prime 200 partono subito</strong>, le altre a 200 al giorno alle 10:00.
+          le <strong>prime 250 partono subito</strong>, le altre a 250 al giorno alle 10:00.
           {countGlobali === 0 && (
             <> La lista è vuota: aggiungili dalla scheda <strong>Contatti</strong> in home Email Marketing.</>
           )}
@@ -1176,8 +1176,8 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
     if (!confirm(
       `Avviare la campagna?\n\n` +
       `• Copia i contatti dalla lista globale\n` +
-      `• Invia subito le prime ~200 email\n` +
-      `• Dal giorno dopo: max 200/giorno alle 10:00\n\n` +
+      `• Invia subito le prime ~250 email\n` +
+      `• Dal giorno dopo: max 250/giorno alle 10:00\n\n` +
       `Contatti in lista globale: ${n}`
     )) return
 
@@ -1187,7 +1187,7 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
       const res = await authFetch('/.netlify/functions/gestisci-campagne-mail', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ tipo: 'avvia-campagna', campagnaId: campagna.id, maxPerGiorno: 200 }),
+        body:    JSON.stringify({ tipo: 'avvia-campagna', campagnaId: campagna.id, maxPerGiorno: 250 }),
       })
       const data = await res.json()
       if (!data.success) throw new Error(data.error)
@@ -1207,7 +1207,7 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
         return
       }
 
-      // Continua i chunk fino a ~200 di oggi
+      // Continua i chunk fino a ~250 di oggi
       setMsg({ tipo: 'ok', testo: 'Campagna avviata. Invio del primo lotto in corso…' })
       const inv = await inviaLottoOra(false)
       if (!inv.ok) {
@@ -1224,9 +1224,9 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
     }
   }
 
-  /** Invia fino a 200 email di oggi a chunk da 25 via gestisci (HTTP, non cron). */
+  /** Invia fino a 250 email di oggi a chunk da 25 via gestisci (HTTP, non cron). */
   async function inviaLottoOra(confirmFirst = true) {
-    if (confirmFirst && !confirm('Inviare ora fino a 200 email in coda per oggi?')) {
+    if (confirmFirst && !confirm('Inviare ora fino a 250 email in coda per oggi?')) {
       return { ok: false, error: 'annullato' }
     }
     setBusy(true)
@@ -1235,7 +1235,7 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
       let inviati = 0
       let errori = 0
       let lastErr = null
-      const TARGET = 200
+      const TARGET = 250
       for (let i = 0; i < 12; i++) {
         const res = await authFetch('/.netlify/functions/gestisci-campagne-mail', {
           method:  'POST',
@@ -1318,13 +1318,13 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
             {attiva ? 'Campagna attiva' : 'Avvio invii'}
           </h3>
           <p className={styles.importHint}>
-            Max <strong>200 email/giorno</strong> (condivisi tra tutte le campagne).
+            Max <strong>250 email/giorno</strong> (condivisi tra tutte le campagne).
             {countGlobali != null && (
               <> Lista globale: <strong>{countGlobali}</strong> contatti
-                {countGlobali > 0 && <> → ~{Math.ceil(countGlobali / 200)} giorni</>}
+                {countGlobali > 0 && <> → ~{Math.ceil(countGlobali / 250)} giorni</>}
               </>
             )}
-            . All’avvio le prime 200 partono subito; dal giorno dopo alle 10:00.
+            . All’avvio le prime 250 partono subito; dal giorno dopo alle 10:00.
           </p>
         </div>
         <div className={styles.avviaActions}>

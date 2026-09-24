@@ -29,10 +29,10 @@
 // GET  ?tipo=statistiche&campagnaId=recXXX
 // POST {tipo:'campagna', titolo, oggettoMail, template}
 // PATCH{tipo:'campagna', id, titolo?, oggettoMail?, template?, stato?}
-// POST {tipo:'importa-contatti', campagnaId, contatti:[...], maxPerGiorno:200}
-// POST {tipo:'copia-globali-in-campagna', campagnaId, maxPerGiorno:200}
-// POST {tipo:'avvia-campagna', campagnaId, maxPerGiorno:200}
-//       → copia globali mancanti, schedule 200/giorno da oggi, stato InCorso
+// POST {tipo:'importa-contatti', campagnaId, contatti:[...], maxPerGiorno:250}
+// POST {tipo:'copia-globali-in-campagna', campagnaId, maxPerGiorno:250}
+// POST {tipo:'avvia-campagna', campagnaId, maxPerGiorno:250}
+//       → copia globali mancanti, schedule 250/giorno da oggi, stato InCorso
 //       → il client triggera subito invia-campagna-mail per il primo lotto
 // DELETE ?tipo=campagna&id=recXXX
 // DELETE ?tipo=contatto&id=recXXX
@@ -335,7 +335,7 @@ exports.handler = async (event) => {
 
       // Importa contatti con scheduling automatico
       if (body.tipo === 'importa-contatti') {
-        const { campagnaId, contatti = [], maxPerGiorno = 200 } = body
+        const { campagnaId, contatti = [], maxPerGiorno = 250 } = body
         if (!campagnaId) return err('campagnaId mancante', 400)
         if (!contatti.length) return err('nessun contatto', 400)
 
@@ -353,7 +353,7 @@ exports.handler = async (event) => {
         if (!unici.length) return err('nessuna email valida trovata', 400)
 
         const oggi = new Date()
-        const max = Math.max(1, Number(maxPerGiorno) || 200)
+        const max = Math.max(1, Number(maxPerGiorno) || 250)
         const records = unici.map((c, i) => {
           const giornoOffset = Math.floor(i / max)
           const data = new Date(oggi)
@@ -369,12 +369,12 @@ exports.handler = async (event) => {
 
       // Copia contatti globali in una campagna con scheduling
       if (body.tipo === 'copia-globali-in-campagna') {
-        const { campagnaId, maxPerGiorno = 200 } = body
+        const { campagnaId, maxPerGiorno = 250 } = body
         if (!campagnaId) return err('campagnaId mancante', 400)
         const globali = await fetchAll(T_CONT, `{CampagnaId}='global'`, CONTATTO_COPY_FIELDS)
         if (!globali.length) return ok({ success: true, copiati: 0 })
         const oggi = new Date()
-        const max  = Math.min(Math.max(1, maxPerGiorno), 200)
+        const max  = Math.min(Math.max(1, maxPerGiorno), 250)
         const records = globali.map(({ fields }, i) => {
           const giornoOffset = Math.floor(i / max)
           const data = new Date(oggi)
@@ -397,7 +397,7 @@ exports.handler = async (event) => {
 
       // Avvia campagna: copia globali mancanti + schedule + InCorso
       if (body.tipo === 'avvia-campagna') {
-        const { campagnaId, maxPerGiorno = 200 } = body
+        const { campagnaId, maxPerGiorno = 250 } = body
         if (!campagnaId || campagnaId === 'global') return err('campagnaId mancante', 400)
 
         const campRes = await fetch(`${atUrl(T_CAMP)}/${campagnaId}`, { headers: AT_HEADERS })
@@ -407,7 +407,7 @@ exports.handler = async (event) => {
           return err('Imposta prima l’oggetto email', 400)
         }
 
-        const max = Math.min(Math.max(1, Number(maxPerGiorno) || 200), 200)
+        const max = Math.min(Math.max(1, Number(maxPerGiorno) || 250), 250)
         const esistenti = await fetchAll(T_CONT, `{CampagnaId}='${campagnaId}'`, ['Email', 'Stato', 'DataProgrammata'])
         const emailsGia = new Set(
           esistenti.map(r => sanitizeEmail(r.fields['Email'])).filter(Boolean)

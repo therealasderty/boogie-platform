@@ -22,7 +22,7 @@ const AT_HEADERS  = { Authorization: `Bearer ${AT_TOKEN}`, 'Content-Type': 'appl
 const BREVO_KEY      = process.env.BREVO_API_KEY
 const SENDER_EMAIL   = process.env.BREVO_SENDER_EMAIL || 'info@boogiebistrot.com'
 const SENDER_NAME    = process.env.BREVO_SENDER_NAME  || 'Boogie Bistrot'
-const MAX_PER_GIORNO = 200
+const MAX_PER_GIORNO = 250
 
 // ── HTML rendering ────────────────────────────────────────────────────────────
 
