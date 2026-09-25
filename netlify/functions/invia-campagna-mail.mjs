@@ -1,6 +1,6 @@
 // netlify/functions/invia-campagna-mail.mjs
 // Funzione HTTP (chiamabile dal dashboard) — invio lotto campagne.
-// Il cron giornaliero è in `cron-invia-campagna-mail.mjs` (schedule separato:
+// Il cron giornaliero è in `cron-invia-campagna-mail.js` (schedule separato:
 // le scheduled function Netlify NON accettano HTTP in produzione).
 //
 // Env vars richieste:
@@ -10,8 +10,29 @@
 //   BREVO_SENDER_NAME   (default: Boogie Bistrot)
 
 import { createRequire } from 'module'
-const require = createRequire(import.meta.url)
-const { shell } = require('./_email.js')
+
+// verifyToken è CJS: caricalo in modo resilient (import.meta può mancare se bundlato male)
+function loadVerifyToken() {
+  try {
+    const req = createRequire(typeof import.meta?.url === 'string' ? import.meta.url : process.cwd() + '/package.json')
+    return req('./verifyToken')
+  } catch (e) {
+    console.warn('[invia-campagna-mail] verifyToken load fail:', e.message)
+    return null
+  }
+}
+
+/** Shell minima per template non-marketing (evita require di _email.js). */
+function shell({ body = '' } = {}) {
+  return `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head><body style="margin:0;padding:0;background:${CBG};font-family:${F};">
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;"><tr><td align="center">
+<table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid ${CG};">
+<tr><td style="padding:40px 40px 20px;font-family:${F};">${body}</td></tr>
+<tr><td style="padding:16px 40px 32px;border-top:1px solid ${CLINE};font-size:11px;color:#B0A898;">Boogie Bistrot — Via Europa, 2, Colle Brianza (LC)</td></tr>
+</table></td></tr></table></body></html>`
+}
 
 const AT_TOKEN    = process.env.AIRTABLE_TOKEN
 const AT_BASE     = process.env.AIRTABLE_BASE_ID
@@ -435,8 +456,8 @@ export const handler = async (event = {}) => {
   const isSchedule = (event.headers?.['x-netlify-event'] || event.headers?.['X-Netlify-Event'] || '') === 'schedule'
   if (!isSchedule && event.httpMethod) {
     try {
-      const { verifyToken } = require('./verifyToken')
-      if (!verifyToken(event)) {
+      const vt = loadVerifyToken()
+      if (vt && !vt.verifyToken(event)) {
         return { statusCode: 401, headers: CORS, body: JSON.stringify({ success: false, error: 'Non autorizzato' }) }
       }
     } catch (e) {

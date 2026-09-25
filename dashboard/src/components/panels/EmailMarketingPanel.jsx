@@ -22,7 +22,7 @@ import { jsPDF } from 'jspdf'
 import styles from './EmailMarketingPanel.module.css'
 
 /** Bump a ogni release del modulo — confronta con l’online dopo il deploy Netlify. */
-export const EMAIL_MKTG_VERSION = '2026.09.24-e'
+export const EMAIL_MKTG_VERSION = '2026.09.25-a'
 
 // ─── Costanti ─────────────────────────────────────────────────────────────────
 
