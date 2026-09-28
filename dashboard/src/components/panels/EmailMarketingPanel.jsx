@@ -22,7 +22,18 @@ import { jsPDF } from 'jspdf'
 import styles from './EmailMarketingPanel.module.css'
 
 /** Bump a ogni release del modulo — confronta con l’online dopo il deploy Netlify. */
-export const EMAIL_MKTG_VERSION = '2026.09.25-a'
+export const EMAIL_MKTG_VERSION = '2026.09.28-a'
+
+const GIORNI_SETTIMANA = [
+  { id: 1, label: 'Lun' },
+  { id: 2, label: 'Mar' },
+  { id: 3, label: 'Mer' },
+  { id: 4, label: 'Gio' },
+  { id: 5, label: 'Ven' },
+  { id: 6, label: 'Sab' },
+  { id: 7, label: 'Dom' },
+]
+const GIORNI_FERIALI = [1, 2, 3, 4, 5]
 
 // ─── Costanti ─────────────────────────────────────────────────────────────────
 
@@ -1163,6 +1174,7 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState(null)
   const [countGlobali, setCountGlobali] = useState(null)
+  const [giorniInvio, setGiorniInvio] = useState(() => [...GIORNI_FERIALI])
   const attiva = campagna.stato === 'InCorso' || campagna.stato === 'Programmata'
 
   useEffect(() => {
@@ -1171,13 +1183,28 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
       .then(d => { if (d.success) setCountGlobali(d.stats.totale) })
   }, [])
 
+  function toggleGiorno(id) {
+    setGiorniInvio(prev => {
+      if (prev.includes(id)) {
+        if (prev.length <= 1) return prev // almeno un giorno
+        return prev.filter(d => d !== id)
+      }
+      return [...prev, id].sort((a, b) => a - b)
+    })
+  }
+
+  const giorniLabel = GIORNI_SETTIMANA
+    .filter(g => giorniInvio.includes(g.id))
+    .map(g => g.label)
+    .join(', ')
+
   async function avvia() {
     const n = countGlobali ?? '?'
     if (!confirm(
       `Avviare la campagna?\n\n` +
       `• Copia i contatti dalla lista globale\n` +
-      `• Invia subito le prime ~250 email\n` +
-      `• Dal giorno dopo: max 250/giorno alle 10:00\n\n` +
+      `• Max 250 email/giorno solo in: ${giorniLabel}\n` +
+      `• Se oggi è tra i giorni scelti, parte subito il primo lotto\n\n` +
       `Contatti in lista globale: ${n}`
     )) return
 
@@ -1187,7 +1214,12 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
       const res = await authFetch('/.netlify/functions/gestisci-campagne-mail', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ tipo: 'avvia-campagna', campagnaId: campagna.id, maxPerGiorno: 250 }),
+        body:    JSON.stringify({
+          tipo: 'avvia-campagna',
+          campagnaId: campagna.id,
+          maxPerGiorno: 250,
+          giorniInvio,
+        }),
       })
       const data = await res.json()
       if (!data.success) throw new Error(data.error)
@@ -1199,6 +1231,15 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
         return
       }
 
+      if (data.invioTrigger?.skippedToday) {
+        setMsg({
+          tipo: 'ok',
+          testo: data.invioTrigger.messaggio ||
+            `Campagna in coda. Primo invio il ${data.primoGiorno} (oggi non è tra i giorni selezionati).`,
+        })
+        return
+      }
+
       if (data.invioTrigger && !data.invioTrigger.ok) {
         setMsg({
           tipo: 'err',
@@ -1207,7 +1248,6 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
         return
       }
 
-      // Continua i chunk fino a ~250 di oggi
       setMsg({ tipo: 'ok', testo: 'Campagna avviata. Invio del primo lotto in corso…' })
       const inv = await inviaLottoOra(false)
       if (!inv.ok) {
@@ -1249,7 +1289,6 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
             setMsg({ tipo: 'err', testo: `Invio non partito: ${lastErr}` })
             return { ok: false, error: lastErr }
           }
-          // Chunk fallito a metà strada: tieni quanto già inviato e segnala
           break
         }
         const chunkInviati = data.inviati || 0
@@ -1262,17 +1301,14 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
           testo: `Invio in corso… ${inviati} inviate` + (errori ? `, ${errori} errori` : '') +
             ` (obiettivo oggi ${TARGET})`,
         })
-        // Nessun contatto processato → coda di oggi vuota
         if (processed === 0) break
-        // Chunk parziale → non ci sono altre 25 in coda per oggi
         if (processed < 25) break
-        // Raggiunto tetto giornaliero di questa sessione
         if (inviati + errori >= TARGET) break
       }
       if (inviati === 0 && errori === 0) {
-        const msg = lastErr || 'Nessuna email da inviare per oggi (già inviate o data non dovuta).'
-        setMsg({ tipo: 'err', testo: msg })
-        return { ok: false, error: msg }
+        const msgTxt = lastErr || 'Nessuna email da inviare per oggi (già inviate o data non dovuta).'
+        setMsg({ tipo: 'err', testo: msgTxt })
+        return { ok: false, error: msgTxt }
       }
       setMsg({
         tipo: inviati > 0 ? 'ok' : 'err',
@@ -1285,6 +1321,42 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
     } catch (e) {
       setMsg({ tipo: 'err', testo: e.message })
       return { ok: false, error: e.message }
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function riprogrammaCoda() {
+    if (!confirm(
+      `Riprogrammare tutta la coda DaInviare?\n\n` +
+      `Solo nei giorni: ${giorniLabel}\n` +
+      `Max 250/giorno. Le date weekend (o non selezionate) verranno spostate.`
+    )) return
+    setBusy(true)
+    setMsg(null)
+    try {
+      const res = await authFetch('/.netlify/functions/gestisci-campagne-mail', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          tipo: 'riprogramma-coda',
+          campagnaId: campagna.id,
+          maxPerGiorno: 250,
+          giorniInvio,
+        }),
+      })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error)
+      setMsg({
+        tipo: 'ok',
+        testo: `Riprogrammati ${data.riprogrammati} contatti` +
+          (data.primoGiorno ? ` · dal ${data.primoGiorno}` : '') +
+          (data.ultimoGiorno ? ` al ${data.ultimoGiorno}` : '') +
+          (data.giorniStimati ? ` · ~${data.giorniStimati} giorni di invio` : '') + '.',
+      })
+      onAvviata?.(campagna)
+    } catch (e) {
+      setMsg({ tipo: 'err', testo: e.message })
     } finally {
       setBusy(false)
     }
@@ -1310,6 +1382,10 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
     }
   }
 
+  const stimaGiorni = countGlobali > 0
+    ? Math.ceil(countGlobali / 250)
+    : null
+
   return (
     <div className={styles.avviaBox}>
       <div className={styles.avviaMain}>
@@ -1318,14 +1394,42 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
             {attiva ? 'Campagna attiva' : 'Avvio invii'}
           </h3>
           <p className={styles.importHint}>
-            Max <strong>250 email/giorno</strong> (condivisi tra tutte le campagne).
+            Max <strong>250 email/giorno</strong> nei giorni selezionati.
             {countGlobali != null && (
-              <> Lista globale: <strong>{countGlobali}</strong> contatti
-                {countGlobali > 0 && <> → ~{Math.ceil(countGlobali / 250)} giorni</>}
+              <> Lista globale: <strong>{countGlobali}</strong>
+                {stimaGiorni != null && <> → ~{stimaGiorni} giorni di invio</>}
               </>
             )}
-            . All’avvio le prime 250 partono subito; dal giorno dopo alle 10:00.
+            .
           </p>
+          <div className={styles.giorniInvioRow}>
+            <span className={styles.giorniInvioLabel}>Giorni di invio</span>
+            <div className={styles.giorniInvioToggles}>
+              {GIORNI_SETTIMANA.map(g => {
+                const on = giorniInvio.includes(g.id)
+                return (
+                  <button
+                    key={g.id}
+                    type="button"
+                    className={`${styles.giornoToggle} ${on ? styles.giornoToggleOn : ''}`}
+                    onClick={() => toggleGiorno(g.id)}
+                    disabled={busy}
+                    aria-pressed={on}
+                  >
+                    {g.label}
+                  </button>
+                )
+              })}
+            </div>
+            <button
+              type="button"
+              className={styles.giorniPreset}
+              onClick={() => setGiorniInvio([...GIORNI_FERIALI])}
+              disabled={busy}
+            >
+              Solo feriali
+            </button>
+          </div>
         </div>
         <div className={styles.avviaActions}>
           {attiva ? (
@@ -1333,12 +1437,15 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
               <button type="button" className="btn-primary" onClick={() => inviaLottoOra(true)} disabled={busy}>
                 <Play size={15} /> {busy ? 'Invio…' : 'Invia lotto di oggi'}
               </button>
+              <button type="button" className="btn-secondary" onClick={riprogrammaCoda} disabled={busy}>
+                Riprogramma coda
+              </button>
               <button type="button" className="btn-secondary" onClick={mettiInPausa} disabled={busy}>
                 <Pause size={15} /> {busy ? '...' : 'Pausa'}
               </button>
             </>
           ) : (
-            <button type="button" className="btn-primary" onClick={avvia} disabled={busy}>
+            <button type="button" className="btn-primary" onClick={avvia} disabled={busy || giorniInvio.length === 0}>
               <Play size={15} /> {busy ? 'Avvio...' : 'Avvia campagna'}
             </button>
           )}

@@ -73,6 +73,60 @@ function addDaysYmd(ymd, days) {
   return dt.toISOString().slice(0, 10)
 }
 
+/** Giorno settimana ISO: 1=Lun … 7=Dom. */
+function dowIso(ymd) {
+  const [y, m, d] = ymd.split('-').map(Number)
+  const js = new Date(Date.UTC(y, m - 1, d)).getUTCDay() // 0=Dom
+  return js === 0 ? 7 : js
+}
+
+/** Default feriali. Accetta array di interi 1–7. */
+function normalizeGiorniInvio(raw) {
+  const set = new Set()
+  if (Array.isArray(raw)) {
+    for (const n of raw) {
+      const v = Number(n)
+      if (v >= 1 && v <= 7) set.add(v)
+    }
+  }
+  if (!set.size) [1, 2, 3, 4, 5].forEach(d => set.add(d))
+  return [...set].sort((a, b) => a - b)
+}
+
+function snapToAllowedDay(ymd, giorniInvio) {
+  let d = ymd
+  for (let i = 0; i < 21; i++) {
+    if (giorniInvio.includes(dowIso(d))) return d
+    d = addDaysYmd(d, 1)
+  }
+  return ymd
+}
+
+function nextAllowedDay(ymd, giorniInvio) {
+  return snapToAllowedDay(addDaysYmd(ymd, 1), giorniInvio)
+}
+
+/**
+ * Assegna DataProgrammata a N contatti: maxPerGiorno sugli slot nei giorni consentiti.
+ * Ritorna array di YYYY-MM-DD allineato all’ordine dei contatti.
+ */
+function scheduleDates(count, maxPerGiorno, giorniInvio, startYmd) {
+  const max = Math.max(1, maxPerGiorno)
+  const days = normalizeGiorniInvio(giorniInvio)
+  let cursor = snapToAllowedDay(startYmd, days)
+  let slot = 0
+  const out = []
+  for (let i = 0; i < count; i++) {
+    if (slot >= max) {
+      cursor = nextAllowedDay(cursor, days)
+      slot = 0
+    }
+    out.push(cursor)
+    slot++
+  }
+  return out
+}
+
 /**
  * Avvia l’invio del lotto IN-PROCESS (niente HTTP a scheduled function).
  * Chunk piccoli per restare sotto il timeout Netlify (~26s).
@@ -397,7 +451,7 @@ exports.handler = async (event) => {
 
       // Avvia campagna: copia globali mancanti + schedule + InCorso
       if (body.tipo === 'avvia-campagna') {
-        const { campagnaId, maxPerGiorno = 250 } = body
+        const { campagnaId, maxPerGiorno = 250, giorniInvio: giorniInvioRaw } = body
         if (!campagnaId || campagnaId === 'global') return err('campagnaId mancante', 400)
 
         const campRes = await fetch(`${atUrl(T_CAMP)}/${campagnaId}`, { headers: AT_HEADERS })
@@ -408,6 +462,7 @@ exports.handler = async (event) => {
         }
 
         const max = Math.min(Math.max(1, Number(maxPerGiorno) || 250), 250)
+        const giorniInvio = normalizeGiorniInvio(giorniInvioRaw)
         const esistenti = await fetchAll(T_CONT, `{CampagnaId}='${campagnaId}'`, ['Email', 'Stato', 'DataProgrammata'])
         const emailsGia = new Set(
           esistenti.map(r => sanitizeEmail(r.fields['Email'])).filter(Boolean)
@@ -420,9 +475,9 @@ exports.handler = async (event) => {
           return email && !emailsGia.has(email)
         })
 
-        // Scheduling: chunk da `max` a partire da oggi (o dall’ultima data in coda se non piena)
+        // Scheduling: chunk da `max` solo nei giorni consentiti
         const oggiStr = oggiRome()
-        let cursorDay = oggiStr
+        let cursorDay = snapToAllowedDay(oggiStr, giorniInvio)
         let slotNelGiorno = 0
 
         if (inCoda.length) {
@@ -434,11 +489,12 @@ exports.handler = async (event) => {
           const giorni = Object.keys(byDay).sort()
           const lastDay = giorni[giorni.length - 1]
           const filled = byDay[lastDay] || 0
-          if (filled < max) {
+          const lastOk = snapToAllowedDay(lastDay, giorniInvio)
+          if (lastOk === lastDay && filled < max) {
             cursorDay = lastDay
             slotNelGiorno = filled
           } else {
-            cursorDay = addDaysYmd(lastDay, 1)
+            cursorDay = nextAllowedDay(lastDay, giorniInvio)
             slotNelGiorno = 0
           }
         }
@@ -447,9 +503,11 @@ exports.handler = async (event) => {
         if (daCopiare.length) {
           const records = daCopiare.map(({ fields }) => {
             if (slotNelGiorno >= max) {
-              cursorDay = addDaysYmd(cursorDay, 1)
+              cursorDay = nextAllowedDay(cursorDay, giorniInvio)
               slotNelGiorno = 0
             }
+            // sicurezza: se cursor non è un giorno consentito (es. ripresa da coda weekend)
+            cursorDay = snapToAllowedDay(cursorDay, giorniInvio)
             const dataProgrammata = cursorDay
             slotNelGiorno++
             return {
@@ -481,9 +539,10 @@ exports.handler = async (event) => {
         if (!patchRes.ok) throw new Error(await patchRes.text())
         const patchJson = await patchRes.json()
 
-        // Primo chunk subito in-process (il client continua con invia-lotto-ora)
+        // Primo chunk subito solo se oggi è un giorno consentito
         let invioTrigger = null
-        if (nuovoStato === 'InCorso') {
+        const invioOggiConsentito = giorniInvio.includes(dowIso(oggiStr))
+        if (nuovoStato === 'InCorso' && invioOggiConsentito) {
           try {
             const result = await runInvioLotto(campagnaId, 25)
             invioTrigger = { ok: true, data: result }
@@ -491,7 +550,16 @@ exports.handler = async (event) => {
             console.error('[avvia-campagna] invio immediato fallito:', e)
             invioTrigger = { ok: false, error: e.message }
           }
+        } else if (nuovoStato === 'InCorso' && !invioOggiConsentito) {
+          invioTrigger = {
+            ok: true,
+            skippedToday: true,
+            data: { inviati: 0, errori: 0 },
+            messaggio: `Oggi non è tra i giorni selezionati: primo invio il ${snapToAllowedDay(oggiStr, giorniInvio)}`,
+          }
         }
+
+        const giorniStimati = daInviareDopo ? Math.ceil(daInviareDopo / max) : 0
 
         return ok({
           success: true,
@@ -499,10 +567,57 @@ exports.handler = async (event) => {
           giaPresenti: esistenti.length,
           daInviare: daInviareDopo,
           maxPerGiorno: max,
-          giorniStimati: daInviareDopo ? Math.ceil(daInviareDopo / max) : 0,
+          giorniInvio,
+          giorniStimati,
+          primoGiorno: snapToAllowedDay(oggiStr, giorniInvio),
           stato: nuovoStato,
           campagna: mapCampagna(patchJson),
           invioTrigger,
+        })
+      }
+
+      // Riprogramma contatti DaInviare sui soli giorni selezionati (es. togli weekend)
+      if (body.tipo === 'riprogramma-coda') {
+        const { campagnaId, maxPerGiorno = 250, giorniInvio: giorniInvioRaw } = body
+        if (!campagnaId || campagnaId === 'global') return err('campagnaId mancante', 400)
+        const max = Math.min(Math.max(1, Number(maxPerGiorno) || 250), 250)
+        const giorniInvio = normalizeGiorniInvio(giorniInvioRaw)
+        const inCoda = await fetchAll(
+          T_CONT,
+          `AND({CampagnaId}='${campagnaId}',{Stato}='DaInviare')`,
+          ['Email', 'Stato', 'DataProgrammata'],
+        )
+        if (!inCoda.length) return ok({ success: true, riprogrammati: 0, giorniInvio })
+
+        // Ordina per data attuale così chi era “prima” resta prima
+        inCoda.sort((a, b) =>
+          String(a.fields['DataProgrammata'] || '').localeCompare(String(b.fields['DataProgrammata'] || ''))
+        )
+
+        const start = snapToAllowedDay(oggiRome(), giorniInvio)
+        const dates = scheduleDates(inCoda.length, max, giorniInvio, start)
+        const updates = inCoda.map((r, i) => ({
+          id: r.id,
+          fields: { DataProgrammata: dates[i] },
+        }))
+        // batch update 10 at a time
+        for (let i = 0; i < updates.length; i += 10) {
+          const batch = updates.slice(i, i + 10)
+          const res = await fetch(atUrl(T_CONT), {
+            method: 'PATCH',
+            headers: AT_HEADERS,
+            body: JSON.stringify({ records: batch }),
+          })
+          if (!res.ok) throw new Error(await res.text())
+        }
+
+        return ok({
+          success: true,
+          riprogrammati: updates.length,
+          giorniInvio,
+          primoGiorno: dates[0],
+          ultimoGiorno: dates[dates.length - 1],
+          giorniStimati: Math.ceil(updates.length / max),
         })
       }
 

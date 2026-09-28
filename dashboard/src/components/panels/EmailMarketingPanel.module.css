@@ -912,11 +912,66 @@
   gap: 8px;
   flex-shrink: 0;
   align-items: center;
+  flex-wrap: wrap;
 }
 .avviaActions :global(button) {
   height: 40px;
   box-sizing: border-box;
   padding: 0 18px;
+}
+.giorniInvioRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin-top: 12px;
+}
+.giorniInvioLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.giorniInvioToggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.giornoToggle {
+  min-width: 38px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text3);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1.2;
+}
+.giornoToggle:hover:not(:disabled) {
+  border-color: var(--text3);
+  color: var(--text);
+}
+.giornoToggleOn {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1a1610;
+}
+.giorniPreset {
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 2px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.giorniPreset:hover:not(:disabled) {
+  color: var(--text);
 }
 .statsRow {
   display: flex;
