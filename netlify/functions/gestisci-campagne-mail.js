@@ -27,18 +27,22 @@
 // GET  ?tipo=campagne
 // GET  ?tipo=contatti&campagnaId=recXXX[&cursor=xxx]
 // GET  ?tipo=statistiche&campagnaId=recXXX
+// GET  ?tipo=conteggio-fonte&fonte=global|clienti&soloMarketing=0|1
 // POST {tipo:'campagna', titolo, oggettoMail, template}
 // PATCH{tipo:'campagna', id, titolo?, oggettoMail?, template?, stato?}
 // POST {tipo:'importa-contatti', campagnaId, contatti:[...], maxPerGiorno:250}
 // POST {tipo:'copia-globali-in-campagna', campagnaId, maxPerGiorno:250}
-// POST {tipo:'avvia-campagna', campagnaId, maxPerGiorno:250}
-//       → copia globali mancanti, schedule 250/giorno da oggi, stato InCorso
-//       → il client triggera subito invia-campagna-mail per il primo lotto
+// POST {tipo:'avvia-campagna', campagnaId, maxPerGiorno:250, fonte:'global'|'clienti', soloMarketing?, giorniInvio?, dataInizio?}
+//       → copia da lista globale o Database Clienti (Brevo), schedule da dataInizio, stato InCorso
+//       → il client triggera invia-lotto-ora per il primo lotto solo se dataInizio ≤ oggi
+// POST {tipo:'riprogramma-coda', campagnaId, maxPerGiorno:250, giorniInvio?, dataInizio?}
 // DELETE ?tipo=campagna&id=recXXX
 // DELETE ?tipo=contatto&id=recXXX
 
 const AT_TOKEN   = process.env.AIRTABLE_TOKEN
 const AT_BASE    = process.env.AIRTABLE_BASE_ID
+const BREVO_KEY  = process.env.BREVO_API_KEY
+const BREVO_LIST_ID = parseInt(process.env.BREVO_LIST_ID) || 3
 const T_CAMP     = 'CampagneMail'
 const T_CONT     = 'CampagneMailContatti'
 const AT_HEADERS = { Authorization: `Bearer ${AT_TOKEN}`, 'Content-Type': 'application/json' }
@@ -104,6 +108,15 @@ function snapToAllowedDay(ymd, giorniInvio) {
 
 function nextAllowedDay(ymd, giorniInvio) {
   return snapToAllowedDay(addDaysYmd(ymd, 1), giorniInvio)
+}
+
+/** YYYY-MM-DD valido; se assente → oggi; se passato → clamp a oggi. */
+function normalizeDataInizio(raw, oggiStr) {
+  const oggi = oggiStr || oggiRome()
+  const s = String(raw || '').trim()
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return oggi
+  if (s < oggi) return oggi
+  return s
 }
 
 /**
@@ -208,6 +221,58 @@ function buildContattoFields(c, campagnaId, dataProgrammata) {
 
 const CONTATTO_COPY_FIELDS = ['Email', 'Nome', 'Azienda', 'Indirizzo', 'SitoWeb', 'DistanzaKm', 'Ambito']
 
+function isMarketingConsent(raw) {
+  if (raw === true || raw === 1) return true
+  if (raw == null) return false
+  const s = String(raw).trim().toLowerCase()
+  return s === 'true' || s === 'yes' || s === 'si' || s === 'sì' || s === '1'
+}
+
+/**
+ * Contatti Database Clienti da Brevo (lista BREVO_LIST_ID).
+ * Usa la risposta lista (attributi inclusi) — niente N+1.
+ * @param {{ soloMarketing?: boolean }} opts
+ * @returns {Promise<Array<{ email: string, nome: string }>>}
+ */
+async function fetchBrevoClienti({ soloMarketing = false } = {}) {
+  if (!BREVO_KEY) throw new Error('BREVO_API_KEY mancante')
+  const headers = {
+    Accept: 'application/json',
+    'api-key': BREVO_KEY,
+  }
+  const byEmail = new Map()
+  let offset = 0
+  const limit = 500
+  while (true) {
+    const url =
+      `https://api.brevo.com/v3/contacts/lists/${BREVO_LIST_ID}/contacts` +
+      `?limit=${limit}&offset=${offset}&sort=desc`
+    const res = await fetch(url, { headers })
+    if (!res.ok) {
+      const txt = await res.text()
+      throw new Error(`Brevo lista contatti: ${res.status} ${txt}`)
+    }
+    const json = await res.json()
+    const batch = json.contacts || []
+    for (const c of batch) {
+      const email = sanitizeEmail(c.email)
+      if (!isValidEmail(email)) continue
+      if (soloMarketing && !isMarketingConsent(c.attributes?.CONSENSO_MARKETING)) continue
+      if (byEmail.has(email)) continue
+      const first = String(c.attributes?.FIRSTNAME || '').trim()
+      const last = String(c.attributes?.LASTNAME || '').trim()
+      const nome = [first, last].filter(Boolean).join(' ') || email
+      byEmail.set(email, { email, nome })
+    }
+    if (batch.length < limit) break
+    offset += limit
+  }
+  return [...byEmail.values()]
+}
+
+function normalizeFonte(raw) {
+  return raw === 'clienti' ? 'clienti' : 'global'
+}
 
 // Esegui N richieste Airtable in parallelo rispettando il rate limit (5 req/s)
 async function batchParallel(items, chunkSize, fn) {
@@ -356,6 +421,22 @@ exports.handler = async (event) => {
         return ok({ success: true, stats })
       }
 
+      if (tipo === 'conteggio-fonte') {
+        const fonte = normalizeFonte(qs.fonte)
+        const soloMarketing = qs.soloMarketing === '1' || qs.soloMarketing === 'true'
+        if (fonte === 'global') {
+          const records = await fetchAll(T_CONT, `{CampagnaId}='global'`, ['Email'])
+          const seen = new Set()
+          for (const r of records) {
+            const email = sanitizeEmail(r.fields['Email'])
+            if (isValidEmail(email)) seen.add(email)
+          }
+          return ok({ success: true, fonte, soloMarketing: false, totale: seen.size })
+        }
+        const clienti = await fetchBrevoClienti({ soloMarketing })
+        return ok({ success: true, fonte, soloMarketing, totale: clienti.length })
+      }
+
       return err('tipo non valido', 400)
     } catch (e) {
       return err(e.message)
@@ -449,10 +530,20 @@ exports.handler = async (event) => {
         return ok({ success: true, copiati: records.length })
       }
 
-      // Avvia campagna: copia globali mancanti + schedule + InCorso
+      // Avvia campagna: copia da fonte (global | clienti) + schedule + InCorso
       if (body.tipo === 'avvia-campagna') {
-        const { campagnaId, maxPerGiorno = 250, giorniInvio: giorniInvioRaw } = body
+        const {
+          campagnaId,
+          maxPerGiorno = 250,
+          giorniInvio: giorniInvioRaw,
+          fonte: fonteRaw,
+          soloMarketing: soloMarketingRaw,
+          dataInizio: dataInizioRaw,
+        } = body
         if (!campagnaId || campagnaId === 'global') return err('campagnaId mancante', 400)
+
+        const fonte = normalizeFonte(fonteRaw)
+        const soloMarketing = fonte === 'clienti' && Boolean(soloMarketingRaw)
 
         const campRes = await fetch(`${atUrl(T_CAMP)}/${campagnaId}`, { headers: AT_HEADERS })
         if (!campRes.ok) return err('Campagna non trovata', 404)
@@ -469,18 +560,39 @@ exports.handler = async (event) => {
         )
         const inCoda = esistenti.filter(r => (r.fields['Stato'] || '') === 'DaInviare')
 
-        const globali = await fetchAll(T_CONT, `{CampagnaId}='global'`, CONTATTO_COPY_FIELDS)
-        const daCopiare = globali.filter(r => {
-          const email = sanitizeEmail(r.fields['Email'])
-          return email && !emailsGia.has(email)
-        })
+        let daCopiare = []
+        if (fonte === 'clienti') {
+          const clienti = await fetchBrevoClienti({ soloMarketing })
+          daCopiare = clienti
+            .filter(c => c.email && !emailsGia.has(c.email))
+            .map(c => ({ email: c.email, nome: c.nome, azienda: '' }))
+        } else {
+          const globali = await fetchAll(T_CONT, `{CampagnaId}='global'`, CONTATTO_COPY_FIELDS)
+          daCopiare = globali
+            .filter(r => {
+              const email = sanitizeEmail(r.fields['Email'])
+              return email && !emailsGia.has(email)
+            })
+            .map(({ fields }) => ({
+              email:      fields['Email'],
+              nome:       fields['Nome'],
+              azienda:    fields['Azienda'],
+              indirizzo:  fields['Indirizzo'],
+              sitoWeb:    fields['SitoWeb'],
+              distanzaKm: fields['DistanzaKm'],
+              ambito:     fields['Ambito'],
+            }))
+        }
 
-        // Scheduling: chunk da `max` solo nei giorni consentiti
+        // Scheduling: da dataInizio (clamp ≥ oggi), snap al primo giorno consentito
         const oggiStr = oggiRome()
-        let cursorDay = snapToAllowedDay(oggiStr, giorniInvio)
+        const dataInizio = normalizeDataInizio(dataInizioRaw, oggiStr)
+        const startSchedule = snapToAllowedDay(dataInizio, giorniInvio)
+        let cursorDay = startSchedule
         let slotNelGiorno = 0
 
         if (inCoda.length) {
+          // Continua dopo l’ultima data già in coda (non rimescolare i già schedulati)
           const byDay = {}
           for (const r of inCoda) {
             const d = r.fields['DataProgrammata'] || oggiStr
@@ -491,35 +603,29 @@ exports.handler = async (event) => {
           const filled = byDay[lastDay] || 0
           const lastOk = snapToAllowedDay(lastDay, giorniInvio)
           if (lastOk === lastDay && filled < max) {
-            cursorDay = lastDay
-            slotNelGiorno = filled
+            cursorDay = lastDay < startSchedule ? startSchedule : lastDay
+            slotNelGiorno = lastDay < startSchedule ? 0 : filled
           } else {
-            cursorDay = nextAllowedDay(lastDay, giorniInvio)
+            const next = nextAllowedDay(lastDay, giorniInvio)
+            cursorDay = next < startSchedule ? startSchedule : next
             slotNelGiorno = 0
           }
         }
 
         let copiati = 0
+        let primoNuovo = null
         if (daCopiare.length) {
-          const records = daCopiare.map(({ fields }) => {
+          const records = daCopiare.map((c) => {
             if (slotNelGiorno >= max) {
               cursorDay = nextAllowedDay(cursorDay, giorniInvio)
               slotNelGiorno = 0
             }
-            // sicurezza: se cursor non è un giorno consentito (es. ripresa da coda weekend)
             cursorDay = snapToAllowedDay(cursorDay, giorniInvio)
             const dataProgrammata = cursorDay
+            if (!primoNuovo) primoNuovo = dataProgrammata
             slotNelGiorno++
             return {
-              fields: buildContattoFields({
-                email:      fields['Email'],
-                nome:       fields['Nome'],
-                azienda:    fields['Azienda'],
-                indirizzo:  fields['Indirizzo'],
-                sitoWeb:    fields['SitoWeb'],
-                distanzaKm: fields['DistanzaKm'],
-                ambito:     fields['Ambito'],
-              }, campagnaId, dataProgrammata),
+              fields: buildContattoFields(c, campagnaId, dataProgrammata),
             }
           })
           await createBatch(T_CONT, records)
@@ -528,7 +634,12 @@ exports.handler = async (event) => {
 
         const daInviareDopo = inCoda.length + copiati
         if (daInviareDopo === 0 && esistenti.length === 0) {
-          return err('Nessun contatto: importa la lista globale o aggiungi contatti alla campagna', 400)
+          const hint = fonte === 'clienti'
+            ? (soloMarketing
+              ? 'Nessun cliente con consenso marketing in Database Clienti'
+              : 'Nessun contatto in Database Clienti')
+            : 'Nessun contatto: importa la lista globale o aggiungi contatti alla campagna'
+          return err(hint, 400)
         }
 
         const nuovoStato = daInviareDopo === 0 ? 'Completata' : 'InCorso'
@@ -539,23 +650,27 @@ exports.handler = async (event) => {
         if (!patchRes.ok) throw new Error(await patchRes.text())
         const patchJson = await patchRes.json()
 
-        // Primo chunk subito solo se oggi è un giorno consentito
+        const dateInCoda = inCoda
+          .map(r => r.fields['DataProgrammata'])
+          .filter(Boolean)
+        if (primoNuovo) dateInCoda.push(primoNuovo)
+        dateInCoda.sort()
+        const primoGiorno = dateInCoda[0] || startSchedule
+
+        // Invio immediato solo se il primo lotto è dovuto oggi
         let invioTrigger = null
-        const invioOggiConsentito = giorniInvio.includes(dowIso(oggiStr))
-        if (nuovoStato === 'InCorso' && invioOggiConsentito) {
-          try {
-            const result = await runInvioLotto(campagnaId, 25)
-            invioTrigger = { ok: true, data: result }
-          } catch (e) {
-            console.error('[avvia-campagna] invio immediato fallito:', e)
-            invioTrigger = { ok: false, error: e.message }
-          }
-        } else if (nuovoStato === 'InCorso' && !invioOggiConsentito) {
+        const invioOggiOk = giorniInvio.includes(dowIso(oggiStr)) && primoGiorno <= oggiStr
+        if (nuovoStato === 'InCorso' && invioOggiOk) {
+          invioTrigger = { ok: true, needsClientSend: true, data: { inviati: 0, errori: 0 } }
+        } else if (nuovoStato === 'InCorso') {
+          const motivo = primoGiorno > oggiStr
+            ? `Primo invio programmato il ${primoGiorno}`
+            : `Oggi non è tra i giorni selezionati: primo invio il ${primoGiorno}`
           invioTrigger = {
             ok: true,
             skippedToday: true,
             data: { inviati: 0, errori: 0 },
-            messaggio: `Oggi non è tra i giorni selezionati: primo invio il ${snapToAllowedDay(oggiStr, giorniInvio)}`,
+            messaggio: motivo,
           }
         }
 
@@ -563,13 +678,16 @@ exports.handler = async (event) => {
 
         return ok({
           success: true,
+          fonte,
+          soloMarketing,
+          dataInizio,
           copiati,
           giaPresenti: esistenti.length,
           daInviare: daInviareDopo,
           maxPerGiorno: max,
           giorniInvio,
           giorniStimati,
-          primoGiorno: snapToAllowedDay(oggiStr, giorniInvio),
+          primoGiorno,
           stato: nuovoStato,
           campagna: mapCampagna(patchJson),
           invioTrigger,
@@ -578,7 +696,12 @@ exports.handler = async (event) => {
 
       // Riprogramma contatti DaInviare sui soli giorni selezionati (es. togli weekend)
       if (body.tipo === 'riprogramma-coda') {
-        const { campagnaId, maxPerGiorno = 250, giorniInvio: giorniInvioRaw } = body
+        const {
+          campagnaId,
+          maxPerGiorno = 250,
+          giorniInvio: giorniInvioRaw,
+          dataInizio: dataInizioRaw,
+        } = body
         if (!campagnaId || campagnaId === 'global') return err('campagnaId mancante', 400)
         const max = Math.min(Math.max(1, Number(maxPerGiorno) || 250), 250)
         const giorniInvio = normalizeGiorniInvio(giorniInvioRaw)
@@ -594,7 +717,9 @@ exports.handler = async (event) => {
           String(a.fields['DataProgrammata'] || '').localeCompare(String(b.fields['DataProgrammata'] || ''))
         )
 
-        const start = snapToAllowedDay(oggiRome(), giorniInvio)
+        const oggiStr = oggiRome()
+        const dataInizio = normalizeDataInizio(dataInizioRaw, oggiStr)
+        const start = snapToAllowedDay(dataInizio, giorniInvio)
         const dates = scheduleDates(inCoda.length, max, giorniInvio, start)
         const updates = inCoda.map((r, i) => ({
           id: r.id,
@@ -615,6 +740,7 @@ exports.handler = async (event) => {
           success: true,
           riprogrammati: updates.length,
           giorniInvio,
+          dataInizio,
           primoGiorno: dates[0],
           ultimoGiorno: dates[dates.length - 1],
           giorniStimati: Math.ceil(updates.length / max),

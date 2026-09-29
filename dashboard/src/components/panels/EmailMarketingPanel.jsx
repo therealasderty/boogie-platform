@@ -12,7 +12,7 @@ import {
   EnvelopeSimple, Plus, ArrowLeft, Trash,
   TextT, Image, Images, CursorClick, Minus, ArrowUp, ArrowDown,
   UploadSimple, Eye, FloppyDisk, ListBullets, Quotes, Users, SquaresFour,
-  CaretDown, GearSix, Play, Pause, ArrowRight, GridFour, FilePdf,
+  CaretDown, GearSix, Play, Pause, ArrowRight, GridFour, FilePdf, Smiley,
 } from '@phosphor-icons/react'
 import { authFetch } from '../../lib/authFetch'
 import { parseContattiCsv } from '../../lib/parseContattiCsv'
@@ -22,7 +22,18 @@ import { jsPDF } from 'jspdf'
 import styles from './EmailMarketingPanel.module.css'
 
 /** Bump a ogni release del modulo — confronta con l’online dopo il deploy Netlify. */
-export const EMAIL_MKTG_VERSION = '2026.09.28-a'
+export const EMAIL_MKTG_VERSION = '2026.09.29-d'
+
+const GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJr9H7A7enhkcRimfhn3EqfVU'
+
+function oggiRomeYmd() {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Rome',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date())
+}
 
 const GIORNI_SETTIMANA = [
   { id: 1, label: 'Lun' },
@@ -51,6 +62,8 @@ const BLOCK_TYPES = [
   { type: 'preheader',           label: 'Preheader',     Icon: Eye,            group: 'struttura' },
   { type: 'header-scuro',        label: 'Header oro',    Icon: Image,          group: 'struttura' },
   { type: 'footer-ricco',        label: 'Footer',        Icon: Minus,          group: 'struttura' },
+  { type: 'footer-semplice',     label: 'Footer semplice', Icon: Minus,        group: 'struttura' },
+  { type: 'etichetta',           label: 'Etichetta',     Icon: TextT,          group: 'testo' },
   { type: 'intestazione',        label: 'Titolo',        Icon: TextT,          group: 'testo' },
   { type: 'intestazione-piccola',label: 'Sottotitolo',   Icon: TextT,          group: 'testo' },
   { type: 'testo',               label: 'Testo',         Icon: TextT,          group: 'testo' },
@@ -62,6 +75,7 @@ const BLOCK_TYPES = [
   { type: 'immagine',            label: 'Immagine',      Icon: Image,          group: 'media' },
   { type: 'mosaico',             label: 'Mosaico 4',     Icon: SquaresFour,    group: 'media' },
   { type: 'pulsante',            label: 'Pulsante CTA',  Icon: CursorClick,    group: 'azioni' },
+  { type: 'doppio-cta',          label: 'Doppio CTA',    Icon: Smiley,         group: 'azioni' },
   { type: 'contatti-diretti',    label: 'Contatti',      Icon: EnvelopeSimple, group: 'azioni' },
 ]
 
@@ -76,6 +90,7 @@ const DEFAULT_BLOCKS = {
   preheader:            { type: 'preheader',            testo: 'Sala esclusiva, ampio giardino e un menu su misura per il tuo evento aziendale.' },
   'header-scuro':       { type: 'header-scuro',         logoUrl: 'https://boogiebistrot.com/logo-email.png', indirizzo: 'Via Europa, 2 — Colle Brianza (LC)' },
   hero:                 { type: 'hero',                 url: '', alt: '', link: '' },
+  etichetta:            { type: 'etichetta',            testo: 'Boogie Bistrot' },
   intestazione:         { type: 'intestazione',         testo: 'Ciao {nome},' },
   'intestazione-piccola':{ type: 'intestazione-piccola', testo: 'Sottotitolo sezione' },
   testo:                { type: 'testo',                contenuto: 'Scrivi il tuo messaggio qui...' },
@@ -85,14 +100,33 @@ const DEFAULT_BLOCKS = {
   lista:                { type: 'lista',                voci: 'Prima voce\nSeconda voce\nTerza voce' },
   'box-4':              { type: 'box-4',                voci: 'Sala esclusiva — spazi riservati solo al vostro gruppo\nAmpio giardino — perfetto per aperitivi all\'aperto\nLocation storica — tra le colline brianzole\nMenu personalizzati — su misura per voi' },
   pulsante:             { type: 'pulsante',             testo: 'Scopri di più', href: 'https://boogiebistrot.com', stile: 'brand' },
+  'doppio-cta': {
+    type: 'doppio-cta',
+    sinistra: {
+      titolo: '😊 È stata una bella serata',
+      sottotitolo: 'Lascia una recensione su Google',
+      href: GOOGLE_REVIEW_URL,
+      stile: 'dark',
+    },
+    destra: {
+      titolo: '😐 C\'è qualcosa da migliorare',
+      sottotitolo: 'Lascia un feedback',
+      href: 'https://boogiebistrot.com/feedback',
+      stile: 'light',
+    },
+  },
   'contatti-diretti':   { type: 'contatti-diretti',     testo: 'Oppure contattaci direttamente:', sito: 'https://boogiebistrot.com', telefono: '+39 039 9260568', email: 'info@boogiebistrot.com' },
   separatore:           { type: 'separatore' },
   'footer-ricco':       { type: 'footer-ricco',         testo: 'Boogie Bistrot\nVia Europa, 2 — Colle Brianza (LC)', sito: 'https://boogiebistrot.com', instagram: 'https://www.instagram.com/boogiebistrot', unsubscribe: true },
+  'footer-semplice': {
+    type: 'footer-semplice',
+    testo: 'Boogie Bistrot — Via Europa, 2, Colle Brianza (LC)\nHai ricevuto questa email perché hai cenato da noi. Non vuoi ricevere questi messaggi? Scrivici a info@boogiebistrot.com.',
+  },
 }
 
 function uid() { return Math.random().toString(36).slice(2, 9) }
 
-const LAYOUT_TYPES = new Set(['preheader', 'header-scuro', 'footer-ricco'])
+const LAYOUT_TYPES = new Set(['preheader', 'header-scuro', 'footer-ricco', 'footer-semplice'])
 
 // ─── Preview HTML email ───────────────────────────────────────────────────────
 
@@ -105,10 +139,12 @@ const LOGO_DARK = 'https://boogiebistrot.com/logo-email.png'
 function renderBlockHtml(b, nome = 'Mario') {
   const sub = s => (s || '').replace(/\{nome\}/gi, nome)
   switch (b.type) {
+    case 'etichetta':
+      return `<p style="font-family:${FONT_STACK};font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:${CMUTED};margin:0 0 12px;">${sub(b.testo || 'Boogie Bistrot')}</p>`
     case 'intestazione':
-      return `<h2 style="font-family:${FONT_STACK};font-size:28px;font-weight:600;color:${CD};margin:0 0 20px;text-align:left;line-height:1.3;">${sub(b.testo)}</h2>`
+      return `<h2 style="font-family:${FONT_STACK};font-size:26px;font-weight:400;color:${CD};margin:0 0 8px;text-align:left;line-height:1.3;">${sub(b.testo || '').replace(/\n/g, '<br>')}</h2>`
     case 'intestazione-piccola':
-      return `<h3 style="font-family:${FONT_STACK};font-size:16px;font-weight:600;color:${CD};margin:0 0 12px;text-transform:uppercase;letter-spacing:0.06em;">${sub(b.testo)}</h3>`
+      return `<h3 style="font-family:${FONT_STACK};font-size:16px;font-weight:600;color:${CD};margin:0 0 12px;text-transform:uppercase;letter-spacing:0.06em;">${sub(b.testo || '').replace(/\n/g, '<br>')}</h3>`
     case 'testo':
       return `<p style="font-family:${FONT_STACK};font-size:15px;line-height:1.8;color:${CB};margin:0 0 20px;">${sub(b.contenuto || '').replace(/\n/g, '<br>')}</p>`
     case 'immagine': {
@@ -188,6 +224,31 @@ function renderBlockHtml(b, nome = 'Mario') {
       if (b.stile === 'light') { bg = CBG;  border = ';border:1px solid ' + CLINE }
       return `<p style="text-align:center;margin:0 0 24px;"><a href="${b.href || '#'}" style="display:inline-block;background:${bg};color:${color};text-decoration:none;padding:14px 32px;font-family:${FONT_STACK};font-size:14px;font-weight:600;letter-spacing:0.04em;border-radius:4px${border};">${b.testo || 'Clicca qui'}</a></p>`
     }
+    case 'doppio-cta': {
+      const L = b.sinistra || {}
+      const R = b.destra || {}
+      const btn = (side, pad) => {
+        const dark = (side.stile || 'dark') === 'dark'
+        const bg = dark ? CD : CBG
+        const color = dark ? 'white' : CD
+        const border = dark ? '' : `;border:1px solid ${CLINE}`
+        const subOpacity = dark ? '0.7' : '0.6'
+        const titolo = sub(side.titolo || 'CTA')
+        const sotto = side.sottotitolo ? `<br><span style="font-size:11px;font-weight:400;opacity:${subOpacity};letter-spacing:0;">${sub(side.sottotitolo)}</span>` : ''
+        return `<td style="${pad}" width="50%">
+<a href="${side.href || '#'}" target="_blank"
+   style="display:block;background:${bg};color:${color};text-decoration:none;padding:14px 16px;font-family:${FONT_STACK};font-size:13px;font-weight:600;letter-spacing:0.05em;text-align:center;border-radius:4px;line-height:1.4${border};">
+  ${titolo}${sotto}
+</a>
+</td>`
+      }
+      return `<table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 12px;">
+<tr>
+${btn(L, 'padding-right:8px;')}
+${btn(R, 'padding-left:8px;')}
+</tr>
+</table>`
+    }
     case 'contatti-diretti': {
       const sito = (b.sito || 'https://boogiebistrot.com').trim()
       const tel = (b.telefono || '').trim()
@@ -254,11 +315,18 @@ function buildPreviewHtml(blocks) {
   const preheader = blocks.find(b => b.type === 'preheader')
   const header = blocks.find(b => b.type === 'header-scuro')
   const footer = blocks.find(b => b.type === 'footer-ricco')
+  const footerSemplice = blocks.find(b => b.type === 'footer-semplice')
   const content = blocks.filter(b => !LAYOUT_TYPES.has(b.type))
   const marketing = Boolean(header || footer || content.some(b => b.type === 'hero'))
 
   if (!marketing) {
     const body = content.map(b => renderBlockHtml(b)).join('\n')
+    const footLines = (footerSemplice?.testo || 'Boogie Bistrot — Via Europa, 2, Colle Brianza (LC)')
+      .split('\n').map(l => l.trim()).filter(Boolean).join('<br>')
+    const footHtml = footLines.replace(
+      /(info@boogiebistrot\.com)/gi,
+      '<a href="mailto:info@boogiebistrot.com" style="color:#C4913A;">$1</a>',
+    )
     return `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">
 <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head><body style="margin:0;padding:0;background:${CBG};font-family:${FONT_STACK};">
@@ -266,11 +334,10 @@ function buildPreviewHtml(blocks) {
 <tr><td align="center">
 <table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid ${CG};">
 <tr><td style="padding:32px 32px 16px;font-family:${FONT_STACK};">
-<img src="${LOGO_URL}" alt="Boogie Bistrot" width="60" style="display:block;margin:0 auto 12px;border:0;">
 ${body}
 </td></tr>
 <tr><td style="padding:16px 32px 24px;border-top:1px solid ${CLINE};">
-<p style="font-size:11px;color:${CFOOT};margin:0;line-height:1.7;">Boogie Bistrot — Via Europa, 2, Colle Brianza (LC)</p>
+<p style="font-size:11px;color:${CFOOT};margin:0;line-height:1.7;">${footHtml}</p>
 </td></tr>
 </table></td></tr></table></body></html>`
   }
@@ -534,15 +601,34 @@ function BlockEditor({ block, onChange }) {
     case 'intestazione':
       return (
         <div className={styles.blockFields}>
-          <label className={styles.fieldLabel}>Testo <span className={styles.hint}>(usa {'{nome}'} per il nome)</span></label>
-          <input className={styles.fieldInput} value={block.testo || ''} onChange={e => set('testo', e.target.value)} placeholder="Ciao {nome}," />
+          <label className={styles.fieldLabel}>Testo <span className={styles.hint}>(usa {'{nome}'} · Invio = a capo)</span></label>
+          <textarea
+            className={styles.fieldTextarea}
+            value={block.testo || ''}
+            onChange={e => set('testo', e.target.value)}
+            rows={3}
+            placeholder={'Ciao {nome},\ngrazie per essere passato dal Boogie!'}
+          />
         </div>
       )
     case 'intestazione-piccola':
       return (
         <div className={styles.blockFields}>
-          <label className={styles.fieldLabel}>Testo sottotitolo</label>
-          <input className={styles.fieldInput} value={block.testo || ''} onChange={e => set('testo', e.target.value)} placeholder="Sottotitolo sezione" />
+          <label className={styles.fieldLabel}>Testo sottotitolo <span className={styles.hint}>(Invio = a capo)</span></label>
+          <textarea
+            className={styles.fieldTextarea}
+            value={block.testo || ''}
+            onChange={e => set('testo', e.target.value)}
+            rows={2}
+            placeholder="Sottotitolo sezione"
+          />
+        </div>
+      )
+    case 'etichetta':
+      return (
+        <div className={styles.blockFields}>
+          <label className={styles.fieldLabel}>Etichetta (piccola, uppercase)</label>
+          <input className={styles.fieldInput} value={block.testo || ''} onChange={e => set('testo', e.target.value)} placeholder="Boogie Bistrot" />
         </div>
       )
     case 'testo':
@@ -671,6 +757,43 @@ function BlockEditor({ block, onChange }) {
           </select>
         </div>
       )
+    case 'doppio-cta': {
+      const L = block.sinistra || {}
+      const R = block.destra || {}
+      const setSide = (side, key, val) => {
+        onChange({
+          ...block,
+          [side]: { ...(block[side] || {}), [key]: val },
+        })
+      }
+      return (
+        <div className={styles.blockFields}>
+          <p className={styles.separatorNote}>Due CTA affiancate (come la mail recensioni post-visita).</p>
+          <label className={styles.fieldLabel}>Sinistra — titolo</label>
+          <input className={styles.fieldInput} value={L.titolo || ''} onChange={e => setSide('sinistra', 'titolo', e.target.value)} />
+          <label className={styles.fieldLabel}>Sinistra — sottotitolo</label>
+          <input className={styles.fieldInput} value={L.sottotitolo || ''} onChange={e => setSide('sinistra', 'sottotitolo', e.target.value)} />
+          <label className={styles.fieldLabel}>Sinistra — URL</label>
+          <input className={styles.fieldInput} value={L.href || ''} onChange={e => setSide('sinistra', 'href', e.target.value)} />
+          <label className={styles.fieldLabel}>Sinistra — stile</label>
+          <select className={styles.fieldSelect} value={L.stile || 'dark'} onChange={e => setSide('sinistra', 'stile', e.target.value)}>
+            <option value="dark">Scuro</option>
+            <option value="light">Chiaro</option>
+          </select>
+          <label className={styles.fieldLabel} style={{ marginTop: 12 }}>Destra — titolo</label>
+          <input className={styles.fieldInput} value={R.titolo || ''} onChange={e => setSide('destra', 'titolo', e.target.value)} />
+          <label className={styles.fieldLabel}>Destra — sottotitolo</label>
+          <input className={styles.fieldInput} value={R.sottotitolo || ''} onChange={e => setSide('destra', 'sottotitolo', e.target.value)} />
+          <label className={styles.fieldLabel}>Destra — URL</label>
+          <input className={styles.fieldInput} value={R.href || ''} onChange={e => setSide('destra', 'href', e.target.value)} />
+          <label className={styles.fieldLabel}>Destra — stile</label>
+          <select className={styles.fieldSelect} value={R.stile || 'light'} onChange={e => setSide('destra', 'stile', e.target.value)}>
+            <option value="dark">Scuro</option>
+            <option value="light">Chiaro</option>
+          </select>
+        </div>
+      )
+    }
     case 'contatti-diretti':
       return (
         <div className={styles.blockFields}>
@@ -697,6 +820,13 @@ function BlockEditor({ block, onChange }) {
             <input type="checkbox" checked={block.unsubscribe !== false} onChange={e => set('unsubscribe', e.target.checked)} />
             Mostra link “Non vuoi più ricevere comunicazioni?” (Brevo)
           </label>
+        </div>
+      )
+    case 'footer-semplice':
+      return (
+        <div className={styles.blockFields}>
+          <label className={styles.fieldLabel}>Testo footer <span className={styles.hint}>(layout transazionale 520px — una riga = a capo)</span></label>
+          <textarea className={styles.fieldTextarea} value={block.testo || ''} onChange={e => set('testo', e.target.value)} rows={4} />
         </div>
       )
     case 'separatore':
@@ -873,6 +1003,9 @@ function CampagnaTab({ campagna, onSaved, onContinuaAvvio }) {
     if (b.type === 'mosaico') {
       const n = (b.immagini || []).filter(x => x?.url).length
       return n ? `${n}/4 foto` : '4 foto'
+    }
+    if (b.type === 'doppio-cta') {
+      return (b.sinistra?.titolo || b.destra?.titolo || '2 CTA').slice(0, 40)
     }
     if (b.testo) return b.testo
     if (b.contenuto) return b.contenuto
@@ -1054,32 +1187,54 @@ function CampagnaTab({ campagna, onSaved, onContinuaAvvio }) {
 
 function AvvioStep({ campagna, onCampagnaUpdate, onTornaGrafica }) {
   const [stats, setStats] = useState(null)
-  const [countGlobali, setCountGlobali] = useState(null)
+  const [fonte, setFonte] = useState('global') // 'global' | 'clienti'
+  const [soloMarketing, setSoloMarketing] = useState(false)
+  const [countFonte, setCountFonte] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [loadingFonte, setLoadingFonte] = useState(false)
 
-  const load = useCallback(async () => {
-    setLoading(true)
+  const attiva = campagna.stato === 'InCorso' || campagna.stato === 'Programmata'
+
+  const loadStats = useCallback(async () => {
     try {
-      const [campRes, globRes] = await Promise.all([
-        authFetch(`/.netlify/functions/gestisci-campagne-mail?tipo=statistiche&campagnaId=${campagna.id}`),
-        authFetch('/.netlify/functions/gestisci-campagne-mail?tipo=statistiche&campagnaId=global'),
-      ])
+      const campRes = await authFetch(
+        `/.netlify/functions/gestisci-campagne-mail?tipo=statistiche&campagnaId=${campagna.id}`,
+      )
       const campData = await campRes.json()
-      const globData = await globRes.json()
       if (campData.success) setStats(campData.stats)
-      if (globData.success) setCountGlobali(globData.stats.totale)
-    } finally {
-      setLoading(false)
-    }
+    } catch { /* ignore */ }
   }, [campagna.id])
 
-  useEffect(() => { load() }, [load])
+  const loadConteggioFonte = useCallback(async () => {
+    if (attiva) return
+    setLoadingFonte(true)
+    try {
+      const qs = new URLSearchParams({
+        tipo: 'conteggio-fonte',
+        fonte,
+        soloMarketing: soloMarketing ? '1' : '0',
+      })
+      const res = await authFetch(`/.netlify/functions/gestisci-campagne-mail?${qs}`)
+      const data = await res.json()
+      if (data.success) setCountFonte(data.totale)
+      else setCountFonte(null)
+    } catch {
+      setCountFonte(null)
+    } finally {
+      setLoadingFonte(false)
+    }
+  }, [fonte, soloMarketing, attiva])
+
+  useEffect(() => {
+    setLoading(true)
+    Promise.all([loadStats(), loadConteggioFonte()]).finally(() => setLoading(false))
+  }, [loadStats, loadConteggioFonte])
 
   const inCoda = stats?.DaInviare ?? 0
   const giaInCampagna = stats?.totale ?? 0
-  const destinatariStimati = inCoda > 0 ? inCoda : (countGlobali ?? 0)
+  const destinatariStimati = inCoda > 0 ? inCoda : (countFonte ?? 0)
   const giorniStimati = destinatariStimati > 0 ? Math.ceil(destinatariStimati / 250) : 0
-  const attiva = campagna.stato === 'InCorso' || campagna.stato === 'Programmata'
+  const labelFonte = fonte === 'clienti' ? 'Database Clienti' : 'Lista globale'
 
   return (
     <div className={styles.avvioStep}>
@@ -1099,8 +1254,10 @@ function AvvioStep({ campagna, onCampagnaUpdate, onTornaGrafica }) {
       ) : (
         <div className={styles.statsRow}>
           <div className={styles.statCard}>
-            <span className={styles.statNum}>{countGlobali ?? 0}</span>
-            <span className={styles.statLabel}>Lista globale</span>
+            <span className={styles.statNum}>
+              {loadingFonte ? '…' : (countFonte ?? 0)}
+            </span>
+            <span className={styles.statLabel}>{labelFonte}</span>
           </div>
           <div className={styles.statCard}>
             <span className={styles.statNum}>{destinatariStimati}</span>
@@ -1121,18 +1278,37 @@ function AvvioStep({ campagna, onCampagnaUpdate, onTornaGrafica }) {
 
       <div className={styles.avvioNote}>
         <p>
-          All’avvio i contatti della <strong>lista globale</strong> vengono copiati in questa campagna:
-          le <strong>prime 250 partono subito</strong>, le altre a 250 al giorno alle 10:00.
-          {countGlobali === 0 && (
-            <> La lista è vuota: aggiungili dalla scheda <strong>Contatti</strong> in home Email Marketing.</>
+          {fonte === 'clienti' ? (
+            <>
+              All’avvio i contatti del <strong>Database Clienti</strong> (Brevo)
+              {soloMarketing ? <> con <strong>consenso marketing</strong></> : null}
+              {' '}vengono copiati in questa campagna dal <strong>giorno di partenza</strong> scelto:
+              max <strong>250/giorno</strong> nei giorni selezionati (cron alle 10:00).
+              Se la partenza è oggi e oggi è un giorno consentito, il primo lotto parte subito.
+            </>
+          ) : (
+            <>
+              All’avvio i contatti della <strong>lista globale</strong> (aziende) vengono copiati
+              dal <strong>giorno di partenza</strong> scelto: max <strong>250/giorno</strong> nei giorni selezionati.
+              Se la partenza è oggi e oggi è un giorno consentito, il primo lotto parte subito.
+              {countFonte === 0 && (
+                <> La lista è vuota: aggiungili dalla scheda <strong>Contatti</strong> in home Email Marketing.</>
+              )}
+            </>
           )}
         </p>
       </div>
 
       <AvviaCampagnaBox
         campagna={campagna}
+        fonte={fonte}
+        soloMarketing={soloMarketing}
+        countFonte={countFonte}
+        loadingFonte={loadingFonte}
+        onFonteChange={setFonte}
+        onSoloMarketingChange={setSoloMarketing}
         onAvviata={(updated) => {
-          load()
+          loadStats()
           if (updated) onCampagnaUpdate?.(updated)
         }}
       />
@@ -1168,20 +1344,24 @@ function AvvioStep({ campagna, onCampagnaUpdate, onTornaGrafica }) {
   )
 }
 
-// ─── Avvia campagna (copia globali + schedule + InCorso) ─────────────────────
+// ─── Avvia campagna (copia fonte + schedule + InCorso) ────────────────────────
 
-function AvviaCampagnaBox({ campagna, onAvviata }) {
+function AvviaCampagnaBox({
+  campagna,
+  fonte = 'global',
+  soloMarketing = false,
+  countFonte = null,
+  loadingFonte = false,
+  onFonteChange,
+  onSoloMarketingChange,
+  onAvviata,
+}) {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState(null)
-  const [countGlobali, setCountGlobali] = useState(null)
   const [giorniInvio, setGiorniInvio] = useState(() => [...GIORNI_FERIALI])
+  const [dataInizio, setDataInizio] = useState(() => oggiRomeYmd())
   const attiva = campagna.stato === 'InCorso' || campagna.stato === 'Programmata'
-
-  useEffect(() => {
-    authFetch('/.netlify/functions/gestisci-campagne-mail?tipo=statistiche&campagnaId=global')
-      .then(r => r.json())
-      .then(d => { if (d.success) setCountGlobali(d.stats.totale) })
-  }, [])
+  const oggiStr = oggiRomeYmd()
 
   function toggleGiorno(id) {
     setGiorniInvio(prev => {
@@ -1198,14 +1378,24 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
     .map(g => g.label)
     .join(', ')
 
+  const labelFonte = fonte === 'clienti' ? 'Database Clienti' : 'lista globale'
+  const dataInizioSafe = dataInizio && dataInizio < oggiStr ? oggiStr : (dataInizio || oggiStr)
+  const parteSubito = dataInizioSafe <= oggiStr
+
   async function avvia() {
-    const n = countGlobali ?? '?'
+    const n = countFonte ?? '?'
+    const filtro = fonte === 'clienti'
+      ? (soloMarketing ? ' (solo consenso marketing)' : ' (tutti)')
+      : ''
     if (!confirm(
       `Avviare la campagna?\n\n` +
-      `• Copia i contatti dalla lista globale\n` +
+      `• Copia i contatti da: ${labelFonte}${filtro}\n` +
+      `• Giorno di partenza: ${dataInizioSafe}\n` +
       `• Max 250 email/giorno solo in: ${giorniLabel}\n` +
-      `• Se oggi è tra i giorni scelti, parte subito il primo lotto\n\n` +
-      `Contatti in lista globale: ${n}`
+      (parteSubito
+        ? `• Se oggi è tra i giorni scelti, parte subito il primo lotto\n\n`
+        : `• Nessun invio immediato: primo lotto dal ${dataInizioSafe} (o primo giorno consentito successivo)\n\n`) +
+      `Destinatari stimati: ${n}`
     )) return
 
     setBusy(true)
@@ -1219,6 +1409,9 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
           campagnaId: campagna.id,
           maxPerGiorno: 250,
           giorniInvio,
+          dataInizio: dataInizioSafe,
+          fonte,
+          soloMarketing: fonte === 'clienti' ? soloMarketing : false,
         }),
       })
       const data = await res.json()
@@ -1235,7 +1428,7 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
         setMsg({
           tipo: 'ok',
           testo: data.invioTrigger.messaggio ||
-            `Campagna in coda. Primo invio il ${data.primoGiorno} (oggi non è tra i giorni selezionati).`,
+            `Campagna in coda. Primo invio il ${data.primoGiorno}.`,
         })
         return
       }
@@ -1276,21 +1469,33 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
       let errori = 0
       let lastErr = null
       const TARGET = 250
-      for (let i = 0; i < 12; i++) {
+      const CHUNK = 25
+      let retries = 0
+      for (let i = 0; i < 20 && inviati + errori < TARGET; i++) {
         const res = await authFetch('/.netlify/functions/gestisci-campagne-mail', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ tipo: 'invia-lotto-ora', campagnaId: campagna.id, limit: 25 }),
+          body:    JSON.stringify({ tipo: 'invia-lotto-ora', campagnaId: campagna.id, limit: CHUNK }),
         })
         const data = await res.json().catch(() => ({}))
         if (!res.ok || !data.success) {
           lastErr = data.error || `HTTP ${res.status}`
+          if (retries < 3) {
+            retries++
+            setMsg({
+              tipo: 'ok',
+              testo: `Invio in corso… ${inviati} inviate — riprovo (${retries}/3)…`,
+            })
+            await new Promise(r => setTimeout(r, 1500 * retries))
+            continue
+          }
           if (i === 0 && inviati === 0) {
             setMsg({ tipo: 'err', testo: `Invio non partito: ${lastErr}` })
             return { ok: false, error: lastErr }
           }
           break
         }
+        retries = 0
         const chunkInviati = data.inviati || 0
         const chunkErrori = data.errori || 0
         const processed = chunkInviati + chunkErrori
@@ -1302,8 +1507,7 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
             ` (obiettivo oggi ${TARGET})`,
         })
         if (processed === 0) break
-        if (processed < 25) break
-        if (inviati + errori >= TARGET) break
+        if (processed < CHUNK) break
       }
       if (inviati === 0 && errori === 0) {
         const msgTxt = lastErr || 'Nessuna email da inviare per oggi (già inviate o data non dovuta).'
@@ -1314,7 +1518,7 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
         tipo: inviati > 0 ? 'ok' : 'err',
         testo: `Fatto: ${inviati} email inviate` + (errori ? ` (${errori} errori)` : '') +
           (lastErr ? ` — ultimo errore chunk: ${lastErr}` : '') +
-          '. Se restano email per oggi, ripremi «Invia lotto di oggi».',
+          (inviati + errori < TARGET ? '. Se restano email per oggi, ripremi «Invia lotto di oggi».' : '.'),
       })
       onAvviata?.(campagna)
       return { ok: inviati > 0, inviati, errori }
@@ -1329,8 +1533,9 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
   async function riprogrammaCoda() {
     if (!confirm(
       `Riprogrammare tutta la coda DaInviare?\n\n` +
-      `Solo nei giorni: ${giorniLabel}\n` +
-      `Max 250/giorno. Le date weekend (o non selezionate) verranno spostate.`
+      `• Giorno di partenza: ${dataInizioSafe}\n` +
+      `• Solo nei giorni: ${giorniLabel}\n` +
+      `• Max 250/giorno. Le date weekend (o non selezionate) verranno spostate.`
     )) return
     setBusy(true)
     setMsg(null)
@@ -1343,6 +1548,7 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
           campagnaId: campagna.id,
           maxPerGiorno: 250,
           giorniInvio,
+          dataInizio: dataInizioSafe,
         }),
       })
       const data = await res.json()
@@ -1382,8 +1588,8 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
     }
   }
 
-  const stimaGiorni = countGlobali > 0
-    ? Math.ceil(countGlobali / 250)
+  const stimaGiorni = countFonte > 0
+    ? Math.ceil(countFonte / 250)
     : null
 
   return (
@@ -1394,14 +1600,88 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
             {attiva ? 'Campagna attiva' : 'Avvio invii'}
           </h3>
           <p className={styles.importHint}>
-            Max <strong>250 email/giorno</strong> nei giorni selezionati.
-            {countGlobali != null && (
-              <> Lista globale: <strong>{countGlobali}</strong>
+            Max <strong>250 email/giorno</strong> nei giorni selezionati
+            {dataInizioSafe ? <>, a partire dal <strong>{dataInizioSafe}</strong></> : null}.
+            {countFonte != null && !loadingFonte && (
+              <> Destinatari: <strong>{countFonte}</strong>
                 {stimaGiorni != null && <> → ~{stimaGiorni} giorni di invio</>}
               </>
             )}
+            {loadingFonte && <> Destinatari: <strong>…</strong></>}
             .
           </p>
+
+          <div className={styles.giorniInvioRow}>
+            <span className={styles.giorniInvioLabel}>Giorno di partenza</span>
+            <input
+              type="date"
+              className={styles.fieldInput}
+              style={{ maxWidth: 180 }}
+              value={dataInizioSafe}
+              min={oggiStr}
+              onChange={e => setDataInizio(e.target.value || oggiStr)}
+              disabled={busy}
+            />
+            {!parteSubito && (
+              <span className={styles.separatorNote} style={{ margin: 0 }}>
+                Nessun invio immediato
+              </span>
+            )}
+          </div>
+
+          {!attiva && (
+            <>
+              <div className={styles.giorniInvioRow}>
+                <span className={styles.giorniInvioLabel}>Lista destinatari</span>
+                <div className={styles.giorniInvioToggles}>
+                  <button
+                    type="button"
+                    className={`${styles.giornoToggle} ${fonte === 'global' ? styles.giornoToggleOn : ''}`}
+                    onClick={() => onFonteChange?.('global')}
+                    disabled={busy}
+                    aria-pressed={fonte === 'global'}
+                  >
+                    Lista globale
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.giornoToggle} ${fonte === 'clienti' ? styles.giornoToggleOn : ''}`}
+                    onClick={() => onFonteChange?.('clienti')}
+                    disabled={busy}
+                    aria-pressed={fonte === 'clienti'}
+                  >
+                    Database Clienti
+                  </button>
+                </div>
+              </div>
+              {fonte === 'clienti' && (
+                <div className={styles.giorniInvioRow}>
+                  <span className={styles.giorniInvioLabel}>Filtro consenso</span>
+                  <div className={styles.giorniInvioToggles}>
+                    <button
+                      type="button"
+                      className={`${styles.giornoToggle} ${!soloMarketing ? styles.giornoToggleOn : ''}`}
+                      onClick={() => onSoloMarketingChange?.(false)}
+                      disabled={busy}
+                      aria-pressed={!soloMarketing}
+                    >
+                      Tutti
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.giornoToggle} ${soloMarketing ? styles.giornoToggleOn : ''}`}
+                      onClick={() => onSoloMarketingChange?.(true)}
+                      disabled={busy}
+                      aria-pressed={soloMarketing}
+                    >
+                      Solo consenso marketing
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
           <div className={styles.giorniInvioRow}>
             <span className={styles.giorniInvioLabel}>Giorni di invio</span>
             <div className={styles.giorniInvioToggles}>
@@ -1445,7 +1725,12 @@ function AvviaCampagnaBox({ campagna, onAvviata }) {
               </button>
             </>
           ) : (
-            <button type="button" className="btn-primary" onClick={avvia} disabled={busy || giorniInvio.length === 0}>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={avvia}
+              disabled={busy || giorniInvio.length === 0 || loadingFonte || countFonte === 0}
+            >
               <Play size={15} /> {busy ? 'Avvio...' : 'Avvia campagna'}
             </button>
           )}

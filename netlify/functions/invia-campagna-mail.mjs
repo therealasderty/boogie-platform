@@ -23,14 +23,15 @@ function loadVerifyToken() {
 }
 
 /** Shell minima per template non-marketing (evita require di _email.js). */
-function shell({ body = '' } = {}) {
+function shell({ body = '', footerHtml = '' } = {}) {
+  const foot = footerHtml || 'Boogie Bistrot — Via Europa, 2, Colle Brianza (LC)'
   return `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">
 <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head><body style="margin:0;padding:0;background:${CBG};font-family:${F};">
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;"><tr><td align="center">
 <table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid ${CG};">
 <tr><td style="padding:40px 40px 20px;font-family:${F};">${body}</td></tr>
-<tr><td style="padding:16px 40px 32px;border-top:1px solid ${CLINE};font-size:11px;color:#B0A898;">Boogie Bistrot — Via Europa, 2, Colle Brianza (LC)</td></tr>
+<tr><td style="padding:16px 40px 32px;border-top:1px solid ${CLINE};font-size:11px;color:#B0A898;line-height:1.7;">${foot}</td></tr>
 </table></td></tr></table></body></html>`
 }
 
@@ -56,15 +57,18 @@ const CBG = '#F5F0E8'
 const CLINE = '#D4C9B0'
 const LOGO_URL = 'https://boogiebistrot.com/logo-email.png'
 const LOGO_DARK = 'https://boogiebistrot.com/logo-email.png'
-const LAYOUT_TYPES = new Set(['preheader', 'header-scuro', 'footer-ricco'])
+const LAYOUT_TYPES = new Set(['preheader', 'header-scuro', 'footer-ricco', 'footer-semplice'])
+const GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJr9H7A7enhkcRimfhn3EqfVU'
 
 function renderBlock(b, nome = '') {
   const sub = s => (s || '').replace(/\{nome\}/gi, nome || 'amico')
   switch (b.type) {
+    case 'etichetta':
+      return `<p style="font-family:${F};font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:${CMUTED};margin:0 0 12px;">${sub(b.testo || 'Boogie Bistrot')}</p>`
     case 'intestazione':
-      return `<h2 style="font-family:${F};font-size:28px;font-weight:600;color:${CD};margin:0 0 20px;text-align:left;line-height:1.3;">${sub(b.testo)}</h2>`
+      return `<h2 style="font-family:${F};font-size:26px;font-weight:400;color:${CD};margin:0 0 8px;text-align:left;line-height:1.3;">${sub(b.testo || '').replace(/\n/g, '<br>')}</h2>`
     case 'intestazione-piccola':
-      return `<h3 style="font-family:${F};font-size:16px;font-weight:600;color:${CD};margin:0 0 12px;text-transform:uppercase;letter-spacing:0.06em;">${sub(b.testo)}</h3>`
+      return `<h3 style="font-family:${F};font-size:16px;font-weight:600;color:${CD};margin:0 0 12px;text-transform:uppercase;letter-spacing:0.06em;">${sub(b.testo || '').replace(/\n/g, '<br>')}</h3>`
     case 'testo':
       return `<p style="font-family:${F};font-size:15px;line-height:1.8;color:${CB};margin:0 0 20px;">${sub(b.contenuto || '').replace(/\n/g, '<br>')}</p>`
     case 'immagine': {
@@ -147,6 +151,33 @@ function renderBlock(b, nome = '') {
       if (b.stile === 'light') { bg = CBG;  border = ';border:1px solid ' + CLINE }
       return `<p style="text-align:center;margin:0 0 24px;"><a href="${b.href || '#'}" style="display:inline-block;background:${bg};color:${color};text-decoration:none;padding:14px 32px;font-family:${F};font-size:14px;font-weight:600;letter-spacing:0.04em;border-radius:4px${border};">${b.testo || 'Clicca qui'}</a></p>`
     }
+    case 'doppio-cta': {
+      const L = b.sinistra || {}
+      const R = b.destra || {}
+      const btn = (side, pad) => {
+        const dark = (side.stile || 'dark') === 'dark'
+        const bg = dark ? CD : CBG
+        const color = dark ? 'white' : CD
+        const border = dark ? '' : `;border:1px solid ${CLINE}`
+        const subOpacity = dark ? '0.7' : '0.6'
+        const titolo = sub(side.titolo || 'CTA')
+        const sotto = side.sottotitolo
+          ? `<br><span style="font-size:11px;font-weight:400;opacity:${subOpacity};letter-spacing:0;">${sub(side.sottotitolo)}</span>`
+          : ''
+        return `<td style="${pad}" width="50%">
+<a href="${side.href || GOOGLE_REVIEW_URL}" target="_blank"
+   style="display:block;background:${bg};color:${color};text-decoration:none;padding:14px 16px;font-family:${F};font-size:13px;font-weight:600;letter-spacing:0.05em;text-align:center;border-radius:4px;line-height:1.4${border};">
+  ${titolo}${sotto}
+</a>
+</td>`
+      }
+      return `<table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 12px;">
+<tr>
+${btn(L, 'padding-right:8px;')}
+${btn(R, 'padding-left:8px;')}
+</tr>
+</table>`
+    }
     case 'contatti-diretti': {
       const sito = (b.sito || 'https://boogiebistrot.com').trim()
       const tel = (b.telefono || '').trim()
@@ -216,12 +247,19 @@ function buildHtml(campagna, nome) {
   const preheader = blocks.find(b => b.type === 'preheader')
   const header = blocks.find(b => b.type === 'header-scuro')
   const footer = blocks.find(b => b.type === 'footer-ricco')
+  const footerSemplice = blocks.find(b => b.type === 'footer-semplice')
   const content = blocks.filter(b => !LAYOUT_TYPES.has(b.type))
   const marketing = Boolean(header || footer || content.some(b => b.type === 'hero'))
 
   if (!marketing) {
     const body = content.map(b => renderBlock(b, nome)).join('\n')
-    return shell({ body })
+    const footLines = (footerSemplice?.testo || 'Boogie Bistrot — Via Europa, 2, Colle Brianza (LC)')
+      .split('\n').map(l => l.trim()).filter(Boolean).join('<br>')
+    const footerHtml = footLines.replace(
+      /(info@boogiebistrot\.com)/gi,
+      '<a href="mailto:info@boogiebistrot.com" style="color:#C4913A;">$1</a>',
+    )
+    return shell({ body, footerHtml })
   }
 
   const rows = []

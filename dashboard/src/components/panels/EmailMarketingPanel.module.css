@@ -940,7 +940,7 @@
 }
 .giornoToggle {
   min-width: 38px;
-  padding: 5px 8px;
+  padding: 5px 10px;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--bg);
@@ -949,6 +949,7 @@
   font-weight: 600;
   cursor: pointer;
   line-height: 1.2;
+  white-space: nowrap;
 }
 .giornoToggle:hover:not(:disabled) {
   border-color: var(--text3);
