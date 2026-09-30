@@ -22,7 +22,16 @@ import { jsPDF } from 'jspdf'
 import styles from './EmailMarketingPanel.module.css'
 
 /** Bump a ogni release del modulo — confronta con l’online dopo il deploy Netlify. */
-export const EMAIL_MKTG_VERSION = '2026.09.29-d'
+export const EMAIL_MKTG_VERSION = '2026.09.30-a'
+
+const MAX_PER_GIORNO_CAP = 250
+const DEFAULT_MAX_PER_GIORNO = 250
+
+function clampMaxPerGiorno(n) {
+  const v = Math.round(Number(n))
+  if (!Number.isFinite(v)) return DEFAULT_MAX_PER_GIORNO
+  return Math.min(MAX_PER_GIORNO_CAP, Math.max(1, v))
+}
 
 const GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJr9H7A7enhkcRimfhn3EqfVU'
 
@@ -1069,8 +1078,7 @@ function CampagnaTab({ campagna, onSaved, onContinuaAvvio }) {
                 />
               </div>
               <p className={styles.editorHint}>
-                Invio: prime 250 subito all’avvio, poi max 250/giorno alle 10:00.
-                Quando la grafica è pronta, passa allo step <strong>Avvio</strong>.
+                Invio: configuri partenza, contatti/giorno e giorni nello step <strong>Avvio</strong>.
               </p>
             </div>
           )}
@@ -1189,11 +1197,13 @@ function AvvioStep({ campagna, onCampagnaUpdate, onTornaGrafica }) {
   const [stats, setStats] = useState(null)
   const [fonte, setFonte] = useState('global') // 'global' | 'clienti'
   const [soloMarketing, setSoloMarketing] = useState(false)
+  const [maxPerGiorno, setMaxPerGiorno] = useState(DEFAULT_MAX_PER_GIORNO)
   const [countFonte, setCountFonte] = useState(null)
   const [loading, setLoading] = useState(true)
   const [loadingFonte, setLoadingFonte] = useState(false)
 
   const attiva = campagna.stato === 'InCorso' || campagna.stato === 'Programmata'
+  const maxSafe = clampMaxPerGiorno(maxPerGiorno)
 
   const loadStats = useCallback(async () => {
     try {
@@ -1233,7 +1243,7 @@ function AvvioStep({ campagna, onCampagnaUpdate, onTornaGrafica }) {
   const inCoda = stats?.DaInviare ?? 0
   const giaInCampagna = stats?.totale ?? 0
   const destinatariStimati = inCoda > 0 ? inCoda : (countFonte ?? 0)
-  const giorniStimati = destinatariStimati > 0 ? Math.ceil(destinatariStimati / 250) : 0
+  const giorniStimati = destinatariStimati > 0 ? Math.ceil(destinatariStimati / maxSafe) : 0
   const labelFonte = fonte === 'clienti' ? 'Database Clienti' : 'Lista globale'
 
   return (
@@ -1270,7 +1280,7 @@ function AvvioStep({ campagna, onCampagnaUpdate, onTornaGrafica }) {
             </span>
           </div>
           <div className={styles.statCard}>
-            <span className={styles.statNum}>250</span>
+            <span className={styles.statNum}>{maxSafe}</span>
             <span className={styles.statLabel}>Max / giorno</span>
           </div>
         </div>
@@ -1283,13 +1293,13 @@ function AvvioStep({ campagna, onCampagnaUpdate, onTornaGrafica }) {
               All’avvio i contatti del <strong>Database Clienti</strong> (Brevo)
               {soloMarketing ? <> con <strong>consenso marketing</strong></> : null}
               {' '}vengono copiati in questa campagna dal <strong>giorno di partenza</strong> scelto:
-              max <strong>250/giorno</strong> nei giorni selezionati (cron alle 10:00).
+              max <strong>{maxSafe}/giorno</strong> nei giorni selezionati (cron alle 10:00).
               Se la partenza è oggi e oggi è un giorno consentito, il primo lotto parte subito.
             </>
           ) : (
             <>
               All’avvio i contatti della <strong>lista globale</strong> (aziende) vengono copiati
-              dal <strong>giorno di partenza</strong> scelto: max <strong>250/giorno</strong> nei giorni selezionati.
+              dal <strong>giorno di partenza</strong> scelto: max <strong>{maxSafe}/giorno</strong> nei giorni selezionati.
               Se la partenza è oggi e oggi è un giorno consentito, il primo lotto parte subito.
               {countFonte === 0 && (
                 <> La lista è vuota: aggiungili dalla scheda <strong>Contatti</strong> in home Email Marketing.</>
@@ -1303,6 +1313,8 @@ function AvvioStep({ campagna, onCampagnaUpdate, onTornaGrafica }) {
         campagna={campagna}
         fonte={fonte}
         soloMarketing={soloMarketing}
+        maxPerGiorno={maxSafe}
+        onMaxPerGiornoChange={setMaxPerGiorno}
         countFonte={countFonte}
         loadingFonte={loadingFonte}
         onFonteChange={setFonte}
@@ -1350,6 +1362,8 @@ function AvviaCampagnaBox({
   campagna,
   fonte = 'global',
   soloMarketing = false,
+  maxPerGiorno = DEFAULT_MAX_PER_GIORNO,
+  onMaxPerGiornoChange,
   countFonte = null,
   loadingFonte = false,
   onFonteChange,
@@ -1362,6 +1376,7 @@ function AvviaCampagnaBox({
   const [dataInizio, setDataInizio] = useState(() => oggiRomeYmd())
   const attiva = campagna.stato === 'InCorso' || campagna.stato === 'Programmata'
   const oggiStr = oggiRomeYmd()
+  const maxSafe = clampMaxPerGiorno(maxPerGiorno)
 
   function toggleGiorno(id) {
     setGiorniInvio(prev => {
@@ -1391,7 +1406,7 @@ function AvviaCampagnaBox({
       `Avviare la campagna?\n\n` +
       `• Copia i contatti da: ${labelFonte}${filtro}\n` +
       `• Giorno di partenza: ${dataInizioSafe}\n` +
-      `• Max 250 email/giorno solo in: ${giorniLabel}\n` +
+      `• Max ${maxSafe} email/giorno solo in: ${giorniLabel}\n` +
       (parteSubito
         ? `• Se oggi è tra i giorni scelti, parte subito il primo lotto\n\n`
         : `• Nessun invio immediato: primo lotto dal ${dataInizioSafe} (o primo giorno consentito successivo)\n\n`) +
@@ -1407,7 +1422,7 @@ function AvviaCampagnaBox({
         body:    JSON.stringify({
           tipo: 'avvia-campagna',
           campagnaId: campagna.id,
-          maxPerGiorno: 250,
+          maxPerGiorno: maxSafe,
           giorniInvio,
           dataInizio: dataInizioSafe,
           fonte,
@@ -1457,9 +1472,9 @@ function AvviaCampagnaBox({
     }
   }
 
-  /** Invia fino a 250 email di oggi a chunk da 25 via gestisci (HTTP, non cron). */
+  /** Invia fino a maxPerGiorno email di oggi a chunk da 25 via gestisci (HTTP, non cron). */
   async function inviaLottoOra(confirmFirst = true) {
-    if (confirmFirst && !confirm('Inviare ora fino a 250 email in coda per oggi?')) {
+    if (confirmFirst && !confirm(`Inviare ora fino a ${maxSafe} email in coda per oggi?`)) {
       return { ok: false, error: 'annullato' }
     }
     setBusy(true)
@@ -1468,10 +1483,11 @@ function AvviaCampagnaBox({
       let inviati = 0
       let errori = 0
       let lastErr = null
-      const TARGET = 250
+      const TARGET = maxSafe
       const CHUNK = 25
       let retries = 0
-      for (let i = 0; i < 20 && inviati + errori < TARGET; i++) {
+      const maxLoops = Math.ceil(TARGET / CHUNK) + 4
+      for (let i = 0; i < maxLoops && inviati + errori < TARGET; i++) {
         const res = await authFetch('/.netlify/functions/gestisci-campagne-mail', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1535,7 +1551,7 @@ function AvviaCampagnaBox({
       `Riprogrammare tutta la coda DaInviare?\n\n` +
       `• Giorno di partenza: ${dataInizioSafe}\n` +
       `• Solo nei giorni: ${giorniLabel}\n` +
-      `• Max 250/giorno. Le date weekend (o non selezionate) verranno spostate.`
+      `• Max ${maxSafe}/giorno. Le date weekend (o non selezionate) verranno spostate.`
     )) return
     setBusy(true)
     setMsg(null)
@@ -1546,7 +1562,7 @@ function AvviaCampagnaBox({
         body:    JSON.stringify({
           tipo: 'riprogramma-coda',
           campagnaId: campagna.id,
-          maxPerGiorno: 250,
+          maxPerGiorno: maxSafe,
           giorniInvio,
           dataInizio: dataInizioSafe,
         }),
@@ -1589,7 +1605,7 @@ function AvviaCampagnaBox({
   }
 
   const stimaGiorni = countFonte > 0
-    ? Math.ceil(countFonte / 250)
+    ? Math.ceil(countFonte / maxSafe)
     : null
 
   return (
@@ -1600,7 +1616,7 @@ function AvviaCampagnaBox({
             {attiva ? 'Campagna attiva' : 'Avvio invii'}
           </h3>
           <p className={styles.importHint}>
-            Max <strong>250 email/giorno</strong> nei giorni selezionati
+            Max <strong>{maxSafe} email/giorno</strong> nei giorni selezionati
             {dataInizioSafe ? <>, a partire dal <strong>{dataInizioSafe}</strong></> : null}.
             {countFonte != null && !loadingFonte && (
               <> Destinatari: <strong>{countFonte}</strong>
@@ -1627,6 +1643,36 @@ function AvviaCampagnaBox({
                 Nessun invio immediato
               </span>
             )}
+          </div>
+
+          <div className={styles.giorniInvioRow}>
+            <span className={styles.giorniInvioLabel}>Contatti al giorno</span>
+            <input
+              type="number"
+              className={styles.fieldInput}
+              style={{ maxWidth: 100 }}
+              min={1}
+              max={MAX_PER_GIORNO_CAP}
+              step={1}
+              value={maxSafe}
+              onChange={e => onMaxPerGiornoChange?.(clampMaxPerGiorno(e.target.value))}
+              disabled={busy}
+              aria-label="Contatti al giorno"
+            />
+            <div className={styles.giorniInvioToggles}>
+              {[50, 100, 150, 200, 250].map(n => (
+                <button
+                  key={n}
+                  type="button"
+                  className={`${styles.giornoToggle} ${maxSafe === n ? styles.giornoToggleOn : ''}`}
+                  onClick={() => onMaxPerGiornoChange?.(n)}
+                  disabled={busy}
+                  aria-pressed={maxSafe === n}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
           </div>
 
           {!attiva && (
