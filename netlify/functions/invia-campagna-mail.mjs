@@ -60,8 +60,43 @@ const LOGO_DARK = 'https://boogiebistrot.com/logo-email.png'
 const LAYOUT_TYPES = new Set(['preheader', 'header-scuro', 'footer-ricco', 'footer-semplice'])
 const GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJr9H7A7enhkcRimfhn3EqfVU'
 
+/** Solo primo nome, capitalizzato. */
+function firstNameOnly(raw) {
+  const first = String(raw || '').trim().split(/\s+/)[0] || ''
+  if (!first || first.includes('@')) return ''
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase()
+}
+
+/** Euristica IT: nomi in -a di solito femminili (eccezioni maschili comuni). */
+const NOMI_MASCHILI_IN_A = new Set([
+  'andrea', 'luca', 'nicola', 'mattia', 'elia', 'tobia', 'battista', 'attila',
+  'joshua', 'josua', 'thomas', 'nikita', 'sascha',
+])
+
+function guessGenderFromFirstName(first) {
+  const n = String(first || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+  if (!n) return 'u'
+  if (NOMI_MASCHILI_IN_A.has(n)) return 'm'
+  if (n.endsWith('a')) return 'f'
+  return 'm'
+}
+
+/** Sostituisce {nome} e {passato}/{passata} (accordo m/f). */
+function applyPersonalization(text, rawNome) {
+  const nome = firstNameOnly(rawNome) || 'amico'
+  const gender = guessGenderFromFirstName(nome === 'amico' ? '' : nome)
+  const passato = gender === 'f' ? 'passata' : 'passato'
+  return String(text || '')
+    .replace(/\{nome\}/gi, nome)
+    .replace(/\{passat[oa]\}/gi, passato)
+}
+
 function renderBlock(b, nome = '') {
-  const sub = s => (s || '').replace(/\{nome\}/gi, nome || 'amico')
+  const sub = s => applyPersonalization(s, nome)
   switch (b.type) {
     case 'etichetta':
       return `<p style="font-family:${F};font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:${CMUTED};margin:0 0 12px;">${sub(b.testo || 'Boogie Bistrot')}</p>`
@@ -265,17 +300,22 @@ function buildHtml(campagna, nome) {
   const rows = []
   if (header) rows.push(renderHeaderScuro(header))
   for (const b of content) {
+    const html = renderBlock(b, nome)
+    if (!html) {
+      if (b?.type) console.warn(`[invia-campagna-mail] blocco non renderizzato: ${b.type}`)
+      continue
+    }
     if (b.type === 'hero') {
-      rows.push(`<tr><td style="padding:0;font-family:${F};">${renderBlock(b, nome)}</td></tr>`)
+      rows.push(`<tr><td style="padding:0;font-family:${F};">${html}</td></tr>`)
     } else {
-      rows.push(`<tr><td style="padding:16px 32px 0;font-family:${F};">${renderBlock(b, nome)}</td></tr>`)
+      rows.push(`<tr><td style="padding:16px 32px 0;font-family:${F};">${html}</td></tr>`)
     }
   }
   rows.push(`<tr><td style="padding:8px 0 0;"></td></tr>`)
   rows.push(footer ? renderFooterRicco(footer) : `<tr><td align="center" style="padding:22px 32px;background:#eece9d;font-size:12px;color:${CD};text-align:center;font-family:${F};">Boogie Bistrot — Via Europa, 2, Colle Brianza (LC)</td></tr>`)
 
   const pre = preheader?.testo
-    ? `<div style="display:none;max-height:0;overflow:hidden;">${preheader.testo}</div>`
+    ? `<div style="display:none;max-height:0;overflow:hidden;">${applyPersonalization(preheader.testo, nome)}</div>`
     : ''
 
   return `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -339,6 +379,9 @@ function oggiRome() {
  * Invia fino a `limit` email con DataProgrammata <= oggi per campagne InCorso/Programmata.
  * @param {{ limit?: number, campagnaId?: string }} opts
  */
+// Esposto per preview/dry-run da gestisci-campagne-mail (no send).
+export { buildHtml, applyPersonalization, firstNameOnly }
+
 export async function runInvioCampagna(opts = {}) {
   if (!BREVO_KEY) throw new Error('BREVO_API_KEY mancante nelle env Netlify')
   if (!AT_TOKEN || !AT_BASE) throw new Error('AIRTABLE_TOKEN / AIRTABLE_BASE_ID mancanti')
@@ -418,7 +461,7 @@ export async function runInvioCampagna(opts = {}) {
     }
 
     const email  = r.fields['Email'] || ''
-    const nome   = r.fields['Nome'] || r.fields['Azienda'] || ''
+    const nome   = firstNameOnly(r.fields['Nome'] || r.fields['Azienda'] || '') || 'amico'
     const html   = buildHtml(campagna, nome)
 
     try {

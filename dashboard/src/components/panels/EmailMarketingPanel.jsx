@@ -22,7 +22,7 @@ import { jsPDF } from 'jspdf'
 import styles from './EmailMarketingPanel.module.css'
 
 /** Bump a ogni release del modulo — confronta con l’online dopo il deploy Netlify. */
-export const EMAIL_MKTG_VERSION = '2026.10.01-a'
+export const EMAIL_MKTG_VERSION = '2026.10.01-d'
 
 const MAX_PER_GIORNO_CAP = 250
 const DEFAULT_MAX_PER_GIORNO = 250
@@ -166,8 +166,40 @@ const CBG = '#F5F0E8', CLINE = '#D4C9B0', CFOOT = '#B0A898'
 const LOGO_URL = 'https://boogiebistrot.com/logo-email.png'
 const LOGO_DARK = 'https://boogiebistrot.com/logo-email.png'
 
+function firstNameOnly(raw) {
+  const first = String(raw || '').trim().split(/\s+/)[0] || ''
+  if (!first || first.includes('@')) return ''
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase()
+}
+
+const NOMI_MASCHILI_IN_A = new Set([
+  'andrea', 'luca', 'nicola', 'mattia', 'elia', 'tobia', 'battista', 'attila',
+  'joshua', 'josua', 'thomas', 'nikita', 'sascha',
+])
+
+function guessGenderFromFirstName(first) {
+  const n = String(first || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+  if (!n) return 'u'
+  if (NOMI_MASCHILI_IN_A.has(n)) return 'm'
+  if (n.endsWith('a')) return 'f'
+  return 'm'
+}
+
+function applyPersonalization(text, rawNome) {
+  const nome = firstNameOnly(rawNome) || 'Mario'
+  const gender = guessGenderFromFirstName(nome)
+  const passato = gender === 'f' ? 'passata' : 'passato'
+  return String(text || '')
+    .replace(/\{nome\}/gi, nome)
+    .replace(/\{passat[oa]\}/gi, passato)
+}
+
 function renderBlockHtml(b, nome = 'Mario') {
-  const sub = s => (s || '').replace(/\{nome\}/gi, nome)
+  const sub = s => applyPersonalization(s, nome)
   switch (b.type) {
     case 'etichetta':
       return `<p style="font-family:${FONT_STACK};font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:${CMUTED};margin:0 0 12px;">${sub(b.testo || 'Boogie Bistrot')}</p>`
@@ -631,7 +663,7 @@ function BlockEditor({ block, onChange }) {
     case 'intestazione':
       return (
         <div className={styles.blockFields}>
-          <label className={styles.fieldLabel}>Testo <span className={styles.hint}>(usa {'{nome}'} · Invio = a capo)</span></label>
+          <label className={styles.fieldLabel}>Testo <span className={styles.hint}>({'{nome}'} · {'{passato}'}/{'{passata}'} · Invio = a capo)</span></label>
           <textarea
             className={styles.fieldTextarea}
             value={block.testo || ''}
@@ -664,7 +696,7 @@ function BlockEditor({ block, onChange }) {
     case 'testo':
       return (
         <div className={styles.blockFields}>
-          <label className={styles.fieldLabel}>Contenuto <span className={styles.hint}>(usa {'{nome}'} per il nome)</span></label>
+          <label className={styles.fieldLabel}>Contenuto <span className={styles.hint}>({'{nome}'} · {'{passato}'})</span></label>
           <textarea className={styles.fieldTextarea} value={block.contenuto || ''} onChange={e => set('contenuto', e.target.value)} rows={5} placeholder="Scrivi il tuo messaggio..." />
         </div>
       )
@@ -748,7 +780,7 @@ function BlockEditor({ block, onChange }) {
     case 'evidenza':
       return (
         <div className={styles.blockFields}>
-          <label className={styles.fieldLabel}>Testo in evidenza <span className={styles.hint}>(usa {'{nome}'} per il nome)</span></label>
+          <label className={styles.fieldLabel}>Testo in evidenza <span className={styles.hint}>({'{nome}'} · {'{passato}'})</span></label>
           <textarea className={styles.fieldTextarea} value={block.contenuto || ''} onChange={e => set('contenuto', e.target.value)} rows={3} placeholder="Offerta speciale, informazione importante..." />
         </div>
       )

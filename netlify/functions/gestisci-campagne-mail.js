@@ -144,8 +144,19 @@ function scheduleDates(count, maxPerGiorno, giorniInvio, startYmd) {
  * Avvia l’invio del lotto IN-PROCESS (niente HTTP a scheduled function).
  * Chunk piccoli per restare sotto il timeout Netlify (~26s).
  */
+/** Import ESM: in locale busta la cache (serve lungo), in prod import relativo bundlato. */
+async function loadInviaCampagnaMail() {
+  if (process.env.NETLIFY_DEV === 'true') {
+    const { pathToFileURL } = await import('node:url')
+    const { join } = await import('node:path')
+    const href = `${pathToFileURL(join(__dirname, 'invia-campagna-mail.mjs')).href}?t=${Date.now()}`
+    return import(href)
+  }
+  return import('./invia-campagna-mail.mjs')
+}
+
 async function runInvioLotto(campagnaId, limit = 25) {
-  const { runInvioCampagna } = await import('./invia-campagna-mail.mjs')
+  const { runInvioCampagna } = await loadInviaCampagnaMail()
   return runInvioCampagna({
     campagnaId: campagnaId || undefined,
     limit: Math.min(Math.max(1, Number(limit) || 25), 50),
@@ -260,8 +271,7 @@ async function fetchBrevoClienti({ soloMarketing = false } = {}) {
       if (soloMarketing && !isMarketingConsent(c.attributes?.CONSENSO_MARKETING)) continue
       if (byEmail.has(email)) continue
       const first = String(c.attributes?.FIRSTNAME || '').trim()
-      const last = String(c.attributes?.LASTNAME || '').trim()
-      const nome = [first, last].filter(Boolean).join(' ') || email
+      const nome = first || sanitizeEmail(c.email).split('@')[0] || email
       byEmail.set(email, { email, nome })
     }
     if (batch.length < limit) break
@@ -781,6 +791,27 @@ exports.handler = async (event) => {
         } catch (e) {
           return err(e.message, 500)
         }
+      }
+
+      // Dry-run: HTML renderizzato senza invio (verifica CTA + personalizzazione)
+      if (body.tipo === 'preview-html') {
+        const { campagnaId, nome = 'Laura Mozzanica' } = body
+        if (!campagnaId) return err('campagnaId mancante', 400)
+        const res = await fetch(`${atUrl(T_CAMP)}/${campagnaId}`, { headers: AT_HEADERS })
+        if (!res.ok) throw new Error(await res.text())
+        const rec = await res.json()
+        const { buildHtml } = await loadInviaCampagnaMail()
+        const html = buildHtml(mapCampagna(rec), nome)
+        return ok({
+          success: true,
+          html,
+          checks: {
+            firstName: html.includes('Ciao Laura') && !html.includes('Mozzanica'),
+            passata: html.includes('passata'),
+            googleCta: html.includes('search.google.com/local/writereview'),
+            feedbackCta: html.includes('boogiebistrot.com/feedback'),
+          },
+        })
       }
 
       return err('tipo non valido', 400)
