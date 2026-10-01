@@ -22,7 +22,7 @@ import { jsPDF } from 'jspdf'
 import styles from './EmailMarketingPanel.module.css'
 
 /** Bump a ogni release del modulo — confronta con l’online dopo il deploy Netlify. */
-export const EMAIL_MKTG_VERSION = '2026.09.30-a'
+export const EMAIL_MKTG_VERSION = '2026.10.01-a'
 
 const MAX_PER_GIORNO_CAP = 250
 const DEFAULT_MAX_PER_GIORNO = 250
@@ -31,6 +31,27 @@ function clampMaxPerGiorno(n) {
   const v = Math.round(Number(n))
   if (!Number.isFinite(v)) return DEFAULT_MAX_PER_GIORNO
   return Math.min(MAX_PER_GIORNO_CAP, Math.max(1, v))
+}
+
+/** Parse JSON da fetch: se arriva HTML (timeout/proxy) mostra errore leggibile. */
+async function readJsonRes(res) {
+  const txt = await res.text()
+  const trimmed = (txt || '').trim()
+  if (!trimmed) {
+    throw new Error(res.ok ? 'Risposta vuota dal server' : `Errore HTTP ${res.status}`)
+  }
+  if (trimmed[0] === '<' || trimmed.toLowerCase().startsWith('<!doctype')) {
+    throw new Error(
+      res.status === 504 || /timeout/i.test(trimmed)
+        ? 'Timeout del server (operazione troppo lunga). Riprova: la riprogrammazione ora va a pezzi.'
+        : `Il server ha risposto HTML invece di JSON (HTTP ${res.status}). Riprova tra poco.`,
+    )
+  }
+  try {
+    return JSON.parse(trimmed)
+  } catch {
+    throw new Error(`Risposta non JSON (HTTP ${res.status}): ${trimmed.slice(0, 120)}`)
+  }
 }
 
 const GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJr9H7A7enhkcRimfhn3EqfVU'
@@ -985,7 +1006,7 @@ function CampagnaTab({ campagna, onSaved, onContinuaAvvio }) {
           template: clean,
         }),
       })
-      const data = await res.json()
+      const data = await readJsonRes(res)
       if (!data.success) throw new Error(data.error)
       onSaved(data.campagna)
     } catch (e) {
@@ -1225,7 +1246,7 @@ function AvvioStep({ campagna, onCampagnaUpdate, onTornaGrafica }) {
         soloMarketing: soloMarketing ? '1' : '0',
       })
       const res = await authFetch(`/.netlify/functions/gestisci-campagne-mail?${qs}`)
-      const data = await res.json()
+      const data = await readJsonRes(res)
       if (data.success) setCountFonte(data.totale)
       else setCountFonte(null)
     } catch {
@@ -1429,7 +1450,7 @@ function AvviaCampagnaBox({
           soloMarketing: fonte === 'clienti' ? soloMarketing : false,
         }),
       })
-      const data = await res.json()
+      const data = await readJsonRes(res)
       if (!data.success) throw new Error(data.error)
 
       onAvviata?.(data.campagna)
@@ -1554,27 +1575,45 @@ function AvviaCampagnaBox({
       `• Max ${maxSafe}/giorno. Le date weekend (o non selezionate) verranno spostate.`
     )) return
     setBusy(true)
-    setMsg(null)
+    setMsg({ tipo: 'ok', testo: 'Riprogrammazione in corso…' })
     try {
-      const res = await authFetch('/.netlify/functions/gestisci-campagne-mail', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          tipo: 'riprogramma-coda',
-          campagnaId: campagna.id,
-          maxPerGiorno: maxSafe,
-          giorniInvio,
-          dataInizio: dataInizioSafe,
-        }),
-      })
-      const data = await res.json()
-      if (!data.success) throw new Error(data.error)
+      const CHUNK = 200
+      let offset = 0
+      let last = null
+      for (let guard = 0; guard < 50; guard++) {
+        const res = await authFetch('/.netlify/functions/gestisci-campagne-mail', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            tipo: 'riprogramma-coda',
+            campagnaId: campagna.id,
+            maxPerGiorno: maxSafe,
+            giorniInvio,
+            dataInizio: dataInizioSafe,
+            offset,
+            chunkSize: CHUNK,
+          }),
+        })
+        const data = await readJsonRes(res)
+        if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`)
+        last = data
+        const done = data.totale === 0 || data.done || data.nextOffset >= data.totale
+        setMsg({
+          tipo: 'ok',
+          testo: data.totale
+            ? `Riprogrammazione… ${Math.min(data.nextOffset || 0, data.totale)}/${data.totale}`
+            : 'Nessun contatto in coda da riprogrammare.',
+        })
+        if (done) break
+        offset = data.nextOffset || (offset + CHUNK)
+      }
+      if (!last) throw new Error('Nessuna risposta')
       setMsg({
         tipo: 'ok',
-        testo: `Riprogrammati ${data.riprogrammati} contatti` +
-          (data.primoGiorno ? ` · dal ${data.primoGiorno}` : '') +
-          (data.ultimoGiorno ? ` al ${data.ultimoGiorno}` : '') +
-          (data.giorniStimati ? ` · ~${data.giorniStimati} giorni di invio` : '') + '.',
+        testo: `Riprogrammati ${last.totale || last.riprogrammatiTotale || last.riprogrammati || 0} contatti` +
+          (last.primoGiorno ? ` · dal ${last.primoGiorno}` : '') +
+          (last.ultimoGiorno ? ` al ${last.ultimoGiorno}` : '') +
+          (last.giorniStimati ? ` · ~${last.giorniStimati} giorni di invio` : '') + '.',
       })
       onAvviata?.(campagna)
     } catch (e) {
@@ -1593,7 +1632,7 @@ function AvviaCampagnaBox({
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ tipo: 'campagna', id: campagna.id, stato: 'Pausa' }),
       })
-      const data = await res.json()
+      const data = await readJsonRes(res)
       if (!data.success) throw new Error(data.error)
       setMsg({ tipo: 'ok', testo: 'Campagna in pausa.' })
       onAvviata?.(data.campagna)
@@ -1838,7 +1877,7 @@ function ContattiGlobali() {
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ tipo: 'importa-contatti', campagnaId: 'global', contatti, maxPerGiorno: 99999 }),
       })
-      const data = await res.json()
+      const data = await readJsonRes(res)
       if (!data.success) throw new Error(data.error)
       const extra = (data.scartati || scartati) ? ` (${data.scartati || scartati} scartati/duplicati)` : ''
       setImportMsg({ tipo: 'ok', testo: `${data.importati} contatti aggiunti alla lista${extra}.` })
@@ -2076,7 +2115,7 @@ function DettaglioCampagna({ campagna: initialCampagna, onBack, onDeleted }) {
     setDeleting(true)
     try {
       const res = await authFetch(`/.netlify/functions/gestisci-campagne-mail?tipo=campagna&id=${campagna.id}`, { method: 'DELETE' })
-      const data = await res.json()
+      const data = await readJsonRes(res)
       if (!data.success) throw new Error(data.error)
       onDeleted(campagna.id)
     } catch (e) {
@@ -2168,7 +2207,7 @@ function ListaCampagne({ onSelect }) {
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ tipo: 'campagna', titolo: 'Nuova campagna', oggettoMail: '' }),
       })
-      const data = await res.json()
+      const data = await readJsonRes(res)
       if (!data.success) throw new Error(data.error)
       setCampagne(prev => [data.campagna, ...prev])
       onSelect(data.campagna)

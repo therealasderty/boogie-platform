@@ -305,6 +305,23 @@ async function createBatch(table, records) {
   })
 }
 
+// Aggiorna record Airtable in batch da 10
+async function updateBatch(table, updates) {
+  const batches = []
+  for (let i = 0; i < updates.length; i += 10) {
+    batches.push(updates.slice(i, i + 10))
+  }
+  return batchParallel(batches, 5, async (batch) => {
+    const res = await fetch(atUrl(table), {
+      method:  'PATCH',
+      headers: AT_HEADERS,
+      body:    JSON.stringify({ records: batch }),
+    })
+    if (!res.ok) throw new Error(await res.text())
+    return res.json()
+  })
+}
+
 // Elimina record Airtable in batch da 10
 async function deleteBatch(table, ids) {
   const batches = []
@@ -694,13 +711,15 @@ exports.handler = async (event) => {
         })
       }
 
-      // Riprogramma contatti DaInviare sui soli giorni selezionati (es. togli weekend)
+      // Riprogramma contatti DaInviare (chunkabili: offset + chunkSize per evitare timeout)
       if (body.tipo === 'riprogramma-coda') {
         const {
           campagnaId,
           maxPerGiorno = 250,
           giorniInvio: giorniInvioRaw,
           dataInizio: dataInizioRaw,
+          offset: offsetRaw = 0,
+          chunkSize: chunkSizeRaw,
         } = body
         if (!campagnaId || campagnaId === 'global') return err('campagnaId mancante', 400)
         const max = Math.min(Math.max(1, Number(maxPerGiorno) || 250), 250)
@@ -710,40 +729,45 @@ exports.handler = async (event) => {
           `AND({CampagnaId}='${campagnaId}',{Stato}='DaInviare')`,
           ['Email', 'Stato', 'DataProgrammata'],
         )
-        if (!inCoda.length) return ok({ success: true, riprogrammati: 0, giorniInvio })
+        if (!inCoda.length) {
+          return ok({ success: true, riprogrammati: 0, giorniInvio, done: true, nextOffset: 0, totale: 0 })
+        }
 
-        // Ordina per data attuale così chi era “prima” resta prima
-        inCoda.sort((a, b) =>
-          String(a.fields['DataProgrammata'] || '').localeCompare(String(b.fields['DataProgrammata'] || ''))
-        )
+        // Ordine stabile (id) così i chunk successivi non mischiano le date
+        inCoda.sort((a, b) => String(a.id).localeCompare(String(b.id)))
 
         const oggiStr = oggiRome()
         const dataInizio = normalizeDataInizio(dataInizioRaw, oggiStr)
         const start = snapToAllowedDay(dataInizio, giorniInvio)
         const dates = scheduleDates(inCoda.length, max, giorniInvio, start)
-        const updates = inCoda.map((r, i) => ({
+
+        const offset = Math.max(0, Number(offsetRaw) || 0)
+        // Default: tutto in un colpo (campagne piccole). Chunk esplicito se passato.
+        const chunkSize = chunkSizeRaw != null
+          ? Math.min(Math.max(1, Number(chunkSizeRaw) || 200), 400)
+          : inCoda.length
+        const slice = inCoda.slice(offset, offset + chunkSize)
+        const updates = slice.map((r, i) => ({
           id: r.id,
-          fields: { DataProgrammata: dates[i] },
+          fields: { DataProgrammata: dates[offset + i] },
         }))
-        // batch update 10 at a time
-        for (let i = 0; i < updates.length; i += 10) {
-          const batch = updates.slice(i, i + 10)
-          const res = await fetch(atUrl(T_CONT), {
-            method: 'PATCH',
-            headers: AT_HEADERS,
-            body: JSON.stringify({ records: batch }),
-          })
-          if (!res.ok) throw new Error(await res.text())
-        }
+        if (updates.length) await updateBatch(T_CONT, updates)
+
+        const nextOffset = offset + slice.length
+        const done = nextOffset >= inCoda.length
 
         return ok({
           success: true,
           riprogrammati: updates.length,
+          riprogrammatiTotale: nextOffset,
           giorniInvio,
           dataInizio,
           primoGiorno: dates[0],
           ultimoGiorno: dates[dates.length - 1],
-          giorniStimati: Math.ceil(updates.length / max),
+          giorniStimati: Math.ceil(inCoda.length / max),
+          done,
+          nextOffset,
+          totale: inCoda.length,
         })
       }
 
