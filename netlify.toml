@@ -29,6 +29,11 @@
 [functions.compleanno-premio]
   schedule = "0 8 * * *"
 
+# 09:00 UTC = 11:00 Europe/Rome in CEST (10:00 in CET). Prima dipendeva da cron-job.org.
+[functions.feedback]
+  schedule = "0 9 * * *"
+  timeout = 26
+
 [functions.pulizia-chiusure]
   schedule = "0 3 * * 1"
 

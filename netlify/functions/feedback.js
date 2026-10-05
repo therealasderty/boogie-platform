@@ -1,5 +1,6 @@
 // netlify/functions/feedback.js
-// Chiamata ogni giorno alle 11:00 da cron-job.org
+// Cron Netlify ogni giorno 09:00 UTC (11:00 Europe/Rome in CEST, 10:00 in CET).
+// POST senza chiave = scheduler. GET con FEEDBACK_API_KEY o CRON_SECRET = trigger manuale.
 //
 // 1) Prima mail: prenotazioni confermate + WiFi di ieri → chiedi recensione Google
 // 2) Follow-up: se il conteggio Google non è salito rispetto allo snapshot di ieri,
@@ -9,8 +10,19 @@
 const GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJr9H7A7enhkcRimfhn3EqfVU'
 const PLACE_ID = 'ChIJr9H7A7enhkcRimfhn3EqfVU'
 
-function ymd(d) {
-  return d.toISOString().split('T')[0]
+function ymdRome(d = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Rome',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(d)
+}
+
+function addDaysYmd(ymdStr, days) {
+  const [y, m, d] = ymdStr.split('-').map(Number)
+  const dt = new Date(Date.UTC(y, m - 1, d + days))
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}-${String(dt.getUTCDate()).padStart(2, '0')}`
 }
 
 function formatDataIT(dateStr) {
@@ -250,10 +262,17 @@ exports.handler = async (event) => {
 
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers, body: '' }
 
-  const API_KEY = process.env.FEEDBACK_API_KEY
-  const requestKey = event.headers['x-api-key'] || event.queryStringParameters?.key
-  if (API_KEY && requestKey !== API_KEY) {
-    return { statusCode: 401, headers, body: 'Unauthorized' }
+  // POST = Netlify Scheduler. GET = trigger manuale / vecchio cron-job.org.
+  const isNetlifyScheduler = event.httpMethod === 'POST'
+  if (!isNetlifyScheduler) {
+    const API_KEY = process.env.FEEDBACK_API_KEY || process.env.CRON_SECRET
+    const requestKey =
+      event.headers['x-api-key'] ||
+      event.queryStringParameters?.key ||
+      event.queryStringParameters?.token
+    if (API_KEY && requestKey !== API_KEY) {
+      return { statusCode: 401, headers, body: 'Unauthorized' }
+    }
   }
 
   const AIRTABLE_TOKEN = process.env.AIRTABLE_TOKEN
@@ -265,14 +284,9 @@ exports.handler = async (event) => {
   const SITO_URL = process.env.SITO_URL || 'https://boogiebistrot.com'
   const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY
 
-  const oggi = new Date()
-  const dataOggi = ymd(oggi)
-  const ieri = new Date(oggi)
-  ieri.setDate(ieri.getDate() - 1)
-  const dataIeri = ymd(ieri)
-  const dueGiorniFa = new Date(oggi)
-  dueGiorniFa.setDate(dueGiorniFa.getDate() - 2)
-  const dataDueGiorniFa = ymd(dueGiorniFa)
+  const dataOggi = ymdRome()
+  const dataIeri = addDaysYmd(dataOggi, -1)
+  const dataDueGiorniFa = addDaysYmd(dataOggi, -2)
 
   console.log('Feedback run:', { dataOggi, dataIeri, dataDueGiorniFa })
 

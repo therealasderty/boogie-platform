@@ -69,7 +69,7 @@ Se la data ricade in un range → `Stato: In attesa`, email "Richiesta ricevuta"
 |----------|------|-------|
 | `contatta.js` | no | Form contatti → RichiesteContatti + email Brevo |
 | `contatta-evento-aziendale.js` | no | Form eventi aziendali → RichiesteEventi + email Brevo |
-| `feedback.js` | no | Email feedback post-visita (ieri). Follow-up a +2gg se conteggio Google invariato. Snapshot giornaliero su Recensioni. |
+| `feedback.js` | GET: `FEEDBACK_API_KEY` / `CRON_SECRET` | **CRON** 09:00 UTC — mail recensioni post-visita (ieri). Follow-up a +2gg se conteggio Google invariato. Snapshot su Recensioni. |
 | `salva-feedback.js` | no | Salva risposta negativa da `/feedback` |
 
 ---
