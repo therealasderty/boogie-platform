@@ -33,6 +33,8 @@ exports.handler = async (event) => {
         dataInizio:   r.fields['Data inizio'] || '',
         dataFine:     r.fields['Data fine'] || '',
         fasce:        Array.isArray(r.fields['Fascia']) ? r.fields['Fascia'] : (r.fields['Fascia'] ? [r.fields['Fascia']] : []),
+        nota:         r.fields['Nota'] || '',
+        immagineUrl:  r.fields['Immagine Url'] || '',
       }));
       return { statusCode: 200, headers, body: JSON.stringify({ success: true, chiusure }) };
     } catch (err) {
@@ -55,13 +57,15 @@ exports.handler = async (event) => {
     let data;
     try { data = JSON.parse(event.body); } catch { return { statusCode: 400, headers, body: 'Invalid JSON' }; }
 
-    const { descrizione, tipo, tipoApertura, giorno, dataInizio, dataFine, fasce } = data;
+    const { descrizione, tipo, tipoApertura, giorno, dataInizio, dataFine, fasce, nota, immagineUrl } = data;
     if (!tipo) return { statusCode: 400, headers, body: 'Tipo obbligatorio' };
 
     const fields = {
       'Descrizione':   descrizione || '',
       'Tipo':          tipo,
       'Tipo apertura': tipoApertura || 'Chiusura',
+      'Nota':          nota || '',
+      'Immagine Url':  immagineUrl || '',
     };
 
     if (tipo === 'Ricorrente' && giorno !== undefined && giorno !== null) fields['Giorno'] = parseInt(giorno);
@@ -87,12 +91,14 @@ exports.handler = async (event) => {
     let data;
     try { data = JSON.parse(event.body); } catch { return { statusCode: 400, headers, body: 'Invalid JSON' }; }
 
-    const { id, descrizione, tipo, tipoApertura, giorno, dataInizio, dataFine, fasce } = data;
+    const { id, descrizione, tipo, tipoApertura, giorno, dataInizio, dataFine, fasce, nota, immagineUrl } = data;
     if (!id) return { statusCode: 400, headers, body: 'ID mancante' };
 
     const fields = {
       'Descrizione':   descrizione || '',
       'Tipo apertura': tipoApertura || 'Chiusura',
+      'Nota':          nota || '',
+      'Immagine Url':  immagineUrl || '',
     };
 
     if (tipo) fields['Tipo'] = tipo;

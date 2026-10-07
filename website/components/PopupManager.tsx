@@ -22,6 +22,8 @@ type Chiusura = {
   fasce: string[]
   /** Prefabbricato in layout considerando orari ordinari (es. " anche a Pranzo"). */
   fascePart?: string
+  nota?: string
+  immagineUrl?: string
 }
 
 type PopupData = {
@@ -317,6 +319,12 @@ export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] 
               {testoChius}
             </p>
 
+            {ev.nota && (
+              <p className="text-white/75 font-light leading-relaxed pr-6 -mt-1" style={{ fontSize: 'var(--text-meta)' }}>
+                {ev.nota}
+              </p>
+            )}
+
             {chiusuraEventi.length > 1 && (
               <p className="text-white/60 font-light -mt-1" style={{ fontSize: 'var(--text-meta)' }}>
                 +{chiusuraEventi.length - 1} {chiusuraEventi.length - 1 === 1 ? 'altro avviso' : 'altri avvisi'}
@@ -406,6 +414,7 @@ export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] 
     const testo       = buildTestoChiusura(ev)
     const badge       = isApertura ? 'Apertura straordinaria' : 'Chiusura straordinaria'
     const accentColor = isApertura ? '#1a3d1f' : '#7a1a1a'
+    const hasImage    = !!ev.immagineUrl
 
     return (
       <div
@@ -414,11 +423,18 @@ export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] 
         onClick={chiudiChiusura}
       >
         <div
-          className="relative w-full max-w-md rounded-card bg-white shadow-2xl overflow-hidden"
+          className={`relative w-full rounded-card bg-white shadow-2xl overflow-hidden ${hasImage ? 'max-w-sm' : 'max-w-md'}`}
           style={{ borderTop: `3px solid ${accentColor}`, ...cardAnim }}
           onClick={e => e.stopPropagation()}
         >
           {btnX(chiudiChiusura)}
+
+          {hasImage && (
+            <div className="w-full aspect-square overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={ev.immagineUrl} alt={ev.descrizione} className="w-full h-full object-cover" />
+            </div>
+          )}
 
           <div className="px-8 py-7 flex flex-col gap-4">
             <span
@@ -431,6 +447,12 @@ export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] 
             <p className="font-sans font-semibold text-neutral-900 leading-snug pr-6" style={{ fontSize: 'var(--text-section)' }}>
               {testo}
             </p>
+
+            {ev.nota && (
+              <p className="text-neutral-500 font-light leading-relaxed -mt-1" style={{ fontSize: 'var(--text-meta)' }}>
+                {ev.nota}
+              </p>
+            )}
 
             {chiusuraEventi.length > 1 && (
               <p className="text-neutral-400 font-light -mt-1" style={{ fontSize: 'var(--text-meta)' }}>

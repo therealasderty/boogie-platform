@@ -69,6 +69,8 @@ export default async function RootLayout({
         dataFine,
         fasce: c.fasce,
         fascePart: buildFascePart(c.tipoApertura, c.fasce, c.dataInizio, dataFine, fasceOrdinarie),
+        nota: c.nota,
+        immagineUrl: c.immagineUrl,
       }
     })
   const eventiNavbar: EventoAgenda[] = selezionaEventiNavbar(eventiRaw, oggi)

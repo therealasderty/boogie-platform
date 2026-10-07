@@ -40,7 +40,7 @@ function InfoModal({ onClose }) {
 }
 
 const FASCE = ['Pranzo', 'Cena']
-const EMPTY_FORM = { descrizione: '', tipo: 'Data specifica', dataInizio: '', dataFine: '', fasce: [], tipoApertura: 'Chiusura' }
+const EMPTY_FORM = { descrizione: '', tipo: 'Data specifica', dataInizio: '', dataFine: '', fasce: [], tipoApertura: 'Chiusura', nota: '', immagineUrl: '' }
 
 function FormFields({ form, setForm, toggleFascia }) {
   return (
@@ -77,6 +77,23 @@ function FormFields({ form, setForm, toggleFascia }) {
               onClick={() => toggleFascia(f)}>{f}</button>
           ))}
         </div>
+      </div>
+      <div className={styles.field}>
+        <label>Nota (opzionale — mostrata nel popup)</label>
+        <textarea
+          value={form.nota}
+          onChange={e => setForm(p => ({ ...p, nota: e.target.value }))}
+          placeholder="Es. Per la Festa della Mamma apriamo eccezionalmente a pranzo"
+          rows={2}
+        />
+      </div>
+      <div className={styles.field}>
+        <label>Immagine URL (opzionale — visual quadrato nel popup)</label>
+        <input
+          value={form.immagineUrl}
+          onChange={e => setForm(p => ({ ...p, immagineUrl: e.target.value }))}
+          placeholder="https://…"
+        />
       </div>
     </>
   )
@@ -153,7 +170,7 @@ export default function ChiusurePanel() {
   }
   function startEdit(ch) {
     setEditId(ch.id)
-    setEditForm({ descrizione: ch.descrizione || '', tipo: 'Data specifica', dataInizio: ch.dataInizio || '', dataFine: ch.dataFine || '', fasce: ch.fasce || [], tipoApertura: ch.tipoApertura || 'Chiusura' })
+    setEditForm({ descrizione: ch.descrizione || '', tipo: 'Data specifica', dataInizio: ch.dataInizio || '', dataFine: ch.dataFine || '', fasce: ch.fasce || [], tipoApertura: ch.tipoApertura || 'Chiusura', nota: ch.nota || '', immagineUrl: ch.immagineUrl || '' })
     setEditMsg(null)
   }
   function closeEdit() { setEditId(null); setEditForm(EMPTY_FORM); setEditMsg(null) }
@@ -165,7 +182,7 @@ export default function ChiusurePanel() {
       setMsg({ type: 'err', text: 'La data fine non può essere prima della data inizio' }); return
     }
     setSubmitting(true)
-    const payload = { descrizione: form.descrizione, tipo: 'Data specifica', dataInizio: form.dataInizio || null, dataFine: form.dataFine || null, fasce: form.fasce, tipoApertura: form.tipoApertura }
+    const payload = { descrizione: form.descrizione, tipo: 'Data specifica', dataInizio: form.dataInizio || null, dataFine: form.dataFine || null, fasce: form.fasce, tipoApertura: form.tipoApertura, nota: form.nota, immagineUrl: form.immagineUrl }
     const res = await salva(payload, null)
     setSubmitting(false)
     if (res.success) { setMsg({ type: 'ok', text: 'Aggiunto' }); setForm(EMPTY_FORM); ricarica() }
@@ -178,7 +195,7 @@ export default function ChiusurePanel() {
       setEditMsg({ type: 'err', text: 'La data fine non può essere prima della data inizio' }); return
     }
     setSubmitting(true)
-    const payload = { descrizione: editForm.descrizione, tipo: 'Data specifica', dataInizio: editForm.dataInizio || null, dataFine: editForm.dataFine || null, fasce: editForm.fasce, tipoApertura: editForm.tipoApertura }
+    const payload = { descrizione: editForm.descrizione, tipo: 'Data specifica', dataInizio: editForm.dataInizio || null, dataFine: editForm.dataFine || null, fasce: editForm.fasce, tipoApertura: editForm.tipoApertura, nota: editForm.nota, immagineUrl: editForm.immagineUrl }
     const res = await salva(payload, editId)
     setSubmitting(false)
     if (res.success) { closeEdit(); ricarica() }
