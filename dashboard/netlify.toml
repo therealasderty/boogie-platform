@@ -17,6 +17,10 @@
 [functions.invia-campagna-mail]
   timeout = 26
 
+# No schedule qui: il cron campagne è solo sul sito website (root netlify.toml)
+# per evitare doppi invii. L'invio manuale dashboard usa gestisci → stesso codice shared.
 [functions.cron-invia-campagna-mail]
-  schedule = "0 8 * * *"
   timeout = 26
+
+[functions.cron-invia-campagna-mail-background]
+  timeout = 900

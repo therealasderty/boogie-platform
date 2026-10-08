@@ -17,13 +17,23 @@ export const handler = async (event = {}) => {
     return { statusCode: 204, headers: CORS, body: '' }
   }
 
-  try {
-    const { verifyToken } = require('./verifyToken')
-    if (!verifyToken(event)) {
-      return { statusCode: 401, headers: CORS, body: JSON.stringify({ success: false, error: 'Non autorizzato' }) }
+  const isSchedule = (event.headers?.['x-netlify-event'] || event.headers?.['X-Netlify-Event'] || '') === 'schedule'
+  const cronSecret = process.env.CRON_SECRET || ''
+  const gotCron =
+    cronSecret &&
+    (event.headers?.['x-cron-secret'] === cronSecret ||
+      event.headers?.['X-Cron-Secret'] === cronSecret ||
+      event.queryStringParameters?.token === cronSecret)
+
+  if (!isSchedule && !gotCron) {
+    try {
+      const { verifyToken } = require('./verifyToken')
+      if (!verifyToken(event)) {
+        return { statusCode: 401, headers: CORS, body: JSON.stringify({ success: false, error: 'Non autorizzato' }) }
+      }
+    } catch (e) {
+      console.warn('[invia-campagna-mail-background] verifyToken:', e.message)
     }
-  } catch (e) {
-    console.warn('[invia-campagna-mail-background] verifyToken:', e.message)
   }
 
   let opts = {}

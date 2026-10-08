@@ -1,12 +1,14 @@
 // netlify/functions/cron-invia-campagna-mail.js
-// Cron giornaliero 10:00 Europe/Rome (08:00 UTC estate).
-// CJS puro: le scheduled Netlify con .mjs + import.meta crashavano in produzione.
+// Legacy entry (sync, timeout 26s). Lo schedule è stato spostato su
+// `cron-invia-campagna-mail-background` (15 min). Questo handler resta
+// chiamabile manualmente / per compat e delega allo stesso invio.
 
 exports.handler = async () => {
-  console.log('[cron-invia-campagna-mail] tick')
+  console.log('[cron-invia-campagna-mail] tick (legacy sync — preferire -background)')
   try {
     const { runInvioCampagna } = await import('./invia-campagna-mail.mjs')
-    const result = await runInvioCampagna({ limit: 250 })
+    // Chunk ridotto: con 26s non si completano 250 invii
+    const result = await runInvioCampagna({ limit: 40 })
     console.log('[cron-invia-campagna-mail] done', result)
     return {
       statusCode: 200,

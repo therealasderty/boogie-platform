@@ -49,9 +49,15 @@
 [functions.invia-campagna-mail]
   timeout = 26
 
+# Legacy sync (no schedule): 26s non bastano per 250 email
 [functions.cron-invia-campagna-mail]
-  schedule = "0 8 * * *"
   timeout = 26
+
+# Cron reale sul sito website (come compleanno/social): background 15 min
+# 08:00 e 08:30 UTC = 10:00/10:30 Europe/Rome in CEST. Idempotente (solo DaInviare).
+[functions.cron-invia-campagna-mail-background]
+  schedule = "0,30 8 * * *"
+
 
 [functions."pubblica-social"]
   timeout = 26

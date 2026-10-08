@@ -90,9 +90,10 @@ function applyPersonalization(text, rawNome) {
   const nome = firstNameOnly(rawNome) || 'amico'
   const gender = guessGenderFromFirstName(nome === 'amico' ? '' : nome)
   const passato = gender === 'f' ? 'passata' : 'passato'
+  // Accetta anche spazi interni / graffe fullwidth copiate da Word/Airtable
   return String(text || '')
-    .replace(/\{nome\}/gi, nome)
-    .replace(/\{passat[oa]\}/gi, passato)
+    .replace(/[\uFF5B{]\s*nome\s*[\uFF5D}]/gi, nome)
+    .replace(/[\uFF5B{]\s*passat[oa]\s*[\uFF5D}]/gi, passato)
 }
 
 function renderBlock(b, nome = '') {
@@ -294,7 +295,7 @@ function buildHtml(campagna, nome) {
       /(info@boogiebistrot\.com)/gi,
       '<a href="mailto:info@boogiebistrot.com" style="color:#C4913A;">$1</a>',
     )
-    return shell({ body, footerHtml })
+    return applyPersonalization(shell({ body, footerHtml }), nome)
   }
 
   const rows = []
@@ -318,7 +319,8 @@ function buildHtml(campagna, nome) {
     ? `<div style="display:none;max-height:0;overflow:hidden;">${applyPersonalization(preheader.testo, nome)}</div>`
     : ''
 
-  return `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  // Pass finale su tutto l'HTML: copre preheader/footer e eventuali blocchi che dimenticano sub()
+  return applyPersonalization(`<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head><body style="margin:0;padding:0;background:#f2ede4;font-family:${F};">
 ${pre}
@@ -326,7 +328,7 @@ ${pre}
 <tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#fff;max-width:600px;width:100%;border-radius:6px;overflow:hidden;">
 ${rows.join('\n')}
-</table></td></tr></table></body></html>`
+</table></td></tr></table></body></html>`, nome)
 }
 
 // ── Airtable helpers ──────────────────────────────────────────────────────────
@@ -461,11 +463,18 @@ export async function runInvioCampagna(opts = {}) {
     }
 
     const email  = r.fields['Email'] || ''
-    const nome   = firstNameOnly(r.fields['Nome'] || r.fields['Azienda'] || '') || 'amico'
-    const html   = buildHtml(campagna, nome)
+    const rawNome = r.fields['Nome'] || r.fields['Azienda'] || ''
+    const nome   = firstNameOnly(rawNome) || 'amico'
+    const html   = buildHtml(campagna, rawNome) // firstNameOnly + {passato} dentro applyPersonalization
+    const subject = applyPersonalization(campagna.oggettoMail, rawNome)
+
+    if (inviati === 0 && errori === 0) {
+      const leak = /[\uFF5B{]\s*(nome|passat[oa])\s*[\uFF5D}]/i.test(html)
+      console.log(`[invia-campagna-mail] sample to=${email} nome="${nome}" raw="${rawNome}" subjectLeak=${/\{/.test(subject)} bodyLeak=${leak}`)
+    }
 
     try {
-      await sendBrevo(email, nome, campagna.oggettoMail, html)
+      await sendBrevo(email, nome, subject, html)
       await atPatch(T_CONT, r.id, {
         Stato:     'Inviato',
         DataInvio: new Date().toISOString(),
