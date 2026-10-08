@@ -18,7 +18,7 @@ const BRAND_ADDRESS  = 'Via Europa 2 · Colle Brianza (LC)'
 
 /** Sfondo foto: gradient sempre sotto; niente crossOrigin in preview (evita schermo nero se CORS fallisce).
  *  La cattura PNG usa già imgToDataUrl come fallback in SocialStudioPanel. */
-function BgPhoto({ imageUrl, fallback }) {
+function BgPhoto({ imageUrl, fallback, objectPosition = 'center center' }) {
   return (
     <>
       {fallback || (
@@ -34,12 +34,13 @@ function BgPhoto({ imageUrl, fallback }) {
           alt=""
           onError={e => { e.currentTarget.style.display = 'none' }}
           style={{
-            position:  'absolute',
-            inset:     0,
-            width:     '100%',
-            height:    '100%',
-            objectFit: 'cover',
-            display:   'block',
+            position:       'absolute',
+            inset:          0,
+            width:          '100%',
+            height:         '100%',
+            objectFit:      'cover',
+            objectPosition,
+            display:        'block',
           }}
         />
       ) : null}
@@ -63,10 +64,21 @@ function formatDataIT(dateStr) {
 
 // ─── Logo block (logo + indirizzo opzionale) ──────────────────────────────────
 
-function LogoBlock({ top = 72, logoW = 140, mostraIndirizzo = false, indirizzo = BRAND_ADDRESS, posizione = 'centro', padding = 72, bollino = false }) {
+function LogoBlock({ top = 72, logoW = 140, mostraIndirizzo = false, indirizzo = BRAND_ADDRESS, posizione = 'centro', padding = 72 }) {
   const jc = posizione === 'sinistra' ? 'flex-start' : posizione === 'destra' ? 'flex-end' : 'center'
-  const innerContent = (
-    <>
+  return (
+    <div style={{
+      position:       'absolute',
+      top,
+      left:           0,
+      right:          0,
+      display:        'flex',
+      justifyContent: jc,
+      alignItems:     'center',
+      gap:            28,
+      paddingLeft:    posizione === 'sinistra' ? padding : 0,
+      paddingRight:   posizione === 'destra'   ? padding : 0,
+    }}>
       <img
         src={LOGO_URL}
         alt="Boogie Bistrot"
@@ -88,25 +100,6 @@ function LogoBlock({ top = 72, logoW = 140, mostraIndirizzo = false, indirizzo =
           </div>
         </>
       )}
-    </>
-  )
-  return (
-    <div style={{
-      position:       'absolute',
-      top,
-      left:           0,
-      right:          0,
-      display:        'flex',
-      justifyContent: jc,
-      alignItems:     'center',
-      paddingLeft:    posizione === 'sinistra' ? padding : 0,
-      paddingRight:   posizione === 'destra'   ? padding : 0,
-    }}>
-      {bollino ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 28, background: 'rgba(0,0,0,0.42)', borderRadius: 999, padding: `${Math.round(logoW * 0.1)}px ${Math.round(logoW * 0.22)}px` }}>
-          {innerContent}
-        </div>
-      ) : innerContent}
     </div>
   )
 }
@@ -1263,7 +1256,8 @@ export function TemplateAperturaStrao({
   overlayOpacity  = 50,
   overlayTipo     = 'pieno',
   logoPos         = 'centro',
-  logoBollino     = false,
+  fotoX           = 50,
+  fotoY           = 50,
   notaColore      = 'bianco',
   notaOpacity     = 55,
 }) {
@@ -1276,9 +1270,9 @@ export function TemplateAperturaStrao({
 
   return (
     <div style={{ position: 'relative', width: W_COVER, height: H_COVER, backgroundColor: DARK_BG, overflow: 'hidden', fontFamily: "'SofiaPro', 'Helvetica Neue', sans-serif" }}>
-      <BgPhoto imageUrl={imageUrl} fallback={<div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 25% 30%, rgba(30,90,40,0.45) 0%, transparent 55%), radial-gradient(ellipse at 72% 65%, rgba(18,60,25,0.32) 0%, transparent 50%), linear-gradient(155deg, #0c1e0f 0%, #081008 55%, #040804 100%)' }} />} />
+      <BgPhoto imageUrl={imageUrl} fallback={<div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 25% 30%, rgba(30,90,40,0.45) 0%, transparent 55%), radial-gradient(ellipse at 72% 65%, rgba(18,60,25,0.32) 0%, transparent 50%), linear-gradient(155deg, #0c1e0f 0%, #081008 55%, #040804 100%)' }} />} objectPosition={`${fotoX}% ${fotoY}%`} />
       <div style={{ position: 'absolute', inset: 0, background: computeOverlay(overlayOpacity, overlayTipo) }} />
-      <LogoBlock top={88} logoW={140} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} posizione={logoPos} padding={72} bollino={logoBollino} />
+      <LogoBlock top={88} logoW={140} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} posizione={logoPos} padding={72} />
       <div style={{ position: 'absolute', bottom: 80, left: 72, right: 72, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
         <div style={{ display: 'inline-block', background: GREEN_STRAO, borderRadius: 999, padding: '10px 30px', marginBottom: 32 }}>
           <span style={{ fontSize: 28, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fff' }}>Apertura Straordinaria</span>
@@ -1307,7 +1301,8 @@ export function TemplateChiusuraStrao({
   overlayOpacity  = 50,
   overlayTipo     = 'pieno',
   logoPos         = 'centro',
-  logoBollino     = false,
+  fotoX           = 50,
+  fotoY           = 50,
   notaColore      = 'bianco',
   notaOpacity     = 55,
 }) {
@@ -1320,9 +1315,9 @@ export function TemplateChiusuraStrao({
 
   return (
     <div style={{ position: 'relative', width: W_COVER, height: H_COVER, backgroundColor: DARK_BG, overflow: 'hidden', fontFamily: "'SofiaPro', 'Helvetica Neue', sans-serif" }}>
-      <BgPhoto imageUrl={imageUrl} fallback={<div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 28% 32%, rgba(110,25,25,0.4) 0%, transparent 50%), radial-gradient(ellipse at 70% 68%, rgba(80,15,15,0.3) 0%, transparent 48%), linear-gradient(155deg, #1c0808 0%, #100404 55%, #080202 100%)' }} />} />
+      <BgPhoto imageUrl={imageUrl} fallback={<div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 28% 32%, rgba(110,25,25,0.4) 0%, transparent 50%), radial-gradient(ellipse at 70% 68%, rgba(80,15,15,0.3) 0%, transparent 48%), linear-gradient(155deg, #1c0808 0%, #100404 55%, #080202 100%)' }} />} objectPosition={`${fotoX}% ${fotoY}%`} />
       <div style={{ position: 'absolute', inset: 0, background: computeOverlay(overlayOpacity, overlayTipo) }} />
-      <LogoBlock top={88} logoW={140} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} posizione={logoPos} padding={72} bollino={logoBollino} />
+      <LogoBlock top={88} logoW={140} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} posizione={logoPos} padding={72} />
       <div style={{ position: 'absolute', bottom: 80, left: 72, right: 72, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
         <div style={{ display: 'inline-block', background: RED_STRAO, borderRadius: 999, padding: '10px 30px', marginBottom: 32 }}>
           <span style={{ fontSize: 28, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fff' }}>Chiusura Straordinaria</span>
@@ -1351,7 +1346,8 @@ export function TemplateAperturaStraoStoria({
   overlayOpacity  = 50,
   overlayTipo     = 'pieno',
   logoPos         = 'centro',
-  logoBollino     = false,
+  fotoX           = 50,
+  fotoY           = 50,
   notaColore      = 'bianco',
   notaOpacity     = 55,
 }) {
@@ -1364,10 +1360,10 @@ export function TemplateAperturaStraoStoria({
 
   return (
     <div style={{ position: 'relative', width: W_COVER, height: H_STORIA, backgroundColor: DARK_BG, overflow: 'hidden', fontFamily: "'SofiaPro', 'Helvetica Neue', sans-serif" }}>
-      <BgPhoto imageUrl={imageUrl} fallback={<div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 25% 30%, rgba(30,90,40,0.45) 0%, transparent 55%), radial-gradient(ellipse at 72% 65%, rgba(18,60,25,0.32) 0%, transparent 50%), linear-gradient(155deg, #0c1e0f 0%, #081008 55%, #040804 100%)' }} />} />
+      <BgPhoto imageUrl={imageUrl} fallback={<div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 25% 30%, rgba(30,90,40,0.45) 0%, transparent 55%), radial-gradient(ellipse at 72% 65%, rgba(18,60,25,0.32) 0%, transparent 50%), linear-gradient(155deg, #0c1e0f 0%, #081008 55%, #040804 100%)' }} />} objectPosition={`${fotoX}% ${fotoY}%`} />
       <div style={{ position: 'absolute', inset: 0, background: computeOverlay(overlayOpacity, overlayTipo) }} />
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 900, background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.65) 100%)' }} />
-      <LogoBlock top={120} logoW={160} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} posizione={logoPos} padding={80} bollino={logoBollino} />
+      <LogoBlock top={120} logoW={160} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} posizione={logoPos} padding={80} />
       <div style={{ position: 'absolute', bottom: 120, left: 80, right: 80, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
         <div style={{ display: 'inline-block', background: GREEN_STRAO, borderRadius: 999, padding: '12px 34px', marginBottom: 44 }}>
           <span style={{ fontSize: 32, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fff' }}>Apertura Straordinaria</span>
@@ -1396,7 +1392,8 @@ export function TemplateChiusuraStraoStoria({
   overlayOpacity  = 50,
   overlayTipo     = 'pieno',
   logoPos         = 'centro',
-  logoBollino     = false,
+  fotoX           = 50,
+  fotoY           = 50,
   notaColore      = 'bianco',
   notaOpacity     = 55,
 }) {
@@ -1409,10 +1406,10 @@ export function TemplateChiusuraStraoStoria({
 
   return (
     <div style={{ position: 'relative', width: W_COVER, height: H_STORIA, backgroundColor: DARK_BG, overflow: 'hidden', fontFamily: "'SofiaPro', 'Helvetica Neue', sans-serif" }}>
-      <BgPhoto imageUrl={imageUrl} fallback={<div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 28% 32%, rgba(110,25,25,0.4) 0%, transparent 50%), radial-gradient(ellipse at 70% 68%, rgba(80,15,15,0.3) 0%, transparent 48%), linear-gradient(155deg, #1c0808 0%, #100404 55%, #080202 100%)' }} />} />
+      <BgPhoto imageUrl={imageUrl} fallback={<div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 28% 32%, rgba(110,25,25,0.4) 0%, transparent 50%), radial-gradient(ellipse at 70% 68%, rgba(80,15,15,0.3) 0%, transparent 48%), linear-gradient(155deg, #1c0808 0%, #100404 55%, #080202 100%)' }} />} objectPosition={`${fotoX}% ${fotoY}%`} />
       <div style={{ position: 'absolute', inset: 0, background: computeOverlay(overlayOpacity, overlayTipo) }} />
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 900, background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.65) 100%)' }} />
-      <LogoBlock top={120} logoW={160} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} posizione={logoPos} padding={80} bollino={logoBollino} />
+      <LogoBlock top={120} logoW={160} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} posizione={logoPos} padding={80} />
       <div style={{ position: 'absolute', bottom: 120, left: 80, right: 80, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
         <div style={{ display: 'inline-block', background: RED_STRAO, borderRadius: 999, padding: '12px 34px', marginBottom: 44 }}>
           <span style={{ fontSize: 32, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fff' }}>Chiusura Straordinaria</span>

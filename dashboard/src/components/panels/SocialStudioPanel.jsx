@@ -539,21 +539,20 @@ function SlideEditorStraordinaria({ slide, onChange }) {
       </div>
       <SizeSlider campo="notaOpacity" label="Opacità" defVal={55} min={0} max={100} />
       <label className={styles.sectionLabel}>Posizione logo</label>
-      <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
         <button className={`btn-toggle btn-sm ${(data.logoPos || 'centro') === 'sinistra' ? 'active' : ''}`} onClick={() => update('logoPos', 'sinistra')}>← Sinistra</button>
         <button className={`btn-toggle btn-sm ${(data.logoPos || 'centro') === 'centro'   ? 'active' : ''}`} onClick={() => update('logoPos', 'centro')}>Centro</button>
         <button className={`btn-toggle btn-sm ${data.logoPos === 'destra'                  ? 'active' : ''}`} onClick={() => update('logoPos', 'destra')}>Destra →</button>
       </div>
-      <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, cursor: 'pointer' }}>
-        <input type="checkbox" checked={!!data.logoBollino} onChange={e => update('logoBollino', e.target.checked)} style={{ accentColor: 'var(--accent)', width: 15, height: 15 }} />
-        <span style={{ fontSize: '0.82rem', color: 'var(--text2)' }}>Sfondo bollino</span>
-      </label>
       <label className={styles.sectionLabel}>Overlay sfondo</label>
       <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
         <button className={`btn-toggle btn-sm ${(data.overlayTipo || 'pieno') === 'pieno' ? 'active' : ''}`} onClick={() => update('overlayTipo', 'pieno')}>Pieno</button>
         <button className={`btn-toggle btn-sm ${data.overlayTipo === 'sfumatura' ? 'active' : ''}`} onClick={() => update('overlayTipo', 'sfumatura')}>Sfumatura</button>
       </div>
       <SizeSlider campo="overlayOpacity" label="Opacità" defVal={50} min={0} max={100} />
+      <label className={styles.sectionLabel}>Posizione foto</label>
+      <SizeSlider campo="fotoX" label="← Orizzontale →" defVal={50} min={0} max={100} />
+      <SizeSlider campo="fotoY" label="↑ Verticale ↓" defVal={50} min={0} max={100} />
       <label className={styles.sectionLabel}>URL foto esterno (opzionale)</label>
       <input className={styles.edInput} value={(!fotoAttuale && data.imageUrl) ? data.imageUrl : ''} onChange={e => update('imageUrl', e.target.value)} placeholder="https://..." />
 
