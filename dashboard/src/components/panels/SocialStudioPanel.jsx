@@ -479,10 +479,39 @@ function SlideEditorStraordinaria({ slide, onChange }) {
   function update(key, val) { onChange({ ...slide, data: { ...data, [key]: val } }) }
 
   const isApertura   = template.startsWith('apertura')
+  const isStoria     = template.endsWith('storia')
   const defaultMsg   = isApertura ? 'Siamo aperti' : 'Siamo chiusi'
   const tuttiTag     = ['tutti', ...new Set(mediaItems.flatMap(m => m.tag).filter(Boolean))]
   const fotoFiltrate = tagFiltro === 'tutti' ? mediaItems : mediaItems.filter(m => m.tag.includes(tagFiltro))
   const fotoAttuale  = data.imageUrl ? mediaItems.find(m => m.url === data.imageUrl) : null
+
+  // Dimensioni default per post vs story
+  const defMsgSize   = isStoria ? 156 : 132
+  const defFasceSize = isStoria ? 38  : 32
+  const defNotaSize  = isStoria ? 32  : 28
+
+  function SizeSlider({ campo, label, defVal, min = 16, max = 200 }) {
+    const val = data[campo] || 0
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+        <span style={{ fontSize: '0.72rem', color: 'var(--text3)', minWidth: 56 }}>{label}</span>
+        <input
+          type="range" min={min} max={max}
+          value={val || defVal}
+          onChange={e => update(campo, Number(e.target.value))}
+          style={{ flex: 1, accentColor: 'var(--accent)' }}
+        />
+        <span style={{ fontSize: '0.72rem', color: 'var(--text)', minWidth: 24, textAlign: 'right' }}>{val || defVal}</span>
+        {val ? (
+          <button
+            onClick={() => update(campo, 0)}
+            title="Ripristina default"
+            style={{ fontSize: '0.7rem', color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', lineHeight: 1 }}
+          >↺</button>
+        ) : null}
+      </div>
+    )
+  }
 
   return (
     <div className={styles.slideEditor}>
@@ -496,10 +525,13 @@ function SlideEditorStraordinaria({ slide, onChange }) {
       )}
       <label className={styles.sectionLabel}>Fasce orarie</label>
       <input className={styles.edInput} value={data.fasce || ''} onChange={e => update('fasce', e.target.value)} placeholder="es. Solo a Pranzo · 12:00–15:00" />
+      <SizeSlider campo="fasceSize" label="Dimensione" defVal={defFasceSize} min={16} max={80} />
       <label className={styles.sectionLabel}>Messaggio principale</label>
       <input className={styles.edInput} value={data.messaggio || ''} onChange={e => update('messaggio', e.target.value)} placeholder={defaultMsg} />
+      <SizeSlider campo="messaggioSize" label="Dimensione" defVal={defMsgSize} min={40} max={220} />
       <label className={styles.sectionLabel}>Nota (opzionale)</label>
       <textarea className={styles.edTextarea} rows={2} value={data.nota || ''} onChange={e => update('nota', e.target.value)} placeholder="es. Prenotazione consigliata" />
+      <SizeSlider campo="notaSize" label="Dimensione" defVal={defNotaSize} min={14} max={60} />
       <label className={styles.sectionLabel}>URL foto esterno (opzionale)</label>
       <input className={styles.edInput} value={(!fotoAttuale && data.imageUrl) ? data.imageUrl : ''} onChange={e => update('imageUrl', e.target.value)} placeholder="https://..." />
 

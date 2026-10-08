@@ -1236,9 +1236,14 @@ export function TemplateAperturaStrao({
   nota            = '',
   mostraIndirizzo = false,
   indirizzo       = BRAND_ADDRESS,
+  messaggioSize   = 0,
+  fasceSize       = 0,
+  notaSize        = 0,
 }) {
   const dataLabel = dataTesto || formatDataIT(data)
-  const msgSize   = messaggio.length > 18 ? 88 : messaggio.length > 10 ? 110 : 132
+  const msgSize   = messaggioSize || (messaggio.length > 18 ? 88 : messaggio.length > 10 ? 110 : 132)
+  const fSz       = fasceSize || 32
+  const nSz       = notaSize  || 28
 
   return (
     <div style={{ position: 'relative', width: W_COVER, height: H_COVER, backgroundColor: DARK_BG, overflow: 'hidden', fontFamily: "'SofiaPro', 'Helvetica Neue', sans-serif" }}>
@@ -1250,9 +1255,9 @@ export function TemplateAperturaStrao({
           <span style={{ fontSize: 28, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fff' }}>Apertura Straordinaria</span>
         </div>
         {dataLabel ? <div style={{ fontSize: 44, fontWeight: 400, color: BRAND_GOLD, marginBottom: 8, letterSpacing: '0.02em' }}>{dataLabel}</div> : null}
-        {fasce ? <div style={{ fontSize: 32, fontWeight: 400, color: 'rgba(255,255,255,0.72)', marginBottom: 28 }}>{fasce}</div> : null}
+        {fasce ? <div style={{ fontSize: fSz, fontWeight: 400, color: 'rgba(255,255,255,0.72)', marginBottom: 28 }}>{fasce}</div> : null}
         <div style={{ fontFamily: "'Alga', 'Georgia', serif", fontSize: msgSize, fontWeight: 600, lineHeight: 0.95, color: '#fff', wordBreak: 'break-word', width: '100%' }}>{messaggio}</div>
-        {nota ? <div style={{ fontSize: 28, fontStyle: 'italic', fontWeight: 300, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, marginTop: 22 }}>{nota}</div> : null}
+        {nota ? <div style={{ fontSize: nSz, fontStyle: 'italic', fontWeight: 300, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, marginTop: 22 }}>{nota}</div> : null}
       </div>
     </div>
   )
@@ -1267,9 +1272,14 @@ export function TemplateChiusuraStrao({
   nota            = '',
   mostraIndirizzo = false,
   indirizzo       = BRAND_ADDRESS,
+  messaggioSize   = 0,
+  fasceSize       = 0,
+  notaSize        = 0,
 }) {
   const dataLabel = dataTesto || formatDataIT(data)
-  const msgSize   = messaggio.length > 18 ? 88 : messaggio.length > 10 ? 110 : 132
+  const msgSize   = messaggioSize || (messaggio.length > 18 ? 88 : messaggio.length > 10 ? 110 : 132)
+  const fSz       = fasceSize || 32
+  const nSz       = notaSize  || 28
 
   return (
     <div style={{ position: 'relative', width: W_COVER, height: H_COVER, backgroundColor: DARK_BG, overflow: 'hidden', fontFamily: "'SofiaPro', 'Helvetica Neue', sans-serif" }}>
@@ -1281,9 +1291,9 @@ export function TemplateChiusuraStrao({
           <span style={{ fontSize: 28, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fff' }}>Chiusura Straordinaria</span>
         </div>
         {dataLabel ? <div style={{ fontSize: 44, fontWeight: 400, color: BRAND_GOLD, marginBottom: 8, letterSpacing: '0.02em' }}>{dataLabel}</div> : null}
-        {fasce ? <div style={{ fontSize: 32, fontWeight: 400, color: 'rgba(255,255,255,0.72)', marginBottom: 28 }}>{fasce}</div> : null}
+        {fasce ? <div style={{ fontSize: fSz, fontWeight: 400, color: 'rgba(255,255,255,0.72)', marginBottom: 28 }}>{fasce}</div> : null}
         <div style={{ fontFamily: "'Alga', 'Georgia', serif", fontSize: msgSize, fontWeight: 600, lineHeight: 0.95, color: '#fff', wordBreak: 'break-word', width: '100%' }}>{messaggio}</div>
-        {nota ? <div style={{ fontSize: 28, fontStyle: 'italic', fontWeight: 300, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, marginTop: 22 }}>{nota}</div> : null}
+        {nota ? <div style={{ fontSize: nSz, fontStyle: 'italic', fontWeight: 300, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, marginTop: 22 }}>{nota}</div> : null}
       </div>
     </div>
   )
@@ -1298,9 +1308,14 @@ export function TemplateAperturaStraoStoria({
   nota            = '',
   mostraIndirizzo = false,
   indirizzo       = BRAND_ADDRESS,
+  messaggioSize   = 0,
+  fasceSize       = 0,
+  notaSize        = 0,
 }) {
   const dataLabel = dataTesto || formatDataIT(data)
-  const msgSize   = messaggio.length > 18 ? 108 : messaggio.length > 10 ? 130 : 156
+  const msgSize   = messaggioSize || (messaggio.length > 18 ? 108 : messaggio.length > 10 ? 130 : 156)
+  const fSz       = fasceSize || 38
+  const nSz       = notaSize  || 32
 
   return (
     <div style={{ position: 'relative', width: W_COVER, height: H_STORIA, backgroundColor: DARK_BG, overflow: 'hidden', fontFamily: "'SofiaPro', 'Helvetica Neue', sans-serif" }}>
@@ -1313,9 +1328,9 @@ export function TemplateAperturaStraoStoria({
           <span style={{ fontSize: 32, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fff' }}>Apertura Straordinaria</span>
         </div>
         {dataLabel ? <div style={{ fontSize: 52, fontWeight: 400, color: BRAND_GOLD, marginBottom: 10, letterSpacing: '0.02em' }}>{dataLabel}</div> : null}
-        {fasce ? <div style={{ fontSize: 38, fontWeight: 400, color: 'rgba(255,255,255,0.72)', marginBottom: 36 }}>{fasce}</div> : null}
+        {fasce ? <div style={{ fontSize: fSz, fontWeight: 400, color: 'rgba(255,255,255,0.72)', marginBottom: 36 }}>{fasce}</div> : null}
         <div style={{ fontFamily: "'Alga', 'Georgia', serif", fontSize: msgSize, fontWeight: 600, lineHeight: 0.95, color: '#fff', wordBreak: 'break-word', width: '100%' }}>{messaggio}</div>
-        {nota ? <div style={{ fontSize: 32, fontStyle: 'italic', fontWeight: 300, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, marginTop: 28 }}>{nota}</div> : null}
+        {nota ? <div style={{ fontSize: nSz, fontStyle: 'italic', fontWeight: 300, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, marginTop: 28 }}>{nota}</div> : null}
       </div>
     </div>
   )
@@ -1330,9 +1345,14 @@ export function TemplateChiusuraStraoStoria({
   nota            = '',
   mostraIndirizzo = false,
   indirizzo       = BRAND_ADDRESS,
+  messaggioSize   = 0,
+  fasceSize       = 0,
+  notaSize        = 0,
 }) {
   const dataLabel = dataTesto || formatDataIT(data)
-  const msgSize   = messaggio.length > 18 ? 108 : messaggio.length > 10 ? 130 : 156
+  const msgSize   = messaggioSize || (messaggio.length > 18 ? 108 : messaggio.length > 10 ? 130 : 156)
+  const fSz       = fasceSize || 38
+  const nSz       = notaSize  || 32
 
   return (
     <div style={{ position: 'relative', width: W_COVER, height: H_STORIA, backgroundColor: DARK_BG, overflow: 'hidden', fontFamily: "'SofiaPro', 'Helvetica Neue', sans-serif" }}>
@@ -1345,9 +1365,9 @@ export function TemplateChiusuraStraoStoria({
           <span style={{ fontSize: 32, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fff' }}>Chiusura Straordinaria</span>
         </div>
         {dataLabel ? <div style={{ fontSize: 52, fontWeight: 400, color: BRAND_GOLD, marginBottom: 10, letterSpacing: '0.02em' }}>{dataLabel}</div> : null}
-        {fasce ? <div style={{ fontSize: 38, fontWeight: 400, color: 'rgba(255,255,255,0.72)', marginBottom: 36 }}>{fasce}</div> : null}
+        {fasce ? <div style={{ fontSize: fSz, fontWeight: 400, color: 'rgba(255,255,255,0.72)', marginBottom: 36 }}>{fasce}</div> : null}
         <div style={{ fontFamily: "'Alga', 'Georgia', serif", fontSize: msgSize, fontWeight: 600, lineHeight: 0.95, color: '#fff', wordBreak: 'break-word', width: '100%' }}>{messaggio}</div>
-        {nota ? <div style={{ fontSize: 32, fontStyle: 'italic', fontWeight: 300, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, marginTop: 28 }}>{nota}</div> : null}
+        {nota ? <div style={{ fontSize: nSz, fontStyle: 'italic', fontWeight: 300, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, marginTop: 28 }}>{nota}</div> : null}
       </div>
     </div>
   )
