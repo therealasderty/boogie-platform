@@ -356,8 +356,12 @@ function SlideEditorFoto({ slide, onChange }) {
         Mostra logo Boogie Bistrot
       </label>
 
+      {/* URL esterno */}
+      <label className={styles.sectionLabel}>URL foto esterno (opzionale)</label>
+      <input className={styles.edInput} value={(!fotoAttuale && data.imageUrl) ? data.imageUrl : ''} onChange={e => update('imageUrl', e.target.value)} placeholder="https://..." />
+
       {/* Filtri tag */}
-      <label className={styles.sectionLabel}>Foto dalla libreria media</label>
+      <label className={styles.sectionLabel}>Oppure scegli dalla libreria media</label>
       <div className={styles.tagFiltri}>
         {tuttiTag.map(t => (
           <button
@@ -422,7 +426,10 @@ function SlideEditorChiusura({ slide, onChange, appuntamenti, eventoGlobaleId, o
       <label className={styles.sectionLabel}>Nome serata</label>
       <input className={styles.edInput} value={data.nomeSerata || ''} onChange={e => update('nomeSerata', e.target.value)} placeholder="Serata Paella" />
 
-      <label className={styles.sectionLabel}>Foto dalla libreria</label>
+      <label className={styles.sectionLabel}>URL foto esterno (opzionale)</label>
+      <input className={styles.edInput} value={(!fotoAttuale && data.imageUrl) ? data.imageUrl : ''} onChange={e => update('imageUrl', e.target.value)} placeholder="https://..." />
+
+      <label className={styles.sectionLabel}>Oppure scegli dalla libreria</label>
       <div className={styles.tagFiltri}>
         {tuttiTag.map(t => (
           <button key={t} className={`${styles.tagBtn} ${tagFiltro === t ? styles.tagBtnActive : ''}`} onClick={() => setTagFiltro(t)}>
@@ -493,7 +500,10 @@ function SlideEditorStraordinaria({ slide, onChange }) {
       <input className={styles.edInput} value={data.messaggio || ''} onChange={e => update('messaggio', e.target.value)} placeholder={defaultMsg} />
       <label className={styles.sectionLabel}>Nota (opzionale)</label>
       <textarea className={styles.edTextarea} rows={2} value={data.nota || ''} onChange={e => update('nota', e.target.value)} placeholder="es. Prenotazione consigliata" />
-      <label className={styles.sectionLabel}>Foto di sfondo (opzionale)</label>
+      <label className={styles.sectionLabel}>URL foto esterno (opzionale)</label>
+      <input className={styles.edInput} value={(!fotoAttuale && data.imageUrl) ? data.imageUrl : ''} onChange={e => update('imageUrl', e.target.value)} placeholder="https://..." />
+
+      <label className={styles.sectionLabel}>Oppure scegli dalla libreria</label>
       <div className={styles.tagFiltri}>
         {tuttiTag.map(t => (
           <button key={t} className={`${styles.tagBtn} ${tagFiltro === t ? styles.tagBtnActive : ''}`} onClick={() => setTagFiltro(t)}>{t}</button>
