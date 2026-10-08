@@ -532,12 +532,22 @@ function SlideEditorStraordinaria({ slide, onChange }) {
       <label className={styles.sectionLabel}>Nota (opzionale)</label>
       <textarea className={styles.edTextarea} rows={2} value={data.nota || ''} onChange={e => update('nota', e.target.value)} placeholder="es. Prenotazione consigliata" />
       <SizeSlider campo="notaSize" label="Dimensione" defVal={defNotaSize} min={14} max={60} />
+      <label className={styles.sectionLabel}>Colore nota</label>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+        <button className={`btn-toggle btn-sm ${(data.notaColore || 'bianco') === 'bianco' ? 'active' : ''}`} onClick={() => update('notaColore', 'bianco')}>Bianco</button>
+        <button className={`btn-toggle btn-sm ${data.notaColore === 'oro'                   ? 'active' : ''}`} onClick={() => update('notaColore', 'oro')}>Oro</button>
+      </div>
+      <SizeSlider campo="notaOpacity" label="Opacità" defVal={55} min={0} max={100} />
       <label className={styles.sectionLabel}>Posizione logo</label>
-      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
         <button className={`btn-toggle btn-sm ${(data.logoPos || 'centro') === 'sinistra' ? 'active' : ''}`} onClick={() => update('logoPos', 'sinistra')}>← Sinistra</button>
         <button className={`btn-toggle btn-sm ${(data.logoPos || 'centro') === 'centro'   ? 'active' : ''}`} onClick={() => update('logoPos', 'centro')}>Centro</button>
         <button className={`btn-toggle btn-sm ${data.logoPos === 'destra'                  ? 'active' : ''}`} onClick={() => update('logoPos', 'destra')}>Destra →</button>
       </div>
+      <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, cursor: 'pointer' }}>
+        <input type="checkbox" checked={!!data.logoBollino} onChange={e => update('logoBollino', e.target.checked)} style={{ accentColor: 'var(--accent)', width: 15, height: 15 }} />
+        <span style={{ fontSize: '0.82rem', color: 'var(--text2)' }}>Sfondo bollino</span>
+      </label>
       <label className={styles.sectionLabel}>Overlay sfondo</label>
       <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
         <button className={`btn-toggle btn-sm ${(data.overlayTipo || 'pieno') === 'pieno' ? 'active' : ''}`} onClick={() => update('overlayTipo', 'pieno')}>Pieno</button>

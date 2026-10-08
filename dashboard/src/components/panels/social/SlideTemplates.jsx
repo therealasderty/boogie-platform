@@ -63,21 +63,10 @@ function formatDataIT(dateStr) {
 
 // ─── Logo block (logo + indirizzo opzionale) ──────────────────────────────────
 
-function LogoBlock({ top = 72, logoW = 140, mostraIndirizzo = false, indirizzo = BRAND_ADDRESS, posizione = 'centro', padding = 72 }) {
+function LogoBlock({ top = 72, logoW = 140, mostraIndirizzo = false, indirizzo = BRAND_ADDRESS, posizione = 'centro', padding = 72, bollino = false }) {
   const jc = posizione === 'sinistra' ? 'flex-start' : posizione === 'destra' ? 'flex-end' : 'center'
-  return (
-    <div style={{
-      position:       'absolute',
-      top,
-      left:           0,
-      right:          0,
-      display:        'flex',
-      justifyContent: jc,
-      alignItems:     'center',
-      gap:            28,
-      paddingLeft:    posizione === 'sinistra' ? padding : 0,
-      paddingRight:   posizione === 'destra'   ? padding : 0,
-    }}>
+  const innerContent = (
+    <>
       <img
         src={LOGO_URL}
         alt="Boogie Bistrot"
@@ -99,6 +88,25 @@ function LogoBlock({ top = 72, logoW = 140, mostraIndirizzo = false, indirizzo =
           </div>
         </>
       )}
+    </>
+  )
+  return (
+    <div style={{
+      position:       'absolute',
+      top,
+      left:           0,
+      right:          0,
+      display:        'flex',
+      justifyContent: jc,
+      alignItems:     'center',
+      paddingLeft:    posizione === 'sinistra' ? padding : 0,
+      paddingRight:   posizione === 'destra'   ? padding : 0,
+    }}>
+      {bollino ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 28, background: 'rgba(0,0,0,0.42)', borderRadius: 999, padding: `${Math.round(logoW * 0.1)}px ${Math.round(logoW * 0.22)}px` }}>
+          {innerContent}
+        </div>
+      ) : innerContent}
     </div>
   )
 }
@@ -1255,17 +1263,22 @@ export function TemplateAperturaStrao({
   overlayOpacity  = 50,
   overlayTipo     = 'pieno',
   logoPos         = 'centro',
+  logoBollino     = false,
+  notaColore      = 'bianco',
+  notaOpacity     = 55,
 }) {
   const dataLabel = dataTesto || formatDataIT(data)
   const msgSize   = messaggioSize || (messaggio.length > 18 ? 88 : messaggio.length > 10 ? 110 : 132)
   const fSz       = fasceSize || 32
   const nSz       = notaSize  || 28
+  const notaRgb   = notaColore === 'oro' ? '238,206,157' : '255,255,255'
+  const notaColor = `rgba(${notaRgb},${(notaOpacity / 100).toFixed(2)})`
 
   return (
     <div style={{ position: 'relative', width: W_COVER, height: H_COVER, backgroundColor: DARK_BG, overflow: 'hidden', fontFamily: "'SofiaPro', 'Helvetica Neue', sans-serif" }}>
       <BgPhoto imageUrl={imageUrl} fallback={<div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 25% 30%, rgba(30,90,40,0.45) 0%, transparent 55%), radial-gradient(ellipse at 72% 65%, rgba(18,60,25,0.32) 0%, transparent 50%), linear-gradient(155deg, #0c1e0f 0%, #081008 55%, #040804 100%)' }} />} />
       <div style={{ position: 'absolute', inset: 0, background: computeOverlay(overlayOpacity, overlayTipo) }} />
-      <LogoBlock top={88} logoW={140} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} posizione={logoPos} padding={72} />
+      <LogoBlock top={88} logoW={140} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} posizione={logoPos} padding={72} bollino={logoBollino} />
       <div style={{ position: 'absolute', bottom: 80, left: 72, right: 72, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
         <div style={{ display: 'inline-block', background: GREEN_STRAO, borderRadius: 999, padding: '10px 30px', marginBottom: 32 }}>
           <span style={{ fontSize: 28, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fff' }}>Apertura Straordinaria</span>
@@ -1273,7 +1286,7 @@ export function TemplateAperturaStrao({
         {dataLabel ? <div style={{ fontSize: 44, fontWeight: 400, color: BRAND_GOLD, marginBottom: 8, letterSpacing: '0.02em' }}>{dataLabel}</div> : null}
         {fasce ? <div style={{ fontSize: fSz, fontWeight: 400, color: 'rgba(255,255,255,0.72)', marginBottom: 28, whiteSpace: 'pre-line' }}>{fasce}</div> : null}
         <div style={{ fontFamily: "'Alga', 'Georgia', serif", fontSize: msgSize, fontWeight: 600, lineHeight: 0.95, color: '#fff', wordBreak: 'break-word', width: '100%', whiteSpace: 'pre-line' }}>{messaggio}</div>
-        {nota ? <div style={{ fontSize: nSz, fontStyle: 'italic', fontWeight: 300, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, marginTop: 22, whiteSpace: 'pre-line' }}>{nota}</div> : null}
+        {nota ? <div style={{ fontSize: nSz, fontStyle: 'italic', fontWeight: 300, color: notaColor, lineHeight: 1.5, marginTop: 22, whiteSpace: 'pre-line' }}>{nota}</div> : null}
       </div>
     </div>
   )
@@ -1294,17 +1307,22 @@ export function TemplateChiusuraStrao({
   overlayOpacity  = 50,
   overlayTipo     = 'pieno',
   logoPos         = 'centro',
+  logoBollino     = false,
+  notaColore      = 'bianco',
+  notaOpacity     = 55,
 }) {
   const dataLabel = dataTesto || formatDataIT(data)
   const msgSize   = messaggioSize || (messaggio.length > 18 ? 88 : messaggio.length > 10 ? 110 : 132)
   const fSz       = fasceSize || 32
   const nSz       = notaSize  || 28
+  const notaRgb   = notaColore === 'oro' ? '238,206,157' : '255,255,255'
+  const notaColor = `rgba(${notaRgb},${(notaOpacity / 100).toFixed(2)})`
 
   return (
     <div style={{ position: 'relative', width: W_COVER, height: H_COVER, backgroundColor: DARK_BG, overflow: 'hidden', fontFamily: "'SofiaPro', 'Helvetica Neue', sans-serif" }}>
       <BgPhoto imageUrl={imageUrl} fallback={<div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 28% 32%, rgba(110,25,25,0.4) 0%, transparent 50%), radial-gradient(ellipse at 70% 68%, rgba(80,15,15,0.3) 0%, transparent 48%), linear-gradient(155deg, #1c0808 0%, #100404 55%, #080202 100%)' }} />} />
       <div style={{ position: 'absolute', inset: 0, background: computeOverlay(overlayOpacity, overlayTipo) }} />
-      <LogoBlock top={88} logoW={140} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} posizione={logoPos} padding={72} />
+      <LogoBlock top={88} logoW={140} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} posizione={logoPos} padding={72} bollino={logoBollino} />
       <div style={{ position: 'absolute', bottom: 80, left: 72, right: 72, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
         <div style={{ display: 'inline-block', background: RED_STRAO, borderRadius: 999, padding: '10px 30px', marginBottom: 32 }}>
           <span style={{ fontSize: 28, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fff' }}>Chiusura Straordinaria</span>
@@ -1312,7 +1330,7 @@ export function TemplateChiusuraStrao({
         {dataLabel ? <div style={{ fontSize: 44, fontWeight: 400, color: BRAND_GOLD, marginBottom: 8, letterSpacing: '0.02em' }}>{dataLabel}</div> : null}
         {fasce ? <div style={{ fontSize: fSz, fontWeight: 400, color: 'rgba(255,255,255,0.72)', marginBottom: 28, whiteSpace: 'pre-line' }}>{fasce}</div> : null}
         <div style={{ fontFamily: "'Alga', 'Georgia', serif", fontSize: msgSize, fontWeight: 600, lineHeight: 0.95, color: '#fff', wordBreak: 'break-word', width: '100%', whiteSpace: 'pre-line' }}>{messaggio}</div>
-        {nota ? <div style={{ fontSize: nSz, fontStyle: 'italic', fontWeight: 300, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, marginTop: 22, whiteSpace: 'pre-line' }}>{nota}</div> : null}
+        {nota ? <div style={{ fontSize: nSz, fontStyle: 'italic', fontWeight: 300, color: notaColor, lineHeight: 1.5, marginTop: 22, whiteSpace: 'pre-line' }}>{nota}</div> : null}
       </div>
     </div>
   )
@@ -1333,18 +1351,23 @@ export function TemplateAperturaStraoStoria({
   overlayOpacity  = 50,
   overlayTipo     = 'pieno',
   logoPos         = 'centro',
+  logoBollino     = false,
+  notaColore      = 'bianco',
+  notaOpacity     = 55,
 }) {
   const dataLabel = dataTesto || formatDataIT(data)
   const msgSize   = messaggioSize || (messaggio.length > 18 ? 108 : messaggio.length > 10 ? 130 : 156)
   const fSz       = fasceSize || 38
   const nSz       = notaSize  || 32
+  const notaRgb   = notaColore === 'oro' ? '238,206,157' : '255,255,255'
+  const notaColor = `rgba(${notaRgb},${(notaOpacity / 100).toFixed(2)})`
 
   return (
     <div style={{ position: 'relative', width: W_COVER, height: H_STORIA, backgroundColor: DARK_BG, overflow: 'hidden', fontFamily: "'SofiaPro', 'Helvetica Neue', sans-serif" }}>
       <BgPhoto imageUrl={imageUrl} fallback={<div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 25% 30%, rgba(30,90,40,0.45) 0%, transparent 55%), radial-gradient(ellipse at 72% 65%, rgba(18,60,25,0.32) 0%, transparent 50%), linear-gradient(155deg, #0c1e0f 0%, #081008 55%, #040804 100%)' }} />} />
       <div style={{ position: 'absolute', inset: 0, background: computeOverlay(overlayOpacity, overlayTipo) }} />
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 900, background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.65) 100%)' }} />
-      <LogoBlock top={120} logoW={160} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} posizione={logoPos} padding={80} />
+      <LogoBlock top={120} logoW={160} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} posizione={logoPos} padding={80} bollino={logoBollino} />
       <div style={{ position: 'absolute', bottom: 120, left: 80, right: 80, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
         <div style={{ display: 'inline-block', background: GREEN_STRAO, borderRadius: 999, padding: '12px 34px', marginBottom: 44 }}>
           <span style={{ fontSize: 32, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fff' }}>Apertura Straordinaria</span>
@@ -1352,7 +1375,7 @@ export function TemplateAperturaStraoStoria({
         {dataLabel ? <div style={{ fontSize: 52, fontWeight: 400, color: BRAND_GOLD, marginBottom: 10, letterSpacing: '0.02em' }}>{dataLabel}</div> : null}
         {fasce ? <div style={{ fontSize: fSz, fontWeight: 400, color: 'rgba(255,255,255,0.72)', marginBottom: 36, whiteSpace: 'pre-line' }}>{fasce}</div> : null}
         <div style={{ fontFamily: "'Alga', 'Georgia', serif", fontSize: msgSize, fontWeight: 600, lineHeight: 0.95, color: '#fff', wordBreak: 'break-word', width: '100%', whiteSpace: 'pre-line' }}>{messaggio}</div>
-        {nota ? <div style={{ fontSize: nSz, fontStyle: 'italic', fontWeight: 300, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, marginTop: 28, whiteSpace: 'pre-line' }}>{nota}</div> : null}
+        {nota ? <div style={{ fontSize: nSz, fontStyle: 'italic', fontWeight: 300, color: notaColor, lineHeight: 1.5, marginTop: 28, whiteSpace: 'pre-line' }}>{nota}</div> : null}
       </div>
     </div>
   )
@@ -1373,18 +1396,23 @@ export function TemplateChiusuraStraoStoria({
   overlayOpacity  = 50,
   overlayTipo     = 'pieno',
   logoPos         = 'centro',
+  logoBollino     = false,
+  notaColore      = 'bianco',
+  notaOpacity     = 55,
 }) {
   const dataLabel = dataTesto || formatDataIT(data)
   const msgSize   = messaggioSize || (messaggio.length > 18 ? 108 : messaggio.length > 10 ? 130 : 156)
   const fSz       = fasceSize || 38
   const nSz       = notaSize  || 32
+  const notaRgb   = notaColore === 'oro' ? '238,206,157' : '255,255,255'
+  const notaColor = `rgba(${notaRgb},${(notaOpacity / 100).toFixed(2)})`
 
   return (
     <div style={{ position: 'relative', width: W_COVER, height: H_STORIA, backgroundColor: DARK_BG, overflow: 'hidden', fontFamily: "'SofiaPro', 'Helvetica Neue', sans-serif" }}>
       <BgPhoto imageUrl={imageUrl} fallback={<div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 28% 32%, rgba(110,25,25,0.4) 0%, transparent 50%), radial-gradient(ellipse at 70% 68%, rgba(80,15,15,0.3) 0%, transparent 48%), linear-gradient(155deg, #1c0808 0%, #100404 55%, #080202 100%)' }} />} />
       <div style={{ position: 'absolute', inset: 0, background: computeOverlay(overlayOpacity, overlayTipo) }} />
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 900, background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.65) 100%)' }} />
-      <LogoBlock top={120} logoW={160} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} posizione={logoPos} padding={80} />
+      <LogoBlock top={120} logoW={160} mostraIndirizzo={mostraIndirizzo} indirizzo={indirizzo} posizione={logoPos} padding={80} bollino={logoBollino} />
       <div style={{ position: 'absolute', bottom: 120, left: 80, right: 80, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
         <div style={{ display: 'inline-block', background: RED_STRAO, borderRadius: 999, padding: '12px 34px', marginBottom: 44 }}>
           <span style={{ fontSize: 32, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fff' }}>Chiusura Straordinaria</span>
@@ -1392,7 +1420,7 @@ export function TemplateChiusuraStraoStoria({
         {dataLabel ? <div style={{ fontSize: 52, fontWeight: 400, color: BRAND_GOLD, marginBottom: 10, letterSpacing: '0.02em' }}>{dataLabel}</div> : null}
         {fasce ? <div style={{ fontSize: fSz, fontWeight: 400, color: 'rgba(255,255,255,0.72)', marginBottom: 36, whiteSpace: 'pre-line' }}>{fasce}</div> : null}
         <div style={{ fontFamily: "'Alga', 'Georgia', serif", fontSize: msgSize, fontWeight: 600, lineHeight: 0.95, color: '#fff', wordBreak: 'break-word', width: '100%', whiteSpace: 'pre-line' }}>{messaggio}</div>
-        {nota ? <div style={{ fontSize: nSz, fontStyle: 'italic', fontWeight: 300, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, marginTop: 28, whiteSpace: 'pre-line' }}>{nota}</div> : null}
+        {nota ? <div style={{ fontSize: nSz, fontStyle: 'italic', fontWeight: 300, color: notaColor, lineHeight: 1.5, marginTop: 28, whiteSpace: 'pre-line' }}>{nota}</div> : null}
       </div>
     </div>
   )
