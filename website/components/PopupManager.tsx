@@ -202,15 +202,17 @@ export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] 
         }
       } catch {}
 
-      const hasChiusura = chiusureAttive.length > 0
-      const hasEvento   = eventoData !== null
+      const hasChiusura   = chiusureAttive.length > 0
+      const hasEvento     = eventoData !== null
+      const hasApertura   = chiusureAttive.some(ev => ev.tipo === 'Apertura straordinaria')
 
       if (!hasChiusura && !hasEvento) return
 
       if (hasChiusura) setChiusuraEventi(chiusureAttive)
       if (hasEvento)   { setPopup(eventoData); setUrgency(eventoUrgency) }
 
-      const newMode: Mode = hasChiusura && hasEvento ? 'entrambi' : hasChiusura ? 'chiusura' : 'evento'
+      // Le aperture straordinarie hanno priorità assoluta: non mostrare l'evento
+      const newMode: Mode = hasChiusura && hasEvento && !hasApertura ? 'entrambi' : hasChiusura ? 'chiusura' : 'evento'
       const delay = newMode === 'evento' ? DELAY_MS[eventoUrgency] : 2000
       setMode(newMode)
 

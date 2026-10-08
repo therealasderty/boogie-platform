@@ -22,7 +22,7 @@ import { jsPDF } from 'jspdf'
 import styles from './EmailMarketingPanel.module.css'
 
 /** Bump a ogni release del modulo — confronta con l’online dopo il deploy Netlify. */
-export const EMAIL_MKTG_VERSION = '2026.10.01-d'
+export const EMAIL_MKTG_VERSION = '2026.10.02-a'
 
 const MAX_PER_GIORNO_CAP = 250
 const DEFAULT_MAX_PER_GIORNO = 250
@@ -158,6 +158,109 @@ function uid() { return Math.random().toString(36).slice(2, 9) }
 
 const LAYOUT_TYPES = new Set(['preheader', 'header-scuro', 'footer-ricco', 'footer-semplice'])
 
+// ─── Template starter per aperture/chiusure straordinarie ────────────────────
+
+const _HDR = { type: 'header-scuro', logoUrl: 'https://boogiebistrot.com/logo-email.png', indirizzo: 'Via Europa, 2 — Colle Brianza (LC)' }
+const _FTR = { type: 'footer-ricco', testo: 'Boogie Bistrot\nVia Europa, 2 — Colle Brianza (LC)', sito: 'https://boogiebistrot.com', instagram: 'https://www.instagram.com/boogiebistrot', unsubscribe: true }
+
+const TEMPLATE_STARTERS = [
+  {
+    id: 'apertura-foto',
+    label: 'Apertura straordinaria',
+    desc: 'Con foto hero',
+    accent: '#1a3d1f',
+    emoji: '🌟',
+    blocks: [
+      { type: 'preheader', testo: 'Siamo aperti in via straordinaria — un\'occasione da non perdere!' },
+      _HDR,
+      { type: 'hero', url: '', alt: 'Apertura straordinaria Boogie Bistrot', link: 'https://boogiebistrot.com/prenota' },
+      { type: 'etichetta', testo: 'Apertura straordinaria' },
+      { type: 'intestazione', testo: 'Ciao {nome}, una buona notizia!' },
+      { type: 'testo', contenuto: 'In via del tutto eccezionale, [GIORNO] [DATA] saremo aperti [FASCIA]. Un\'occasione per godersi la cucina del territorio, la pizza dal forno a legna e le nostre birre locali.' },
+      { type: 'evidenza', contenuto: '📅 [GIORNO] [DATA]\n🕐 [ORARIO]\n📍 Via Europa, 2 — Colle Brianza (LC)' },
+      { type: 'pulsante', testo: 'Prenota il tuo tavolo', href: 'https://boogiebistrot.com/prenota', stile: '' },
+      _FTR,
+    ],
+  },
+  {
+    id: 'apertura-nofoto',
+    label: 'Apertura straordinaria',
+    desc: 'Senza foto',
+    accent: '#1a3d1f',
+    emoji: '✨',
+    blocks: [
+      { type: 'preheader', testo: 'Siamo aperti in via straordinaria — un\'occasione da non perdere!' },
+      _HDR,
+      { type: 'etichetta', testo: 'Apertura straordinaria' },
+      { type: 'intestazione', testo: 'Ciao {nome}, una buona notizia!' },
+      { type: 'testo', contenuto: 'In via del tutto eccezionale, [GIORNO] [DATA] saremo aperti [FASCIA]. Un\'occasione per godersi la cucina del territorio, la pizza dal forno a legna e le nostre birre locali.' },
+      { type: 'evidenza', contenuto: '📅 [GIORNO] [DATA]\n🕐 [ORARIO]\n📍 Via Europa, 2 — Colle Brianza (LC)' },
+      { type: 'pulsante', testo: 'Prenota il tuo tavolo', href: 'https://boogiebistrot.com/prenota', stile: '' },
+      _FTR,
+    ],
+  },
+  {
+    id: 'chiusura-foto',
+    label: 'Chiusura straordinaria',
+    desc: 'Con foto hero',
+    accent: '#7a1a1a',
+    emoji: '🔴',
+    blocks: [
+      { type: 'preheader', testo: 'Informazione importante sulle prossime aperture.' },
+      _HDR,
+      { type: 'hero', url: '', alt: 'Boogie Bistrot', link: '' },
+      { type: 'etichetta', testo: 'Comunicazione importante' },
+      { type: 'intestazione', testo: 'Ciao {nome},' },
+      { type: 'testo', contenuto: 'Vogliamo informarti che [GIORNO] [DATA] il Boogie Bistrot rimarrà chiuso [FASCIA]. Ci scusiamo per il disagio e ti aspettiamo presto.' },
+      { type: 'evidenza', contenuto: '🔴 Chiuso [GIORNO] [DATA] — [FASCIA]\n✅ Riapriamo regolarmente il [PROSSIMA APERTURA]' },
+      { type: 'contatti-diretti', testo: 'Per info o prenotazioni future:', sito: 'https://boogiebistrot.com', telefono: '+39 039 9260568', email: 'info@boogiebistrot.com' },
+      _FTR,
+    ],
+  },
+  {
+    id: 'chiusura-nofoto',
+    label: 'Chiusura straordinaria',
+    desc: 'Senza foto',
+    accent: '#7a1a1a',
+    emoji: '⚠️',
+    blocks: [
+      { type: 'preheader', testo: 'Informazione importante sulle prossime aperture.' },
+      _HDR,
+      { type: 'etichetta', testo: 'Comunicazione importante' },
+      { type: 'intestazione', testo: 'Ciao {nome},' },
+      { type: 'testo', contenuto: 'Vogliamo informarti che [GIORNO] [DATA] il Boogie Bistrot rimarrà chiuso [FASCIA]. Ci scusiamo per il disagio e ti aspettiamo presto.' },
+      { type: 'evidenza', contenuto: '🔴 Chiuso [GIORNO] [DATA] — [FASCIA]\n✅ Riapriamo regolarmente il [PROSSIMA APERTURA]' },
+      { type: 'contatti-diretti', testo: 'Per info o prenotazioni future:', sito: 'https://boogiebistrot.com', telefono: '+39 039 9260568', email: 'info@boogiebistrot.com' },
+      _FTR,
+    ],
+  },
+]
+
+// ─── Template starter picker ──────────────────────────────────────────────────
+
+function TemplateStarterPicker({ onApply }) {
+  return (
+    <div className={styles.starterWrap}>
+      <p className={styles.starterHint}>Parti da un template o aggiungi blocchi manualmente.</p>
+      <div className={styles.starterGrid}>
+        {TEMPLATE_STARTERS.map(t => (
+          <button
+            key={t.id}
+            type="button"
+            className={styles.starterCard}
+            style={{ '--starter-accent': t.accent }}
+            onClick={() => onApply(t.blocks.map(b => ({ ...b, _id: uid() })))}
+          >
+            <span className={styles.starterEmoji}>{t.emoji}</span>
+            <span className={styles.starterLabel}>{t.label}</span>
+            <span className={styles.starterDesc}>{t.desc}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ─── Preview HTML email ───────────────────────────────────────────────────────
 
 const FONT_STACK = "'Raleway',Arial,sans-serif"
@@ -194,8 +297,8 @@ function applyPersonalization(text, rawNome) {
   const gender = guessGenderFromFirstName(nome)
   const passato = gender === 'f' ? 'passata' : 'passato'
   return String(text || '')
-    .replace(/\{nome\}/gi, nome)
-    .replace(/\{passat[oa]\}/gi, passato)
+    .replace(/[\uFF5B{]\s*nome\s*[\uFF5D}]/gi, nome)
+    .replace(/[\uFF5B{]\s*passat[oa]\s*[\uFF5D}]/gi, passato)
 }
 
 function renderBlockHtml(b, nome = 'Mario') {
@@ -419,10 +522,10 @@ ${body}
   rows.push(footer ? renderFooterRicco(footer) : `<tr><td align="center" style="padding:22px 32px;background:#eece9d;font-size:12px;color:${CD};text-align:center;font-family:${FONT_STACK};">Boogie Bistrot — Via Europa, 2, Colle Brianza (LC)</td></tr>`)
 
   const pre = preheader?.testo
-    ? `<div style="display:none;max-height:0;overflow:hidden;">${preheader.testo}</div>`
+    ? `<div style="display:none;max-height:0;overflow:hidden;">${applyPersonalization(preheader.testo, 'Mario Rossi')}</div>`
     : ''
 
-  return `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  return applyPersonalization(`<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head><body style="margin:0;padding:0;background:#f2ede4;font-family:${FONT_STACK};">
 ${pre}
@@ -430,7 +533,7 @@ ${pre}
 <tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#fff;max-width:600px;width:100%;border-radius:6px;overflow:hidden;">
 ${rows.join('\n')}
-</table></td></tr></table></body></html>`
+</table></td></tr></table></body></html>`, 'Mario Rossi')
 }
 
 /** Scarica la newsletter come PDF su una sola pagina A4. */
@@ -1161,9 +1264,9 @@ function CampagnaTab({ campagna, onSaved, onContinuaAvvio }) {
               </div>
               <div className={styles.blockList}>
                 {blocks.length === 0 && (
-                  <p className={styles.emptyBlocks}>
-                    Nessun blocco. Aggiungi Header e Hero per iniziare.
-                  </p>
+                  <TemplateStarterPicker
+                    onApply={bs => { setBlocks(bs); setExpandedId(null) }}
+                  />
                 )}
                 {blocks.map((b, idx) => {
                   const cfg = BLOCK_TYPES.find(t => t.type === b.type)

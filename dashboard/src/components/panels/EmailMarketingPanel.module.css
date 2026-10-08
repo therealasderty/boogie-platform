@@ -622,6 +622,56 @@
   border-radius: var(--radius);
   margin: 0;
 }
+
+/* ─── Template starter picker ──────────────────────────────────────── */
+.starterWrap {
+  padding: 4px 0 8px;
+}
+.starterHint {
+  font-size: 0.72rem;
+  color: var(--text3);
+  margin: 0 0 10px;
+  text-align: center;
+}
+.starterGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.starterCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border2);
+  border-radius: var(--radius-sm);
+  background: var(--bg2);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+  border-left: 3px solid var(--starter-accent, var(--accent));
+}
+.starterCard:hover {
+  border-color: var(--starter-accent, var(--accent));
+  background: var(--bg3);
+}
+.starterEmoji {
+  font-size: 1.1rem;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.starterLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+.starterDesc {
+  font-size: 0.68rem;
+  color: var(--text3);
+}
+
 .blockCard {
   border: 1px solid var(--border2);
   border-radius: 6px;
