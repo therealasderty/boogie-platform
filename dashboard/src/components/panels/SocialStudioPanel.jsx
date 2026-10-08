@@ -532,6 +532,12 @@ function SlideEditorStraordinaria({ slide, onChange }) {
       <label className={styles.sectionLabel}>Nota (opzionale)</label>
       <textarea className={styles.edTextarea} rows={2} value={data.nota || ''} onChange={e => update('nota', e.target.value)} placeholder="es. Prenotazione consigliata" />
       <SizeSlider campo="notaSize" label="Dimensione" defVal={defNotaSize} min={14} max={60} />
+      <label className={styles.sectionLabel}>Posizione logo</label>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+        <button className={`btn-toggle btn-sm ${(data.logoPos || 'centro') === 'sinistra' ? 'active' : ''}`} onClick={() => update('logoPos', 'sinistra')}>← Sinistra</button>
+        <button className={`btn-toggle btn-sm ${(data.logoPos || 'centro') === 'centro'   ? 'active' : ''}`} onClick={() => update('logoPos', 'centro')}>Centro</button>
+        <button className={`btn-toggle btn-sm ${data.logoPos === 'destra'                  ? 'active' : ''}`} onClick={() => update('logoPos', 'destra')}>Destra →</button>
+      </div>
       <label className={styles.sectionLabel}>Overlay sfondo</label>
       <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
         <button className={`btn-toggle btn-sm ${(data.overlayTipo || 'pieno') === 'pieno' ? 'active' : ''}`} onClick={() => update('overlayTipo', 'pieno')}>Pieno</button>
