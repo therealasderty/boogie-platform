@@ -462,6 +462,75 @@ function SlideEditorChiusura({ slide, onChange, appuntamenti, eventoGlobaleId, o
   )
 }
 
+// ─── SlideEditorStraordinaria ─────────────────────────────────────────────────
+// Usato da apertura_strao, chiusura_strao, apertura_strao_storia, chiusura_strao_storia
+
+function SlideEditorStraordinaria({ slide, onChange }) {
+  const { items: mediaItems, loading: mediaLoading } = useMedia()
+  const [tagFiltro, setTagFiltro] = useState('tutti')
+  const { data = {}, template } = slide
+  function update(key, val) { onChange({ ...slide, data: { ...data, [key]: val } }) }
+
+  const isApertura   = template.startsWith('apertura')
+  const defaultMsg   = isApertura ? 'Siamo aperti' : 'Siamo chiusi'
+  const tuttiTag     = ['tutti', ...new Set(mediaItems.flatMap(m => m.tag).filter(Boolean))]
+  const fotoFiltrate = tagFiltro === 'tutti' ? mediaItems : mediaItems.filter(m => m.tag.includes(tagFiltro))
+  const fotoAttuale  = data.imageUrl ? mediaItems.find(m => m.url === data.imageUrl) : null
+
+  return (
+    <div className={styles.slideEditor}>
+      <label className={styles.sectionLabel}>Data</label>
+      <input className={styles.edInput} type="date" value={data.data || ''} onChange={e => { update('data', e.target.value); if (e.target.value) update('dataTesto', '') }} />
+      {!!data.dataTesto && (
+        <>
+          <label className={styles.sectionLabel}>Testo data personalizzato</label>
+          <input className={styles.edInput} value={data.dataTesto} onChange={e => update('dataTesto', e.target.value)} placeholder="es. Domenica 15 Giugno" />
+        </>
+      )}
+      <label className={styles.sectionLabel}>Fasce orarie</label>
+      <input className={styles.edInput} value={data.fasce || ''} onChange={e => update('fasce', e.target.value)} placeholder="es. Solo a Pranzo · 12:00–15:00" />
+      <label className={styles.sectionLabel}>Messaggio principale</label>
+      <input className={styles.edInput} value={data.messaggio || ''} onChange={e => update('messaggio', e.target.value)} placeholder={defaultMsg} />
+      <label className={styles.sectionLabel}>Nota (opzionale)</label>
+      <textarea className={styles.edTextarea} rows={2} value={data.nota || ''} onChange={e => update('nota', e.target.value)} placeholder="es. Prenotazione consigliata" />
+      <label className={styles.sectionLabel}>Foto di sfondo (opzionale)</label>
+      <div className={styles.tagFiltri}>
+        {tuttiTag.map(t => (
+          <button key={t} className={`${styles.tagBtn} ${tagFiltro === t ? styles.tagBtnActive : ''}`} onClick={() => setTagFiltro(t)}>{t}</button>
+        ))}
+      </div>
+      {mediaLoading ? (
+        <div style={{ fontSize: '0.82rem', color: 'var(--text3)' }}>Caricamento galleria…</div>
+      ) : (
+        <div className={styles.fotoGrid}>
+          {fotoFiltrate.map(foto => (
+            <button
+              key={foto.id}
+              className={`${styles.fotoCell} ${data.imageUrl === foto.url ? styles.fotoCellSelected : ''}`}
+              onClick={() => update('imageUrl', data.imageUrl === foto.url ? '' : foto.url)}
+              title={foto.alt || foto.nome}
+            >
+              <img src={cloudinaryThumb(foto.url, 120)} alt={foto.alt || ''} className={styles.fotoImg} />
+              {data.imageUrl === foto.url && <div className={styles.fotoCheck}>✓</div>}
+            </button>
+          ))}
+        </div>
+      )}
+      {fotoAttuale && (
+        <div className={styles.fotoSelezionataWrap}>
+          <img src={cloudinaryThumb(fotoAttuale.url, 80)} alt="" className={styles.fotoSelezionataPreview} />
+          <div className={styles.fotoSelezionataInfo}>
+            <span>{fotoAttuale.alt || fotoAttuale.nome || 'Foto selezionata'}</span>
+            {fotoAttuale.tag?.length > 0 && <span className={styles.fotoTag}>{fotoAttuale.tag.join(', ')}</span>}
+          </div>
+          <button className={styles.fotoDeseleziona} onClick={() => update('imageUrl', '')}><X size={13} /></button>
+        </div>
+      )}
+      <IndirizzoToggle data={data} update={update} />
+    </div>
+  )
+}
+
 // ─── SlideEditorAgendaCover ─────────────────────────────────────────────────
 
 function SlideEditorAgendaCover({ slide, onChange }) {
@@ -874,6 +943,10 @@ function SlideEditor({ slide, onChange, appuntamenti, eventoGlobaleId, orari }) 
   if (template === 'chiusura') return (
     <SlideEditorChiusura slide={slide} onChange={onChange} appuntamenti={appuntamenti} eventoGlobaleId={eventoGlobaleId} orari={orari} />
   )
+
+  if (template === 'apertura_strao' || template === 'chiusura_strao' || template === 'apertura_strao_storia' || template === 'chiusura_strao_storia') {
+    return <SlideEditorStraordinaria slide={slide} onChange={onChange} />
+  }
 
   if (template === 'prezzo_evento' || template === 'prezzo_storia') {
     const voci = Array.isArray(data.voci) ? data.voci : []
