@@ -524,14 +524,20 @@ function SlideEditorStraordinaria({ slide, onChange }) {
         </>
       )}
       <label className={styles.sectionLabel}>Fasce orarie</label>
-      <input className={styles.edInput} value={data.fasce || ''} onChange={e => update('fasce', e.target.value)} placeholder="es. Solo a Pranzo · 12:00–15:00" />
+      <textarea className={styles.edTextarea} rows={2} value={data.fasce || ''} onChange={e => update('fasce', e.target.value)} placeholder={'es. Solo a Pranzo · 12:00–15:00\nUsa Invio per andare a capo'} />
       <SizeSlider campo="fasceSize" label="Dimensione" defVal={defFasceSize} min={16} max={80} />
       <label className={styles.sectionLabel}>Messaggio principale</label>
-      <input className={styles.edInput} value={data.messaggio || ''} onChange={e => update('messaggio', e.target.value)} placeholder={defaultMsg} />
+      <textarea className={styles.edTextarea} rows={2} value={data.messaggio || ''} onChange={e => update('messaggio', e.target.value)} placeholder={defaultMsg} />
       <SizeSlider campo="messaggioSize" label="Dimensione" defVal={defMsgSize} min={40} max={220} />
       <label className={styles.sectionLabel}>Nota (opzionale)</label>
       <textarea className={styles.edTextarea} rows={2} value={data.nota || ''} onChange={e => update('nota', e.target.value)} placeholder="es. Prenotazione consigliata" />
       <SizeSlider campo="notaSize" label="Dimensione" defVal={defNotaSize} min={14} max={60} />
+      <label className={styles.sectionLabel}>Overlay sfondo</label>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+        <button className={`btn-toggle btn-sm ${(data.overlayTipo || 'pieno') === 'pieno' ? 'active' : ''}`} onClick={() => update('overlayTipo', 'pieno')}>Pieno</button>
+        <button className={`btn-toggle btn-sm ${data.overlayTipo === 'sfumatura' ? 'active' : ''}`} onClick={() => update('overlayTipo', 'sfumatura')}>Sfumatura</button>
+      </div>
+      <SizeSlider campo="overlayOpacity" label="Opacità" defVal={50} min={0} max={100} />
       <label className={styles.sectionLabel}>URL foto esterno (opzionale)</label>
       <input className={styles.edInput} value={(!fotoAttuale && data.imageUrl) ? data.imageUrl : ''} onChange={e => update('imageUrl', e.target.value)} placeholder="https://..." />
 
