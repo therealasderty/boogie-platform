@@ -121,7 +121,7 @@ export default function BloccoPrenotazioniPanel() {
     const res = await salva({ descrizione: form.descrizione, dataInizio: form.dataInizio, dataFine: form.dataFine || form.dataInizio, fasce: form.fasce }, null)
     setSubmitting(false)
     if (res.success) { setMsg({ type: 'ok', text: 'Blocco aggiunto' }); setForm(EMPTY_FORM); ricarica() }
-    else { setMsg({ type: 'err', text: `Errore: ${JSON.stringify(res.airtableError || res)}` }) }
+    else { setMsg({ type: 'err', text: 'Errore — riprova' }) }
   }
 
   async function handleSubmitEdit() {
