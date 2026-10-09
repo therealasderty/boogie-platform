@@ -55,7 +55,8 @@ exports.handler = async (event) => {
       body: JSON.stringify({ fields }),
     });
     const result = await res.json();
-    return { statusCode: res.ok ? 200 : 500, headers, body: JSON.stringify({ success: res.ok, id: result.id }) };
+    if (!res.ok) console.error('Airtable POST error:', JSON.stringify(result));
+    return { statusCode: res.ok ? 200 : 500, headers, body: JSON.stringify({ success: res.ok, id: result.id, airtableError: res.ok ? undefined : result }) };
   }
 
   if (event.httpMethod === 'PATCH') {
