@@ -127,7 +127,7 @@ export default function ModalPrenotazione({ prenotazione = null, onClose, onSucc
             {isEdit && form.evento && (
               <div className={`${styles.field} ${styles.full}`}>
                 <label>Evento</label>
-                <input value={form.evento} readOnly style={{ opacity: 0.7, cursor: 'default', color: 'var(--gold)' }} />
+                <input value={form.evento} readOnly style={{ opacity: 0.7, cursor: 'default', color: 'var(--accent)' }} />
               </div>
             )}
 

@@ -46,7 +46,7 @@ const FESTIVITA = [
 ]
 
 const VISIBILITA_COLORI = {
-  'promozione': '#E67E22',
+  'promozione': 'var(--color-promozione)',
   'pagina':     'var(--accent)',
 }
 
@@ -283,7 +283,7 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
                     {GIORNI_SETT.map(g => (
                       <button key={g.value} type="button"
                         className={`${styles.giornoBtn} ${giorniEsclusione.includes(g.value) ? styles.giornoBtnActive : ''}`}
-                        style={giorniEsclusione.includes(g.value) ? { background: '#64748b', borderColor: '#64748b' } : {}}
+                        style={giorniEsclusione.includes(g.value) ? { background: 'var(--color-passato)', borderColor: 'var(--color-passato)' } : {}}
                         onClick={() => setGiorniEsclusione(prev =>
                           prev.includes(g.value) ? prev.filter(d => d !== g.value) : [...prev, g.value]
                         )}
@@ -319,22 +319,22 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
                 <div className={styles.tipoGroup}>
                   <button type="button"
                     className={`${styles.tipoBtn} ${stato === 'attivo' ? styles.tipoBtnActive : ''}`}
-                    style={stato === 'attivo' ? { background: '#16a34a', borderColor: '#16a34a' } : {}}
+                    style={stato === 'attivo' ? { background: 'var(--color-attivo)', borderColor: 'var(--color-attivo)' } : {}}
                     onClick={() => { setStato('attivo'); setDataTBD(false) }}
                   >✓ Attivo</button>
                   <button type="button"
                     className={`${styles.tipoBtn} ${stato === 'futuro' ? styles.tipoBtnActive : ''}`}
-                    style={stato === 'futuro' ? { background: '#7c3aed', borderColor: '#7c3aed' } : {}}
+                    style={stato === 'futuro' ? { background: 'var(--color-futuro)', borderColor: 'var(--color-futuro)' } : {}}
                     onClick={() => { setStato('futuro'); setMostraInNews(true); setDataVal(''); setOra(''); setOraFine('') }}
                   >Futuro</button>
                   <button type="button"
                     className={`${styles.tipoBtn} ${stato === 'passato' ? styles.tipoBtnActive : ''}`}
-                    style={stato === 'passato' ? { background: '#64748b', borderColor: '#64748b' } : {}}
+                    style={stato === 'passato' ? { background: 'var(--color-passato)', borderColor: 'var(--color-passato)' } : {}}
                     onClick={() => setStato('passato')}
                   >Passato</button>
                   <button type="button"
                     className={`${styles.tipoBtn} ${stato === 'bozza' ? styles.tipoBtnActive : ''}`}
-                    style={stato === 'bozza' ? { background: '#ca8a04', borderColor: '#ca8a04' } : {}}
+                    style={stato === 'bozza' ? { background: 'var(--color-bozza)', borderColor: 'var(--color-bozza)' } : {}}
                     onClick={() => setStato('bozza')}
                   >✎ Bozza</button>
                 </div>
@@ -529,7 +529,7 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
           <button type="button" className={styles.sezioneHeader} onClick={() => setSezioneSocial(v => !v)}>
             <span className={styles.sezioneTitolo}>Social Media</span>
             {statoSocial === 'pronto' && (
-              <span className={styles.sezioneBadge} style={{ background: 'rgba(230,126,34,0.12)', color: '#E67E22', borderColor: 'rgba(230,126,34,0.3)' }}>Pronto</span>
+              <span className={styles.sezioneBadge} style={{ background: 'rgba(230,126,34,0.12)', color: 'var(--color-promozione)', borderColor: 'rgba(230,126,34,0.3)' }}>Pronto</span>
             )}
             {statoSocial === 'pubblicato' && (
               <span className={styles.sezioneBadge} style={{ background: 'rgba(39,174,96,0.12)', color: '#27AE60', borderColor: 'rgba(39,174,96,0.3)' }}>Pubblicato</span>
@@ -542,8 +542,8 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
                 <label>Stato social</label>
                 <div className={styles.tipoGroup}>
                   {[
-                    { v: 'nessuno',    label: '— Nessuno',    bg: '#64748b' },
-                    { v: 'pronto',     label: 'Pronto',     bg: '#E67E22' },
+                    { v: 'nessuno',    label: '— Nessuno',    bg: 'var(--color-passato)' },
+                    { v: 'pronto',     label: 'Pronto',     bg: 'var(--color-promozione)' },
                     { v: 'pubblicato', label: '✓ Pubblicato', bg: '#27AE60' },
                   ].map(({ v, label, bg }) => (
                     <button key={v} type="button"
@@ -631,7 +631,7 @@ function CardAppuntamento({ a, onEdit }) {
   const isPagina = !!a.slug
   const isPassato = a.stato === 'passato'
   const isFuturo  = a.stato === 'futuro'
-  const dotColor  = isPassato ? '#64748b' : isFuturo ? '#7c3aed' : isPagina ? 'var(--accent)' : '#E67E22'
+  const dotColor  = isPassato ? 'var(--color-passato)' : isFuturo ? 'var(--color-futuro)' : isPagina ? 'var(--accent)' : 'var(--color-promozione)'
   return (
     <button
       type="button"
@@ -892,7 +892,7 @@ export default function AgendaPanel() {
     const color = isPassato
       ? '#94a3b8'
       : isFuturo
-        ? '#7c3aed'
+        ? 'var(--color-futuro)'
         : isBozza
           ? '#ffffff'
           : isRicorrente
@@ -996,7 +996,7 @@ export default function AgendaPanel() {
   return (
     <div className={styles.panel}>
       {toastNotificati > 0 && (
-        <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, background: '#16a34a', color: '#fff', padding: '12px 20px', borderRadius: 8, fontSize: '0.9rem', boxShadow: '0 4px 16px rgba(0,0,0,0.25)' }}>
+        <div className="toast">
           {toastNotificati} {toastNotificati === 1 ? 'persona avvisata' : 'persone avvisate'} via email
         </div>
       )}

@@ -118,10 +118,23 @@
   --text: #1A1208;
   --text2: #3D2E18;
   --text3: #7A6448;
+  --text-inverted: #fff;
   --accent: #B8820A;
   --accent2: #7A5F30;
+  --accent-muted: rgba(184, 130, 10, 0.15);
   --danger: #C0392B;
   --success: #2E7D32;
+
+  /* Alias (compatibilità componenti legacy) */
+  --gold: var(--accent);
+
+  /* Colori semantici — stati evento / calendario */
+  --color-attivo: #16a34a;
+  --color-futuro: #7c3aed;
+  --color-passato: #64748b;
+  --color-bozza: #ca8a04;
+  --color-promozione: #E67E22;
+  --color-ricorrente: #9B91F0;
 
   --font-body: 'Geist', 'Inter', sans-serif;
   --font-display: 'Instrument Sans', sans-serif;
@@ -133,6 +146,10 @@
   --border-style: var(--border-width) solid var(--border);
   --shadow: 0 1px 4px rgba(0,0,0,0.06);
   --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+
+  /* Z-index */
+  --z-modal: 1000;
+  --z-toast: 9999;
 }
 
 html, body, #root {
@@ -290,4 +307,19 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="
 .btn-outline-success.btn-sm {
   padding: 7px 14px;
   font-size: 0.82rem;
+}
+
+/* Toast — notifica temporanea fixed in basso a destra */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: var(--z-toast);
+  background: var(--color-attivo);
+  color: var(--text-inverted);
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+  box-shadow: var(--shadow-md);
 }

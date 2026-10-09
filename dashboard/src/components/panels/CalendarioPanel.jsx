@@ -76,7 +76,7 @@ function ModalDettaglio({ evento, onClose, onEdit }) {
         </div>
         <div className={styles.modalBody}>
           <div className={styles.modalChip} style={{ background: statoInfo.bg, color: statoInfo.color }}>{stato}</div>
-          {nomeEvento && <div className={styles.modalRiga}><span className={styles.modalLabel}>Evento</span><span className={styles.modalVal} style={{ color: 'var(--gold)' }}>{nomeEvento}</span></div>}
+          {nomeEvento && <div className={styles.modalRiga}><span className={styles.modalLabel}>Evento</span><span className={styles.modalVal} style={{ color: 'var(--accent)' }}>{nomeEvento}</span></div>}
           <div className={styles.modalRiga}><span className={styles.modalLabel}>Orario</span><span className={styles.modalVal}>{ora}</span></div>
           <div className={styles.modalRiga}><span className={styles.modalLabel}>Persone</span><span className={styles.modalVal}>{persone}</span></div>
           {preferenza && <div className={styles.modalRiga}><span className={styles.modalLabel}>Preferenza</span><span className={styles.modalVal}>{preferenza.toLowerCase() === 'pizza' ? '🍕 Pizza' : '🍽️ Cucina'}</span></div>}
