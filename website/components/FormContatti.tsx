@@ -120,10 +120,10 @@ export default function FormContatti() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className={labelClass} style={{ fontSize: 'var(--text-meta)' }}>
+        <label htmlFor="data_nascita_contatti" className={labelClass} style={{ fontSize: 'var(--text-meta)' }}>
           Data di nascita <span className="text-neutral-400 font-light">(opzionale)</span>
         </label>
-        <input name="data_nascita" type="date"
+        <input id="data_nascita_contatti" name="data_nascita" type="date"
           className={inputClass}
           style={{ fontSize: 'var(--text-meta)', colorScheme: 'light' }} />
       </div>

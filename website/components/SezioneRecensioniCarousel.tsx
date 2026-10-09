@@ -134,19 +134,23 @@ export default function SezioneRecensioniCarousel({ recensioni }: Props) {
           </svg>
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center">
           {recensioni.map((_, i) => (
             <button
               key={i}
               onClick={() => setCurrent(i)}
               aria-label={`Recensione ${i + 1}`}
-              className="rounded-pill transition-all duration-300"
-              style={{
-                width: i === current ? '24px' : '6px',
-                height: '6px',
-                backgroundColor: i === current ? 'var(--color-foreground)' : '#d4d4d4',
-              }}
-            />
+              style={{ padding: '19px 8px', background: 'transparent' }}
+            >
+              <span
+                className="rounded-pill transition-all duration-300 block pointer-events-none"
+                style={{
+                  width: i === current ? '24px' : '6px',
+                  height: '6px',
+                  backgroundColor: i === current ? 'var(--color-foreground)' : '#d4d4d4',
+                }}
+              />
+            </button>
           ))}
         </div>
 

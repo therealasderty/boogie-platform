@@ -12,7 +12,7 @@ const TIPI_EVENTO = [
 
 import { inputClass } from '@/lib/form-classes'
 
-export default function FormEventoAziendale() {
+export default function FormEventoAziendale({ defaultTipoEvento = '' }: { defaultTipoEvento?: string }) {
   const [stato, setStato] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle')
   const [loadedAt] = useState(() => Date.now())
 
@@ -127,7 +127,7 @@ export default function FormEventoAziendale() {
           <select name="tipo_evento"
             className={`${inputClass} cursor-pointer`}
             style={{ fontSize: 'var(--text-meta)' }}
-            defaultValue=""
+            defaultValue={defaultTipoEvento}
           >
             <option value="" disabled>Seleziona...</option>
             {TIPI_EVENTO.map(t => (

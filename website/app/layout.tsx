@@ -106,6 +106,9 @@ export default async function RootLayout({
 
   return (
     <html lang="it" className={`${raleway.variable} h-full`} suppressHydrationWarning>
+      <head>
+        <link rel="preload" href="/fonts/ivymode-regular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+      </head>
       <body className="min-h-full flex flex-col">
         <script
           type="application/ld+json"

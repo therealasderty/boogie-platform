@@ -14,6 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/eventi-speciali`,         lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.9 },
     { url: `${BASE_URL}/blog`,                    lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.8 },
     { url: `${BASE_URL}/eventi-aziendali`,        lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE_URL}/cene-aziendali-natale`,   lastModified: new Date(), changeFrequency: 'yearly',  priority: 0.85 },
     { url: `${BASE_URL}/menu/pizza`,              lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE_URL}/menu/specialita`,         lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE_URL}/menu/vini`,               lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },

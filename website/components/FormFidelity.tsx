@@ -107,10 +107,10 @@ export default function FormFidelity() {
       </div>
 
       <div>
-        <label className={labelClass} style={{ fontSize: 'var(--text-meta)' }}>
+        <label htmlFor="data_nascita_fidelity" className={labelClass} style={{ fontSize: 'var(--text-meta)' }}>
           Data di nascita <span className="text-neutral-400 font-light">(opzionale)</span>
         </label>
-        <input type="date" value={dataNascita} onChange={e => setDataNascita(e.target.value)}
+        <input id="data_nascita_fidelity" type="date" value={dataNascita} onChange={e => setDataNascita(e.target.value)}
           className={inputClass} style={{ fontSize: 'var(--text-body)', colorScheme: 'light' }} />
         <p className="mt-1.5 text-neutral-400 font-light" style={{ fontSize: 'var(--text-meta)' }}>
           🎂 Compilala per ricevere una sorpresa speciale nel mese del tuo compleanno
