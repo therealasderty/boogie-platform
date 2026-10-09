@@ -10,6 +10,7 @@
 import {
   House,
   CalendarDots,
+  CalendarX,
   Lock,
   CreditCard,
   Users,
@@ -128,3 +129,4 @@ export const IconDesign = icon(Slideshow)
 
 // — Tools (link esterni)
 export const IconExternalLink = icon(ArrowSquareOut)
+export const IconCalendarX    = icon(CalendarX)

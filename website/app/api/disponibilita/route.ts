@@ -8,6 +8,7 @@ const AIRTABLE_TABLE    = process.env.AIRTABLE_TABLE    || 'Prenotazioni'
 const AIRTABLE_CHIUSURE = process.env.AIRTABLE_CHIUSURE || 'Chiusure'
 const AIRTABLE_ORARI    = process.env.AIRTABLE_ORARI    || 'Orari'
 const AIRTABLE_AGENDA   = process.env.AIRTABLE_AGENDA   || 'Agenda'
+const AIRTABLE_BLOCCHI  = process.env.AIRTABLE_BLOCCHI  || 'BloccoPrenotazioni'
 /** Cache in-memory solo per orari/chiusure (tabelle config, non per-data). */
 const STATIC_TABLES_TTL_MS = 15 * 1000
 
@@ -183,6 +184,36 @@ export async function GET(req: NextRequest) {
       })
     }
 
+    // ── 1b. Blocchi prenotazioni (locale aperto, ma prenotazioni chiuse) ──
+    const blocchiJson = await fetchStaticTableAllRecords(
+      `blocchi:${AIRTABLE_BLOCCHI}`,
+      AT(AIRTABLE_BLOCCHI)
+    )
+    const fasceBlocco: string[] = []
+
+    if (blocchiJson) {
+      const bloccoRecords: { fields: Record<string, unknown> }[] =
+        ((blocchiJson.records as { fields: Record<string, unknown> }[]) ?? [])
+
+      for (const r of bloccoRecords) {
+        const f = r.fields
+        const inizio = f['Data inizio'] as string
+        if (!inizio) continue
+        let fine = (f['Data fine'] as string) || inizio
+        if (fine < inizio) fine = inizio
+        if (data >= inizio && data <= fine) {
+          const fascia = f['Fascia']
+          if (!fascia || (Array.isArray(fascia) && fascia.length === 0)) {
+            // Nessuna fascia specificata = tutto il giorno bloccato
+            ;['Pranzo', 'Cena'].forEach(x => { if (!fasceBlocco.includes(x)) fasceBlocco.push(x) })
+          } else {
+            const arr = Array.isArray(fascia) ? fascia : [fascia]
+            arr.forEach((x: string) => { if (!fasceBlocco.includes(x)) fasceBlocco.push(x) })
+          }
+        }
+      }
+    }
+
     // ── 2. Orari e generazione slot ──────────────────────────────────
     const orariJson = await fetchStaticTableAllRecords(
       `orari:${AIRTABLE_ORARI}`,
@@ -301,7 +332,7 @@ export async function GET(req: NextRequest) {
         })),
       }))
 
-    return NextResponse.json({ chiuso: false, fasce, eventiDelGiorno }, {
+    return NextResponse.json({ chiuso: false, fasce, eventiDelGiorno, fasceBlocco }, {
       headers: { 'Cache-Control': 'no-store' },
     })
   } catch (err) {

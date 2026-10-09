@@ -2,13 +2,15 @@ import { useState } from 'react'
 import OrariPanel from './OrariPanel'
 import ChiusurePanel from './ChiusurePanel'
 import ConfermaPrenotazioniPanel from './ConfermaPrenotazioniPanel'
-import { IconClock, IconLock, IconCheck } from '../../icons/index.jsx'
+import BloccoPrenotazioniPanel from './BloccoPrenotazioniPanel'
+import { IconClock, IconLock, IconCheck, IconCalendarX } from '../../icons/index.jsx'
 import styles from './GestisciOrariPanel.module.css'
 
 const TABS = [
-  { id: 'orari',    Icon: IconClock,  label: 'Orari Ordinari' },
-  { id: 'chiusure', Icon: IconLock,   label: 'Chiusure & Aperture' },
-  { id: 'conferma', Icon: IconCheck,  label: 'Conferma Prenotazioni' },
+  { id: 'orari',    Icon: IconClock,      label: 'Orari Ordinari' },
+  { id: 'chiusure', Icon: IconLock,       label: 'Chiusure & Aperture' },
+  { id: 'conferma', Icon: IconCheck,      label: 'Conferma Prenotazioni' },
+  { id: 'blocco',   Icon: IconCalendarX,  label: 'Blocco Prenotazioni' },
 ]
 
 export default function GestisciOrariPanel() {
@@ -31,6 +33,7 @@ export default function GestisciOrariPanel() {
       {tab === 'orari'    && <OrariPanel />}
       {tab === 'chiusure' && <ChiusurePanel />}
       {tab === 'conferma' && <ConfermaPrenotazioniPanel />}
+      {tab === 'blocco'   && <BloccoPrenotazioniPanel />}
     </div>
   )
 }

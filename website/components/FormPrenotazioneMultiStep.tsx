@@ -219,6 +219,7 @@ export default function FormPrenotazioneMultiStep({
     orarioFisso ? 'pronto' : 'idle'
   )
   const [fasce, setFasce]                         = useState<Fascia[]>([])
+  const [fasceBlocco, setFasceBlocco]             = useState<string[]>([])
   const [oraSelezionata, setOraSelezionata]       = useState(orarioFisso ? (orario ?? '') : '')
   const [fasceSelezionate, setFasceSelezionate]   = useState<string[]>([])
   const [eventoBloccante, setEventoBloccante]     = useState<{ titolo: string; slug: string } | null>(null)
@@ -252,6 +253,7 @@ export default function FormPrenotazioneMultiStep({
     setDisponibilita('loading')
     setOraSelezionata('')
     setFasceSelezionate([])
+    setFasceBlocco([])
 
     fetch(`/api/disponibilita?data=${data}`, { cache: 'no-store' })
       .then(r => r.json())
@@ -297,6 +299,7 @@ export default function FormPrenotazioneMultiStep({
 
         autoAdvanceRef.current = 0
         setFasce(fasceFiltrate)
+        setFasceBlocco(json.fasceBlocco || [])
 
         const visti = new Set<string>()
         for (const fascia of fasceFiltrate) {
@@ -388,7 +391,7 @@ export default function FormPrenotazioneMultiStep({
 
   // ── Slot helpers ──────────────────────────────────────────────────────────
 
-  const slotsDisponibili = fasce.flatMap(f => f.slots).filter(s => s.disponibili >= persone)
+  const slotsDisponibili = fasce.filter(f => !fasceBlocco.includes(f.fascia)).flatMap(f => f.slots).filter(s => s.disponibili >= persone)
   const fascePerOrario   = oraSelezionata
     ? fasce.filter(f => f.slots.some(s => s.ora === oraSelezionata))
     : []
@@ -626,30 +629,41 @@ export default function FormPrenotazioneMultiStep({
                                 {fascia.fascia}
                               </p>
                             )}
-                            <div className="flex flex-wrap gap-2">
-                              {fascia.slots.map(slot => {
-                                const nonDisponibile = slot.disponibili < persone
-                                return (
-                                <button
-                                  key={`${fi}-${slot.ora}`}
-                                  type="button"
-                                  disabled={nonDisponibile}
-                                  aria-pressed={oraSelezionata === slot.ora}
-                                  onClick={() => setOraSelezionata(slot.ora)}
-                                  className={`px-5 rounded-btn border font-light transition-colors ${
-                                    nonDisponibile
-                                      ? 'opacity-30 cursor-not-allowed border-neutral-200 text-neutral-400'
-                                      : oraSelezionata === slot.ora
-                                        ? 'border-brand bg-brand/10 text-brand'
-                                        : 'border-neutral-200 bg-neutral-50 text-neutral-600 hover:border-neutral-300'
-                                  }`}
-                                  style={{ fontSize: 'var(--text-body)', minHeight: '48px' }}
-                                >
-                                  {slot.ora}{nonDisponibile ? (slot.pieno ? ' — esaurito' : ' — non disponibile') : ''}
-                                </button>
-                                )
-                              })}
-                            </div>
+                            {fasceBlocco.includes(fascia.fascia) ? (
+                              <div className="rounded-btn border border-amber-200 bg-amber-50 px-4 py-3">
+                                <p className="text-amber-800 font-medium" style={{ fontSize: 'var(--text-body)' }}>
+                                  Siamo al completo {fascia.fascia === 'Pranzo' ? 'a pranzo' : 'a cena'} in questa data.
+                                </p>
+                                <p className="text-amber-700/70 mt-0.5" style={{ fontSize: 'var(--text-meta)' }}>
+                                  Prova un altro giorno o contattaci direttamente.
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="flex flex-wrap gap-2">
+                                {fascia.slots.map(slot => {
+                                  const nonDisponibile = slot.disponibili < persone
+                                  return (
+                                  <button
+                                    key={`${fi}-${slot.ora}`}
+                                    type="button"
+                                    disabled={nonDisponibile}
+                                    aria-pressed={oraSelezionata === slot.ora}
+                                    onClick={() => setOraSelezionata(slot.ora)}
+                                    className={`px-5 rounded-btn border font-light transition-colors ${
+                                      nonDisponibile
+                                        ? 'opacity-30 cursor-not-allowed border-neutral-200 text-neutral-400'
+                                        : oraSelezionata === slot.ora
+                                          ? 'border-brand bg-brand/10 text-brand'
+                                          : 'border-neutral-200 bg-neutral-50 text-neutral-600 hover:border-neutral-300'
+                                    }`}
+                                    style={{ fontSize: 'var(--text-body)', minHeight: '48px' }}
+                                  >
+                                    {slot.ora}{nonDisponibile ? (slot.pieno ? ' — esaurito' : ' — non disponibile') : ''}
+                                  </button>
+                                  )
+                                })}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
