@@ -101,7 +101,11 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
   const [titoloIntro, setTitoloIntro] = useState(appuntamento?.titoloIntro || '')
   const [testoIntro, setTestoIntro] = useState(appuntamento?.testoIntro || '')
   const [fotoHero, setFotoHero] = useState(appuntamento?.fotoHero || '')
-  const [tagFotoIntro, setTagFotoIntro] = useState(appuntamento?.tagFotoIntro || '')
+  const [tagFotoIntro, setTagFotoIntro] = useState(
+    appuntamento?.tagFotoIntro
+      ? appuntamento.tagFotoIntro.split(',').map(t => t.trim()).filter(Boolean)
+      : []
+  )
   const [mostraMediaHero, setMostraMediaHero] = useState(false)
   const { items: mediaItems } = useMedia()
   const tagEsistenti = [...new Set(mediaItems.flatMap(m => m.tag).filter(Boolean))].sort()
@@ -176,7 +180,7 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
         titoloIntro: titoloIntro.trim(),
         testoIntro,
         fotoHero: fotoHero.trim(),
-        tagFotoIntro: tagFotoIntro.trim(),
+        tagFotoIntro: tagFotoIntro.join(','),
         blocchi: JSON.stringify(blocchi),
         metaTitle: metaTitle.trim(),
         metaDescription: metaDescription.trim(),
@@ -461,23 +465,28 @@ function EditorAppuntamento({ data, appuntamento, prefill, onSalva, onElimina, o
 
               <div className={styles.field}>
                 <label>Tag foto intro (carosello)</label>
-                <input
-                  value={tagFotoIntro}
-                  onChange={e => setTagFotoIntro(e.target.value)}
-                  placeholder="es. serate-jazz"
-                />
                 {tagEsistenti.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                    {tagEsistenti.map(t => (
-                      <button key={t} type="button" onClick={() => setTagFotoIntro(t)}
-                        style={{
-                          padding: '3px 10px', borderRadius: 20, fontSize: '0.78rem', cursor: 'pointer',
-                          border: '1px solid var(--border)',
-                          background: tagFotoIntro === t ? 'var(--accent)' : 'var(--bg-input)',
-                          color: tagFotoIntro === t ? '#000' : 'var(--text2)',
-                        }}
-                      >{t}</button>
-                    ))}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                    {tagEsistenti.map(t => {
+                      const attivo = tagFotoIntro.includes(t)
+                      return (
+                        <button key={t} type="button" onClick={() => setTagFotoIntro(
+                          attivo ? tagFotoIntro.filter(x => x !== t) : [...tagFotoIntro, t]
+                        )}
+                          style={{
+                            padding: '3px 10px', borderRadius: 20, fontSize: '0.78rem', cursor: 'pointer',
+                            border: '1px solid var(--border)',
+                            background: attivo ? 'var(--accent)' : 'var(--bg-input)',
+                            color: attivo ? '#fff' : 'var(--text2)',
+                          }}
+                        >{t}</button>
+                      )
+                    })}
+                  </div>
+                )}
+                {tagFotoIntro.length > 0 && (
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text3)', marginTop: 6 }}>
+                    Selezionati: {tagFotoIntro.join(', ')}
                   </div>
                 )}
               </div>

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: 'Prenota un tavolo | Boogie Bistrot',
   description: 'Prenota il tuo tavolo al Boogie Bistrot di Colle Brianza. Cucina del territorio, pizza tradizionale nel forno a legna e birre locali.',
   alternates: {
-    canonical: '/prenota',
+    canonical: `${process.env.SITO_URL || 'https://boogiebistrot.com'}/prenota`,
   },
 }
 

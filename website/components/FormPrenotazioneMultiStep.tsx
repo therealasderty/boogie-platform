@@ -472,6 +472,7 @@ export default function FormPrenotazioneMultiStep({
                 <button
                   key={n}
                   type="button"
+                  aria-pressed={persone === n}
                   onClick={() => { handleFirstInteraction(); setPersone(n) }}
                   className={`rounded-btn border font-medium transition-colors ${
                     persone === n
@@ -561,7 +562,12 @@ export default function FormPrenotazioneMultiStep({
 
               {/* Feedback disponibilità */}
               {disponibilita === 'loading' && (
-                <p className="text-neutral-500" style={{ fontSize: 'var(--text-meta)' }}>Verifica disponibilità…</p>
+                <div className="flex items-center gap-2 text-neutral-400" style={{ fontSize: 'var(--text-meta)' }}>
+                  <svg className="animate-spin flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="32" strokeDashoffset="12" />
+                  </svg>
+                  Verifica disponibilità…
+                </div>
               )}
 
               {disponibilita === 'chiuso' && !ricorrente && (
@@ -628,6 +634,7 @@ export default function FormPrenotazioneMultiStep({
                                   key={`${fi}-${slot.ora}`}
                                   type="button"
                                   disabled={nonDisponibile}
+                                  aria-pressed={oraSelezionata === slot.ora}
                                   onClick={() => setOraSelezionata(slot.ora)}
                                   className={`px-5 rounded-btn border font-light transition-colors ${
                                     nonDisponibile
@@ -658,6 +665,7 @@ export default function FormPrenotazioneMultiStep({
                           <button
                             key={f.fascia}
                             type="button"
+                            aria-pressed={fasceSelezionate.includes(f.fascia)}
                             onClick={() => toggleFascia(f.fascia)}
                             className={`flex-1 px-4 rounded-btn border font-light transition-colors ${
                               fasceSelezionate.includes(f.fascia)
@@ -868,7 +876,7 @@ export default function FormPrenotazioneMultiStep({
               </div>
 
               {erroreMsg && (
-                <p className="text-red-600" style={{ fontSize: 'var(--text-meta)' }}>{erroreMsg}</p>
+                <p role="alert" className="text-red-600" style={{ fontSize: 'var(--text-meta)' }}>{erroreMsg}</p>
               )}
             </div>
 

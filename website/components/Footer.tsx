@@ -136,7 +136,7 @@ export default function Footer() {
           {/* Link columns */}
           {navColumns.map((col) => (
             <div key={col.title} className="flex flex-col gap-4">
-              <p className="text-white/30 font-medium uppercase tracking-widest" style={{ fontSize: '0.65rem' }}>
+              <p className="text-white/50 font-medium uppercase tracking-widest" style={{ fontSize: 'var(--text-label)' }}>
                 {col.title}
               </p>
               <ul className="flex flex-col gap-3">
@@ -157,7 +157,7 @@ export default function Footer() {
 
           {/* Contatti */}
           <div className="col-span-2 md:col-span-1 flex flex-col gap-4">
-            <p className="text-white/30 font-medium uppercase tracking-widest" style={{ fontSize: '0.65rem' }}>
+            <p className="text-white/50 font-medium uppercase tracking-widest" style={{ fontSize: 'var(--text-label)' }}>
               Contatti
             </p>
             <div className="flex flex-col gap-3">

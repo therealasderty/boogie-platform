@@ -64,7 +64,7 @@ export async function generateMetadata(
   ])
   if (!localita || !evento) return {}
 
-  const title = localita.metaTitle || `${evento.titolo} vicino a ${localita.citta} | Boogie Bistrot`
+  const title = `${evento.titolo} vicino a ${localita.citta} | Boogie Bistrot`
   const description = localita.metaDescription
     || `${evento.titolo} al Boogie Bistrot di Colle Brianza, a pochi minuti da ${localita.citta}. ${evento.descrizioneBreve || ''}`
 

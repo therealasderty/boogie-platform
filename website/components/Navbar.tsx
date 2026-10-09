@@ -338,7 +338,9 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
           transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease',
         }}
         onClick={() => setMobileOpen((v) => !v)}
-        aria-label="Menu"
+        aria-label={mobileOpen ? 'Chiudi menu' : 'Apri menu'}
+        aria-expanded={mobileOpen}
+        aria-controls="mobile-menu-panel"
       >
         <HamburgerIcon open={mobileOpen} />
       </button>
@@ -354,7 +356,8 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
             exit={{ x: 80, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 320, damping: 24 }}
             onClick={() => setMobileOpen((v) => !v)}
-            aria-label="Menu"
+            aria-label="Apri menu"
+            aria-expanded={false}
           >
             <HamburgerIcon open={false} />
           </motion.button>

@@ -26,7 +26,7 @@ const raleway = Raleway({
 
 export async function generateMetadata(): Promise<Metadata> {
   const media = await fetchMedia('og-image')
-  const ogImage = openGraphImageUrl(media[0]?.url ?? '/og-image.jpg')
+  const ogImage = openGraphImageUrl(media[0]?.url ?? '/og-image.webp')
   return {
     title: "Boogie Bistrot",
     description: "Ristorante con giardino a Colle Brianza",

@@ -34,7 +34,7 @@ const nextConfig: NextConfig = {
       // Galleria
       { source: '/galleria-fotografica', destination: '/galleria', permanent: true },
       // Alias comuni
-      { source: '/menu', destination: '/menu/specialita', permanent: false },
+      { source: '/menu', destination: '/menu/specialita', permanent: true },
     ]
   },
 };

@@ -56,7 +56,7 @@ function RendererMenu({ b }: { b: BloccoMenu }) {
   return (
     <section className="py-12 border-b border-neutral-200">
       {b.titolo && (
-        <h3 className="font-raleway font-semibold text-neutral-900 mb-8" style={{ fontSize: '1.75rem' }}>
+        <h3 className="font-raleway font-semibold text-neutral-900 mb-8" style={{ fontSize: 'var(--text-section)' }}>
           {b.titolo}
         </h3>
       )}
@@ -102,7 +102,7 @@ function RendererMenu({ b }: { b: BloccoMenu }) {
       {haPrezzo && (
         <div className="mt-8 inline-flex w-full sm:w-auto flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 rounded-card border border-neutral-200 bg-surface-warm px-5 py-3.5">
           {b.importo && (
-            <span className="font-raleway font-semibold text-neutral-900 leading-none" style={{ fontSize: '1.35rem' }}>
+            <span className="font-raleway font-semibold text-neutral-900 leading-none" style={{ fontSize: 'var(--text-subtitle)' }}>
               {b.importo}
             </span>
           )}
@@ -137,7 +137,7 @@ function RendererArtista({ b }: { b: BloccoArtista }) {
           </div>
         )}
         <div>
-          <h3 className="font-raleway font-semibold text-neutral-900" style={{ fontSize: '1.5rem' }}>{b.nome}</h3>
+          <h3 className="font-raleway font-semibold text-neutral-900" style={{ fontSize: 'var(--text-section)' }}>{b.nome}</h3>
           {b.bio && (
             <p className="text-neutral-600 mt-2 leading-relaxed" style={{ fontSize: 'var(--text-meta)' }}>
               {b.bio}
@@ -237,12 +237,12 @@ function RendererPrezzo({ b }: { b: BloccoPrezzo }) {
     <section className="py-12">
       <div className="rounded-card px-6 py-8 bg-white">
         {b.importo && (
-          <div className="font-raleway font-semibold text-brand mb-1" style={{ fontSize: '2.5rem' }}>
+          <div className="font-raleway font-semibold text-brand mb-1" style={{ fontSize: 'var(--text-display)' }}>
             {b.importo}
           </div>
         )}
         {b.titolo && (
-          <h3 className="font-raleway font-semibold text-neutral-900 mb-5" style={{ fontSize: '1.4rem' }}>
+          <h3 className="font-raleway font-semibold text-neutral-900 mb-5" style={{ fontSize: 'var(--text-subtitle)' }}>
             {b.titolo}
           </h3>
         )}

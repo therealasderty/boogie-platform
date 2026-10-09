@@ -156,7 +156,7 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
                 Boogie Bistrot<br />
                 Ristorante con giardino a Colle Brianza
               </h1>
-              <div className="hidden md:flex flex-wrap gap-3 mt-1">
+              <div className="flex flex-wrap gap-3 mt-1">
                 <Link
                   href="/prenota"
                   className="bg-brand hover:bg-brand-hover text-black text-sm font-semibold px-6 py-3 rounded-btn transition-colors"
@@ -167,7 +167,7 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
                 </Link>
                 <Link
                   href="/menu"
-                  className="border border-white/70 text-white text-sm font-semibold px-6 py-3 rounded-btn hover:bg-white hover:text-black hover:border-white transition-colors"
+                  className="hidden md:inline-flex border border-white/70 text-white text-sm font-semibold px-6 py-3 rounded-btn hover:bg-white hover:text-black hover:border-white transition-colors"
                 >
                   Scopri i menù
                 </Link>
@@ -254,8 +254,7 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
                   className="object-cover object-center"
                   sizes="100vw"
                   quality={65}
-                  priority={idx === 0}
-                  fetchPriority={idx === 0 ? 'high' : 'low'}
+                  fetchPriority="low"
                 />
                 <div
                   className="absolute inset-0"
@@ -272,8 +271,7 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
                   className="object-cover"
                   sizes="(max-width: 1535px) 30vw, 360px"
                   quality={65}
-                  priority={idx === 0}
-                  fetchPriority={idx === 0 ? 'high' : 'low'}
+                  fetchPriority="low"
                 />
                 <div
                   className="absolute inset-0"

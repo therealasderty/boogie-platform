@@ -17,8 +17,13 @@ export async function fetchMedia(tag?: string): Promise<MediaItem[]> {
   if (!token || !base) return []
 
   try {
-    const formula = tag
-      ? `&filterByFormula=${encodeURIComponent(`FIND("${tag}", {Tag})`)}`
+    const tags = tag ? tag.split(',').map(t => t.trim()).filter(Boolean) : []
+    const formula = tags.length > 0
+      ? `&filterByFormula=${encodeURIComponent(
+          tags.length === 1
+            ? `FIND("${tags[0]}", {Tag})`
+            : `OR(${tags.map(t => `FIND("${t}", {Tag})`).join(',')})`
+        )}`
       : ''
 
     const res = await fetch(

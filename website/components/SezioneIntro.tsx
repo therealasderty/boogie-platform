@@ -97,10 +97,13 @@ export default function SezioneIntro({ immagini = [], label, titolo, testo, inve
                 key={i}
                 onClick={() => goTo(i)}
                 aria-label={`Foto ${i + 1}`}
-                className={`rounded-pill transition-all duration-300 ${
+                aria-pressed={i === current}
+                className="p-2 -m-2 touch-manipulation"
+              >
+                <span className={`block rounded-pill transition-all duration-300 ${
                   i === current ? 'w-6 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/40 hover:bg-white/70'
-                }`}
-              />
+                }`} />
+              </button>
             ))}
           </div>
         </>

@@ -94,8 +94,7 @@ export default async function SezioneBlog() {
                 <article className="group flex flex-col bg-white rounded-card overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
                   {a.fotoHero && (
                     <div className="card-img">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={a.fotoHero} alt={a.titolo} className="w-full h-full object-cover img-zoom" />
+                      <Image src={a.fotoHero} alt={a.titolo} fill className="object-cover img-zoom" sizes="(max-width: 768px) 100vw, 50vw" />
                       {a.categoria && <span className="card-badge">{a.categoria}</span>}
                     </div>
                   )}
@@ -128,8 +127,7 @@ export default async function SezioneBlog() {
                 <FadeIn key={i} delay={i * 0.1}>
                   <article className="group flex flex-col bg-white rounded-card overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
                     <div className="card-img">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={e.fotoHero} alt={e.titolo} className="w-full h-full object-cover img-zoom" />
+                      <Image src={e.fotoHero} alt={e.titolo} fill className="object-cover img-zoom" sizes="(max-width: 768px) 100vw, 50vw" />
                       <span className="card-badge">
                         {e.ricorrente ? 'Appuntamento fisso' : 'Prossimamente'}
                       </span>
