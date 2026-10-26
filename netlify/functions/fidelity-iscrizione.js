@@ -32,6 +32,11 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers, body: '' };
   if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: 'Method Not Allowed' };
 
+  const { isRateLimited, clientIp } = require('./rate-limit');
+  if (await isRateLimited('fidelity', clientIp(event))) {
+    return { statusCode: 429, headers, body: 'Troppe richieste. Riprova tra qualche minuto.' };
+  }
+
   const BREVO_API_KEY = process.env.BREVO_API_KEY;
   const BREVO_LIST_ID = parseInt(process.env.BREVO_LIST_ID) || 3;
   const BREVO_DEBUG_LOGS = process.env.BREVO_DEBUG_LOGS === '1';
@@ -81,7 +86,7 @@ exports.handler = async (event) => {
       ...(data_nascita ? { BIRTHDAY: String(data_nascita) } : {}),
       CONSENSO_MARKETING: consenso_marketing ? true : false,
     },
-    listIds: [BREVO_LIST_ID],
+    ...(consenso_marketing ? { listIds: [BREVO_LIST_ID] } : {}),
     updateEnabled: true,
   };
 

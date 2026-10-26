@@ -7,9 +7,6 @@ import { IconImages, IconPlus, IconTrash, IconEdit, IconRefresh, IconClose, Icon
 
 import { uploadMediaToR2 } from '../../lib/r2-media.js'
 
-const AIRTABLE_TOKEN   = import.meta.env.VITE_AIRTABLE_TOKEN
-const AIRTABLE_BASE_ID = import.meta.env.VITE_AIRTABLE_BASE_ID
-
 function useR2Upload(onUpload, onError) {
   const inputRef = useRef(null)
   const [uploading, setUploading] = useState(false)
@@ -39,8 +36,6 @@ function useR2Upload(onUpload, onError) {
   const input = <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleChange} />
   return { open, input, uploading }
 }
-const BASE = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}`
-const AT_HEADERS = { 'Authorization': `Bearer ${AIRTABLE_TOKEN}`, 'Content-Type': 'application/json' }
 
 const inputStyle = {
   width: '100%', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
@@ -79,26 +74,16 @@ function MediaModal({ item, onClose, onSave, tagEsistenti = [] }) {
     if (!form.url.trim()) { setError('URL obbligatorio'); return }
     setSaving(true)
     setError(null)
-    const fields = {
-      'Nome':        form.nome.trim(),
-      'URL':         form.url.trim(),
-      'Alt text':    form.alt.trim(),
-      'Tag':         form.tag.trim(),
-      'Solo Mobile': form.soloMobile,
-    }
     try {
-      const res = await fetch(
-        isNew ? `${BASE}/Media` : `${BASE}/Media/${item.id}`,
-        {
-          method: isNew ? 'POST' : 'PATCH',
-          headers: AT_HEADERS,
-          body: JSON.stringify({ fields }),
-        }
-      )
-      if (!res.ok) throw new Error(await res.text())
-      onSave()
+      await onSave({
+        nome: form.nome.trim(),
+        url: form.url.trim(),
+        alt: form.alt.trim(),
+        tag: form.tag.trim(),
+        soloMobile: form.soloMobile,
+      }, isNew ? null : item.id)
     } catch (e) {
-      setError('Errore durante il salvataggio')
+      setError(e.message || 'Errore durante il salvataggio')
       console.error(e)
     } finally {
       setSaving(false)
@@ -224,8 +209,7 @@ function MediaCard({ item, onEdit, onDelete, sortable, dragHandleProps }) {
   async function elimina() {
     setDeleting(true)
     try {
-      await fetch(`${BASE}/Media/${item.id}`, { method: 'DELETE', headers: AT_HEADERS })
-      onDelete()
+      await onDelete(item.id)
     } catch (e) {
       console.error(e)
     } finally {
@@ -299,7 +283,7 @@ function MediaCard({ item, onEdit, onDelete, sortable, dragHandleProps }) {
 
 // ─── Pannello principale ──────────────────────────────────────────────────────
 export default function MediaPanel() {
-  const { items, loading, refetch } = useMedia()
+  const { items, loading, refetch, salva, elimina, aggiornaRecords } = useMedia()
   const [cerca, setCerca]           = useState('')
   const [tagAttivo, setTagAttivo]   = useState(null)
   const [modale, setModale]         = useState(null)
@@ -318,23 +302,12 @@ export default function MediaPanel() {
 
     setSaving(true)
     try {
-      const chunks = []
-      for (let i = 0; i < daAggiornare.length; i += 10)
-        chunks.push(daAggiornare.slice(i, i + 10))
-      for (const chunk of chunks) {
-        await fetch(`${BASE}/Media`, {
-          method: 'PATCH',
-          headers: AT_HEADERS,
-          body: JSON.stringify({
-            records: chunk.map(m => ({
-              id: m.id,
-              fields: { 'Tag': m.tag.map(t => t === vecchio ? nuovoTrimmed : t).join(', ') },
-            })),
-          }),
-        })
-      }
+      await aggiornaRecords(daAggiornare.map(m => ({
+        id: m.id,
+        tag: m.tag.map(t => t === vecchio ? nuovoTrimmed : t).join(', '),
+      })))
       if (tagAttivo === vecchio) setTagAttivo(nuovoTrimmed)
-      await refetch()
+      await refetch({ silent: true })
     } catch (e) {
       console.error(e)
     } finally {
@@ -348,23 +321,12 @@ export default function MediaPanel() {
     const daAggiornare = items.filter(m => m.tag.includes(eliminaTagNome))
     setSaving(true)
     try {
-      const chunks = []
-      for (let i = 0; i < daAggiornare.length; i += 10)
-        chunks.push(daAggiornare.slice(i, i + 10))
-      for (const chunk of chunks) {
-        await fetch(`${BASE}/Media`, {
-          method: 'PATCH',
-          headers: AT_HEADERS,
-          body: JSON.stringify({
-            records: chunk.map(m => ({
-              id: m.id,
-              fields: { 'Tag': m.tag.filter(t => t !== eliminaTagNome).join(', ') },
-            })),
-          }),
-        })
-      }
+      await aggiornaRecords(daAggiornare.map(m => ({
+        id: m.id,
+        tag: m.tag.filter(t => t !== eliminaTagNome).join(', '),
+      })))
       if (tagAttivo === eliminaTagNome) setTagAttivo(null)
-      await refetch()
+      await refetch({ silent: true })
     } catch (e) {
       console.error(e)
     } finally {
@@ -392,18 +354,8 @@ export default function MediaPanel() {
 
     setSaving(true)
     try {
-      // Salva il nuovo ordine su Airtable (massimo 10 record per chiamata)
-      for (let i = 0; i < riordinati.length; i += 10) {
-        const chunk = riordinati.slice(i, i + 10)
-        await fetch(`${BASE}/Media`, {
-          method: 'PATCH',
-          headers: AT_HEADERS,
-          body: JSON.stringify({
-            records: chunk.map((m, j) => ({ id: m.id, fields: { 'Ordine': i + j + 1 } })),
-          }),
-        })
-      }
-      await refetch()
+      await aggiornaRecords(riordinati.map((m, i) => ({ id: m.id, ordine: i + 1 })))
+      await refetch({ silent: true })
     } catch (e) {
       console.error(e)
     } finally {
@@ -411,7 +363,16 @@ export default function MediaPanel() {
     }
   }
 
-  function onSave() { refetch(); setModale(null) }
+  async function handleSave(payload, id) {
+    await salva(payload, id)
+    await refetch({ silent: true })
+    setModale(null)
+  }
+
+  async function handleDelete(id) {
+    await elimina(id)
+    await refetch({ silent: true })
+  }
 
   return (
     <div>
@@ -507,7 +468,7 @@ export default function MediaPanel() {
           <SortableContext items={filtrati.map(m => m.id)} strategy={rectSortingStrategy}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
               {filtrati.map(m => (
-                <SortableMediaCard key={m.id} item={m} onEdit={item => setModale(item)} onDelete={refetch} sortable />
+                <SortableMediaCard key={m.id} item={m} onEdit={item => setModale(item)} onDelete={handleDelete} sortable />
               ))}
             </div>
           </SortableContext>
@@ -515,7 +476,7 @@ export default function MediaPanel() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
           {filtrati.map(m => (
-            <MediaCard key={m.id} item={m} onEdit={item => setModale(item)} onDelete={refetch} />
+            <MediaCard key={m.id} item={m} onEdit={item => setModale(item)} onDelete={handleDelete} />
           ))}
         </div>
       )}
@@ -525,7 +486,7 @@ export default function MediaPanel() {
         <MediaModal
           item={modale === 'new' ? null : modale}
           onClose={() => setModale(null)}
-          onSave={onSave}
+          onSave={handleSave}
           tagEsistenti={tuttiTag}
         />
       )}

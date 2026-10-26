@@ -281,7 +281,7 @@ export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] 
     const isApertura  = ev.tipo === 'Apertura straordinaria'
     const testoChius  = buildTestoChiusura(ev)
     const badgeChius  = isApertura ? 'Apertura straordinaria' : 'Chiusura straordinaria'
-    const accentColor = isApertura ? '#1a3d1f' : '#7a1a1a'
+    const accentColor = isApertura ? 'var(--color-state-apertura)' : 'var(--color-state-chiusura)'
 
     const isPassatoEv = popup.stato === 'passato' || popup.stato === 'dormiente'
     const isFuturoEv  = popup.stato === 'futuro'
@@ -311,7 +311,7 @@ export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] 
             style={{ backgroundColor: accentColor }}
           >
             <span
-              className="self-start text-[0.6rem] font-semibold uppercase tracking-[0.12em] px-2.5 py-1 rounded-pill text-white"
+              className="self-start text-tiny font-semibold uppercase tracking-[0.12em] px-2.5 py-1 rounded-pill text-white"
               style={{ backgroundColor: 'rgba(255,255,255,0.18)' }}
             >
               {badgeChius}
@@ -360,22 +360,22 @@ export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] 
             <div className="px-6 py-5 flex flex-col gap-2.5 flex-1">
               <div>
                 {badgeEv ? (
-                  <span className="text-[0.6rem] font-semibold uppercase tracking-[0.12em] px-2.5 py-1 rounded-pill bg-neutral-100 text-neutral-500">
+                  <span className="text-tiny font-semibold uppercase tracking-[0.12em] px-2.5 py-1 rounded-pill bg-neutral-100 text-neutral-500">
                     {badgeEv}
                   </span>
                 ) : dataLabelEv ? (
-                  <span className="text-[0.65rem] font-medium uppercase tracking-[0.1em] text-neutral-400" style={{ letterSpacing: 'var(--tracking-label)' }}>
+                  <span className="text-tiny font-medium uppercase text-neutral-400" style={{ letterSpacing: 'var(--tracking-label)' }}>
                     {dataLabelEv}
                   </span>
                 ) : (
-                  <span className="text-[0.65rem] font-medium uppercase tracking-[0.1em] text-neutral-400" style={{ letterSpacing: 'var(--tracking-label)' }}>
+                  <span className="text-tiny font-medium uppercase text-neutral-400" style={{ letterSpacing: 'var(--tracking-label)' }}>
                     In evidenza
                   </span>
                 )}
               </div>
 
               {badgeEv && dataLabelEv && (
-                <span className="text-[0.65rem] font-medium uppercase tracking-[0.1em] text-neutral-400 -mt-1" style={{ letterSpacing: 'var(--tracking-label)' }}>
+                <span className="text-tiny font-medium uppercase text-neutral-400 -mt-1" style={{ letterSpacing: 'var(--tracking-label)' }}>
                   {dataLabelEv}
                 </span>
               )}
@@ -415,7 +415,7 @@ export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] 
     const isApertura  = ev.tipo === 'Apertura straordinaria'
     const testo       = buildTestoChiusura(ev)
     const badge       = isApertura ? 'Apertura straordinaria' : 'Chiusura straordinaria'
-    const accentColor = isApertura ? '#1a3d1f' : '#7a1a1a'
+    const accentColor = isApertura ? 'var(--color-state-apertura)' : 'var(--color-state-chiusura)'
     const hasImage    = !!ev.immagineUrl
 
     return (
@@ -440,7 +440,7 @@ export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] 
 
           <div className="px-8 py-7 flex flex-col gap-4">
             <span
-              className="self-start text-[0.6rem] font-semibold uppercase tracking-[0.12em] px-2.5 py-1 rounded-pill text-white"
+              className="self-start text-tiny font-semibold uppercase tracking-[0.12em] px-2.5 py-1 rounded-pill text-white"
               style={{ backgroundColor: accentColor }}
             >
               {badge}
@@ -555,22 +555,22 @@ export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] 
         <div className="bg-white px-8 py-6 flex flex-col gap-3">
           <div>
             {badge ? (
-              <span className={`text-[0.6rem] font-semibold uppercase tracking-[0.12em] px-2.5 py-1 rounded-pill ${isLastMinute ? 'bg-brand text-black/80' : 'bg-neutral-100 text-neutral-500'}`}>
+              <span className={`text-tiny font-semibold uppercase tracking-[0.12em] px-2.5 py-1 rounded-pill ${isLastMinute ? 'bg-brand text-black/80' : 'bg-neutral-100 text-neutral-500'}`}>
                 {badge}
               </span>
             ) : dataLabel ? (
-              <span className="text-[0.65rem] font-medium uppercase tracking-[0.1em] text-neutral-400" style={{ letterSpacing: 'var(--tracking-label)' }}>
+              <span className="text-tiny font-medium uppercase text-neutral-400" style={{ letterSpacing: 'var(--tracking-label)' }}>
                 {dataLabel}
               </span>
             ) : (
-              <span className="text-[0.65rem] font-medium uppercase tracking-[0.1em] text-neutral-400" style={{ letterSpacing: 'var(--tracking-label)' }}>
+              <span className="text-tiny font-medium uppercase text-neutral-400" style={{ letterSpacing: 'var(--tracking-label)' }}>
                 In evidenza
               </span>
             )}
           </div>
 
           {badge && dataLabel && (
-            <span className="text-[0.65rem] font-medium uppercase tracking-[0.1em] text-neutral-400 -mt-1" style={{ letterSpacing: 'var(--tracking-label)' }}>
+            <span className="text-tiny font-medium uppercase text-neutral-400 -mt-1" style={{ letterSpacing: 'var(--tracking-label)' }}>
               {dataLabel}
             </span>
           )}

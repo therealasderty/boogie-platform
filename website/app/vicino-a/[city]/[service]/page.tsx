@@ -14,6 +14,7 @@ import { fetchEventoBySlug, formatBadgeRicorrente } from '@/lib/agenda'
 import { fetchOrari, fetchChiusure } from '@/lib/orari'
 import { fetchMedia } from '@/lib/media'
 import AltriAppuntamenti from '@/components/AltriAppuntamenti'
+import ConsentGatedMap from '@/components/ConsentGatedMap'
 
 function localDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -256,16 +257,7 @@ export default async function CityServicePage({
               </div>
             </div>
             <div className="overflow-hidden rounded-card" style={{ height: 260 }}>
-              <iframe
-                src={MAPS_EMBED}
-                width="100%"
-                height="100%"
-                style={{ border: 0, display: 'block' }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="Boogie Bistrot su Google Maps"
-              />
+              <ConsentGatedMap src={MAPS_EMBED} height={260} title="Boogie Bistrot su Google Maps" />
             </div>
           </FadeIn>
         </div>

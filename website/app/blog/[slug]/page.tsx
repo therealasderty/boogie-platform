@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import DOMPurify from 'isomorphic-dompurify'
 import PaginaHero from '@/components/PaginaHero'
 import SezioneMenu from '@/components/SezioneMenu'
 import SezioneRecensioni from '@/components/SezioneRecensioni'
@@ -117,7 +118,7 @@ export default async function BlogSlugPage({ params }: { params: Promise<{ slug:
             {articolo.contenuto ? (
               <div
                 className="rich-text"
-                dangerouslySetInnerHTML={{ __html: articolo.contenuto }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(articolo.contenuto) }}
               />
             ) : (
               <p className="text-white/40 italic" style={{ fontSize: 'var(--text-meta)' }}>

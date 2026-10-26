@@ -1,35 +1,32 @@
 import { useState, useEffect, useCallback } from 'react'
+import { authFetch } from '../lib/authFetch'
+import { API_BASE } from '../lib/config'
 
-const AIRTABLE_TOKEN   = import.meta.env.VITE_AIRTABLE_TOKEN
-const AIRTABLE_BASE_ID = import.meta.env.VITE_AIRTABLE_BASE_ID
-const BASE = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}`
-const AT_HEADERS = { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
+const API = `${API_BASE}/gestisci-recensioni-sito`
+
+async function readJson(res) {
+  const json = await res.json().catch(() => ({ success: false }))
+  if (!res.ok || json.success === false) {
+    throw new Error(json.error || 'Errore durante l\'operazione')
+  }
+  return json
+}
 
 export function useRecensioniSito() {
   const [items, setItems]     = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState(null)
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
+    setError(null)
     try {
-      const res = await fetch(
-        `${BASE}/RecensioniSito?sort[0][field]=Ordine&sort[0][direction]=asc`,
-        { headers: AT_HEADERS }
-      )
-      if (!res.ok) throw new Error()
-      const json = await res.json()
-      setItems((json.records || []).map(r => ({
-        id:          r.id,
-        nome:        r.fields['Nome'] || '',
-        piattaforma: r.fields['Piattaforma'] || 'Google',
-        stelle:      r.fields['Stelle'] ?? 5,
-        testo:       r.fields['Testo'] || '',
-        data:        r.fields['Data'] || '',
-        attivo:      r.fields['Attivo'] === true,
-        ordine:      r.fields['Ordine'] ?? 0,
-      })))
+      const res = await authFetch(API)
+      const json = await readJson(res)
+      setItems(json.items || [])
     } catch (e) {
       console.error(e)
+      setError(e.message)
     } finally {
       setLoading(false)
     }
@@ -37,5 +34,28 @@ export function useRecensioniSito() {
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
-  return { items, loading, refetch: fetchAll }
+  const salva = useCallback(async (payload, id = null) => {
+    const res = await authFetch(API, {
+      method: id ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(id ? { id, ...payload } : payload),
+    })
+    return readJson(res)
+  }, [])
+
+  const elimina = useCallback(async (id) => {
+    const res = await authFetch(`${API}?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+    return readJson(res)
+  }, [])
+
+  const toggleAttivo = useCallback(async (item) => {
+    const res = await authFetch(API, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: item.id, attivo: !item.attivo }),
+    })
+    return readJson(res)
+  }, [])
+
+  return { items, loading, error, refetch: fetchAll, salva, elimina, toggleAttivo }
 }

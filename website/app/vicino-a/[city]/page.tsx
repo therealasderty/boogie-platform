@@ -6,6 +6,7 @@ import SezioneMenu from '@/components/SezioneMenu'
 import SezioneContatti from '@/components/SezioneContatti'
 import Footer from '@/components/Footer'
 import FadeIn from '@/components/FadeIn'
+import ConsentGatedMap from '@/components/ConsentGatedMap'
 import { fetchLocalita, fetchLocalitaBySlug } from '@/lib/localita'
 import { fetchMedia } from '@/lib/media'
 import { fetchEventi } from '@/lib/agenda'
@@ -192,16 +193,7 @@ export default async function CityPage({ params }: { params: Promise<{ city: str
             </div>
 
             <div className="overflow-hidden rounded-card" style={{ height: 400 }}>
-              <iframe
-                src={MAPS_EMBED}
-                width="100%"
-                height="100%"
-                style={{ border: 0, display: 'block' }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="Boogie Bistrot su Google Maps"
-              />
+              <ConsentGatedMap src={MAPS_EMBED} height={400} title="Boogie Bistrot su Google Maps" />
             </div>
           </FadeIn>
         </div>

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
+import DOMPurify from 'isomorphic-dompurify'
 
 interface BreadcrumbItem { label: string; href?: string }
 
@@ -142,7 +143,7 @@ export default function SezioneIntro({ immagini = [], label, titolo, testo, inve
       <div
         className="text-neutral-500 font-light leading-relaxed [&_strong]:font-semibold [&_strong]:text-neutral-800"
         style={{ fontSize: 'var(--text-body)' }}
-        dangerouslySetInnerHTML={{ __html: testo }}
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(testo) }}
       />
       {cta && (
         <Link

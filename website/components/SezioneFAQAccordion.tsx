@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import DOMPurify from 'isomorphic-dompurify'
 import type { FaqItem } from '@/lib/faq'
 
 function Item({ domanda, risposta, aperto, onClick }: {
@@ -41,7 +42,7 @@ function Item({ domanda, risposta, aperto, onClick }: {
         <div
           className="faq-risposta text-white/40 font-light leading-relaxed pb-6"
           style={{ fontSize: 'var(--text-meta)' }}
-          dangerouslySetInnerHTML={{ __html: risposta }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(risposta) }}
         />
       </div>
     </div>

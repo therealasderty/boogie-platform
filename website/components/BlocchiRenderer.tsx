@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import DOMPurify from 'isomorphic-dompurify'
 import { fetchMedia } from '@/lib/media'
 import type {
   Blocco, BloccoTesto, BloccoImmagine, BloccoMenu, BloccoArtista, BloccoCardOfferte, BloccoPrezzo,
@@ -19,7 +20,7 @@ function RendererTesto({ b }: { b: BloccoTesto }) {
         <div
           className="rich-text text-neutral-600 leading-relaxed"
           style={{ fontSize: 'var(--text-lead)' }}
-          dangerouslySetInnerHTML={{ __html: b.contenuto }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(b.contenuto) }}
         />
       )}
     </section>

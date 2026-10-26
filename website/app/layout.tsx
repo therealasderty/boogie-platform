@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Raleway } from "next/font/google";
-import Script from "next/script";
+import UmamiLoader from "@/components/UmamiLoader";
 import "./globals.css";
 import Navbar from "@/components/Navbar"
 import CookieBanner from "@/components/CookieBanner";
@@ -125,13 +125,7 @@ export default async function RootLayout({
           </NavbarShell>
           <CookieBanner />
         </PageContextProvider>
-        {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
-          <Script
-            src={process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL || 'https://cloud.umami.is/script.js'}
-            data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
-            strategy="afterInteractive"
-          />
-        )}
+        <UmamiLoader />
       </body>
     </html>
   );

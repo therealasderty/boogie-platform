@@ -20,6 +20,15 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function escHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 function normalizePhoneForBrevo(raw) {
   const input = String(raw || '').trim();
   if (!input) return null;
@@ -126,7 +135,7 @@ exports.handler = async (event) => {
         BIRTHDAY: data_nascita || undefined,
         CONSENSO_MARKETING: consenso_marketing ? true : false,
       },
-      listIds: [BREVO_LIST_ID],
+      ...(consenso_marketing ? { listIds: [BREVO_LIST_ID] } : {}),
       updateEnabled: true,
     };
 
@@ -166,12 +175,12 @@ exports.handler = async (event) => {
           <img src="https://boogiebistrot.com/logo-email.png" alt="Boogie Bistrot" width="80" height="65" style="display:block;margin:0 auto 20px;border:0;">
           <h1 style="font-size:26px;color:#1A1610;margin:0 0 24px;font-weight:400;">Messaggio ricevuto ✓</h1>
           <p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 24px;">
-            Ciao <strong>${nome}</strong>,<br>
+            Ciao <strong>${escHtml(nome)}</strong>,<br>
             abbiamo ricevuto il tuo messaggio e ti risponderemo al più presto.
           </p>
           <table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin-bottom:28px;">
             <tr><td style="padding:20px 24px;">
-              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Il tuo messaggio</span><strong style="color:#1A1610;">${messaggio}</strong></p>
+              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Il tuo messaggio</span><strong style="color:#1A1610;">${escHtml(messaggio)}</strong></p>
             </td></tr>
           </table>
           <p style="font-size:13px;color:#8B6F47;line-height:1.6;">Per urgenze chiamaci al <a href="tel:3465813309" style="color:#C4913A;">346 5813309</a>.</p>
@@ -202,14 +211,14 @@ exports.handler = async (event) => {
           <p style="font-size:13px;color:#8B6F47;margin:0 0 24px;">Ricevuto il ${new Date().toLocaleString('it-IT')}</p>
           <table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin-bottom:28px;">
             <tr><td style="padding:20px 24px;">
-              <p style="margin:0 0 12px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Nome</span><strong style="color:#1A1610;">${nome}</strong></p>
-              <p style="margin:0 0 12px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Email</span><strong style="color:#1A1610;">${email}</strong></p>
-              ${telefono ? `<p style="margin:0 0 12px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Telefono</span><strong style="color:#1A1610;">${telefono}</strong></p>` : ''}
+              <p style="margin:0 0 12px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Nome</span><strong style="color:#1A1610;">${escHtml(nome)}</strong></p>
+              <p style="margin:0 0 12px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Email</span><strong style="color:#1A1610;">${escHtml(email)}</strong></p>
+              ${telefono ? `<p style="margin:0 0 12px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Telefono</span><strong style="color:#1A1610;">${escHtml(telefono)}</strong></p>` : ''}
               <p style="margin:0 0 12px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Consenso Marketing</span><strong style="color:${consenso_marketing ? '#2E7D32' : '#999'};">${consenso_marketing ? '✓ Sì' : '✗ No'}</strong></p>
-              <p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:6px;">Messaggio</span><span style="color:#1A1610;line-height:1.7;">${messaggio}</span></p>
+              <p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:6px;">Messaggio</span><span style="color:#1A1610;line-height:1.7;">${escHtml(messaggio)}</span></p>
             </td></tr>
           </table>
-          <a href="mailto:${email}" style="display:inline-block;background:#1A1610;color:white;text-decoration:none;padding:12px 24px;font-family:'Raleway',Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.05em;border-radius:4px;">✉ Rispondi a ${nome}</a>
+          <a href="mailto:${escHtml(email)}" style="display:inline-block;background:#1A1610;color:white;text-decoration:none;padding:12px 24px;font-family:'Raleway',Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.05em;border-radius:4px;">✉ Rispondi a ${escHtml(nome)}</a>
         </td></tr>
         <tr><td style="padding:16px 40px 24px;border-top:1px solid #D4C9B0;">
           <p style="font-size:11px;color:#B0A898;margin:0;line-height:1.7;">Boogie Bistrot — Sistema messaggi automatico</p>

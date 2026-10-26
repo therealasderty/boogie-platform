@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useCallback } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -7,6 +7,7 @@ import interactionPlugin from '@fullcalendar/interaction'
 import { useCalendario } from '../../hooks/useCalendario'
 import { useAppuntamenti } from '../../hooks/useAppuntamenti'
 import { useOrari } from '../../hooks/useOrari'
+import { useChiusure } from '../../hooks/useChiusure'
 import { IconNote, IconClose, IconCalendar, IconRefresh, IconEdit } from '../../icons/index.jsx'
 import ModalPrenotazione from '../ModalPrenotazione.jsx'
 import styles from './CalendarioPanel.module.css'
@@ -138,7 +139,25 @@ export default function CalendarioPanel() {
   const { eventi, loading, ricarica } = useCalendario()
   const { appuntamenti } = useAppuntamenti()
   const { orari } = useOrari()
+  const { chiusure } = useChiusure()
   const agendaEvents = useMemo(() => buildAgendaEvents(appuntamenti, orari), [appuntamenti, orari])
+
+  const getStatoGiorno = useCallback((dateStr) => {
+    const dayOfWeek = new Date(dateStr + 'T12:00:00').getDay()
+    const matchData = (c) =>
+      (c.tipo === 'Data specifica' && c.dataInizio <= dateStr && dateStr <= c.dataFine) ||
+      (c.tipo === 'Ricorrente' && c.giorno === dayOfWeek)
+    if (chiusure.some(c => c.tipoApertura === 'Apertura' && matchData(c))) return { tipo: null }
+    const attive = chiusure.filter(c => c.tipoApertura !== 'Apertura' && matchData(c))
+    if (attive.length > 0) {
+      const fullDay = attive.some(c => !c.fasce || c.fasce.length === 0)
+      if (fullDay) return { tipo: 'straordinaria', tuttoIlGiorno: true }
+      const fasce = [...new Set(attive.flatMap(c => c.fasce))]
+      return { tipo: 'straordinaria', tuttoIlGiorno: false, fasce }
+    }
+    if (orari.length > 0 && !orari.some(o => o.giorno === dayOfWeek && o.attivo)) return { tipo: 'ordinaria' }
+    return { tipo: null }
+  }, [chiusure, orari])
   const calRef = useRef(null)
   const [vistaAttiva, setVistaAttiva] = useState(isMobile() ? 'listWeek' : 'dayGridMonth')
   const [eventoSelezionato, setEventoSelezionato] = useState(null)
@@ -211,6 +230,50 @@ export default function CalendarioPanel() {
           listDayFormat={{ weekday: 'long', day: 'numeric', month: 'long' }}
           listDaySideFormat={false}
           noEventsText="Nessuna prenotazione"
+          dayCellClassNames={(arg) => {
+            const stato = getStatoGiorno(arg.date.toISOString().slice(0, 10))
+            if (stato.tipo === 'ordinaria') return 'fc-day-chiuso-ord'
+            if (stato.tipo === 'straordinaria') return 'fc-day-chiuso-strao'
+            return ''
+          }}
+          dayCellContent={(arg) => {
+            const stato = getStatoGiorno(arg.date.toISOString().slice(0, 10))
+            return (
+              <div className={styles.dayCellWrap}>
+                <span>{arg.dayNumberText}</span>
+                {stato.tipo === 'ordinaria' && (
+                  <span className={styles.dcBadgeRed}>Chiuso</span>
+                )}
+                {stato.tipo === 'straordinaria' && stato.tuttoIlGiorno && (
+                  <span className={styles.dcBadgeAmber}>Chius. str.</span>
+                )}
+                {stato.tipo === 'straordinaria' && !stato.tuttoIlGiorno && stato.fasce.map(f => (
+                  <span key={f} className={styles.dcBadgeFascia}>
+                    {f === 'Pranzo' ? 'Pranzo' : 'Cena'}
+                  </span>
+                ))}
+              </div>
+            )
+          }}
+          dayHeaderContent={(arg) => {
+            const stato = getStatoGiorno(arg.date.toISOString().slice(0, 10))
+            return (
+              <div className={styles.dayHeaderWrap}>
+                <span>{arg.text}</span>
+                {stato.tipo === 'ordinaria' && (
+                  <span className={styles.dcBadgeRed}>Chiuso</span>
+                )}
+                {stato.tipo === 'straordinaria' && stato.tuttoIlGiorno && (
+                  <span className={styles.dcBadgeAmber}>Chius. str.</span>
+                )}
+                {stato.tipo === 'straordinaria' && !stato.tuttoIlGiorno && stato.fasce.map(f => (
+                  <span key={f} className={styles.dcBadgeFascia}>
+                    {f === 'Pranzo' ? 'Pranzo' : 'Cena'}
+                  </span>
+                ))}
+              </div>
+            )
+          }}
         />
       </div>
 

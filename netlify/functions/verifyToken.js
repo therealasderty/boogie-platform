@@ -5,12 +5,13 @@ const TOKEN_TTL_S = 7 * 24 * 60 * 60
 function credentials() {
   return {
     password: process.env.DASHBOARD_PASSWORD,
-    secret: process.env.DASHBOARD_SECRET || 'boogie-secret-key',
+    secret: process.env.DASHBOARD_SECRET,
   }
 }
 
 function createToken() {
   const { password, secret } = credentials()
+  if (!password || !secret) return null
   const issuedAt = Math.floor(Date.now() / 1000)
   const sig = crypto.createHmac('sha256', secret).update(`${password}.${issuedAt}`).digest('hex')
   return `${issuedAt}.${sig}`
@@ -19,6 +20,7 @@ function createToken() {
 function isValidToken(token) {
   if (!token) return false
   const { password, secret } = credentials()
+  if (!password || !secret) return false
 
   const parts = token.split('.')
   if (parts.length === 2 && /^\d+$/.test(parts[0])) {
@@ -45,9 +47,6 @@ function verifyToken(event) {
   const headers = event.headers || {}
   const auth = (headers.authorization || headers.Authorization || '').trim()
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : auth
-  if (process.env.NETLIFY_DEV === 'true') return true
-  // Bypass usato dal dashboard in Vite DEV (authFetch)
-  if (token === 'dev-bypass' && process.env.CONTEXT !== 'production') return true
   return isValidToken(token)
 }
 

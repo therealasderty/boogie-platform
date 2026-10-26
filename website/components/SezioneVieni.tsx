@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import FadeIn from '@/components/FadeIn'
+import ConsentGatedMap from '@/components/ConsentGatedMap'
 import { fetchOrari, fetchChiusure, buildOrariLines } from '@/lib/orari'
 
 const PHONES = ['+39 039 9260568', '+39 346 5813309']
@@ -114,14 +115,10 @@ export default async function SezioneVieni() {
           {/* Mappa */}
           <FadeIn delay={0.1}>
             <div className="rounded-card overflow-hidden border border-neutral-200 h-full min-h-[320px]">
-              <iframe
+              <ConsentGatedMap
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2783.592387939404!2d9.359719676493903!3d45.759317071080346!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4786a7b703fbd1af%3A0x557d2a719fe1678a!2sBoogie%20Bistrot!5e0!3m2!1sit!2sit!4v1776421231356!5m2!1sit!2sit"
-                width="100%"
                 height="100%"
-                style={{ border: 0, display: 'block', minHeight: '320px' }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
+                className="h-full min-h-[320px]"
                 title="Boogie Bistrot su Google Maps"
               />
             </div>

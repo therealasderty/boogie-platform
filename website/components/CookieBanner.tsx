@@ -112,7 +112,7 @@ export default function CookieBanner() {
                   <p className="text-white font-medium" style={{ fontSize: 'var(--text-meta)', margin: 0 }}>Necessari</p>
                   <p className="text-text-faint" style={{ fontSize: '0.75rem', margin: 0 }}>Funzionamento del sito, sempre attivi</p>
                 </div>
-                <div style={{ width: 36, height: 20, borderRadius: 999, background: 'var(--color-brand)', flexShrink: 0, opacity: 0.5 }} />
+                <div style={{ width: 36, height: 20, borderRadius: 'var(--radius-pill)', background: 'var(--color-brand)', flexShrink: 0, opacity: 0.5 }} />
               </label>
 
               {/* Analitici */}

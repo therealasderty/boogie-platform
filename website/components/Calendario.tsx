@@ -239,7 +239,7 @@ function MenuLink() {
 function FasciaHeader({ label, slots, borderTop = true }: { label: string; slots: FasciaSlot[]; borderTop?: boolean }) {
   return (
     <div className={`flex items-center gap-2 px-2 py-1.5 rounded-btn bg-neutral-100 ${borderTop ? 'mt-1' : ''}`}>
-      <span className="uppercase tracking-widest font-bold text-neutral-500" style={{ fontSize: '0.65rem' }}>{label}</span>
+      <span className="uppercase tracking-widest font-bold text-neutral-500" style={{ fontSize: 'var(--text-tiny)' }}>{label}</span>
       {slots.length > 0 && (
         <span className="text-neutral-500" style={{ fontSize: 'var(--text-label)' }}>{formatSlots(slots)}</span>
       )}
@@ -270,7 +270,7 @@ function DayColumn({ date, events, isToday, status, orari }: {
     <div className="flex flex-col min-h-48 border-r border-neutral-100 last:border-r-0">
       {/* Header giorno */}
       <div className={`px-3 py-3 text-center border-b border-neutral-100 flex flex-col items-center justify-center h-[72px] ${isToday ? 'bg-neutral-800' : 'bg-neutral-50'}`}>
-        <div className={`uppercase tracking-widest font-semibold leading-none ${isToday ? 'text-white/50' : 'text-neutral-500'}`} style={{ fontSize: '0.65rem' }}>
+        <div className={`uppercase tracking-widest font-semibold leading-none ${isToday ? 'text-white/50' : 'text-neutral-500'}`} style={{ fontSize: 'var(--text-tiny)' }}>
           {DAY_NAMES[date.getDay()]}
         </div>
         <div className={`text-2xl font-bold leading-none mt-1.5 ${isToday ? 'text-white' : isClosed ? 'text-neutral-400' : 'text-neutral-800'}`}>
@@ -281,7 +281,7 @@ function DayColumn({ date, events, isToday, status, orari }: {
       <div className={`flex flex-col gap-2 p-2.5 flex-1 bg-white ${isToday ? 'border-x border-b border-neutral-800/20 rounded-b-card' : ''}`}>
         {isClosed && (
           <div className="flex justify-center pt-1">
-            <span className={`inline-block px-1.5 py-0.5 rounded font-semibold uppercase tracking-wide ${status === 'chiusura-straordinaria' ? 'bg-red-50 text-red-400' : 'bg-neutral-100 text-neutral-400'}`} style={{ fontSize: '0.6rem' }}>
+            <span className={`inline-block px-1.5 py-0.5 rounded font-semibold uppercase tracking-wide ${status === 'chiusura-straordinaria' ? 'bg-red-50 text-red-400' : 'bg-neutral-100 text-neutral-400'}`} style={{ fontSize: 'var(--text-tiny)' }}>
               Chiuso
             </span>
           </div>

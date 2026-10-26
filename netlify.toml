@@ -4,6 +4,15 @@
   command = "npm run build"
   publish = ".next"
 
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+
 [images]
   remote_images = [
     "https://pub-412a895afa8e491c84ad5df75bc1458b\\.r2\\.dev/.*",

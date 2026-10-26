@@ -27,9 +27,18 @@ exports.handler = async (event) => {
     };
   }
 
+  const token = createToken();
+  if (!token) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: 'Autenticazione non configurata' })
+    };
+  }
+
   return {
     statusCode: 200,
     headers,
-    body: JSON.stringify({ success: true, token: createToken() })
+    body: JSON.stringify({ success: true, token })
   };
 };

@@ -19,7 +19,7 @@ export default function PrivacyPage() {
             <span className="text-text-muted">Privacy Policy</span>
           </nav>
 
-          <h1 className="font-ivy font-normal text-white mb-10" style={{ fontSize: '2.5rem' }}>
+          <h1 className="font-ivy font-normal text-white mb-10" style={{ fontSize: 'var(--text-display)' }}>
             Privacy Policy
           </h1>
 

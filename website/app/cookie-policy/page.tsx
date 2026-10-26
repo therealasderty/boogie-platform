@@ -19,7 +19,7 @@ export default function CookiePolicyPage() {
             <span className="text-text-muted">Cookie Policy</span>
           </nav>
 
-          <h1 className="font-ivy font-normal text-white mb-10" style={{ fontSize: '2.5rem' }}>
+          <h1 className="font-ivy font-normal text-white mb-10" style={{ fontSize: 'var(--text-display)' }}>
             Cookie Policy
           </h1>
 

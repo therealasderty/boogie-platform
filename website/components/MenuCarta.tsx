@@ -16,38 +16,16 @@ interface Sezione {
   piatti?: Piatto[]
 }
 
+import { IconGlutine, IconLattosio } from '@/components/AllergenBadge'
+import SectionContainer from '@/components/SectionContainer'
+
 interface MenuCartaProps {
   sezioni: Sezione[]
 }
 
-function IconGlutine() {
-  return (
-    <span
-      title="Contiene glutine"
-      className="inline-flex items-center justify-center w-6 h-6 rounded-pill bg-amber-100 text-amber-700 font-semibold"
-      style={{ fontSize: '0.6rem', letterSpacing: '0.02em' }}
-    >
-      G
-    </span>
-  )
-}
-
-function IconLattosio() {
-  return (
-    <span
-      title="Contiene lattosio"
-      className="inline-flex items-center justify-center w-6 h-6 rounded-pill bg-blue-50 text-blue-600 font-semibold"
-      style={{ fontSize: '0.6rem', letterSpacing: '0.02em' }}
-    >
-      L
-    </span>
-  )
-}
-
 export default function MenuCarta({ sezioni }: MenuCartaProps) {
   return (
-    <section className="py-20 md:py-28 bg-white">
-      <div className="max-w-7xl mx-auto px-6 md:px-14">
+    <SectionContainer bg="white">
 
 
         {/* Sezioni */}
@@ -66,7 +44,7 @@ export default function MenuCarta({ sezioni }: MenuCartaProps) {
                   <div
                     key={p.nome}
                     className="flex items-start justify-between gap-6 py-5"
-                    style={{ borderBottom: i < (s.voci || s.piatti || []).length - 1 ? '1px solid #e5e5e5' : 'none' }}
+                    style={{ borderBottom: i < (s.voci || s.piatti || []).length - 1 ? '1px solid var(--color-border-separator)' : 'none' }}
                   >
                     <div className="flex flex-col gap-1 flex-1">
                       <div className="flex items-center gap-2">
@@ -74,13 +52,13 @@ export default function MenuCarta({ sezioni }: MenuCartaProps) {
                           {p.nome}
                         </span>
                         {p.badge && (
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-pill bg-brand/20 text-neutral-700" style={{ letterSpacing: '0.04em' }}>{p.badge}</span>
+                          <span className="text-tiny font-semibold px-2 py-0.5 rounded-pill bg-brand/20 text-neutral-700" style={{ letterSpacing: '0.04em' }}>{p.badge}</span>
                         )}
                         {p.senzaGlutine && (
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-pill bg-green-50 text-green-700" style={{ letterSpacing: '0.04em' }}>Senza glutine</span>
+                          <span className="text-tiny font-semibold px-2 py-0.5 rounded-pill bg-green-50 text-green-700" style={{ letterSpacing: '0.04em' }}>Senza glutine</span>
                         )}
                         {p.senzaLattosio && (
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-pill bg-blue-50 text-blue-600" style={{ letterSpacing: '0.04em' }}>Senza lattosio</span>
+                          <span className="text-tiny font-semibold px-2 py-0.5 rounded-pill bg-blue-50 text-blue-600" style={{ letterSpacing: '0.04em' }}>Senza lattosio</span>
                         )}
                       </div>
                       {p.descrizione && (
@@ -116,7 +94,6 @@ export default function MenuCarta({ sezioni }: MenuCartaProps) {
           I prezzi sono IVA inclusa · Per allergeni non indicati informare il personale
         </p>
 
-      </div>
-    </section>
+    </SectionContainer>
   )
 }

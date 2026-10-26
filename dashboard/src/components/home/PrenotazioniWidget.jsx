@@ -33,23 +33,33 @@ function getLabelGiorno(dataStr) {
   return formatData(dataStr)
 }
 
-function isGiornoChiuso(dateStr, orari, chiusure) {
+// Restituisce { tipo: null | 'ordinaria' | 'straordinaria', tuttoIlGiorno?, fasce? }
+function getStatoGiorno(dateStr, orari, chiusure) {
   const dayOfWeek = new Date(dateStr + 'T12:00:00').getDay()
-
   const matchData = (c) =>
     (c.tipo === 'Data specifica' && c.dataInizio <= dateStr && dateStr <= c.dataFine) ||
     (c.tipo === 'Ricorrente' && c.giorno === dayOfWeek)
 
-  // Apertura straordinaria: ha priorità su tutto (con o senza fascia)
-  if (chiusure.some(c => c.tipoApertura === 'Apertura' && matchData(c))) return false
+  // Apertura straordinaria: ha priorità su tutto
+  if (chiusure.some(c => c.tipoApertura === 'Apertura' && matchData(c)))
+    return { tipo: null }
 
-  // Chiusura straordinaria giornata intera
-  if (chiusure.some(c => c.tipoApertura !== 'Apertura' && !c.fascia && matchData(c))) return true
+  // Chiusure straordinarie attive per questa data
+  const chiusureAttive = chiusure.filter(c => c.tipoApertura !== 'Apertura' && matchData(c))
+  if (chiusureAttive.length > 0) {
+    // Se almeno una non ha fasce → chiusura giornata intera
+    const fullDay = chiusureAttive.some(c => !c.fasce || c.fasce.length === 0)
+    if (fullDay) return { tipo: 'straordinaria', tuttoIlGiorno: true }
+    // Altrimenti raccoglie tutte le fasce chiuse
+    const fasce = [...new Set(chiusureAttive.flatMap(c => c.fasce))]
+    return { tipo: 'straordinaria', tuttoIlGiorno: false, fasce }
+  }
 
   // Chiusura ordinaria: nessun orario attivo per questo giorno
-  if (orari.length > 0 && !orari.some(o => o.giorno === dayOfWeek && o.attivo)) return true
+  if (orari.length > 0 && !orari.some(o => o.giorno === dayOfWeek && o.attivo))
+    return { tipo: 'ordinaria' }
 
-  return false
+  return { tipo: null }
 }
 
 function PrefBadge({ preferenza }) {
@@ -64,36 +74,50 @@ function PrefBadge({ preferenza }) {
   )
 }
 
-function GiornoCard({ giorno, chiuso }) {
-  const [aperto, setAperto] = useState(isOggi(giorno.data) && !chiuso)
+function GiornoCard({ giorno, stato }) {
+  const [aperto, setAperto] = useState(isOggi(giorno.data))
   const label = getLabelGiorno(giorno.data)
+  const haChiusura = stato.tipo !== null
+  const chiusoTutto = stato.tipo === 'ordinaria' || (stato.tipo === 'straordinaria' && stato.tuttoIlGiorno)
 
   return (
     <div className={`${styles.giornoCard} ${isOggi(giorno.data) ? styles.oggi : ''}`}>
-      <div className={styles.giornoHeader} onClick={() => !chiuso && setAperto(o => !o)}
-        style={chiuso ? { cursor: 'default' } : {}}>
+      <div className={styles.giornoHeader} onClick={() => setAperto(o => !o)}>
         <div className={styles.giornoInfo}>
           <span className={styles.giornoLabel}>{label}</span>
           <span className={styles.giornoData}>{formatData(giorno.data)}</span>
         </div>
         <div className={styles.giornoStats}>
-          {chiuso ? (
+          {/* Badge chiusura */}
+          {stato.tipo === 'ordinaria' && (
             <span className={styles.chiusoBadge}>Chiuso</span>
-          ) : giorno.totPrenotazioni > 0 ? (
+          )}
+          {stato.tipo === 'straordinaria' && stato.tuttoIlGiorno && (
+            <span className={styles.chiusuraStrao}>Chiusura straord.</span>
+          )}
+          {stato.tipo === 'straordinaria' && !stato.tuttoIlGiorno && stato.fasce.map(f => (
+            <span key={f} className={styles.chiusuraFascia}>
+              {f === 'Pranzo' ? 'Pranzo chiuso' : 'Cena chiusa'}
+            </span>
+          ))}
+
+          {/* Statistiche prenotazioni */}
+          {giorno.totPrenotazioni > 0 ? (
             <>
               <span className={styles.statChip}>{giorno.totPrenotazioni} pren.</span>
               <span className={styles.statChip}>{giorno.totPersone} coperti</span>
               {giorno.pizza > 0 && <span className={styles.statChipPizza}>🍕 {giorno.pizza}</span>}
               {giorno.cucina > 0 && <span className={styles.statChipCucina}>🍽️ {giorno.cucina}</span>}
             </>
-          ) : (
+          ) : !haChiusura ? (
             <span className={styles.nessuna}>Nessuna prenotazione</span>
-          )}
-          {!chiuso && <span className={styles.chevron}>{aperto ? '▴' : '▾'}</span>}
+          ) : null}
+
+          <span className={styles.chevron}>{aperto ? '▴' : '▾'}</span>
         </div>
       </div>
 
-      {aperto && !chiuso && giorno.totPrenotazioni > 0 && (
+      {aperto && giorno.totPrenotazioni > 0 && (
         <div className={styles.lista}>
           {giorno.prenotazioni
             .sort((a, b) => a.ora.localeCompare(b.ora))
@@ -122,8 +146,10 @@ function GiornoCard({ giorno, chiuso }) {
         </div>
       )}
 
-      {aperto && !chiuso && giorno.totPrenotazioni === 0 && (
-        <div className={styles.listaVuota}>Nessuna prenotazione per questo giorno</div>
+      {aperto && giorno.totPrenotazioni === 0 && (
+        <div className={styles.listaVuota}>
+          {chiusoTutto ? 'Nessuna prenotazione registrata' : 'Nessuna prenotazione per questo giorno'}
+        </div>
       )}
     </div>
   )
@@ -155,7 +181,7 @@ export default function PrenotazioniWidget({ onNavigate }) {
               <GiornoCard
                 key={g.data}
                 giorno={g}
-                chiuso={isGiornoChiuso(g.data, orari, chiusure)}
+                stato={getStatoGiorno(g.data, orari, chiusure)}
               />
             ))}
           </div>

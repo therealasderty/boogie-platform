@@ -8,6 +8,15 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function escHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 function normalizePhoneForBrevo(raw) {
   const input = String(raw || '').trim();
   if (!input) return null;
@@ -31,6 +40,11 @@ exports.handler = async (event) => {
 
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers, body: '' };
   if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: 'Method Not Allowed' };
+
+  const { isRateLimited, clientIp } = require('./rate-limit');
+  if (await isRateLimited('prenota', clientIp(event))) {
+    return { statusCode: 429, headers, body: 'Troppe richieste. Riprova tra qualche minuto.' };
+  }
 
   const AIRTABLE_TOKEN   = process.env.AIRTABLE_TOKEN;
   const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
@@ -147,7 +161,7 @@ exports.handler = async (event) => {
         BIRTHDAY: data_nascita || undefined,
         CONSENSO_MARKETING: consenso_marketing ? true : false,
       },
-      listIds: [BREVO_LIST_ID],
+      ...(consenso_marketing ? { listIds: [BREVO_LIST_ID] } : {}),
       updateEnabled: true,
     };
 
@@ -239,17 +253,17 @@ exports.handler = async (event) => {
           <h1 style="font-size:26px;color:#1A1610;margin:0 0 8px;font-weight:400;">Richiesta ricevuta! 📩</h1>
           <p style="font-size:13px;color:#8B6F47;margin:0 0 24px;">Ti confermeremo la disponibilità a breve.</p>
           <p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 24px;">
-            Ciao <strong>${nome}</strong>,<br>
+            Ciao <strong>${escHtml(nome)}</strong>,<br>
             abbiamo ricevuto la tua richiesta di prenotazione. Nei prossimi minuti riceverai una conferma via email non appena avremo verificato la disponibilità.
           </p>
           <table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin-bottom:28px;">
             <tr><td style="padding:20px 24px;">
-              ${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Evento</span><strong>${evento}</strong></p>` : ''}
+              ${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Evento</span><strong>${escHtml(evento)}</strong></p>` : ''}
               <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Data richiesta</span><strong>${dataFormattata}</strong></p>
-              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ora</span><strong>${ora}</strong></p>
-              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ospiti</span><strong>${persone} ${parseInt(persone) === 1 ? 'persona' : 'persone'}</strong></p>
-              ${preferenza ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Preferenza</span><strong>${preferenza}</strong></p>` : ''}
-              ${note ? `<p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Note</span><strong>${note}</strong></p>` : ''}
+              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ora</span><strong>${escHtml(ora)}</strong></p>
+              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ospiti</span><strong>${escHtml(persone)} ${parseInt(persone) === 1 ? 'persona' : 'persone'}</strong></p>
+              ${preferenza ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Preferenza</span><strong>${escHtml(preferenza)}</strong></p>` : ''}
+              ${note ? `<p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Note</span><strong>${escHtml(note)}</strong></p>` : ''}
             </td></tr>
           </table>
           <p style="font-size:13px;color:#8B6F47;line-height:1.6;margin:0 0 8px;">
@@ -282,17 +296,17 @@ exports.handler = async (event) => {
           <h1 style="font-size:26px;color:#1A1610;margin:0 0 8px;font-weight:400;">Prenotazione confermata! 🎉</h1>
           <p style="font-size:13px;color:#8B6F47;margin:0 0 24px;">Il tuo tavolo è riservato.</p>
           <p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 24px;">
-            Ciao <strong>${nome}</strong>,<br>
+            Ciao <strong>${escHtml(nome)}</strong>,<br>
             siamo lieti di confermarti la prenotazione. Non vediamo l'ora di accoglierti!
           </p>
           <table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin-bottom:28px;">
             <tr><td style="padding:20px 24px;">
-              ${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Evento</span><strong>${evento}</strong></p>` : ''}
+              ${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Evento</span><strong>${escHtml(evento)}</strong></p>` : ''}
               <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Data</span><strong>${dataFormattata}</strong></p>
-              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ora</span><strong>${ora}</strong></p>
-              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ospiti</span><strong>${persone} ${parseInt(persone) === 1 ? 'persona' : 'persone'}</strong></p>
-              ${preferenza ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Preferenza</span><strong>${preferenza}</strong></p>` : ''}
-              ${note ? `<p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Note</span><strong>${note}</strong></p>` : ''}
+              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ora</span><strong>${escHtml(ora)}</strong></p>
+              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ospiti</span><strong>${escHtml(persone)} ${parseInt(persone) === 1 ? 'persona' : 'persone'}</strong></p>
+              ${preferenza ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Preferenza</span><strong>${escHtml(preferenza)}</strong></p>` : ''}
+              ${note ? `<p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Note</span><strong>${escHtml(note)}</strong></p>` : ''}
             </td></tr>
           </table>
           <p style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Aggiungi al calendario</p>
@@ -340,15 +354,15 @@ exports.handler = async (event) => {
           <p style="font-size:13px;color:#8B6F47;margin:0 0 24px;">Ricevuta il ${new Date().toLocaleString('it-IT')}</p>
           <table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin-bottom:28px;">
             <tr><td style="padding:20px 24px;">
-              ${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Evento</span><strong>🎉 ${evento}</strong></p>` : ''}
-              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Nome</span><strong>${nomeCompleto}</strong></p>
+              ${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Evento</span><strong>🎉 ${escHtml(evento)}</strong></p>` : ''}
+              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Nome</span><strong>${escHtml(nomeCompleto)}</strong></p>
               <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Data</span><strong>${dataFormattata}</strong></p>
-              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ora</span><strong>${ora}</strong></p>
-              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Persone</span><strong>${persone}</strong></p>
-              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Email</span><strong>${email}</strong></p>
-              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Telefono</span><strong>${telefono}</strong></p>
-              ${preferenza ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Preferenza</span><strong>${preferenza}</strong></p>` : ''}
-              ${note ? `<p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Note</span><strong>${note}</strong></p>` : ''}
+              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ora</span><strong>${escHtml(ora)}</strong></p>
+              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Persone</span><strong>${escHtml(persone)}</strong></p>
+              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Email</span><strong>${escHtml(email)}</strong></p>
+              <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Telefono</span><strong>${escHtml(telefono)}</strong></p>
+              ${preferenza ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Preferenza</span><strong>${escHtml(preferenza)}</strong></p>` : ''}
+              ${note ? `<p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Note</span><strong>${escHtml(note)}</strong></p>` : ''}
             </td></tr>
           </table>
           ${richiedeConferma ? `
@@ -386,7 +400,11 @@ exports.handler = async (event) => {
       })
     });
     const resUtenteBody = await resUtente.json();
-    console.log('Brevo utente status:', resUtente.status, JSON.stringify(resUtenteBody));
+    if (BREVO_DEBUG_LOGS) {
+      console.log('Brevo utente status:', resUtente.status, JSON.stringify(resUtenteBody));
+    } else if (!resUtente.ok) {
+      console.error('Brevo utente error:', resUtente.status);
+    }
 
     const resRistorante = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST', headers: brevoHeaders,
@@ -404,7 +422,11 @@ exports.handler = async (event) => {
       })
     });
     const resRistoranteBody = await resRistorante.json();
-    console.log('Brevo ristorante status:', resRistorante.status, JSON.stringify(resRistoranteBody));
+    if (BREVO_DEBUG_LOGS) {
+      console.log('Brevo ristorante status:', resRistorante.status, JSON.stringify(resRistoranteBody));
+    } else if (!resRistorante.ok) {
+      console.error('Brevo ristorante error:', resRistorante.status);
+    }
   } catch (err) {
     console.error('Brevo error:', err);
   }

@@ -21,7 +21,7 @@ export default function PrenotazioneCancellataPage() {
             ✓
           </div>
 
-          <h1 className="font-[family-name:var(--font-ivy)] text-[2rem] leading-tight text-gray-900 mb-4">
+          <h1 className="font-ivy font-normal leading-tight text-gray-900 mb-4" style={{ fontSize: 'var(--text-display)' }}>
             Prenotazione annullata.
           </h1>
 

@@ -1,43 +1,33 @@
 import { useState, useEffect, useCallback } from 'react'
-import { cacheGet, cacheSet } from '../lib/cache'
+import { authFetch } from '../lib/authFetch'
+import { API_BASE } from '../lib/config'
+import { cacheGet, cacheSet, cacheInvalidate } from '../lib/cache'
 
 const CACHE_KEY = 'media'
-const AIRTABLE_TOKEN   = import.meta.env.VITE_AIRTABLE_TOKEN
-const AIRTABLE_BASE_ID = import.meta.env.VITE_AIRTABLE_BASE_ID
-const BASE = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}`
-const AT_HEADERS = { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
+const API = `${API_BASE}/gestisci-media`
+
+async function readJson(res) {
+  const json = await res.json().catch(() => ({ success: false }))
+  if (!res.ok || json.success === false) {
+    throw new Error(json.error || 'Errore durante l\'operazione')
+  }
+  return json
+}
 
 export function useMedia() {
   const [items, setItems]     = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
 
-  const fetchAll = useCallback(async () => {
+  const fetchAll = useCallback(async (opts = {}) => {
     const cached = cacheGet(CACHE_KEY)
     if (cached) { setItems(cached); setLoading(false); return }
-    setLoading(true)
+    if (!opts.silent) setLoading(true)
     setError(null)
     try {
-      let records = []
-      let offset = null
-      do {
-        const url = `${BASE}/Media?fields[]=Nome&fields[]=URL&fields[]=Alt%20text&fields[]=Tag&fields[]=Ordine&fields[]=Solo%20Mobile&sort[0][field]=Ordine&sort[0][direction]=asc${offset ? `&offset=${offset}` : ''}`
-        const res = await fetch(url, { headers: AT_HEADERS })
-        if (!res.ok) throw new Error(await res.text())
-        const json = await res.json()
-        records = [...records, ...(json.records || [])]
-        offset = json.offset
-      } while (offset)
-
-      const mapped = records.map(r => ({
-        id:   r.id,
-        nome: r.fields['Nome'] || '',
-        url:  r.fields['URL']  || '',
-        alt:  r.fields['Alt text'] || '',
-        tag:        r.fields['Tag'] ? r.fields['Tag'].split(',').map(t => t.trim()).filter(Boolean) : [],
-        ordine:     r.fields['Ordine'] ?? 0,
-        soloMobile: r.fields['Solo Mobile'] === true,
-      })).filter(m => m.url)
+      const res = await authFetch(API)
+      const json = await readJson(res)
+      const mapped = json.items || []
       setItems(mapped)
       cacheSet(CACHE_KEY, mapped)
     } catch (e) {
@@ -49,5 +39,34 @@ export function useMedia() {
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
-  return { items, loading, error, refetch: fetchAll }
+  const salva = useCallback(async (payload, id = null) => {
+    const res = await authFetch(API, {
+      method: id ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(id ? { id, ...payload } : payload),
+    })
+    const json = await readJson(res)
+    cacheInvalidate(CACHE_KEY)
+    return json
+  }, [])
+
+  const elimina = useCallback(async (id) => {
+    const res = await authFetch(`${API}?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+    const json = await readJson(res)
+    cacheInvalidate(CACHE_KEY)
+    return json
+  }, [])
+
+  const aggiornaRecords = useCallback(async (records) => {
+    const res = await authFetch(API, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records }),
+    })
+    const json = await readJson(res)
+    cacheInvalidate(CACHE_KEY)
+    return json
+  }, [])
+
+  return { items, loading, error, refetch: fetchAll, salva, elimina, aggiornaRecords }
 }

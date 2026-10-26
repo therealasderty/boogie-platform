@@ -1,7 +1,7 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import FadeIn from '@/components/FadeIn'
 import ArrowRightIcon from '@/components/ArrowRightIcon'
+import ArticleCard from '@/components/ArticleCard'
 import { fetchEventi } from '@/lib/agenda'
 import { fetchArticoli } from '@/lib/blog'
 
@@ -91,28 +91,15 @@ export default async function SezioneBlog() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {blogCards.map((a, i) => (
               <FadeIn key={a.id} delay={i * 0.1}>
-                <article className="group flex flex-col bg-white rounded-card overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
-                  {a.fotoHero && (
-                    <div className="card-img">
-                      <Image src={a.fotoHero} alt={a.titolo} fill className="object-cover img-zoom" sizes="(max-width: 768px) 100vw, 50vw" />
-                      {a.categoria && <span className="card-badge">{a.categoria}</span>}
-                    </div>
-                  )}
-                  <div className="card-body">
-                    <h3 className="font-semibold text-neutral-900 leading-snug" style={{ fontSize: 'var(--text-lead)' }}>
-                      {a.titolo}
-                    </h3>
-                    {a.descrizioneBreve && (
-                      <p className="text-neutral-500 font-light leading-relaxed flex-1" style={{ fontSize: 'var(--text-meta)' }}>
-                        {a.descrizioneBreve}
-                      </p>
-                    )}
-                    <Link href={`/blog/${a.slug}`} className="article-link">
-                      Leggi l&apos;articolo
-                      <ArrowRightIcon />
-                    </Link>
-                  </div>
-                </article>
+                <ArticleCard
+                  image={a.fotoHero}
+                  imageAlt={a.titolo}
+                  badge={a.categoria}
+                  titolo={a.titolo}
+                  descrizione={a.descrizioneBreve}
+                  href={`/blog/${a.slug}`}
+                  ctaLabel="Leggi l'articolo"
+                />
               </FadeIn>
             ))}
           </div>
@@ -121,33 +108,19 @@ export default async function SezioneBlog() {
         {/* Cards eventi */}
         {!usaBlog && !usaFallback && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {eventiCard.map((e, i) => {
-              const href = e.slug ? `/eventi-speciali/${e.slug}` : '/eventi-speciali'
-              return (
-                <FadeIn key={i} delay={i * 0.1}>
-                  <article className="group flex flex-col bg-white rounded-card overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
-                    <div className="card-img">
-                      <Image src={e.fotoHero} alt={e.titolo} fill className="object-cover img-zoom" sizes="(max-width: 768px) 100vw, 50vw" />
-                      <span className="card-badge">
-                        {e.ricorrente ? 'Appuntamento fisso' : 'Prossimamente'}
-                      </span>
-                    </div>
-                    <div className="card-body">
-                      <h3 className="font-semibold text-neutral-900 leading-snug" style={{ fontSize: 'var(--text-lead)' }}>
-                        {e.titolo}
-                      </h3>
-                      <p className="text-neutral-500 font-light leading-relaxed flex-1" style={{ fontSize: 'var(--text-meta)' }}>
-                        {e.descrizioneBreve}
-                      </p>
-                      <Link href={href} className="article-link">
-                        Scopri di più
-                        <ArrowRightIcon />
-                      </Link>
-                    </div>
-                  </article>
-                </FadeIn>
-              )
-            })}
+            {eventiCard.map((e, i) => (
+              <FadeIn key={i} delay={i * 0.1}>
+                <ArticleCard
+                  image={e.fotoHero}
+                  imageAlt={e.titolo}
+                  badge={e.ricorrente ? 'Appuntamento fisso' : 'Prossimamente'}
+                  titolo={e.titolo}
+                  descrizione={e.descrizioneBreve}
+                  href={e.slug ? `/eventi-speciali/${e.slug}` : '/eventi-speciali'}
+                  ctaLabel="Scopri di più"
+                />
+              </FadeIn>
+            ))}
           </div>
         )}
 
@@ -156,30 +129,15 @@ export default async function SezioneBlog() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {ARTICOLI_FALLBACK.map((a, i) => (
               <FadeIn key={a.href} delay={i * 0.1}>
-                <article className="group flex flex-col bg-white rounded-card overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
-                  <div className="card-img">
-                    <Image
-                      src={a.image}
-                      alt={a.titolo}
-                      fill
-                      className="object-cover img-zoom"
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                    />
-                    <span className="card-badge">{a.label}</span>
-                  </div>
-                  <div className="card-body">
-                    <h3 className="font-semibold text-neutral-900 leading-snug" style={{ fontSize: 'var(--text-lead)' }}>
-                      {a.titolo}
-                    </h3>
-                    <p className="text-neutral-500 font-light leading-relaxed flex-1" style={{ fontSize: 'var(--text-meta)' }}>
-                      {a.intro}
-                    </p>
-                    <Link href={a.href} className="article-link">
-                      Leggi l&apos;articolo
-                      <ArrowRightIcon />
-                    </Link>
-                  </div>
-                </article>
+                <ArticleCard
+                  image={a.image}
+                  imageAlt={a.titolo}
+                  badge={a.label}
+                  titolo={a.titolo}
+                  descrizione={a.intro}
+                  href={a.href}
+                  ctaLabel="Leggi l'articolo"
+                />
               </FadeIn>
             ))}
           </div>

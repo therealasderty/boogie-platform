@@ -61,3 +61,17 @@
 .calWrap :global(.fc-timegrid-event) { border: none !important; border-radius: var(--radius-sm) !important; }
 .calWrap :global(.fc-event .fc-event-title),
 .calWrap :global(.fc-event .fc-event-time) { color: white !important; }
+
+/* Sfondo tint giorni chiusi */
+.calWrap :global(.fc-day-chiuso-ord) { background-color: rgba(198,40,40,0.05) !important; }
+.calWrap :global(.fc-day-chiuso-strao) { background-color: rgba(184,98,10,0.06) !important; }
+
+/* Badge chiusura nel numero del giorno (dayGrid) */
+.dayCellWrap { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.dcBadgeRed { font-size: 0.6rem; font-weight: 700; color: #c62828; background: rgba(198,40,40,0.1); border: 1px solid rgba(198,40,40,0.2); padding: 1px 5px; border-radius: 20px; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1.5; }
+.dcBadgeAmber { font-size: 0.6rem; font-weight: 700; color: #B8620A; background: rgba(184,98,10,0.1); border: 1px solid rgba(184,98,10,0.2); padding: 1px 5px; border-radius: 20px; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1.5; }
+.dcBadgeFascia { font-size: 0.6rem; font-weight: 700; color: #8B6914; background: rgba(184,130,10,0.1); border: 1px solid rgba(184,130,10,0.2); padding: 1px 5px; border-radius: 20px; letter-spacing: 0.04em; line-height: 1.5; }
+
+/* Badge chiusura nell'header colonna (timeGrid) */
+.dayHeaderWrap { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 2px 0; }
+.calWrap :global(.fc-col-header-cell) .dayHeaderWrap { text-transform: none; letter-spacing: normal; }

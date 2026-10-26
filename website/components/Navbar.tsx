@@ -183,7 +183,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
   const desktopNav = (
     <>
       <li className="relative" onMouseEnter={() => openDropdown('menu')} onMouseLeave={scheduleClose}>
-        <Link href="/menu/specialita" className="flex items-center gap-1 text-white/90 hover:text-white hover:bg-white/10 transition-colors text-base tracking-wide font-light cursor-pointer px-3 py-1.5 rounded-btn">
+        <Link href="/menu/specialita" className="flex items-center gap-1 text-white/90 hover:text-white hover:bg-white/10 transition-colors text-body tracking-wide font-light cursor-pointer px-3 py-1.5 rounded-btn">
           I nostri menù <ChevronDown />
         </Link>
         <AnimatePresence>
@@ -198,7 +198,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
               transition={{ duration: 0.18, ease: 'easeOut' }}
             >
               {menuVoci.map((v) => (
-                <Link key={v.href} href={v.href} onClick={() => setActiveDropdown(null)} className="block px-5 py-2.5 text-sm text-black/70 hover:text-black hover:bg-brand transition-colors">
+                <Link key={v.href} href={v.href} onClick={() => setActiveDropdown(null)} className="block px-5 py-2.5 text-meta text-black/70 hover:text-black hover:bg-brand transition-colors">
                   {v.label}
                 </Link>
               ))}
@@ -208,7 +208,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
       </li>
 
       <li className="relative" onMouseEnter={() => openDropdown('eventi')} onMouseLeave={scheduleClose}>
-        <Link href="/eventi-speciali" className="flex items-center gap-1 text-white/90 hover:text-white hover:bg-white/10 transition-colors text-base tracking-wide font-light cursor-pointer px-3 py-1.5 rounded-btn">
+        <Link href="/eventi-speciali" className="flex items-center gap-1 text-white/90 hover:text-white hover:bg-white/10 transition-colors text-body tracking-wide font-light cursor-pointer px-3 py-1.5 rounded-btn">
           Appuntamenti <ChevronDown />
         </Link>
         <AnimatePresence>
@@ -223,20 +223,20 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
               transition={{ duration: 0.18, ease: 'easeOut' }}
             >
               <Link href="/eventi-aziendali" onClick={() => setActiveDropdown(null)} className="block px-5 py-3 hover:bg-brand transition-colors border-b border-black/5">
-                <span className="text-[11px] text-black/40 uppercase tracking-wider block">Location & catering</span>
-                <span className="text-sm text-black/70">Eventi Aziendali</span>
+                <span className="text-tiny text-black/40 uppercase tracking-wider block">Location & catering</span>
+                <span className="text-meta text-black/70">Eventi Aziendali</span>
               </Link>
               {eventi.length > 0 && <div className="border-t border-black/10" />}
               {eventi.map((e, i) => (
                 <Link key={i} href={e.slug ? `/eventi-speciali/${e.slug}` : '/eventi-speciali'} onClick={() => setActiveDropdown(null)} className="block px-5 py-3 hover:bg-brand transition-colors border-b border-black/5 last:border-b-0">
-                  <span className="text-[11px] text-black/40 uppercase tracking-wider block">
+                  <span className="text-tiny text-black/40 uppercase tracking-wider block">
                     {e.ricorrente ? formatRicorrente(e, orariDisplay?.giorniChiusi) : e.data ? formatDataShort(e.data) : ''}
                   </span>
-                  <span className="text-sm text-black/70">{e.titolo}</span>
+                  <span className="text-meta text-black/70">{e.titolo}</span>
                 </Link>
               ))}
               {eventi.length > 0 && <div className="border-t border-black/10" />}
-              <Link href="/eventi-speciali" onClick={() => setActiveDropdown(null)} className="block px-5 py-2.5 text-sm text-black/50 hover:text-black hover:bg-brand transition-colors">
+              <Link href="/eventi-speciali" onClick={() => setActiveDropdown(null)} className="block px-5 py-2.5 text-meta text-black/50 hover:text-black hover:bg-brand transition-colors">
                 Tutti gli eventi →
               </Link>
             </motion.div>
@@ -251,7 +251,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
         { label: 'FAQ', href: '/faq' },
       ].map((item) => (
         <li key={item.href}>
-          <Link href={item.href} className="text-white/90 hover:text-white hover:bg-white/10 transition-colors text-base tracking-wide font-light px-3 py-1.5 rounded-btn">
+          <Link href={item.href} className="text-white/90 hover:text-white hover:bg-white/10 transition-colors text-body tracking-wide font-light px-3 py-1.5 rounded-btn">
             {item.label}
           </Link>
         </li>
@@ -286,7 +286,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
               <Image src="/logo-white.svg" alt="Boogie Bistrot" width={96} height={40} className="h-10 w-auto" priority />
             </Link>
             <ul className="flex items-center gap-8">{desktopNav}</ul>
-            <Link href={prenotaHref} className={`flex-shrink-0 bg-brand hover:bg-brand-hover text-sm font-semibold text-black px-6 py-3 rounded-btn transition-colors whitespace-nowrap${!showPrenotaBtn ? ' invisible pointer-events-none' : ''}`} data-umami-event="prenota" data-umami-event-source="navbar">
+            <Link href={prenotaHref} className={`flex-shrink-0 bg-brand hover:bg-brand-hover text-meta font-semibold text-black px-6 py-3 rounded-btn transition-colors whitespace-nowrap${!showPrenotaBtn ? ' invisible pointer-events-none' : ''}`} data-umami-event="prenota" data-umami-event-source="navbar">
               {prenotaLabel}
             </Link>
           </div>
@@ -308,7 +308,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
             <Image src="/logo-white.svg" alt="Boogie Bistrot" width={96} height={40} className="h-10 w-auto" priority />
           </Link>
           <ul className="flex items-center gap-8">{desktopNav}</ul>
-          <Link href={prenotaHref} className={`flex-shrink-0 bg-brand hover:bg-brand-hover text-sm font-semibold text-black px-6 py-3 rounded-btn transition-colors whitespace-nowrap${!showPrenotaBtn ? ' invisible pointer-events-none' : ''}`}>
+          <Link href={prenotaHref} className={`flex-shrink-0 bg-brand hover:bg-brand-hover text-meta font-semibold text-black px-6 py-3 rounded-btn transition-colors whitespace-nowrap${!showPrenotaBtn ? ' invisible pointer-events-none' : ''}`}>
             {prenotaLabel}
           </Link>
         </div>
@@ -385,7 +385,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
             {/* I nostri menù */}
             <li className="border-b border-white/10">
               <button
-                className="w-full flex items-center justify-between py-4 text-white text-base cursor-pointer"
+                className="w-full flex items-center justify-between py-4 text-white text-body cursor-pointer"
                 onClick={() => setMobileExpanded(mobileExpanded === 'menu' ? null : 'menu')}
               >
                 I nostri menù
@@ -397,7 +397,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
                 <ul className="pl-4 pb-3">
                   {menuVoci.map((v) => (
                     <li key={v.href}>
-                      <Link href={v.href} className="block py-2.5 text-sm text-white/60">
+                      <Link href={v.href} className="block py-2.5 text-meta text-white/60">
                         {v.label}
                       </Link>
                     </li>
@@ -411,7 +411,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
               {eventi.length > 0 ? (
                 <>
                   <button
-                    className="w-full flex items-center justify-between py-4 text-white text-base cursor-pointer"
+                    className="w-full flex items-center justify-between py-4 text-white text-body cursor-pointer"
                     onClick={() => setMobileExpanded(mobileExpanded === 'eventi' ? null : 'eventi')}
                   >
                     Appuntamenti
@@ -426,8 +426,8 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
                         className="flex items-center gap-3 rounded-card overflow-hidden bg-white/5 border border-white/10 hover:bg-white/10 active:bg-white/15 transition-colors px-4 py-3"
                       >
                         <div className="flex-1 min-w-0">
-                          <span className="text-[10px] text-white/40 uppercase tracking-wider block mb-0.5">Location & catering</span>
-                          <span className="text-sm text-white font-medium leading-snug block">Eventi Aziendali</span>
+                          <span className="text-tiny text-white/40 uppercase tracking-wider block mb-0.5">Location & catering</span>
+                          <span className="text-meta text-white font-medium leading-snug block">Eventi Aziendali</span>
                         </div>
                       </Link>
                       {eventi.map((e, i) => (
@@ -449,16 +449,16 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
                             </div>
                           )}
                           <div className="flex-1 py-2 pr-3 min-w-0">
-                            <span className="text-[10px] text-white/40 uppercase tracking-wider block mb-0.5">
+                            <span className="text-tiny text-white/40 uppercase tracking-wider block mb-0.5">
                               {e.ricorrente
                                 ? formatRicorrente(e, orariDisplay?.giorniChiusi)
                                 : e.data ? formatDataShort(e.data) : ''}
                             </span>
-                            <span className="text-sm text-white font-medium leading-snug block truncate">{e.titolo}</span>
+                            <span className="text-meta text-white font-medium leading-snug block truncate">{e.titolo}</span>
                           </div>
                         </Link>
                       ))}
-                      <Link href="/eventi-speciali" className="text-xs text-white/30 hover:text-white/60 transition-colors pt-1 text-right pr-1">
+                      <Link href="/eventi-speciali" className="text-label text-white/30 hover:text-white/60 transition-colors pt-1 text-right pr-1">
                         Tutti gli appuntamenti →
                       </Link>
                     </div>
@@ -467,7 +467,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
               ) : (
                 <>
                   <button
-                    className="w-full flex items-center justify-between py-4 text-white text-base cursor-pointer"
+                    className="w-full flex items-center justify-between py-4 text-white text-body cursor-pointer"
                     onClick={() => setMobileExpanded(mobileExpanded === 'eventi' ? null : 'eventi')}
                   >
                     Appuntamenti
@@ -482,11 +482,11 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
                         className="flex items-center gap-3 rounded-card overflow-hidden bg-white/5 border border-white/10 hover:bg-white/10 active:bg-white/15 transition-colors px-4 py-3"
                       >
                         <div className="flex-1 min-w-0">
-                          <span className="text-[10px] text-white/40 uppercase tracking-wider block mb-0.5">Location & catering</span>
-                          <span className="text-sm text-white font-medium leading-snug block">Eventi Aziendali</span>
+                          <span className="text-tiny text-white/40 uppercase tracking-wider block mb-0.5">Location & catering</span>
+                          <span className="text-meta text-white font-medium leading-snug block">Eventi Aziendali</span>
                         </div>
                       </Link>
-                      <Link href="/eventi-speciali" className="text-xs text-white/30 hover:text-white/60 transition-colors pt-1 text-right pr-1">
+                      <Link href="/eventi-speciali" className="text-label text-white/30 hover:text-white/60 transition-colors pt-1 text-right pr-1">
                         Tutti gli appuntamenti →
                       </Link>
                     </div>
@@ -502,7 +502,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
               { label: 'FAQ', href: '/faq' },
             ].map((item) => (
               <li key={item.href} className="border-b border-white/10">
-                <Link href={item.href} className="block py-4 text-white text-base">
+                <Link href={item.href} className="block py-4 text-white text-body">
                   {item.label}
                 </Link>
               </li>
@@ -520,7 +520,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
               <div className="flex flex-col gap-0.5">
                 {orariDisplay.righe.map((r, i) => <span key={i}>{r}</span>)}
                 {orariDisplay.avvisoSettimana && (
-                  <Link href="/#calendario" className="text-brand/80 text-xs mt-1 hover:underline underline-offset-2">⚠ Orari cambiati questa settimana — controlla il calendario</Link>
+                  <Link href="/#calendario" className="text-brand/80 text-label mt-1 hover:underline underline-offset-2">⚠ Orari cambiati questa settimana — controlla il calendario</Link>
                 )}
               </div>
             </div>
@@ -530,7 +530,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
           <div className="mt-4">
             <Link
               href="/prenota"
-              className="block text-center text-sm font-semibold text-black bg-brand hover:bg-brand-hover px-5 py-4 rounded-btn transition-colors"
+              className="block text-center text-meta font-semibold text-black bg-brand hover:bg-brand-hover px-5 py-4 rounded-btn transition-colors"
             >
               Prenota un tavolo
             </Link>
@@ -561,7 +561,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path d="M2.5 4.5C2.5 3.4 3.4 2.5 4.5 2.5h1.75a1 1 0 0 1 .95.68l.9 2.7a1 1 0 0 1-.23 1.02L6.6 8.18a10.5 10.5 0 0 0 5.22 5.22l1.28-1.27a1 1 0 0 1 1.02-.23l2.7.9a1 1 0 0 1 .68.95V15.5A2 2 0 0 1 15.5 17.5C8.32 17.5 2.5 11.68 2.5 4.5Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
               </svg>
-              <span className="text-[10px] tracking-wide">Contattaci</span>
+              <span className="text-tiny tracking-wide">Contattaci</span>
             </a>
 
             {/* Divisore */}
@@ -578,7 +578,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
                 <path d="M10 2a6 6 0 0 1 6 6c0 4-6 10-6 10S4 12 4 8a6 6 0 0 1 6-6Z" stroke="currentColor" strokeWidth="1.4" />
                 <circle cx="10" cy="8" r="2" stroke="currentColor" strokeWidth="1.4" />
               </svg>
-              <span className="text-[10px] tracking-wide">Come raggiungerci</span>
+              <span className="text-tiny tracking-wide">Come raggiungerci</span>
             </a>
 
             {/* Divisore + Menu (solo homepage) */}
@@ -594,7 +594,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
                     <path d="M9 2v4M6 6h6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
                     <path d="M14 2c0 0 1 2 1 4.5S14 11 14 11v7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  <span className="text-[10px] tracking-wide">Menù</span>
+                  <span className="text-tiny tracking-wide">Menù</span>
                 </Link>
               </>
             )}
@@ -612,7 +612,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
                   <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" strokeWidth="1.4" />
                   <path d="M3 8h14M7 2v3M13 2v3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
                 </svg>
-                <span className="text-[10px] tracking-wide text-center leading-tight line-clamp-1">{prenotaLabel}</span>
+                <span className="text-tiny tracking-wide text-center leading-tight line-clamp-1">{prenotaLabel}</span>
               </Link>
             )}
 

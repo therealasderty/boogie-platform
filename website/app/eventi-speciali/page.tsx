@@ -92,7 +92,7 @@ function CardEventoUnico({ evento, variante = 'prossimo' }: { evento: EventoAgen
           </div>
         ) : data ? (
           <div className={`flex-shrink-0 flex flex-col items-center justify-center w-16 h-16 rounded-btn border ${variante === 'passato' ? 'border-white/10 bg-white/5' : 'border-brand/40 bg-brand/10'}`}>
-            <span className={`font-ivy font-normal leading-none ${variante === 'passato' ? 'text-text-faint' : 'text-brand'}`} style={{ fontSize: '1.5rem' }}>
+            <span className={`font-sans font-semibold leading-none ${variante === 'passato' ? 'text-text-faint' : 'text-brand'}`} style={{ fontSize: 'var(--text-subtitle)' }}>
               {data.giorno}
             </span>
             <span className={`uppercase font-medium ${variante === 'passato' ? 'text-text-faint/60' : 'text-brand/70'}`} style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}>
@@ -138,7 +138,7 @@ function CardEventoUnico({ evento, variante = 'prossimo' }: { evento: EventoAgen
           </div>
         ) : data ? (
           <div className={`flex-shrink-0 flex flex-col items-center justify-center w-16 h-16 rounded-btn border ${variante === 'passato' ? 'border-white/10 bg-white/5' : 'border-brand/40 bg-brand/10'}`}>
-            <span className={`font-ivy font-normal leading-none ${variante === 'passato' ? 'text-text-faint' : 'text-brand'}`} style={{ fontSize: '1.5rem' }}>
+            <span className={`font-sans font-semibold leading-none ${variante === 'passato' ? 'text-text-faint' : 'text-brand'}`} style={{ fontSize: 'var(--text-subtitle)' }}>
               {data.giorno}
             </span>
             <span className={`uppercase font-medium ${variante === 'passato' ? 'text-text-faint/60' : 'text-brand/70'}`} style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}>

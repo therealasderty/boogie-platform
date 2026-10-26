@@ -45,7 +45,7 @@
 
   /* Testo */
   --color-text-muted: oklch(100% 0 0 / 75%);   /* testo secondario su sfondo scuro */
-  --color-text-faint: oklch(100% 0 0 / 45%);   /* label uppercase, meta */
+  --color-text-faint: oklch(100% 0 0 / 55%);   /* label uppercase, meta — 55% = 5.5:1 su surface-dark (WCAG AA) */
 
   /* Font */
   --font-sans: var(--font-raleway), sans-serif;
@@ -65,10 +65,24 @@
   --text-display: 2.5rem;      /* importo prezzo grande */
   --tracking-label: 0.12em;    /* lettera-spaziatura label uppercase */
 
+  /* Tipografia extra */
+  --text-tiny: 0.625rem;       /* label micro (10px) — badge, dots, bottom bar */
+
   /* Border radius */
   --radius-btn: 8px;                /* tutti i pulsanti */
   --radius-card: 12px;              /* card, dropdown, pannelli */
   --radius-pill: 999px;             /* dots, badge */
+
+  /* Separatori */
+  --color-border-separator: #e5e5e5; /* bordi sottili su sfondo chiaro */
+
+  /* Stato apertura/chiusura straordinaria (Popup, Banner) */
+  --color-state-apertura: #1a3d1f;   /* verde scuro — apertura straordinaria */
+  --color-state-chiusura: #7a1a1a;   /* rosso scuro — chiusura straordinaria */
+
+  /* Palette calda (email, placeholder mappa, sfondi cream) */
+  --color-surface-cream: #f5f0e8;    /* warm cream — placeholder mappa, sfondo email */
+  --color-text-warm: #8B6F47;        /* warm brown — testo secondario su sfondo cream */
 }
 
 @keyframes slide-in-right {
@@ -96,8 +110,16 @@
   100% { transform: translateX(-50%); }
 }
 
+/* Focus visible globale — WCAG 2.4.7 / 2.4.11 (tastiera, screen reader) */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
 html {
-  background: #1a1a1a; /* overscroll in fondo → colore footer */
+  background: var(--color-surface-dark); /* overscroll in fondo → colore footer */
   overflow-x: clip;    /* evita scroll orizzontale da animazioni translateX pre-trigger */
 }
 
@@ -124,8 +146,8 @@ body {
 }
 
 /* Rich text (contenuto eventi + FAQ) */
-:is(.rich-text, .faq-risposta) h2 { font-family: var(--font-sans); font-weight: 600; color: #fff; font-size: 1.4rem; margin: 1.6em 0 0.4em; }
-:is(.rich-text, .faq-risposta) h3 { font-family: var(--font-sans); font-weight: 600; color: #fff; font-size: 1.15rem; margin: 1.4em 0 0.35em; }
+:is(.rich-text, .faq-risposta) h2 { font-family: var(--font-sans); font-weight: 600; color: #fff; font-size: var(--text-subtitle); margin: 1.6em 0 0.4em; }
+:is(.rich-text, .faq-risposta) h3 { font-family: var(--font-sans); font-weight: 600; color: #fff; font-size: var(--text-lead); margin: 1.4em 0 0.35em; }
 :is(.rich-text, .faq-risposta) :is(h2, h3):first-child { margin-top: 0; }
 :is(.rich-text, .faq-risposta) p  { margin: 0 0 0.75em; }
 :is(.rich-text, .faq-risposta) p:last-child { margin-bottom: 0; }

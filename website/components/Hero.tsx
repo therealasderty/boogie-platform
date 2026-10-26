@@ -312,14 +312,16 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
         </div>
 
         {/* Navigazione news */}
-        <div className="absolute bottom-8 left-8 right-8 flex items-center gap-3">
+        <div className="absolute bottom-8 left-8 right-8 flex items-center gap-1">
           {newsItems.map((_, i) => (
             <button
               key={i}
               onClick={() => goToNews(i)}
               aria-label={`News ${i + 1}`}
-              className={`h-px transition-all duration-300 ${(news % newsItems.length) === i ? 'w-8 bg-black/60' : 'w-4 bg-black/25 hover:bg-black/40'}`}
-            />
+              className="py-3 px-1 flex items-center"
+            >
+              <span className={`h-px block transition-all duration-300 ${(news % newsItems.length) === i ? 'w-8 bg-black/60' : 'w-4 bg-black/25'}`} />
+            </button>
           ))}
           <div className="ml-auto flex gap-2">
             <button

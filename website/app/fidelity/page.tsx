@@ -69,7 +69,7 @@ export default async function FidelityPage() {
             {/* Callout punti */}
             <div className="flex items-center gap-5 rounded-card border border-brand/30 bg-brand/5 px-6 py-5">
               <div className="text-center flex-shrink-0">
-                <span className="font-ivy font-normal text-brand leading-none" style={{ fontSize: '2.5rem' }}>5</span>
+                <span className="font-sans font-bold text-brand leading-none" style={{ fontSize: 'var(--text-display)' }}>5</span>
                 <span className="block text-brand/70 font-medium uppercase mt-1" style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}>punti</span>
               </div>
               <div className="w-px h-10 bg-brand/20 flex-shrink-0" />
@@ -104,7 +104,7 @@ export default async function FidelityPage() {
               <FadeIn key={p.punti} delay={i * 0.07}>
                 <div className="flex items-center gap-5 py-5 border-b border-white/8">
                   <div className="flex-shrink-0 w-24 text-right">
-                    <span className="font-ivy font-normal text-brand leading-none" style={{ fontSize: 'var(--text-section)' }}>
+                    <span className="font-sans font-bold text-brand leading-none" style={{ fontSize: 'var(--text-section)' }}>
                       {formatPunti(p.punti)}
                     </span>
                     <span className="block text-brand/50 font-medium uppercase" style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}>

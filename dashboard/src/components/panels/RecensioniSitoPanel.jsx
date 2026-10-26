@@ -5,11 +5,6 @@ import {
   IconClose, IconCheck, IconRefresh, IconEye, IconEyeSlash,
 } from '../../icons/index.jsx'
 
-const AIRTABLE_TOKEN   = import.meta.env.VITE_AIRTABLE_TOKEN
-const AIRTABLE_BASE_ID = import.meta.env.VITE_AIRTABLE_BASE_ID
-const BASE = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}`
-const AT_HEADERS = { 'Authorization': `Bearer ${AIRTABLE_TOKEN}`, 'Content-Type': 'application/json' }
-
 const inputStyle = {
   width: '100%', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
   padding: '8px 10px', fontSize: '0.88rem', color: 'var(--text)',
@@ -95,27 +90,17 @@ function RecensioneModal({ item, onClose, onSave }) {
     if (!form.testo.trim()) { setError('Il testo è obbligatorio'); return }
     setSaving(true)
     setError(null)
-    const fields = {
-      'Nome':        form.nome.trim(),
-      'Piattaforma': form.piattaforma,
-      'Stelle':      form.stelle,
-      'Testo':       form.testo.trim(),
-      'Data':        form.data.trim(),
-      'Attivo':      form.attivo,
-    }
     try {
-      const res = await fetch(
-        isNew ? `${BASE}/RecensioniSito` : `${BASE}/RecensioniSito/${item.id}`,
-        {
-          method: isNew ? 'POST' : 'PATCH',
-          headers: AT_HEADERS,
-          body: JSON.stringify({ fields }),
-        }
-      )
-      if (!res.ok) throw new Error(await res.text())
-      onSave()
+      await onSave({
+        nome: form.nome.trim(),
+        piattaforma: form.piattaforma,
+        stelle: form.stelle,
+        testo: form.testo.trim(),
+        data: form.data.trim(),
+        attivo: form.attivo,
+      }, isNew ? null : item.id)
     } catch (e) {
-      setError('Errore durante il salvataggio')
+      setError(e.message || 'Errore durante il salvataggio')
       console.error(e)
     } finally {
       setSaving(false)
@@ -231,8 +216,7 @@ function RecensioneCard({ item, onEdit, onDelete, onToggle }) {
   async function elimina() {
     setDeleting(true)
     try {
-      await fetch(`${BASE}/RecensioniSito/${item.id}`, { method: 'DELETE', headers: AT_HEADERS })
-      onDelete()
+      await onDelete()
     } catch (e) {
       console.error(e)
     } finally {
@@ -244,12 +228,7 @@ function RecensioneCard({ item, onEdit, onDelete, onToggle }) {
   async function toggleAttivo() {
     setToggling(true)
     try {
-      await fetch(`${BASE}/RecensioniSito/${item.id}`, {
-        method: 'PATCH',
-        headers: AT_HEADERS,
-        body: JSON.stringify({ fields: { 'Attivo': !item.attivo } }),
-      })
-      onToggle()
+      await onToggle()
     } catch (e) {
       console.error(e)
     } finally {
@@ -322,10 +301,14 @@ function RecensioneCard({ item, onEdit, onDelete, onToggle }) {
 
 // ─── Pannello principale ──────────────────────────────────────────────────────
 export default function RecensioniSitoPanel() {
-  const { items, loading, refetch } = useRecensioniSito()
+  const { items, loading, refetch, salva, elimina, toggleAttivo } = useRecensioniSito()
   const [modale, setModale] = useState(null)
 
-  function onSave() { refetch(); setModale(null) }
+  async function handleSave(payload, id) {
+    await salva(payload, id)
+    await refetch()
+    setModale(null)
+  }
 
   const attive   = items.filter(r => r.attivo).length
   const inattive = items.filter(r => !r.attivo).length
@@ -370,8 +353,8 @@ export default function RecensioniSitoPanel() {
               key={item.id}
               item={item}
               onEdit={i => setModale(i)}
-              onDelete={refetch}
-              onToggle={refetch}
+              onDelete={async () => { await elimina(item.id); await refetch() }}
+              onToggle={async () => { await toggleAttivo(item); await refetch() }}
             />
           ))}
         </div>
@@ -382,7 +365,7 @@ export default function RecensioniSitoPanel() {
         <RecensioneModal
           item={modale === 'new' ? null : modale}
           onClose={() => setModale(null)}
-          onSave={onSave}
+          onSave={handleSave}
         />
       )}
     </div>

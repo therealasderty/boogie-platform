@@ -92,7 +92,7 @@ export default function BannerChiusure({ eventi: eventiProp }: { eventi: Evento[
   const isApertura = ev.tipo === 'Apertura straordinaria'
   const testo = buildTesto(ev)
   const badge = isApertura ? 'Apertura straordinaria' : 'Chiusura straordinaria'
-  const bgColor = isApertura ? '#1a3d1f' : '#3d1a1a'
+  const bgColor = isApertura ? 'var(--color-state-apertura)' : 'var(--color-state-chiusura)'
 
   // Testo completo per il marquee (badge + testo + eventuale "Prenota →" hint)
   const testoCompleto = `${badge} · ${testo}${isApertura ? ' — Prenota il tuo tavolo' : ''}`
@@ -106,7 +106,7 @@ export default function BannerChiusure({ eventi: eventiProp }: { eventi: Evento[
       >
         <div className="flex items-center gap-2 min-w-0 overflow-hidden">
           <span
-            className="shrink-0 text-[0.65rem] font-semibold uppercase px-2 py-0.5 rounded-pill"
+            className="shrink-0 text-tiny font-semibold uppercase px-2 py-0.5 rounded-pill"
             style={{ backgroundColor: 'rgba(255,255,255,0.15)', letterSpacing: '0.1em' }}
           >
             {badge}
@@ -163,7 +163,7 @@ export default function BannerChiusure({ eventi: eventiProp }: { eventi: Evento[
             {[0, 1].map(i => (
               <span key={i} className="flex items-center gap-2 px-6">
                 <span
-                  className="text-[0.65rem] font-semibold uppercase px-2 py-0.5 rounded-pill shrink-0"
+                  className="text-tiny font-semibold uppercase px-2 py-0.5 rounded-pill shrink-0"
                   style={{ backgroundColor: 'rgba(255,255,255,0.15)', letterSpacing: '0.1em' }}
                 >
                   {badge}
