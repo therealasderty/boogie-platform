@@ -1,5 +1,5 @@
 export async function authFetch(url, options = {}) {
-  const token = localStorage.getItem('bb-auth-token') || (import.meta.env.DEV ? 'dev-bypass' : '');
+  const token = localStorage.getItem('bb-auth-token') || '';
   const res = await fetch(url, {
     ...options,
     headers: {

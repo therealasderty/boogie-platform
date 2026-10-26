@@ -8,6 +8,15 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function escHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 function normalizePhoneForBrevo(raw) {
   const input = String(raw || '').trim();
   if (!input) return null;
@@ -129,7 +138,7 @@ exports.handler = async (event) => {
           <img src="https://boogiebistrot.com/logo-email.png" alt="Boogie Bistrot" width="80" height="65" style="display:block;margin:0 auto 8px;border:0;">
           <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Fidelity</p>
           <h1 style="font-size:26px;color:#1A1610;margin:0 0 24px;font-weight:400;">Benvenuto nel programma Fidelity! 🎉</h1>
-          <p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 20px;">Ciao <strong>${nome}</strong>,<br>sei ufficialmente iscritto al programma Fidelity di Boogie Bistrot.</p>
+          <p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 20px;">Ciao <strong>${escHtml(nome)}</strong>,<br>sei ufficialmente iscritto al programma Fidelity di Boogie Bistrot.</p>
           <table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin-bottom:24px;">
             <tr><td style="padding:20px 24px;">
               <p style="margin:0 0 8px;font-size:13px;color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">Come funziona</p>
