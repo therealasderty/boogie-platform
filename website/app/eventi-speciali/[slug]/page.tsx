@@ -68,7 +68,7 @@ function localDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-function prossimaOccorrenza(evento: { ricorrenza: string; giornoSettimana: string; giorniEsclusione: string; data?: string }): string {
+function prossimaOccorrenza(evento: { ricorrenza: string; giornoSettimana: string; giorniEsclusione: string; data?: string | null }): string {
   const oggi = new Date()
   oggi.setHours(0, 0, 0, 0)
   // Se l'evento ha una data di inizio futura, non proporre date precedenti
