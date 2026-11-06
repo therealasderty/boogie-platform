@@ -153,7 +153,7 @@ export function selezionaEventiNavbar(eventi: EventoAgenda[], oggi: string): Eve
     if (a.mostraInNews !== b.mostraInNews) return a.mostraInNews ? -1 : 1
     const aRic = a.ricorrente ? 1 : 0
     const bRic = b.ricorrente ? 1 : 0
-    if (aRic !== bRic) return aRic - bRic
+    if (aRic !== bRic) return bRic - aRic
     return (b.data || '').localeCompare(a.data || '')
   })
 

@@ -64,6 +64,7 @@ Monorepo in `/boogie-platform` su GitHub: therealasderty.
 
 ## TODO produzione
 
+- [ ] Hero stagionale: filtrare immagini hero per tag in base al mese (es. `giardino` solo apr–ott). Filtro lato server in `page.tsx` dopo `fetchMedia('hero')`, mappa tag→mesi, fallback immagini locali
 - [ ] Gallery: filtri tag (Cucina, Pizza, Giardino, Locale, Serate)
 - [ ] Progress bar navigazione (NProgress-style con `usePathname`)
 - [ ] `og:image` statica in `public/og-image.jpg` → aggiungere in `layout.tsx`

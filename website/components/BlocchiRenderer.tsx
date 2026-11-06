@@ -112,12 +112,15 @@ function RendererMenu({ b }: { b: BloccoMenu }) {
           )}
           {notePrezzo.length > 0 && (
             <ul className="flex flex-wrap gap-x-4 gap-y-1">
-              {notePrezzo.map((n, i) => (
-                <li key={i} className="flex items-center gap-1.5 text-neutral-500" style={{ fontSize: 'var(--text-meta)' }}>
-                  <span className="text-brand flex-shrink-0" aria-hidden>✓</span>
-                  {n}
-                </li>
-              ))}
+              {notePrezzo.map((n, i) => {
+                const escluso = /esclus/i.test(n)
+                return (
+                  <li key={i} className="flex items-center gap-1.5 text-neutral-500" style={{ fontSize: 'var(--text-meta)' }}>
+                    <span className={`${escluso ? 'text-neutral-400' : 'text-brand'} flex-shrink-0`} aria-hidden>{escluso ? '✗' : '✓'}</span>
+                    {n}
+                  </li>
+                )
+              })}
             </ul>
           )}
         </div>
