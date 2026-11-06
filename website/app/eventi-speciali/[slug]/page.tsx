@@ -121,10 +121,20 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
     return `${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}`
   })() : null
 
+  const oggi = new Date()
+  oggi.setHours(0, 0, 0, 0)
+  const dataInizioFutura = evento.data && new Date(evento.data + 'T00:00:00') > oggi
+  const dalLabel = dataInizioFutura
+    ? (() => {
+        const d = new Date(evento.data + 'T00:00:00')
+        return `dal ${d.getDate()} ${MESI[d.getMonth()]}`
+      })()
+    : null
+
   const heroBadge = evento.stato === 'futuro'
     ? 'Data da definire'
     : evento.ricorrente
-      ? (formatBadgeRicorrente(evento, giorniChiusi) || null)
+      ? ((formatBadgeRicorrente(evento, giorniChiusi) || '') + (dalLabel ? ` · ${dalLabel}` : '') || null)
       : dataFormattata
         ? (evento.orario
             ? `${dataFormattata} · ore ${evento.orario}${evento.orarioFine ? `–${evento.orarioFine}` : ''}`
