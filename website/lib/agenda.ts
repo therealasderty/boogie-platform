@@ -142,8 +142,7 @@ export async function fetchEventoBySlug(slug: string): Promise<EventoAgenda | nu
 export function selezionaEventiNavbar(eventi: EventoAgenda[], oggi: string): EventoAgenda[] {
   const visibili = eventi.filter(e => {
     if (!e.slug) return false
-    if (e.stato === 'bozza' || e.stato === 'passato') return false
-    if (e.stato === 'futuro') return true
+    if (e.stato !== 'attivo') return false
     if (e.ricorrente) return true
     return !!e.data && e.data >= oggi
   })
