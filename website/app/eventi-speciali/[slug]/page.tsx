@@ -68,20 +68,23 @@ function localDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-function prossimaOccorrenza(evento: { ricorrenza: string; giornoSettimana: string; giorniEsclusione: string }): string {
+function prossimaOccorrenza(evento: { ricorrenza: string; giornoSettimana: string; giorniEsclusione: string; data?: string }): string {
   const oggi = new Date()
   oggi.setHours(0, 0, 0, 0)
+  // Se l'evento ha una data di inizio futura, non proporre date precedenti
+  const inizio = evento.data ? new Date(evento.data + 'T00:00:00') : oggi
+  const da = inizio > oggi ? inizio : oggi
   if (evento.ricorrenza === 'settimanale') {
     const giorni = (evento.giornoSettimana || '').split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n))
     if (giorni.length === 0) return ''
     for (let i = 0; i <= 7; i++) {
-      const d = new Date(oggi); d.setDate(d.getDate() + i)
+      const d = new Date(da); d.setDate(d.getDate() + i)
       if (giorni.includes(d.getDay())) return localDateStr(d)
     }
   } else if (evento.ricorrenza === 'giornaliera') {
     const esclusi = (evento.giorniEsclusione || '').split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n))
     for (let i = 0; i <= 7; i++) {
-      const d = new Date(oggi); d.setDate(d.getDate() + i)
+      const d = new Date(da); d.setDate(d.getDate() + i)
       if (!esclusi.includes(d.getDay())) return localDateStr(d)
     }
   }
