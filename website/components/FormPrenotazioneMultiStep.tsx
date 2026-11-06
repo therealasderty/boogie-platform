@@ -45,6 +45,10 @@ export interface FormPrenotazioneMultiStepProps {
   giornoSettimana?: string
   /** Giorni esclusi per eventi giornalieri, es. "6" (sabato). */
   giorniEsclusione?: string
+  /** Data minima selezionabile (ISO). Per eventi che partono in futuro. */
+  dataMinima?: string
+  /** Se true, mostra dropdown per scegliere quanti menu vegetariani. */
+  menuVegetariano?: boolean
 }
 
 // ─── Costanti ────────────────────────────────────────────────────────────────
@@ -174,6 +178,8 @@ export default function FormPrenotazioneMultiStep({
   dataFormattata,
   giornoSettimana,
   giorniEsclusione,
+  dataMinima,
+  menuVegetariano,
 }: FormPrenotazioneMultiStepProps = {}) {
 
   const isEventoMode = !!titolo
@@ -208,6 +214,7 @@ export default function FormPrenotazioneMultiStep({
   const [dataNascita, setDataNascita]     = useState('')
   const [website, setWebsite]             = useState('') // honeypot
   const [preferenza, setPreferenza]       = useState<'pizza' | 'cucina' | ''>('')
+  const [menuVegetariani, setMenuVegetariani] = useState(0)
   const [note, setNote]                   = useState('')
   const [consensoPrivacy, setConsensoPrivacy]     = useState(false)
   const [consensoMarketing, setConsensoMarketing] = useState(false)
@@ -361,6 +368,7 @@ export default function FormPrenotazioneMultiStep({
           note,
           evento: titolo || '',
           preferenza: preferenza || null,
+          menu_vegetariani: menuVegetariano ? menuVegetariani : undefined,
           data_nascita: dataNascita || null,
           consenso_privacy: consensoPrivacy,
           consenso_marketing: consensoMarketing,
@@ -524,7 +532,7 @@ export default function FormPrenotazioneMultiStep({
                   <input
                     type="date"
                     required
-                    min={oggi()}
+                    min={dataMinima && dataMinima > oggi() ? dataMinima : oggi()}
                     max={traUnMese()}
                     value={data}
                     onChange={e => {
@@ -779,6 +787,26 @@ export default function FormPrenotazioneMultiStep({
                   🎂 Compilala per ricevere una sorpresa nel mese del tuo compleanno
                 </p>
               </div>
+
+              {menuVegetariano && (
+                <div>
+                  <label className={labelClass} style={{ fontSize: 'var(--text-meta)' }}>
+                    Menu vegetariani
+                  </label>
+                  <select
+                    value={menuVegetariani}
+                    onChange={e => setMenuVegetariani(Number(e.target.value))}
+                    className={inputClass}
+                    style={{ fontSize: 'var(--text-body)', minHeight: '48px' }}
+                  >
+                    {Array.from({ length: persone + 1 }, (_, i) => (
+                      <option key={i} value={i}>
+                        {i === 0 ? 'Nessuno' : `${i} ${i === 1 ? 'menu vegetariano' : 'menu vegetariani'}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className={labelClass} style={{ fontSize: 'var(--text-meta)' }}>

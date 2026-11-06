@@ -257,6 +257,8 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
                           ricorrente
                           giornoSettimana={evento.giornoSettimana || undefined}
                           giorniEsclusione={evento.giorniEsclusione || undefined}
+                          dataMinima={evento.data || undefined}
+                          menuVegetariano={evento.menuVegetariano || undefined}
                         />
                       )
                     })()
@@ -267,6 +269,7 @@ export default async function EventoPage({ params }: { params: Promise<{ slug: s
                         orarioFine={evento.orarioFine || undefined}
                         titolo={evento.titolo}
                         dataFormattata={dataFormattata || undefined}
+                        menuVegetariano={evento.menuVegetariano || undefined}
                       />
                     : (
                       <Link

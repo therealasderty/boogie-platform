@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
   try { body = await req.json() } catch { return NextResponse.json({ success: false }, { status: 400 }) }
 
   const { nome, cognome, data, ora, persone, email, telefono, note, preferenza, evento,
-          data_nascita, consenso_privacy, consenso_marketing, website } = body as Record<string, unknown>
+          menu_vegetariani, data_nascita, consenso_privacy, consenso_marketing, website } = body as Record<string, unknown>
 
   // Anti-spam: honeypot deve essere vuoto
   if (website) {
@@ -137,6 +137,7 @@ export async function POST(req: NextRequest) {
             'Note':               note || '',
             'Preferenza':         preferenza || null,
             'Evento':             evento || null,
+            'MenuVegetariani':    menu_vegetariani != null ? Number(menu_vegetariani) : null,
             'Canale':             'Sito web',
             'Data Nascita':       data_nascita || null,
             'Consenso Privacy':   consenso_privacy,
@@ -161,6 +162,7 @@ export async function POST(req: NextRequest) {
   if (TELEGRAM_TOKEN && TELEGRAM_CHAT_ID) {
     const prefStr = String(preferenza || '')
     const prefLine = prefStr ? `${prefStr.toLowerCase() === 'pizza' ? '🍕' : '🍽️'} *Preferenza:* ${prefStr}\n` : ''
+    const vegLine = menu_vegetariani && Number(menu_vegetariani) > 0 ? `🥗 *Menu vegetariani:* ${menu_vegetariani}\n` : ''
     const testo = richiedeConferma
       ? `⏳ *Nuova richiesta da confermare*\n\n` +
         (evento ? `🎉 *Evento:* ${evento}\n` : '') +
@@ -169,6 +171,7 @@ export async function POST(req: NextRequest) {
         `🕐 *Ora:* ${ora}\n` +
         `👥 *Persone:* ${persone}\n` +
         prefLine +
+        vegLine +
         `📞 *Telefono:* ${telefono}\n` +
         `📧 *Email:* ${email}` +
         (note ? `\n📝 *Note:* ${note}` : '') +
@@ -180,6 +183,7 @@ export async function POST(req: NextRequest) {
         `🕐 *Ora:* ${ora}\n` +
         `👥 *Persone:* ${persone}\n` +
         prefLine +
+        vegLine +
         `📞 *Telefono:* ${telefono}\n` +
         `📧 *Email:* ${email}` +
         (note ? `\n📝 *Note:* ${note}` : '')

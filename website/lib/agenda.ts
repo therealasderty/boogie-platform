@@ -37,6 +37,7 @@ export interface EventoAgenda {
   inPrimoPiano:    boolean
   mostraInNews:    boolean
   bloccaGiorno:    boolean
+  menuVegetariano: boolean
   metaTitle:       string
   metaDescription: string
 }
@@ -91,6 +92,7 @@ function mapRecord(r: { id: string; fields?: Record<string, unknown> }): EventoA
     mostraInNews:     !!(f['MostraInNews'] as boolean),
     inPrimoPiano:     !!(f['InPrimoPiano'] as boolean),
     bloccaGiorno:     !!(f['BloccaGiorno'] as boolean),
+    menuVegetariano:  !!(f['MenuVegetariano'] as boolean),
     metaTitle:        (f['MetaTitle'] as string) ?? '',
     metaDescription:  (f['MetaDescription'] as string) ?? '',
   }
