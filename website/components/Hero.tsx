@@ -156,6 +156,22 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
                 Boogie Bistrot<br />
                 Ristorante con giardino a Colle Brianza
               </h1>
+              <div className="hidden md:flex flex-wrap gap-3 mt-1">
+                <Link
+                  href="/prenota"
+                  className="bg-brand hover:bg-brand-hover text-black text-sm font-semibold px-6 py-3 rounded-btn transition-colors"
+                  data-umami-event="prenota"
+                  data-umami-event-source="hero"
+                >
+                  Prenota un tavolo
+                </Link>
+                <Link
+                  href="/menu"
+                  className="inline-flex border border-white/70 text-white text-sm font-semibold px-6 py-3 rounded-btn hover:bg-white hover:text-black hover:border-white transition-colors"
+                >
+                  Scopri i menù
+                </Link>
+              </div>
             </div>
           </div>
 

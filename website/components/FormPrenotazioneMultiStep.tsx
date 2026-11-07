@@ -854,6 +854,11 @@ export default function FormPrenotazioneMultiStep({
                 <p className="text-neutral-700" style={{ fontSize: 'var(--text-meta)' }}>
                   👥 {persone} {persone === 1 ? 'persona' : 'persone'}
                 </p>
+                {menuVegetariano && menuVegetariani > 0 && (
+                  <p className="text-neutral-700" style={{ fontSize: 'var(--text-meta)' }}>
+                    🥗 {menuVegetariani} {menuVegetariani === 1 ? 'menu vegetariano' : 'menu vegetariani'}
+                  </p>
+                )}
                 {nome && (
                   <p className="text-neutral-700" style={{ fontSize: 'var(--text-meta)' }}>👤 {nome} {cognome}</p>
                 )}
