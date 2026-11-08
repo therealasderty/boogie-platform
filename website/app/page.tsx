@@ -113,7 +113,7 @@ export default async function Home() {
     ? mediaHero.map(m => ({ src: m.url, alt: m.alt || m.nome }))
     : HERO_FALLBACK
 
-  const oggi = new Date().toISOString().split('T')[0]
+  const oggi = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Rome' })
   const heroNews = eventi
     .filter(e => e.fotoHero && e.descrizioneBreve && (e.stato === 'attivo' || e.stato === 'futuro' || (e.stato === 'passato' && e.mostraInNews)))
     .sort((a, b) => {
@@ -135,7 +135,13 @@ export default async function Home() {
       const isFuturo  = e.stato === 'futuro'
       const giornoLabel = isPassato ? 'Prossimamente' : isFuturo ? 'Prossimamente · Data da definire' : formatLabelEvento(e, giorniChiusi)
       const oraLabel = !isPassato && !isFuturo && e.orario ? (e.orarioFine ? `${e.orario}–${e.orarioFine}` : e.orario) : ''
-      const label = oraLabel ? `${giornoLabel}\n${oraLabel}` : giornoLabel
+      const inizioLabel = !isPassato && !isFuturo && e.ricorrente && e.data && e.data > oggi
+        ? (() => {
+            const d = new Date(e.data + 'T00:00:00')
+            return `Dal ${d.getDate()} ${MESI_FULL[d.getMonth()]}`
+          })()
+        : ''
+      const label = [inizioLabel, giornoLabel, oraLabel].filter(Boolean).join('\n')
       return {
         label,
         titolo: e.titolo,
