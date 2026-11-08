@@ -37,7 +37,7 @@ function formatGiorniSettimana(giorniStr: string): string {
   return ranges.join(', ')
 }
 
-function formatRicorrente(e: EventoAgenda, giorniChiusi: number[] = []): string {
+function formatRicorrente(e: EventoAgenda, oggi: string, giorniChiusi: number[] = []): string {
   let label = 'ricorrente'
   if (e.ricorrenza === 'giornaliera') {
     const esclusiEvento = e.giorniEsclusione
@@ -66,6 +66,10 @@ function formatRicorrente(e: EventoAgenda, giorniChiusi: number[] = []): string 
   if (e.ricorrenza !== 'giornaliera' && e.giorniEsclusione) {
     const esclusi = e.giorniEsclusione.split(',').map(Number).filter(n => !isNaN(n) && GIORNI_BREVI[n])
     if (esclusi.length > 0) label += ` (escluso ${esclusi.map(n => GIORNI_BREVI[n]).join(', ')})`
+  }
+  if (e.data && e.data > oggi && (e.ricorrenza === 'giornaliera' || e.ricorrenza === 'settimanale')) {
+    const d = new Date(e.data + 'T00:00:00')
+    label = `Dal ${d.getDate()} ${MESI_FULL[d.getMonth()]} · ${label}`
   }
   return label
 }
@@ -110,7 +114,7 @@ function HamburgerIcon({ open }: { open: boolean }) {
   )
 }
 
-export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: { righe: string[]; avvisoSettimana: boolean; giorniChiusi?: number[] }; eventi?: EventoAgenda[] }) {
+export default function Navbar({ oggi, orariDisplay, eventi = [] }: { oggi: string; orariDisplay?: { righe: string[]; avvisoSettimana: boolean; giorniChiusi?: number[] }; eventi?: EventoAgenda[] }) {
   const pathname = usePathname()
   const { eventoTitolo, eventoDormiente } = usePageContext()
   const isHome = pathname === '/'
@@ -230,7 +234,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
               {eventi.map((e, i) => (
                 <Link key={i} href={e.slug ? `/eventi-speciali/${e.slug}` : '/eventi-speciali'} onClick={() => setActiveDropdown(null)} className="block px-5 py-3 hover:bg-brand transition-colors border-b border-black/5 last:border-b-0">
                   <span className="text-tiny text-black/40 uppercase tracking-wider block">
-                    {e.ricorrente ? formatRicorrente(e, orariDisplay?.giorniChiusi) : e.data ? formatDataShort(e.data) : ''}
+                    {e.ricorrente ? formatRicorrente(e, oggi, orariDisplay?.giorniChiusi) : e.data ? formatDataShort(e.data) : ''}
                   </span>
                   <span className="text-meta text-black/70">{e.titolo}</span>
                 </Link>
@@ -451,7 +455,7 @@ export default function Navbar({ orariDisplay, eventi = [] }: { orariDisplay?: {
                           <div className="flex-1 py-2 pr-3 min-w-0">
                             <span className="text-tiny text-white/40 uppercase tracking-wider block mb-0.5">
                               {e.ricorrente
-                                ? formatRicorrente(e, orariDisplay?.giorniChiusi)
+                                ? formatRicorrente(e, oggi, orariDisplay?.giorniChiusi)
                                 : e.data ? formatDataShort(e.data) : ''}
                             </span>
                             <span className="text-meta text-white font-medium leading-snug block truncate">{e.titolo}</span>

@@ -55,8 +55,9 @@ export default async function RootLayout({
 }>) {
   const [orari, chiusure, eventiRaw] = await Promise.all([fetchOrari(), fetchChiusure(), fetchEventi()])
   const orariDisplay = buildOrariLines(orari, chiusure)
-  const oggi = new Date().toISOString().split('T')[0]
-  const fra7gg = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  const adesso = new Date()
+  const oggi = adesso.toLocaleDateString('en-CA', { timeZone: 'Europe/Rome' })
+  const fra7gg = new Date(adesso.getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-CA', { timeZone: 'Europe/Rome' })
   const fasceOrdinarie = buildFasceOrdinarieMap(orari)
   const eventiBanner = chiusure
     .filter(c => c.tipo === 'Data specifica' && c.dataInizio && c.dataInizio <= fra7gg && (c.dataFine || c.dataInizio) >= oggi)
@@ -116,7 +117,7 @@ export default async function RootLayout({
         />
         <PageContextProvider>
           <NavbarShell>
-            <Navbar orariDisplay={orariDisplay} eventi={eventiNavbar} />
+            <Navbar oggi={oggi} orariDisplay={orariDisplay} eventi={eventiNavbar} />
             <BannerChiusure eventi={eventiBanner} />
           </NavbarShell>
           <PageTransition>{children}</PageTransition>

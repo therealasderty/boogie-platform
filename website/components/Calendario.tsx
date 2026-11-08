@@ -281,8 +281,8 @@ function DayColumn({ date, events, isToday, status, orari }: {
       <div className={`flex flex-col gap-2 p-2.5 flex-1 bg-white ${isToday ? 'border-x border-b border-neutral-800/20 rounded-b-card' : ''}`}>
         {isClosed && (
           <div className="flex justify-center pt-1">
-            <span className={`inline-block px-1.5 py-0.5 rounded font-semibold uppercase tracking-wide ${status === 'chiusura-straordinaria' ? 'bg-red-50 text-red-400' : 'bg-neutral-100 text-neutral-400'}`} style={{ fontSize: 'var(--text-tiny)' }}>
-              Chiuso
+            <span className={`inline-block px-1.5 py-0.5 rounded text-center font-semibold uppercase tracking-wide ${status === 'chiusura-straordinaria' ? 'bg-red-50 text-red-400' : 'bg-neutral-100 text-neutral-400'}`} style={{ fontSize: 'var(--text-tiny)' }}>
+              {status === 'chiusura-straordinaria' ? '(Chiusura straordinaria)' : 'Chiuso'}
             </span>
           </div>
         )}
