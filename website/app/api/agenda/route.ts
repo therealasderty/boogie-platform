@@ -51,6 +51,8 @@ export async function GET() {
           link:            slug ? `/eventi-speciali/${slug}` : '',
           nascondiAltri:   false,
           evidenza:        f['Tipo'] === 'pagina' || !!slug,
+          fotoHero:        (f['FotoHero'] as string) ?? '',
+          descrizioneBreve: (f['DescrizioneBreve'] as string) ?? '',
         }
       })
 
