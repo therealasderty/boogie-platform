@@ -12,38 +12,38 @@ export const revalidate = 259200
 
 export const metadata: Metadata = {
   title: 'Eventi Aziendali | Boogie Bistrot — Colle Brianza',
-  description: 'Organizza il tuo evento aziendale al Boogie Bistrot di Colle Brianza: sala esclusiva, ampio giardino, menu personalizzati e atmosfera unica nel cuore della Brianza.',
+  description: 'Eventi aziendali al Boogie Bistrot di Colle Brianza (LC): sala riservata da 10 a 80 persone, giardino estivo, cucina del territorio rivisitata. Richiedi un preventivo.',
 }
 
 const PUNTI_FORZA = [
   {
-    titolo: 'Sala esclusiva',
-    testo: 'Spazi riservati per il vostro gruppo, con privacy e comfort per ogni tipo di incontro professionale.',
+    titolo: 'Sala riservata',
+    testo: 'Spazi privati per il vostro gruppo, da 10 a 80 persone, per tutta la durata della serata.',
   },
   {
-    titolo: 'Ampio giardino',
-    testo: "Un'area verde che nella bella stagione diventa la cornice ideale per aperitivi e momenti di networking.",
+    titolo: 'Giardino estivo',
+    testo: 'Da aprile a ottobre, il giardino ospita aperitivi e cene all\'aperto tra le colline brianzole.',
   },
   {
-    titolo: 'Location storica',
-    testo: 'Un edificio dal fascino unico, circondato dalle colline brianzole, che unisce tradizione ed eleganza senza risultare austero.',
+    titolo: 'Cucina del territorio',
+    testo: 'Menu costruito insieme a voi: piatti brianzoli rivisitati, ingredienti di stagione, vini e birre artigianali locali.',
   },
   {
-    titolo: 'Menu personalizzati',
-    testo: 'Il nostro chef crea per voi un menu su misura, studiato nei minimi dettagli per soddisfare ogni esigenza.',
+    titolo: 'Formule flessibili',
+    testo: 'Cena, pranzo di lavoro, aperitivo, team building: adattiamo tempi e portate al tipo di evento.',
   },
 ]
 
 const VOCI_MENU = [
-  'Menu personalizzati e flessibili nel numero di portate',
-  'Timing del servizio adattabile alle vostre esigenze',
-  'Possibilità di menu tematici o concept originali',
-  'Selezione di vini e birre artigianali brianzole abbinate ad ogni portata',
+  'Numero di portate e abbinamenti concordati con voi',
+  'Tempi del servizio adattabili (pausa tra portate per speech, premiazioni, ecc.)',
+  'Menu tematici o formati originali su richiesta',
+  'Selezione di vini e birre artigianali brianzole',
+  'Varianti vegetariane, senza glutine e senza lattosio senza costi aggiuntivi',
 ]
 
 export default async function EventiAziendaliPage() {
   const mediaLocation = await fetchMedia('location')
-  const fotoShuffled = [...mediaLocation]
   const heroImage = 'https://pub-412a895afa8e491c84ad5df75bc1458b.r2.dev/media/1780389736209-media_1.1_TaY9KSJq6.jpg'
 
   return (
@@ -51,7 +51,7 @@ export default async function EventiAziendaliPage() {
       <PaginaHero
         titolo="Eventi Aziendali"
         sottotitolo="Boogie Bistrot"
-        tagline="La location perfetta per il tuo evento aziendale nel cuore della Brianza"
+        tagline="Cene aziendali e team building a Colle Brianza, da 10 a 80 persone"
         image={heroImage}
       />
 
@@ -63,22 +63,22 @@ export default async function EventiAziendaliPage() {
               className="uppercase text-black/40 font-medium"
               style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
             >
-              Una proposta su misura
+              Eventi aziendali
             </span>
             <h2
               className="font-semibold text-neutral-900 mt-4 mb-6 leading-snug"
               style={{ fontSize: 'var(--text-section)' }}
             >
-              Un'esperienza memorabile<br className="hidden md:block" /> per ogni esigenza aziendale
+              Dal pranzo di lavoro<br className="hidden md:block" /> alla cena di Natale
             </h2>
             <div className="w-10 h-px bg-neutral-200 mb-6" />
             <p
               className="text-neutral-600 font-light leading-relaxed max-w-2xl"
               style={{ fontSize: 'var(--text-lead)' }}
             >
-              Al Boogie Bistrot trasformiamo ogni evento aziendale in un momento da ricordare, dove il piacere della
-              buona cucina del territorio si unisce all'atmosfera rilassata e accogliente dei nostri spazi — il
-              contesto ideale per rafforzare i legami professionali in una location dal fascino unico.
+              Al Boogie Bistrot di Colle Brianza organizziamo eventi aziendali per gruppi
+              da 10 a 80 persone: sala riservata, giardino nella bella stagione e cucina
+              del territorio rivisitata. Costruiamo il menu insieme a voi.
             </p>
           </FadeIn>
 
@@ -106,7 +106,7 @@ export default async function EventiAziendaliPage() {
         </div>
       </section>
 
-      {/* ── Esperienza gastronomica ── */}
+      {/* ── Il menu ── */}
       <section className="py-20 md:py-28 px-6 md:px-14 bg-surface-dark">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24">
@@ -122,16 +122,16 @@ export default async function EventiAziendaliPage() {
                 className="font-semibold text-white mt-4 mb-6 leading-snug"
                 style={{ fontSize: 'var(--text-section)' }}
               >
-                Un'esperienza gastronomica personalizzata
+                Il menu del vostro evento
               </h2>
               <div className="w-10 h-px bg-white/10 mb-6" />
               <p
                 className="text-white/60 font-light leading-relaxed"
                 style={{ fontSize: 'var(--text-body)' }}
               >
-                Il vero punto di forza degli eventi aziendali al Boogie Bistrot è la nostra cucina. Il nostro chef
-                creerà per voi un menu su misura, con piatti del territorio rivisitati e ingredienti freschi
-                selezionati — pensato nei minimi dettagli per soddisfare le vostre preferenze.
+                Lo chef parte dalla cucina del territorio rivisitata e adatta portate,
+                tempi e abbinamenti al tipo di serata. Ingredienti di stagione,
+                molti da produttori della Brianza.
               </p>
             </FadeIn>
 
@@ -160,9 +160,8 @@ export default async function EventiAziendaliPage() {
                   className="text-white/60 font-light leading-relaxed"
                   style={{ fontSize: 'var(--text-body)' }}
                 >
-                  Per chi cerca qualcosa di davvero originale: un'esperienza culinaria insolita che inverte
-                  l'ordine tradizionale delle portate. Un modo divertente e diverso di vivere la cena aziendale,
-                  perfetto per stimolare la conversazione e rompere il ghiaccio.
+                  Si parte dal dolce e si chiude con l'antipasto. Un formato che sorprende
+                  e funziona bene come icebreaker quando i colleghi non si conoscono tutti.
                 </p>
               </div>
             </FadeIn>
@@ -172,7 +171,7 @@ export default async function EventiAziendaliPage() {
       </section>
 
       {/* ── Griglia foto location ── */}
-      {fotoShuffled.length > 0 && (
+      {mediaLocation.length > 0 && (
         <section className="py-20 md:py-28 px-6 md:px-14 bg-white">
           <div className="max-w-6xl mx-auto">
             <FadeIn>
@@ -180,7 +179,7 @@ export default async function EventiAziendaliPage() {
                 className="uppercase text-black/40 font-medium"
                 style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
               >
-                La location
+                I nostri spazi
               </span>
               <h2
                 className="font-semibold text-neutral-900 mt-4 mb-10 leading-snug"
@@ -189,7 +188,7 @@ export default async function EventiAziendaliPage() {
                 Gli spazi del Boogie Bistrot
               </h2>
             </FadeIn>
-            <GrigliaFotoLocation foto={fotoShuffled} />
+            <GrigliaFotoLocation foto={mediaLocation} />
           </div>
         </section>
       )}
@@ -202,13 +201,13 @@ export default async function EventiAziendaliPage() {
               className="uppercase text-black/40 font-medium"
               style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
             >
-              Consulenza personalizzata
+              Preventivo gratuito
             </span>
             <h2
               className="font-semibold text-neutral-900 mt-4 mb-2 leading-snug"
               style={{ fontSize: 'var(--text-section)' }}
             >
-              Parliamo del tuo evento
+              Richiedi il preventivo
             </h2>
             <div className="w-10 h-px bg-neutral-200 mb-8" />
           </FadeIn>

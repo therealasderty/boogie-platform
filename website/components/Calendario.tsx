@@ -506,7 +506,7 @@ export default function Calendario({ orari = [], chiusure = [] }: { orari?: Orar
                     )}
                     <div className="mt-3 text-center" style={{ fontSize: 'var(--text-label)' }}>
                       {isClosed ? (
-                        <span className={`font-medium leading-tight ${
+                        <span className={`font-medium leading-tight ${isSelected && loadStatus === 'ready' ? 'sr-only' : ''} ${
                           status === 'chiusura-straordinaria'
                             ? isSelected ? 'text-red-300' : 'text-red-400'
                             : isSelected ? 'text-white/40' : 'text-neutral-300'
@@ -567,21 +567,13 @@ export default function Calendario({ orari = [], chiusure = [] }: { orari?: Orar
                 </div>
 
                 {/* Mobile: inline orari for selected day */}
-                <div className="sm:hidden mb-4">
-                  {selectedIsClosed ? (
-                    <span className={`font-medium ${
-                      selectedStatus === 'chiusura-straordinaria' ? 'text-red-500' : 'text-neutral-400'
-                    }`} style={{ fontSize: 'var(--text-label)' }}>
-                      {closedLabel(selectedStatus)}
-                    </span>
-                  ) : (selectedPranzo.length > 0 || selectedCena.length > 0) ? (
-                    <div className="flex items-center gap-3 text-neutral-500" style={{ fontSize: 'var(--text-label)' }}>
-                      {selectedPranzo.map((s, i) => <span key={`p-${i}`}>{s.inizio}–{s.fine}</span>)}
-                      {selectedPranzo.length > 0 && selectedCena.length > 0 && <span className="text-neutral-300">·</span>}
-                      {selectedCena.map((s, i) => <span key={`c-${i}`}>{s.inizio}–{s.fine}</span>)}
-                    </div>
-                  ) : null}
-                </div>
+                {!selectedIsClosed && (selectedPranzo.length > 0 || selectedCena.length > 0) && (
+                  <div className="sm:hidden mb-4 flex items-center gap-3 text-neutral-500" style={{ fontSize: 'var(--text-label)' }}>
+                    {selectedPranzo.map((s, i) => <span key={`p-${i}`}>{s.inizio}–{s.fine}</span>)}
+                    {selectedPranzo.length > 0 && selectedCena.length > 0 && <span className="text-neutral-300">·</span>}
+                    {selectedCena.map((s, i) => <span key={`c-${i}`}>{s.inizio}–{s.fine}</span>)}
+                  </div>
+                )}
 
                 {/* Events for selected day */}
                 {selectedIsClosed ? (

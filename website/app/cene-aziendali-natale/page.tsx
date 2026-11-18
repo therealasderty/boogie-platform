@@ -14,14 +14,14 @@ export const revalidate = 259200
 export const metadata: Metadata = {
   title: 'Cena di Natale Aziendale in Brianza | Boogie Bistrot — Colle Brianza',
   description:
-    'Organizza la cena di Natale aziendale al Boogie Bistrot di Colle Brianza: sala privata, menu natalizio su misura, da 10 a 80 ospiti. Richiedi il preventivo.',
+    'Cena di Natale aziendale al Boogie Bistrot di Colle Brianza: 3 menu da 45 a 55 € a persona, bevande incluse. Sala privata, da 10 a 80 ospiti. Richiedi il preventivo.',
   alternates: {
     canonical: 'https://boogiebistrot.com/cene-aziendali-natale',
   },
   openGraph: {
     title: 'Cena di Natale Aziendale in Brianza | Boogie Bistrot',
     description:
-      'Organizza la cena di Natale aziendale al Boogie Bistrot di Colle Brianza: sala privata, menu natalizio su misura, da 10 a 80 ospiti. Richiedi il preventivo.',
+      'Cena di Natale aziendale al Boogie Bistrot di Colle Brianza: 3 menu da 45 a 55 € a persona, bevande incluse. Sala privata, da 10 a 80 ospiti. Richiedi il preventivo.',
     locale: 'it_IT',
     siteName: 'Boogie Bistrot',
   },
@@ -29,26 +29,50 @@ export const metadata: Metadata = {
 
 const PUNTI_FORZA = [
   {
-    titolo: 'Atmosfera natalizia',
-    testo: 'Ambienti caldi e accoglienti, pensati per rendere la serata degli auguri un momento speciale per tutto il team.',
+    titolo: 'Sala riservata',
+    testo: 'Spazi privati per il vostro gruppo, da 10 a 80 persone, per tutta la durata della serata.',
   },
   {
-    titolo: 'Sala privata',
-    testo: 'Spazi riservati per gruppi da 10 a 80 persone, con privacy e comfort per l\'intera durata della serata.',
+    titolo: 'Tre menu a prezzo fisso',
+    testo: 'Risotto alla zucca, brasato con polenta, tagliolini al ragù di cervo: da 45 a 55 € a persona, bevande incluse.',
   },
   {
-    titolo: 'Cucina del territorio',
-    testo: 'Menu natalizi con ingredienti di stagione selezionati e preparati dal nostro chef.',
+    titolo: 'Esigenze alimentari',
+    testo: 'Varianti vegetariane, senza glutine e senza lattosio preparate senza costi aggiuntivi.',
   },
 ]
 
-const VOCI_MENU = [
-  'Antipasti della casa',
-  'Primo di stagione — risotto, pasta fresca o gnocchi',
-  'Secondo con contorno (carne, pesce o entrambi)',
-  'Dessert natalizio della casa',
-  'Selezione di vini e birre artigianali locali in abbinamento',
-  'Menu vegetariano e opzioni senza glutine su richiesta',
+const MENU_PROPOSTE = [
+  {
+    nome: 'Menu Tradizione',
+    prezzo: 45,
+    portate: [
+      { tipo: 'Antipasto', piatti: ['Affettato misto del territorio con gnocco fritto e verdurine croccanti'] },
+      { tipo: 'Primo', piatti: ['Risotto alla zucca, zola e amaretti'] },
+      { tipo: 'Secondo', piatti: ['Punta di vitello e patate al forno'] },
+      { tipo: 'Dolce', piatti: ['Tiramisù di panettone'] },
+    ],
+  },
+  {
+    nome: 'Menu Ricercato',
+    prezzo: 50,
+    portate: [
+      { tipo: 'Antipasti', piatti: ['Sfoglia con tuorlo fondente, crema al Parmigiano e bacon croccante', 'Parmigiana di melanzane'] },
+      { tipo: 'Primo', piatti: ['Tagliolini al ragù di cervo'] },
+      { tipo: 'Secondo', piatti: ['Filetto di maialino con la sua salsa e patate al forno'] },
+      { tipo: 'Dolce', piatti: ['Tortino di pere e amaretti con crema allo zabaione'] },
+    ],
+  },
+  {
+    nome: 'Menu Prestigio',
+    prezzo: 55,
+    portate: [
+      { tipo: 'Antipasti', piatti: ['Cestino di pasta fillo con pere, taleggio e speck croccante', 'Affettato del territorio con Casera e gnocco fritto'] },
+      { tipo: 'Bis di primi', piatti: ['Risotto ai porcini', 'Fagottino ripieno di radicchio, taleggio e crumble di noci'] },
+      { tipo: 'Secondo', piatti: ['Brasato con polenta'] },
+      { tipo: 'Dolce', piatti: ['Tortino di cioccolato dal cuore caldo con gelato al fior di latte'] },
+    ],
+  },
 ]
 
 
@@ -59,7 +83,7 @@ const FAQ_NATALE: FaqItem[] = [
     attivo: true,
     domanda: 'Quante persone possono partecipare alla cena di Natale?',
     risposta:
-      '<p>Ospitiamo gruppi da <strong>10 a 80 persone</strong>. Per gruppi più piccoli o più grandi valutate insieme a noi la soluzione migliore — scriveteci e troviamo la formula adatta.</p>',
+      '<p>Ospitiamo gruppi da <strong>10 a 80 persone</strong>. Per gruppi più piccoli o più grandi scriveteci per verificare la disponibilità.</p>',
   },
   {
     id: 'faq-natale-2',
@@ -67,7 +91,7 @@ const FAQ_NATALE: FaqItem[] = [
     attivo: true,
     domanda: 'Quanto costa la cena di Natale aziendale a persona?',
     risposta:
-      '<p>Il prezzo dipende dal menu scelto, dal numero di ospiti e dalla formula (cena completa, apericena o pranzo). Forniamo un <strong>preventivo personalizzato</strong> entro 24 ore dalla richiesta. Compilate il form e vi ricontattiamo.</p>',
+      '<p>Proponiamo tre menu a <strong>45, 50 o 55 € a persona</strong>, bevande incluse: acqua, vino (una bottiglia ogni 3 persone) e caffè. Compilate il form per ricevere il preventivo dettagliato.</p>',
   },
   {
     id: 'faq-natale-3',
@@ -75,7 +99,7 @@ const FAQ_NATALE: FaqItem[] = [
     attivo: true,
     domanda: 'Quando è meglio prenotare?',
     risposta:
-      '<p>Le date di dicembre — in particolare i <strong>venerdì e sabato sera</strong> — si esauriscono rapidamente, spesso già da ottobre. Consigliamo di contattarci il prima possibile per verificare la disponibilità e bloccare la data.</p>',
+      '<p>Le date di dicembre, in particolare i <strong>venerdì e sabato sera</strong>, si esauriscono rapidamente, spesso già da ottobre. Consigliamo di contattarci il prima possibile per verificare la disponibilità e bloccare la data.</p>',
   },
   {
     id: 'faq-natale-4',
@@ -83,7 +107,7 @@ const FAQ_NATALE: FaqItem[] = [
     attivo: true,
     domanda: 'Posso avere un menu per celiaci, vegetariani o con allergie?',
     risposta:
-      '<p>Sì. Il nostro chef prepara varianti per ogni esigenza: <strong>menu vegetariano, opzioni senza glutine e adattamenti per le allergie</strong> più comuni. Segnalate le necessità al momento della prenotazione e provvederemo senza costi aggiuntivi.</p>',
+      '<p>Sì. Prepariamo <strong>varianti vegetariane, senza glutine e senza lattosio</strong>. Per altre allergie o intolleranze, segnalatele al momento della prenotazione. Nessun costo aggiuntivo.</p>',
   },
   {
     id: 'faq-natale-6',
@@ -119,7 +143,7 @@ export default async function CeneAziendaliNatalePage() {
             className="text-neutral-700 font-medium text-center sm:text-left"
             style={{ fontSize: 'var(--text-meta)' }}
           >
-            Le date di dicembre si esauriscono in anticipo — soprattutto venerdì e sabato sera
+            Le date di dicembre si esauriscono in anticipo, soprattutto venerdì e sabato sera
           </p>
           <a
             href="#richiedi-preventivo"
@@ -146,16 +170,16 @@ export default async function CeneAziendaliNatalePage() {
                 className="font-semibold text-neutral-900 mt-4 mb-6 leading-snug"
                 style={{ fontSize: 'var(--text-section)' }}
               >
-                Un Natale aziendale<br className="hidden md:block" /> che lascia il segno
+                Sala privata, da 10 a 80 persone,<br className="hidden md:block" /> a Colle Brianza
               </h2>
               <div className="w-10 h-px bg-neutral-200 mb-6" />
               <p
                 className="text-neutral-600 font-light leading-relaxed"
                 style={{ fontSize: 'var(--text-lead)' }}
               >
-                Al Boogie Bistrot di Colle Brianza organizziamo cene di Natale aziendali su misura,
-                dalla piccola squadra al gruppo numeroso. Cucina del territorio, atmosfera autentica e
-                spazi riservati: tutto quello che serve per festeggiare insieme in modo memorabile.
+                Al Boogie Bistrot di Colle Brianza organizziamo cene di Natale aziendali
+                per gruppi da 10 a 80 persone. Tre menu da 45 a 55 euro a persona, bevande incluse,
+                in una sala riservata per il vostro gruppo.
               </p>
             </FadeIn>
 
@@ -212,26 +236,24 @@ export default async function CeneAziendaliNatalePage() {
                 className="font-semibold text-white mt-4 mb-6 leading-snug"
                 style={{ fontSize: 'var(--text-section)' }}
               >
-                Come vorresti festeggiare?
+                Cena, pranzo o aperitivo
               </h2>
               <div className="w-10 h-px bg-white/10 mb-6" />
               <p
                 className="text-white/60 font-light leading-relaxed"
                 style={{ fontSize: 'var(--text-body)' }}
               >
-                Che si tratti di una cena completa, di un pranzo di fine anno o di un aperitivo
-                con stuzzichini — siamo qui per trovare insieme la formula più adatta al vostro
-                gruppo e al vostro budget. Nessun pacchetto fisso: partiamo dalle vostre esigenze
-                e costruiamo la serata su misura.
+                Oltre ai tre menu da 45 a 55 euro, possiamo adattare la formula al vostro gruppo:
+                cena completa, pranzo di fine anno o aperitivo con stuzzichini.
               </p>
             </FadeIn>
 
             <FadeIn delay={0.1}>
               <div className="flex flex-col gap-4">
                 {[
-                  { label: 'Cena', desc: 'Il classico per eccellenza, con menu completo e servizio al tavolo.' },
-                  { label: 'Pranzo', desc: 'Per chi preferisce festeggiare di giorno, con tempi rispettati.' },
-                  { label: 'Aperitivo', desc: 'Un format più informale, perfetto per grandi gruppi o un primo incontro.' },
+                  { label: 'Cena', desc: 'I tre menu da 45 a 55 €, servizio al tavolo, da 10 a 80 persone.' },
+                  { label: 'Pranzo', desc: 'Stessi menu della cena, per chi preferisce festeggiare di giorno.' },
+                  { label: 'Aperitivo', desc: 'Formula più informale con stuzzichini, adatta a grandi gruppi.' },
                 ].map((item) => (
                   <div key={item.label} className="flex items-start gap-5 rounded-card border border-white/10 p-5">
                     <span
@@ -252,7 +274,7 @@ export default async function CeneAziendaliNatalePage() {
                   className="text-white/30 font-light mt-2"
                   style={{ fontSize: 'var(--text-meta)' }}
                 >
-                  Contattaci e definiamo insieme tutto il resto.
+                  Per dettagli su data, orario e personalizzazioni, compilate il form qui sotto.
                 </p>
               </div>
             </FadeIn>
@@ -284,93 +306,31 @@ export default async function CeneAziendaliNatalePage() {
         </div>
       )}
 
-      {/* ── Menu natalizio ── */}
-      <section className="py-20 md:py-28 px-6 md:px-14 bg-surface-dark border-t border-white/5">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24">
-
-            <FadeIn>
-              <span
-                className="uppercase text-white/30 font-medium"
-                style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
-              >
-                La cucina
-              </span>
-              <h2
-                className="font-semibold text-white mt-4 mb-6 leading-snug"
-                style={{ fontSize: 'var(--text-section)' }}
-              >
-                Menu natalizio su misura
-              </h2>
-              <div className="w-10 h-px bg-white/10 mb-6" />
-              <p
-                className="text-white/60 font-light leading-relaxed"
-                style={{ fontSize: 'var(--text-body)' }}
-              >
-                Il nostro chef compone un menu natalizio ad hoc per la vostra azienda, con i
-                sapori del territorio brianzolo rivisitati in chiave moderna. Ingredienti di
-                stagione, presentazioni curate e un servizio attento ai dettagli.
-              </p>
-            </FadeIn>
-
-            <FadeIn delay={0.1}>
-              <ul className="flex flex-col gap-4 mb-10">
-                {VOCI_MENU.map((voce) => (
-                  <li
-                    key={voce}
-                    className="flex items-start gap-3 text-white/70 font-light"
-                    style={{ fontSize: 'var(--text-body)' }}
-                  >
-                    <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-brand flex-shrink-0" />
-                    {voce}
-                  </li>
-                ))}
-              </ul>
-
-              <div className="rounded-card border border-white/10 p-6">
-                <p
-                  className="text-brand font-medium mb-3"
+      {/* ── Griglia foto location (senza giardino) ── */}
+      {(() => {
+        const fotoInterni = mediaLocation.filter(m => !m.tag.includes('giardino'))
+        return fotoInterni.length > 0 && (
+          <section className="py-20 md:py-28 px-6 md:px-14 bg-white">
+            <div className="max-w-6xl mx-auto">
+              <FadeIn>
+                <span
+                  className="uppercase text-black/40 font-medium"
                   style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
                 >
-                  ESIGENZE ALIMENTARI
-                </p>
-                <p
-                  className="text-white/60 font-light leading-relaxed"
-                  style={{ fontSize: 'var(--text-body)' }}
+                  I nostri spazi
+                </span>
+                <h2
+                  className="font-semibold text-neutral-900 mt-4 mb-10 leading-snug"
+                  style={{ fontSize: 'var(--text-section)' }}
                 >
-                  Segnalate intolleranze, allergie o preferenze alimentari al momento della
-                  prenotazione. Prepariamo varianti personalizzate per ogni commensale, senza
-                  costi aggiuntivi.
-                </p>
-              </div>
-            </FadeIn>
-
-          </div>
-        </div>
-      </section>
-
-      {/* ── Griglia foto location ── */}
-      {mediaLocation.length > 0 && (
-        <section className="py-20 md:py-28 px-6 md:px-14 bg-white">
-          <div className="max-w-6xl mx-auto">
-            <FadeIn>
-              <span
-                className="uppercase text-black/40 font-medium"
-                style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
-              >
-                La location
-              </span>
-              <h2
-                className="font-semibold text-neutral-900 mt-4 mb-10 leading-snug"
-                style={{ fontSize: 'var(--text-section)' }}
-              >
-                Gli spazi del Boogie Bistrot
-              </h2>
-            </FadeIn>
-            <GrigliaFotoLocation foto={mediaLocation} />
-          </div>
-        </section>
-      )}
+                  Gli spazi del Boogie Bistrot
+                </h2>
+              </FadeIn>
+              <GrigliaFotoLocation foto={fotoInterni} />
+            </div>
+          </section>
+        )
+      })()}
 
       {/* ── FAQ ── */}
       <section className="py-20 md:py-28 px-6 md:px-14 bg-surface-dark">
@@ -386,10 +346,105 @@ export default async function CeneAziendaliNatalePage() {
               className="font-semibold text-white mt-4 mb-10 leading-snug"
               style={{ fontSize: 'var(--text-section)' }}
             >
-              Tutto quello che vuoi sapere
+              Domande sulla cena di Natale aziendale
             </h2>
           </FadeIn>
           <SezioneFAQAccordion faq={FAQ_NATALE} />
+        </div>
+      </section>
+
+      {/* ── Menu natalizi ── */}
+      <section className="py-20 md:py-28 px-6 md:px-14 bg-surface-dark border-t border-white/5">
+        <div className="max-w-6xl mx-auto">
+          <FadeIn>
+            <span
+              className="uppercase text-white/30 font-medium"
+              style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
+            >
+              Le proposte
+            </span>
+            <h2
+              className="font-semibold text-white mt-4 mb-6 leading-snug"
+              style={{ fontSize: 'var(--text-section)' }}
+            >
+              I tre menu di Natale
+            </h2>
+            <div className="w-10 h-px bg-white/10 mb-6" />
+            <p
+              className="text-white/60 font-light leading-relaxed max-w-2xl mb-14"
+              style={{ fontSize: 'var(--text-body)' }}
+            >
+              Tre proposte a prezzo fisso, da 45 a 55 € a persona. Ogni menu comprende
+              acqua, vino (rosso o bianco, una bottiglia ogni 3 persone) e caffè.
+            </p>
+          </FadeIn>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {MENU_PROPOSTE.map((menu, i) => (
+              <FadeIn key={menu.nome} delay={i * 0.1}>
+                <div className="rounded-card border border-white/10 p-6 h-full flex flex-col">
+                  <div className="flex items-baseline justify-between mb-6">
+                    <h3
+                      className="font-semibold text-white"
+                      style={{ fontSize: 'var(--text-body)' }}
+                    >
+                      {menu.nome}
+                    </h3>
+                    <span className="text-brand font-semibold" style={{ fontSize: 'var(--text-lead)' }}>
+                      {menu.prezzo}&thinsp;€
+                    </span>
+                  </div>
+                  <div className="w-full h-px bg-white/10 mb-6" />
+                  <div className="flex flex-col gap-5 flex-1">
+                    {menu.portate.map((portata) => (
+                      <div key={portata.tipo}>
+                        <p
+                          className="text-brand/70 font-medium uppercase mb-1.5"
+                          style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
+                        >
+                          {portata.tipo}
+                        </p>
+                        {portata.piatti.map((piatto) => (
+                          <p
+                            key={piatto}
+                            className="text-white/60 font-light leading-relaxed"
+                            style={{ fontSize: 'var(--text-meta)' }}
+                          >
+                            {piatto}
+                          </p>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                  <p
+                    className="text-white/30 font-light mt-6 pt-5 border-t border-white/5"
+                    style={{ fontSize: 'var(--text-label)' }}
+                  >
+                    a persona · bevande incluse
+                  </p>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+
+          <FadeIn delay={0.35}>
+            <div className="rounded-card border border-white/10 p-6 mt-8">
+              <p
+                className="text-brand font-medium mb-3"
+                style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
+              >
+                ESIGENZE ALIMENTARI
+              </p>
+              <p
+                className="text-white/60 font-light leading-relaxed"
+                style={{ fontSize: 'var(--text-body)' }}
+              >
+                Segnalate intolleranze, allergie o preferenze alimentari al momento della
+                prenotazione. Prepariamo varianti personalizzate per ogni commensale, senza
+                costi aggiuntivi.
+              </p>
+            </div>
+          </FadeIn>
         </div>
       </section>
 
@@ -401,7 +456,7 @@ export default async function CeneAziendaliNatalePage() {
               className="uppercase text-black/40 font-medium"
               style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
             >
-              Consulenza gratuita
+              Preventivo gratuito
             </span>
             <h2
               className="font-semibold text-neutral-900 mt-4 mb-2 leading-snug"

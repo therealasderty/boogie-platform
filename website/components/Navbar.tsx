@@ -85,6 +85,12 @@ const menuVoci = [
   { label: 'Cocktails', href: '/menu/cocktails' },
 ]
 
+const eventiPrivatiVoci = [
+  { label: 'Eventi Aziendali', href: '/eventi-aziendali' },
+  { label: 'Cene di Natale Aziendali', href: '/cene-aziendali-natale' },
+  { label: 'Comunioni', href: '/comunioni' },
+]
+
 
 
 function ChevronDown() {
@@ -174,6 +180,16 @@ export default function Navbar({ oggi, orariDisplay, eventi = [] }: { oggi: stri
 
   const isTopHome = isHome && !scrolled
 
+  const appuntamenti = [
+    { titolo: 'Capodanno 2026', href: '/capodanno', data: formatDataShort('2026-12-31'), fotoHero: null },
+    ...eventi.map(e => ({
+      titolo: e.titolo,
+      href: e.slug ? `/eventi-speciali/${e.slug}` : '/eventi-speciali',
+      data: e.ricorrente ? formatRicorrente(e, oggi, orariDisplay?.giorniChiusi) : e.data ? formatDataShort(e.data) : '',
+      fotoHero: e.fotoHero,
+    })),
+  ]
+
   function openDropdown(name: string) {
     if (closeTimer.current) clearTimeout(closeTimer.current)
     setActiveDropdown(name)
@@ -226,23 +242,43 @@ export default function Navbar({ oggi, orariDisplay, eventi = [] }: { oggi: stri
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18, ease: 'easeOut' }}
             >
-              <Link href="/eventi-aziendali" onClick={() => setActiveDropdown(null)} className="block px-5 py-3 hover:bg-brand transition-colors border-b border-black/5">
-                <span className="text-tiny text-black/40 uppercase tracking-wider block">Location & catering</span>
-                <span className="text-meta text-black/70">Eventi Aziendali</span>
-              </Link>
-              {eventi.length > 0 && <div className="border-t border-black/10" />}
-              {eventi.map((e, i) => (
-                <Link key={i} href={e.slug ? `/eventi-speciali/${e.slug}` : '/eventi-speciali'} onClick={() => setActiveDropdown(null)} className="block px-5 py-3 hover:bg-brand transition-colors border-b border-black/5 last:border-b-0">
+              {appuntamenti.map((e, i) => (
+                <Link key={i} href={e.href} onClick={() => setActiveDropdown(null)} className="block px-5 py-3 hover:bg-brand transition-colors border-b border-black/5 last:border-b-0">
                   <span className="text-tiny text-black/40 uppercase tracking-wider block">
-                    {e.ricorrente ? formatRicorrente(e, oggi, orariDisplay?.giorniChiusi) : e.data ? formatDataShort(e.data) : ''}
+                    {e.data}
                   </span>
                   <span className="text-meta text-black/70">{e.titolo}</span>
                 </Link>
               ))}
-              {eventi.length > 0 && <div className="border-t border-black/10" />}
+              <div className="border-t border-black/10" />
               <Link href="/eventi-speciali" onClick={() => setActiveDropdown(null)} className="block px-5 py-2.5 text-meta text-black/50 hover:text-black hover:bg-brand transition-colors">
-                Tutti gli eventi →
+                Tutti gli appuntamenti →
               </Link>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </li>
+
+      <li className="relative" onMouseEnter={() => openDropdown('privati')} onMouseLeave={scheduleClose}>
+        <Link href="/eventi-aziendali" className="flex items-center gap-1 text-white/90 hover:text-white hover:bg-white/10 transition-colors text-body tracking-wide font-light cursor-pointer px-3 py-1.5 rounded-btn">
+          Eventi <ChevronDown />
+        </Link>
+        <AnimatePresence>
+          {activeDropdown === 'privati' && (
+            <motion.div
+              className="absolute top-full left-0 mt-3 bg-white rounded-card overflow-hidden min-w-56 shadow-xl"
+              onMouseEnter={() => openDropdown('privati')}
+              onMouseLeave={scheduleClose}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+            >
+              {eventiPrivatiVoci.map((v) => (
+                <Link key={v.href} href={v.href} onClick={() => setActiveDropdown(null)} className="block px-5 py-2.5 text-meta text-black/70 hover:text-black hover:bg-brand transition-colors">
+                  {v.label}
+                </Link>
+              ))}
             </motion.div>
           )}
         </AnimatePresence>
@@ -299,7 +335,7 @@ export default function Navbar({ oggi, orariDisplay, eventi = [] }: { oggi: stri
 
       {/* ── Navbar scrollata — fixed, transizione su transform e opacity ── */}
       <nav
-        className="hidden lg:block fixed top-0 left-0 right-0 z-50 bg-black/55 backdrop-blur-md"
+        className="hidden lg:block fixed top-0 left-0 right-0 z-[52] bg-black/55 backdrop-blur-md"
         style={{
           transform: scrolled ? 'translateY(0)' : 'translateY(-100%)',
           opacity: scrolled ? 1 : 0,
@@ -410,92 +446,73 @@ export default function Navbar({ oggi, orariDisplay, eventi = [] }: { oggi: stri
               )}
             </li>
 
-            {/* Eventi Speciali */}
+            {/* Appuntamenti */}
             <li className="border-b border-white/10">
-              {eventi.length > 0 ? (
-                <>
-                  <button
-                    className="w-full flex items-center justify-between py-4 text-white text-body cursor-pointer"
-                    onClick={() => setMobileExpanded(mobileExpanded === 'eventi' ? null : 'eventi')}
-                  >
-                    Appuntamenti
-                    <span className={`transition-transform duration-200 ${mobileExpanded === 'eventi' ? 'rotate-180' : ''}`}>
-                      <ChevronDown />
-                    </span>
-                  </button>
-                  {mobileExpanded === 'eventi' && (
-                    <div className="pb-4 flex flex-col gap-2">
-                      <Link
-                        href="/eventi-aziendali"
-                        className="flex items-center gap-3 rounded-card overflow-hidden bg-white/5 border border-white/10 hover:bg-white/10 active:bg-white/15 transition-colors px-4 py-3"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <span className="text-tiny text-white/40 uppercase tracking-wider block mb-0.5">Location & catering</span>
-                          <span className="text-meta text-white font-medium leading-snug block">Eventi Aziendali</span>
+              <button
+                className="w-full flex items-center justify-between py-4 text-white text-body cursor-pointer"
+                onClick={() => setMobileExpanded(mobileExpanded === 'eventi' ? null : 'eventi')}
+              >
+                Appuntamenti
+                <span className={`transition-transform duration-200 ${mobileExpanded === 'eventi' ? 'rotate-180' : ''}`}>
+                  <ChevronDown />
+                </span>
+              </button>
+              {mobileExpanded === 'eventi' && (
+                <div className="pb-4 flex flex-col gap-2">
+                  {appuntamenti.map((e, i) => (
+                    <Link
+                      key={i}
+                      href={e.href}
+                      className="flex items-center gap-3 rounded-card overflow-hidden bg-white/5 border border-white/10 hover:bg-white/10 active:bg-white/15 transition-colors"
+                    >
+                      {e.fotoHero ? (
+                        <div className="relative w-16 h-16 flex-shrink-0">
+                          <Image src={e.fotoHero} alt={e.titolo} fill className="object-cover" sizes="64px" />
                         </div>
-                      </Link>
-                      {eventi.map((e, i) => (
-                        <Link
-                          key={i}
-                          href={e.slug ? `/eventi-speciali/${e.slug}` : '/eventi-speciali'}
-                          className="flex items-center gap-3 rounded-card overflow-hidden bg-white/5 border border-white/10 hover:bg-white/10 active:bg-white/15 transition-colors"
-                        >
-                          {e.fotoHero ? (
-                            <div className="relative w-16 h-16 flex-shrink-0">
-                              <Image src={e.fotoHero} alt={e.titolo} fill className="object-cover" sizes="64px" />
-                            </div>
-                          ) : (
-                            <div className="w-16 h-16 flex-shrink-0 bg-white/5 flex items-center justify-center">
-                              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white/20">
-                                <rect x="2" y="5" width="16" height="11" rx="2" stroke="currentColor" strokeWidth="1.3" />
-                                <path d="M2 9h16M7 2v4M13 2v4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                              </svg>
-                            </div>
-                          )}
-                          <div className="flex-1 py-2 pr-3 min-w-0">
-                            <span className="text-tiny text-white/40 uppercase tracking-wider block mb-0.5">
-                              {e.ricorrente
-                                ? formatRicorrente(e, oggi, orariDisplay?.giorniChiusi)
-                                : e.data ? formatDataShort(e.data) : ''}
-                            </span>
-                            <span className="text-meta text-white font-medium leading-snug block truncate">{e.titolo}</span>
-                          </div>
-                        </Link>
-                      ))}
-                      <Link href="/eventi-speciali" className="text-label text-white/30 hover:text-white/60 transition-colors pt-1 text-right pr-1">
-                        Tutti gli appuntamenti →
-                      </Link>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <>
-                  <button
-                    className="w-full flex items-center justify-between py-4 text-white text-body cursor-pointer"
-                    onClick={() => setMobileExpanded(mobileExpanded === 'eventi' ? null : 'eventi')}
-                  >
-                    Appuntamenti
-                    <span className={`transition-transform duration-200 ${mobileExpanded === 'eventi' ? 'rotate-180' : ''}`}>
-                      <ChevronDown />
-                    </span>
-                  </button>
-                  {mobileExpanded === 'eventi' && (
-                    <div className="pb-4 flex flex-col gap-2">
-                      <Link
-                        href="/eventi-aziendali"
-                        className="flex items-center gap-3 rounded-card overflow-hidden bg-white/5 border border-white/10 hover:bg-white/10 active:bg-white/15 transition-colors px-4 py-3"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <span className="text-tiny text-white/40 uppercase tracking-wider block mb-0.5">Location & catering</span>
-                          <span className="text-meta text-white font-medium leading-snug block">Eventi Aziendali</span>
+                      ) : (
+                        <div className="w-16 h-16 flex-shrink-0 bg-white/5 flex items-center justify-center">
+                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-white/20">
+                            <rect x="2" y="5" width="16" height="11" rx="2" stroke="currentColor" strokeWidth="1.3" />
+                            <path d="M2 9h16M7 2v4M13 2v4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                          </svg>
                         </div>
+                      )}
+                      <div className="flex-1 py-2 pr-3 min-w-0">
+                        <span className="text-tiny text-white/40 uppercase tracking-wider block mb-0.5">
+                          {e.data}
+                        </span>
+                        <span className="text-meta text-white font-medium leading-snug block truncate">{e.titolo}</span>
+                      </div>
+                    </Link>
+                  ))}
+                  <Link href="/eventi-speciali" className="text-label text-white/30 hover:text-white/60 transition-colors pt-1 text-right pr-1">
+                    Tutti gli appuntamenti →
+                  </Link>
+                </div>
+              )}
+            </li>
+
+            {/* Eventi */}
+            <li className="border-b border-white/10">
+              <button
+                className="w-full flex items-center justify-between py-4 text-white text-body cursor-pointer"
+                onClick={() => setMobileExpanded(mobileExpanded === 'privati' ? null : 'privati')}
+              >
+                Eventi
+                <span className={`transition-transform duration-200 ${mobileExpanded === 'privati' ? 'rotate-180' : ''}`}>
+                  <ChevronDown />
+                </span>
+              </button>
+              {mobileExpanded === 'privati' && (
+                <ul className="pl-4 pb-3">
+                  {eventiPrivatiVoci.map((v) => (
+                    <li key={v.href}>
+                      <Link href={v.href} className="block py-2.5 text-meta text-white/60">
+                        {v.label}
                       </Link>
-                      <Link href="/eventi-speciali" className="text-label text-white/30 hover:text-white/60 transition-colors pt-1 text-right pr-1">
-                        Tutti gli appuntamenti →
-                      </Link>
-                    </div>
-                  )}
-                </>
+                    </li>
+                  ))}
+                </ul>
               )}
             </li>
 

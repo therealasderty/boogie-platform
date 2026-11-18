@@ -7,6 +7,8 @@ const TIPI_EVENTO = [
   'Pranzo di lavoro',
   'Team building',
   'Cena di Natale',
+  'Cenone di Capodanno',
+  'Comunione',
   'Altro',
 ]
 
@@ -149,7 +151,7 @@ export default function FormEventoAziendale({ defaultTipoEvento = '' }: { defaul
         <label className="text-neutral-500 font-medium" style={{ fontSize: 'var(--text-meta)' }}>
           Data o periodo indicativo
         </label>
-        <input name="data_evento" type="text" placeholder="Es. 15 dicembre 2025, o fine novembre"
+        <input name="data_evento" type="text" placeholder="Es. seconda settimana di dicembre, o una data precisa"
           className={inputClass} style={{ fontSize: 'var(--text-meta)' }} />
       </div>
 
