@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { salvaPrenotazione } from '@/lib/salva-prenotazione'
 
 const AIRTABLE_TOKEN   = process.env.AIRTABLE_TOKEN
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID
@@ -23,6 +24,11 @@ function isRateLimited(ip: string): boolean {
   if (timestamps.length >= maxRequests) return true
   ipLog.set(ip, [...timestamps, now])
   return false
+}
+
+function escHtml(value: unknown) {
+  return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 }
 
 function normalizePhoneForBrevo(raw: unknown): string | null {
@@ -65,28 +71,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Campi obbligatori mancanti' }, { status: 400 })
   }
 
-  const MAX_PER_SLOT = 10
-  const numPersone = parseInt(String(persone))
-
-  // ── Controllo capienza slot ──────────────────────────────────────
-  const capFormula = encodeURIComponent(
-    `AND(DATETIME_FORMAT({Data},'YYYY-MM-DD')="${String(data)}", {Ora}="${String(ora)}", {Stato}!="Cancellata")`
-  )
-  try {
-    const capRes = await fetch(
-      `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}?filterByFormula=${capFormula}&fields[]=Persone`,
-      { headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }, cache: 'no-store' }
-    )
-    if (capRes.ok) {
-      const capJson = await capRes.json() as { records: { fields: { Persone?: number } }[] }
-      const occupati = capJson.records.reduce((sum, r) => sum + (Number(r.fields.Persone) || 0), 0)
-      if (occupati + numPersone > MAX_PER_SLOT) {
-        return NextResponse.json({ success: false, error: 'slot_pieno' }, { status: 409 })
-      }
-    }
-  } catch (err) {
-    console.error('Capacity check error:', err)
-    // Fail-open: in caso di errore Airtable non blocchiamo la prenotazione
+  const numPersone = Number(persone)
+  if (typeof data !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(data) ||
+      typeof ora !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(ora) ||
+      !Number.isInteger(numPersone) || numPersone < 1 || numPersone > 10) {
+    return NextResponse.json({ success: false, error: 'Data, ora o numero di ospiti non validi' }, { status: 400 })
   }
 
   const nomeCompleto = cognome ? `${nome} ${cognome}` : String(nome)
@@ -98,7 +87,7 @@ export async function POST(req: NextRequest) {
   })
 
   // ── 0. Leggi configurazione conferma manuale ─────────────────────
-  let confermaManualeDays = new Set<number>()
+  const confermaManualeDays = new Set<number>()
   let confermaManualeDates: { id: string; dataInizio: string; dataFine: string }[] = []
   try {
     const configRes = await fetch(`${NETLIFY_URL}/.netlify/functions/get-configurazione`)
@@ -123,41 +112,32 @@ export async function POST(req: NextRequest) {
   // ── 1. Salva su Airtable ─────────────────────────────────────────
   let recordId: string | undefined
   try {
-    const res = await fetch(
-      `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}`,
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fields: {
-            'Nome':               nomeCompleto,
-            'Data':               data,
-            'Ora':                ora,
-            'Persone':            numPersone,
-            'Email':              email,
-            'Telefono':           telefono,
-            'Note':               note || '',
-            'Preferenza':         preferenza || null,
-            'Evento':             evento || null,
-            ...(menu_vegetariani != null ? { 'MenuVegetariani': Number(menu_vegetariani) } : {}),
-            'Canale':             'Sito web',
-            'Data Nascita':       data_nascita || null,
-            'Consenso Privacy':   consenso_privacy,
-            'Consenso Marketing': consenso_marketing,
-            'Timestamp':          new Date().toISOString(),
-            'Stato':              richiedeConferma ? 'In attesa' : 'Confermata',
-          },
-        }),
-      }
-    )
-    if (!res.ok) {
-      console.error('Airtable error:', await res.text())
-      return NextResponse.json({ success: false, error: 'Errore salvataggio' }, { status: 500 })
+    if (!AIRTABLE_TOKEN || !AIRTABLE_BASE_ID) throw new Error('Configurazione Airtable mancante')
+    const esito = await salvaPrenotazione({
+      'Nome':             nomeCompleto,
+      'Data':             data,
+      'Ora':              ora,
+      'Persone':          numPersone,
+      'Email':            email,
+      'Telefono':         telefono,
+      'Note':             note || '',
+      'Preferenza':       preferenza || null,
+      'Evento':           evento || null,
+      ...(menu_vegetariani != null ? { 'MenuVegetariani': Number(menu_vegetariani) } : {}),
+      'Canale':           'Sito web',
+      'Data Nascita':     data_nascita || null,
+      'Consenso Privacy': consenso_privacy,
+      'Consenso Marketing':consenso_marketing,
+      'Timestamp':        new Date().toISOString(),
+      'Stato':            richiedeConferma ? 'In attesa' : 'Confermata',
+    }, `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}`, AIRTABLE_TOKEN)
+    if ('errore' in esito) {
+      return NextResponse.json({ success: false, error: esito.errore }, { status: esito.errore === 'slot_pieno' ? 409 : 503 })
     }
-    recordId = (await res.json()).id
+    recordId = esito.id
   } catch (err) {
-    console.error('Airtable fetch error:', err)
-    return NextResponse.json({ success: false, error: 'Errore connessione' }, { status: 500 })
+    console.error('Prenotazione non confermata:', err)
+    return NextResponse.json({ success: false, error: 'disponibilita_non_verificabile' }, { status: 503 })
   }
 
   // ── 2. Telegram ──────────────────────────────────────────────────
@@ -271,15 +251,15 @@ export async function POST(req: NextRequest) {
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
 <tr><td align="center"><table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid #C4913A;">
 <tr><td style="padding:40px 40px 20px;">
-<p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Boogie Bistrot${evento ? ' · ' + evento : ''}</p>
+<p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Boogie Bistrot${evento ? ' · ' + escHtml(evento) : ''}</p>
 <h1 style="font-size:26px;color:#1A1610;margin:0 0 8px;font-weight:400;">Richiesta ricevuta!</h1>
 <p style="font-size:13px;color:#8B6F47;margin:0 0 24px;">Ti confermiamo a breve.</p>
-<p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 24px;">Ciao <strong>${nome}</strong>,<br>abbiamo ricevuto la tua richiesta di prenotazione. La verificheremo e ti invieremo la conferma definitiva al più presto.</p>
+<p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 24px;">Ciao <strong>${escHtml(nome)}</strong>,<br>abbiamo ricevuto la tua richiesta di prenotazione. La verificheremo e ti invieremo la conferma definitiva al più presto.</p>
 <table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin-bottom:28px;"><tr><td style="padding:20px 24px;">
-${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Evento</span><strong>${evento}</strong></p>` : ''}
+${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Evento</span><strong>${escHtml(evento)}</strong></p>` : ''}
 <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Data</span><strong>${dataFormattata}</strong></p>
-<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ora</span><strong>${ora}</strong></p>
-<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ospiti</span><strong>${persone} ${parseInt(String(persone)) === 1 ? 'persona' : 'persone'}</strong></p>
+<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ora</span><strong>${escHtml(ora)}</strong></p>
+<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ospiti</span><strong>${escHtml(persone)} ${parseInt(String(persone)) === 1 ? 'persona' : 'persone'}</strong></p>
 ${vegLabel ? `<p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Menu vegetariani</span><strong>${vegLabel}</strong></p>` : ''}
 </td></tr></table>
 <p style="font-size:13px;color:#8B6F47;line-height:1.6;">Per informazioni: <a href="mailto:${EMAIL_RISTORANTE}" style="color:#C4913A;">${EMAIL_RISTORANTE}</a></p>
@@ -312,15 +292,15 @@ ${vegLabel ? `<p style="margin:0;font-size:13px;"><span style="color:#8B6F47;fon
 <h1 style="font-size:22px;color:#1A1610;margin:0 0 6px;font-weight:400;">⏳ Nuova richiesta da confermare</h1>
 <p style="font-size:13px;color:#8B6F47;margin:0 0 24px;">Richiede conferma manuale</p>
 <table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin-bottom:28px;"><tr><td style="padding:20px 24px;">
-${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Evento</span><strong>🎉 ${evento}</strong></p>` : ''}
-<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Nome</span><strong>${nomeCompleto}</strong></p>
+${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Evento</span><strong>🎉 ${escHtml(evento)}</strong></p>` : ''}
+<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Nome</span><strong>${escHtml(nomeCompleto)}</strong></p>
 <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Data</span><strong>${dataFormattata}</strong></p>
-<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ora</span><strong>${ora}</strong></p>
-<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Persone</span><strong>${persone}</strong></p>
+<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ora</span><strong>${escHtml(ora)}</strong></p>
+<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Persone</span><strong>${escHtml(persone)}</strong></p>
 ${vegLabel ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Menu vegetariani</span><strong>🥗 ${vegLabel}</strong></p>` : ''}
-<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Email</span><strong>${email}</strong></p>
-<p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Telefono</span><strong>${telefono}</strong></p>
-${note ? `<p style="margin:10px 0 0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Note</span><strong>${note}</strong></p>` : ''}
+<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Email</span><strong>${escHtml(email)}</strong></p>
+<p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Telefono</span><strong>${escHtml(telefono)}</strong></p>
+${note ? `<p style="margin:10px 0 0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Note</span><strong>${escHtml(note)}</strong></p>` : ''}
 </td></tr></table>
 <table cellpadding="0" cellspacing="0" style="margin-bottom:20px;"><tr>
 <td><a href="${confermaUrl}" style="display:inline-block;background:#C4913A;color:white;text-decoration:none;padding:12px 24px;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;letter-spacing:0.05em;">✅ Conferma prenotazione</a></td>
@@ -364,15 +344,15 @@ ${note ? `<p style="margin:10px 0 0;font-size:13px;"><span style="color:#8B6F47;
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
 <tr><td align="center"><table width="520" cellpadding="0" cellspacing="0" style="background:white;border-top:3px solid #C4913A;">
 <tr><td style="padding:40px 40px 20px;">
-<p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Boogie Bistrot${evento ? ' · ' + evento : ''}</p>
+<p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Boogie Bistrot${evento ? ' · ' + escHtml(evento) : ''}</p>
 <h1 style="font-size:26px;color:#1A1610;margin:0 0 8px;font-weight:400;">Prenotazione confermata! 🎉</h1>
 <p style="font-size:13px;color:#8B6F47;margin:0 0 24px;">Il tuo tavolo è riservato.</p>
-<p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 24px;">Ciao <strong>${nome}</strong>,<br>siamo lieti di confermarti la prenotazione. Non vediamo l'ora di accoglierti!</p>
+<p style="font-size:15px;color:#4A4030;line-height:1.7;margin:0 0 24px;">Ciao <strong>${escHtml(nome)}</strong>,<br>siamo lieti di confermarti la prenotazione. Non vediamo l'ora di accoglierti!</p>
 <table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin-bottom:28px;"><tr><td style="padding:20px 24px;">
-${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Evento</span><strong>${evento}</strong></p>` : ''}
+${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Evento</span><strong>${escHtml(evento)}</strong></p>` : ''}
 <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Data</span><strong>${dataFormattata}</strong></p>
-<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ora</span><strong>${ora}</strong></p>
-<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ospiti</span><strong>${persone} ${parseInt(String(persone)) === 1 ? 'persona' : 'persone'}</strong></p>
+<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ora</span><strong>${escHtml(ora)}</strong></p>
+<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ospiti</span><strong>${escHtml(persone)} ${parseInt(String(persone)) === 1 ? 'persona' : 'persone'}</strong></p>
 ${vegLabel ? `<p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Menu vegetariani</span><strong>${vegLabel}</strong></p>` : ''}
 </td></tr></table>
 <p style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8B6F47;margin:0 0 12px;">Aggiungi al calendario</p>
@@ -409,15 +389,15 @@ ${vegLabel ? `<p style="margin:0;font-size:13px;"><span style="color:#8B6F47;fon
 <h1 style="font-size:22px;color:#1A1610;margin:0 0 6px;font-weight:400;">✅ Nuova prenotazione confermata</h1>
 <p style="font-size:13px;color:#8B6F47;margin:0 0 24px;">Confermata automaticamente dal sito</p>
 <table cellpadding="0" cellspacing="0" width="100%" style="background:#F5F0E8;border-left:3px solid #C4913A;margin-bottom:28px;"><tr><td style="padding:20px 24px;">
-${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Evento</span><strong>🎉 ${evento}</strong></p>` : ''}
-<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Nome</span><strong>${nomeCompleto}</strong></p>
+${evento ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Evento</span><strong>🎉 ${escHtml(evento)}</strong></p>` : ''}
+<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Nome</span><strong>${escHtml(nomeCompleto)}</strong></p>
 <p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Data</span><strong>${dataFormattata}</strong></p>
-<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ora</span><strong>${ora}</strong></p>
-<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Persone</span><strong>${persone}</strong></p>
+<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Ora</span><strong>${escHtml(ora)}</strong></p>
+<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Persone</span><strong>${escHtml(persone)}</strong></p>
 ${vegLabel ? `<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Menu vegetariani</span><strong>🥗 ${vegLabel}</strong></p>` : ''}
-<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Email</span><strong>${email}</strong></p>
-<p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Telefono</span><strong>${telefono}</strong></p>
-${note ? `<p style="margin:10px 0 0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Note</span><strong>${note}</strong></p>` : ''}
+<p style="margin:0 0 10px;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Email</span><strong>${escHtml(email)}</strong></p>
+<p style="margin:0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Telefono</span><strong>${escHtml(telefono)}</strong></p>
+${note ? `<p style="margin:10px 0 0;font-size:13px;"><span style="color:#8B6F47;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:3px;">Note</span><strong>${escHtml(note)}</strong></p>` : ''}
 </td></tr></table>
 </td></tr>
 <tr><td style="padding:16px 40px 24px;border-top:1px solid #D4C9B0;">

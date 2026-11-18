@@ -43,23 +43,17 @@ async function fetchStaticTableAllRecords(key: string, baseUrl: string): Promise
 
   const allRecords: unknown[] = []
   let url: string | null = baseUrl
-  try {
-    while (url) {
-      const res = await fetch(url, { headers: atHeaders, cache: 'no-store' })
-      if (!res.ok) return null
-      const json = (await res.json()) as { records?: unknown[]; offset?: string }
-      allRecords.push(...(json.records ?? []))
-      const off = json.offset
-      if (!off) break
-      const sep = baseUrl.includes('?') ? '&' : '?'
-      url = `${baseUrl}${sep}offset=${encodeURIComponent(off)}`
-    }
-    const merged: JsonValue = { records: allRecords }
-    staticTableCache.set(key, { expiresAt: Date.now() + STATIC_TABLES_TTL_MS, value: merged })
-    return merged
-  } catch {
-    return null
+  while (url) {
+    const res = await fetch(url, { headers: atHeaders, cache: 'no-store' })
+    if (!res.ok) throw new Error(`Configurazione disponibilità: HTTP ${res.status}`)
+    const json = (await res.json()) as { records: unknown[]; offset?: string }
+    allRecords.push(...json.records)
+    const sep = baseUrl.includes('?') ? '&' : '?'
+    url = json.offset ? `${baseUrl}${sep}offset=${encodeURIComponent(json.offset)}` : null
   }
+  const merged: JsonValue = { records: allRecords }
+  staticTableCache.set(key, { expiresAt: Date.now() + STATIC_TABLES_TTL_MS, value: merged })
+  return merged
 }
 
 export async function GET(req: NextRequest) {
@@ -301,12 +295,12 @@ export async function GET(req: NextRequest) {
     let prenUrl: string | null = prenBase
     while (prenUrl) {
       const prenRes = await fetch(prenUrl, { headers: atHeaders, cache: 'no-store' })
-      if (!prenRes.ok) break
+      if (!prenRes.ok) throw new Error(`Lettura prenotazioni: HTTP ${prenRes.status}`)
       const prenJson = (await prenRes.json()) as {
-        records?: { fields: Record<string, unknown> }[]
+        records: { fields: Record<string, unknown> }[]
         offset?: string
       }
-      prenRecords.push(...(prenJson.records ?? []))
+      prenRecords.push(...prenJson.records)
       if (!prenJson.offset) break
       prenUrl = `${prenBase}&offset=${encodeURIComponent(prenJson.offset)}`
     }
@@ -337,6 +331,6 @@ export async function GET(req: NextRequest) {
     })
   } catch (err) {
     console.error('disponibilita error:', err)
-    return NextResponse.json({ chiuso: true, fasce: [] }, { status: 500 })
+    return NextResponse.json({ error: 'disponibilita_non_verificabile' }, { status: 503, headers: { 'Cache-Control': 'no-store' } })
   }
 }

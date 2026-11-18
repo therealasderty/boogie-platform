@@ -93,9 +93,10 @@ exports.handler = async (event) => {
     'api-key': BREVO_API_KEY,
   }
 
+  let recordId
   // ── Salva richiesta su Airtable ─────────────────────────────────
   try {
-    await fetch(
+    const saved = await fetch(
       `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/RichiesteEventi`,
       {
         method: 'POST',
@@ -118,14 +119,19 @@ exports.handler = async (event) => {
         }),
       }
     )
+    if (!saved.ok) throw new Error(`Airtable HTTP ${saved.status}`)
+    recordId = (await saved.json()).records?.[0]?.id
+    if (!recordId) throw new Error('ID richiesta mancante')
   } catch (err) {
     console.error('Airtable save error:', err)
+    return { statusCode: 503, headers, body: 'Salvataggio temporaneamente non disponibile' }
   }
 
   // ── Salva/aggiorna contatto su Brevo ────────────────────────────
   try {
     const normalizedPhone = normalizePhoneForBrevo(telefono)
     await fetch('https://api.brevo.com/v3/contacts', {
+      signal: AbortSignal.timeout(2500),
       method: 'POST',
       headers: brevoHeaders,
       body: JSON.stringify({
@@ -218,34 +224,43 @@ exports.handler = async (event) => {
 </body>
 </html>`
 
-  try {
-    await Promise.all([
-      fetch('https://api.brevo.com/v3/smtp/email', {
-        method: 'POST',
-        headers: brevoHeaders,
-        body: JSON.stringify({
-          sender: { name: 'Boogie Bistrot', email: EMAIL_FROM },
-          to: [{ email, name: nome }],
-          subject: 'Abbiamo ricevuto la tua richiesta — Boogie Bistrot',
-          htmlContent: emailUtenteHtml,
-        }),
-      }),
-      fetch('https://api.brevo.com/v3/smtp/email', {
-        method: 'POST',
-        headers: brevoHeaders,
-        body: JSON.stringify({
-          sender: { name: 'Sito Boogie Bistrot', email: EMAIL_FROM },
-          to: [{ email: EMAIL_RISTORANTE }],
-          replyTo: { email, name: nome },
-          subject: `🏢 Evento aziendale — ${nome}${cognome ? ' ' + cognome : ''} (${num_ospiti} ospiti)`,
-          htmlContent: emailNotificaHtml,
-        }),
-      }),
-    ])
-  } catch (err) {
-    console.error('Brevo error:', err)
-    return { statusCode: 500, headers, body: 'Errore invio email' }
+  async function inviaNotifica(destinatario, messaggio) {
+    const body = JSON.stringify({
+      ...messaggio,
+      headers: { idempotencyKey: `${recordId}-${destinatario}` },
+    })
+    for (let tentativo = 0; tentativo < 3; tentativo++) {
+      try {
+        const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST', headers: brevoHeaders, body, signal: AbortSignal.timeout(3500),
+        })
+        if (res.ok) return
+        if (res.status < 500 && res.status !== 429 && res.status !== 408) {
+          console.error('Brevo notifica', recordId, destinatario, res.status)
+          return
+        }
+        throw new Error(`Brevo HTTP ${res.status}`)
+      } catch (err) {
+        console.error('Brevo notifica', recordId, destinatario, tentativo + 1, err.message)
+      }
+      if (tentativo < 2) await new Promise(resolve => setTimeout(resolve, 300 * (2 ** tentativo)))
+    }
   }
 
+  await Promise.all([
+    inviaNotifica('cliente', {
+      sender: { name: 'Boogie Bistrot', email: EMAIL_FROM },
+      to: [{ email, name: nome }],
+      subject: 'Abbiamo ricevuto la tua richiesta — Boogie Bistrot',
+      htmlContent: emailUtenteHtml,
+    }),
+    inviaNotifica('ristorante', {
+      sender: { name: 'Sito Boogie Bistrot', email: EMAIL_FROM },
+      to: [{ email: EMAIL_RISTORANTE }],
+      replyTo: { email, name: nome },
+      subject: `Nuova richiesta evento — ${nome}${cognome ? ' ' + cognome : ''} (${num_ospiti} ospiti)`,
+      htmlContent: emailNotificaHtml,
+    }),
+  ])
   return { statusCode: 200, headers, body: JSON.stringify({ success: true }) }
 }

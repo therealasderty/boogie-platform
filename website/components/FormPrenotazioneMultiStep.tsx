@@ -222,7 +222,7 @@ export default function FormPrenotazioneMultiStep({
   // ── Disponibilità ────────────────────────────────────────────────────────
 
   // Orario fisso: partiamo già in stato pronto (niente fetch)
-  const [disponibilita, setDisponibilita] = useState<'idle' | 'loading' | 'chiuso' | 'bloccato' | 'pronto'>(
+  const [disponibilita, setDisponibilita] = useState<'idle' | 'loading' | 'errore' | 'chiuso' | 'bloccato' | 'pronto'>(
     orarioFisso ? 'pronto' : 'idle'
   )
   const [fasce, setFasce]                         = useState<Fascia[]>([])
@@ -262,9 +262,14 @@ export default function FormPrenotazioneMultiStep({
     setFasceSelezionate([])
     setFasceBlocco([])
 
-    fetch(`/api/disponibilita?data=${data}`, { cache: 'no-store' })
-      .then(r => r.json())
+    const controller = new AbortController()
+    fetch(`/api/disponibilita?data=${data}`, { cache: 'no-store', signal: controller.signal })
+      .then(r => {
+        if (!r.ok) throw new Error('Disponibilità non verificabile')
+        return r.json()
+      })
       .then(json => {
+        if (controller.signal.aborted) return
         const chiuso = json.chiuso || !json.fasce?.length
 
         // Auto-advance per eventi ricorrenti
@@ -320,7 +325,8 @@ export default function FormPrenotazioneMultiStep({
         }
         setDisponibilita('pronto')
       })
-      .catch(() => setDisponibilita('chiuso'))
+      .catch(() => { if (!controller.signal.aborted) setDisponibilita('errore') })
+    return () => controller.abort()
   }, [data, orario, orarioFine, haRange, ricorrente, isEventoMode, orarioFisso, refreshKey])
 
   // ── Invalida slot selezionato se persone cambiano ────────────────────────
@@ -379,6 +385,11 @@ export default function FormPrenotazioneMultiStep({
           website, // honeypot
         }),
       })
+      if (res.status === 503) {
+        setErroreMsg('Disponibilità temporaneamente non verificabile. Riprova tra poco o chiamaci.')
+        setStato('pronto')
+        return
+      }
       if (res.status === 409) {
         const json = await res.json() as { error?: string }
         if (json.error === 'slot_pieno') {
@@ -585,6 +596,12 @@ export default function FormPrenotazioneMultiStep({
                 </div>
               )}
 
+              {disponibilita === 'errore' && (
+                <p role="alert">
+                  Disponibilità temporaneamente non verificabile.{' '}
+                  <button type="button" className="underline" onClick={() => setRefreshKey(k => k + 1)}>Riprova</button>
+                </p>
+              )}
               {disponibilita === 'chiuso' && !ricorrente && (
                 <div className="rounded-card border border-black/10 bg-black/3 p-5">
                   <p className="text-black/70 font-medium mb-1" style={{ fontSize: 'var(--text-body)' }}>

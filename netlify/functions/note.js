@@ -14,6 +14,12 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 }
 
+async function airtable(url, options = {}) {
+  const res = await fetch(url, { ...options, headers: atHeaders })
+  if (!res.ok) throw new Error(`Airtable HTTP ${res.status}`)
+  return res.json()
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: corsHeaders, body: '' }
 
@@ -24,8 +30,7 @@ exports.handler = async (event) => {
 
   if (method === 'GET') {
     try {
-      const res = await fetch(`${BASE_URL}?sort[0][field]=Data&sort[0][direction]=desc&maxRecords=50`, { headers: atHeaders })
-      const json = await res.json()
+      const json = await airtable(`${BASE_URL}?sort[0][field]=Data&sort[0][direction]=desc&maxRecords=50`)
       const note = (json.records || []).map(r => ({
         id: r.id,
         testo: r.fields.Testo || '',
@@ -35,9 +40,9 @@ exports.handler = async (event) => {
         categoria: r.fields.Categoria || 'Generale',
         per: r.fields.Per || [],
       }))
-      return { statusCode: 200, body: JSON.stringify({ success: true, note }) }
+      return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success: true, note }) }
     } catch (e) {
-      return { statusCode: 500, body: JSON.stringify({ success: false, error: e.message }) }
+      return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ success: false, error: e.message }) }
     }
   }
 
@@ -46,23 +51,20 @@ exports.handler = async (event) => {
       const body = JSON.parse(event.body)
 
       if (body.action === 'toggle' && body.id) {
-        const res = await fetch(`${BASE_URL}/${body.id}`, {
+        const json = await airtable(`${BASE_URL}/${body.id}`, {
           method: 'PATCH',
-          headers,
           body: JSON.stringify({ fields: { Completata: body.completata } }),
         })
-        const json = await res.json()
-        return { statusCode: 200, body: JSON.stringify({ success: true, record: json }) }
+        return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success: true, record: json }) }
       }
 
       if (body.action === 'delete' && body.id) {
-        await fetch(`${BASE_URL}/${body.id}`, { method: 'DELETE', headers })
-        return { statusCode: 200, body: JSON.stringify({ success: true }) }
+        await airtable(`${BASE_URL}/${body.id}`, { method: 'DELETE' })
+        return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success: true }) }
       }
 
-      const res = await fetch(BASE_URL, {
+      const json = await airtable(BASE_URL, {
         method: 'POST',
-        headers,
         body: JSON.stringify({
           fields: {
             Testo: body.testo,
@@ -74,12 +76,11 @@ exports.handler = async (event) => {
           }
         }),
       })
-      const json = await res.json()
-      return { statusCode: 200, body: JSON.stringify({ success: true, record: json }) }
+      return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success: true, record: json }) }
     } catch (e) {
-      return { statusCode: 500, body: JSON.stringify({ success: false, error: e.message }) }
+      return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ success: false, error: e.message }) }
     }
   }
 
-  return { statusCode: 405, body: 'Method not allowed' }
+  return { statusCode: 405, headers: corsHeaders, body: 'Method not allowed' }
 }
