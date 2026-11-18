@@ -284,12 +284,16 @@ export default function FormPrenotazioneMultiStep({
         if (chiuso) { setDisponibilita('chiuso'); return }
 
         // Filtra slot nel range evento se haRange
+        const inizio = haRange ? timeToMin(orario!) : 0
+        const fine = haRange ? timeToMin(orarioFine!) : 0
+        // L'API restituisce gli slot della sola data richiesta. La fine può cadere il giorno dopo.
+        const fineEvento = fine < inizio ? fine + 24 * 60 : fine
         const fasceFiltrate: Fascia[] = json.fasce.map((f: Fascia) => ({
           ...f,
           slots: haRange
             ? f.slots.filter((s: Slot) => {
                 const m = timeToMin(s.ora)
-                return m >= timeToMin(orario!) && m < timeToMin(orarioFine!)
+                return m >= inizio && m < fineEvento
               })
             : f.slots,
         })).filter((f: Fascia) => f.slots.length > 0)

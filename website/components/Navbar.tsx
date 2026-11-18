@@ -180,15 +180,13 @@ export default function Navbar({ oggi, orariDisplay, eventi = [] }: { oggi: stri
 
   const isTopHome = isHome && !scrolled
 
-  const appuntamenti = [
-    { titolo: 'Capodanno 2026', href: '/capodanno', data: formatDataShort('2026-12-31'), fotoHero: null },
-    ...eventi.map(e => ({
-      titolo: e.titolo,
-      href: e.slug ? `/eventi-speciali/${e.slug}` : '/eventi-speciali',
-      data: e.ricorrente ? formatRicorrente(e, oggi, orariDisplay?.giorniChiusi) : e.data ? formatDataShort(e.data) : '',
-      fotoHero: e.fotoHero,
-    })),
-  ]
+  const appuntamenti = eventi.map(e => ({
+    id: e.id,
+    titolo: e.titolo,
+    href: e.slug ? `/eventi-speciali/${e.slug}` : '/eventi-speciali',
+    data: e.ricorrente ? formatRicorrente(e, oggi, orariDisplay?.giorniChiusi) : e.data ? formatDataShort(e.data) : '',
+    fotoHero: e.fotoHero,
+  }))
 
   function openDropdown(name: string) {
     if (closeTimer.current) clearTimeout(closeTimer.current)
@@ -242,8 +240,8 @@ export default function Navbar({ oggi, orariDisplay, eventi = [] }: { oggi: stri
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18, ease: 'easeOut' }}
             >
-              {appuntamenti.map((e, i) => (
-                <Link key={i} href={e.href} onClick={() => setActiveDropdown(null)} className="block px-5 py-3 hover:bg-brand transition-colors border-b border-black/5 last:border-b-0">
+              {appuntamenti.map(e => (
+                <Link key={e.id} href={e.href} onClick={() => setActiveDropdown(null)} className="block px-5 py-3 hover:bg-brand transition-colors border-b border-black/5 last:border-b-0">
                   <span className="text-tiny text-black/40 uppercase tracking-wider block">
                     {e.data}
                   </span>
@@ -459,9 +457,9 @@ export default function Navbar({ oggi, orariDisplay, eventi = [] }: { oggi: stri
               </button>
               {mobileExpanded === 'eventi' && (
                 <div className="pb-4 flex flex-col gap-2">
-                  {appuntamenti.map((e, i) => (
+                  {appuntamenti.map(e => (
                     <Link
-                      key={i}
+                      key={e.id}
                       href={e.href}
                       className="flex items-center gap-3 rounded-card overflow-hidden bg-white/5 border border-white/10 hover:bg-white/10 active:bg-white/15 transition-colors"
                     >

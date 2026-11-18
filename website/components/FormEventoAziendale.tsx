@@ -7,7 +7,6 @@ const TIPI_EVENTO = [
   'Pranzo di lavoro',
   'Team building',
   'Cena di Natale',
-  'Cenone di Capodanno',
   'Comunione',
   'Altro',
 ]
