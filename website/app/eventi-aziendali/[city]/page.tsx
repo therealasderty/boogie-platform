@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import PaginaHero from '@/components/PaginaHero'
@@ -6,6 +7,7 @@ import SezioneVieni from '@/components/SezioneVieni'
 import FadeIn from '@/components/FadeIn'
 import FormEventoAziendale from '@/components/FormEventoAziendale'
 import GrigliaFotoLocation from '@/components/GrigliaFotoLocation'
+import { vociMenuAziendale } from '@/lib/menu-aziendali'
 import { fetchMedia } from '@/lib/media'
 import { fetchLocalita, fetchLocalitaBySlug } from '@/lib/localita'
 
@@ -28,13 +30,6 @@ const PUNTI_FORZA = [
     titolo: 'Menu personalizzati',
     testo: 'Il nostro chef crea per voi un menu su misura, studiato nei minimi dettagli per soddisfare ogni esigenza.',
   },
-]
-
-const VOCI_MENU = [
-  'Menu personalizzati e flessibili nel numero di portate',
-  'Timing del servizio adattabile alle vostre esigenze',
-  'Possibilità di menu tematici o concept originali',
-  'Selezione di vini e birre artigianali brianzole abbinate ad ogni portata',
 ]
 
 
@@ -175,11 +170,14 @@ export default async function EventiAziendaliCityPage(
                 creerà per voi un menu su misura, con piatti del territorio rivisitati e ingredienti freschi
                 selezionati — pensato nei minimi dettagli per soddisfare le vostre preferenze.
               </p>
+              <Link href="/cene-aziendali-natale#menu-aziendali" className="inline-block mt-4 text-brand underline underline-offset-4">
+                Scoprite i tre menù aziendali più richiesti per Natale
+              </Link>
             </FadeIn>
 
             <FadeIn delay={0.1}>
               <ul className="flex flex-col gap-4 mb-10">
-                {VOCI_MENU.map((voce) => (
+                {vociMenuAziendale.map((voce) => (
                   <li
                     key={voce}
                     className="flex items-start gap-3 text-white/70 font-light"

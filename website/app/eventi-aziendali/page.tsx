@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import type { Metadata } from 'next'
 import PaginaHero from '@/components/PaginaHero'
 import Footer from '@/components/Footer'
@@ -5,6 +6,7 @@ import FadeIn from '@/components/FadeIn'
 import FormEventoAziendale from '@/components/FormEventoAziendale'
 import GrigliaFotoLocation from '@/components/GrigliaFotoLocation'
 import SezioneVieni from '@/components/SezioneVieni'
+import { vociMenuAziendale } from '@/lib/menu-aziendali'
 import { fetchMedia } from '@/lib/media'
 
 
@@ -32,14 +34,6 @@ const PUNTI_FORZA = [
     titolo: 'Formule flessibili',
     testo: 'Cena, pranzo di lavoro, aperitivo, team building: adattiamo tempi e portate al tipo di evento.',
   },
-]
-
-const VOCI_MENU = [
-  'Numero di portate e abbinamenti concordati con voi',
-  'Tempi del servizio adattabili (pausa tra portate per speech, premiazioni, ecc.)',
-  'Menu tematici o formati originali su richiesta',
-  'Selezione di vini e birre artigianali brianzole',
-  'Varianti vegetariane, senza glutine e senza lattosio senza costi aggiuntivi',
 ]
 
 export default async function EventiAziendaliPage() {
@@ -133,11 +127,14 @@ export default async function EventiAziendaliPage() {
                 tempi e abbinamenti al tipo di serata. Ingredienti di stagione,
                 molti da produttori della Brianza.
               </p>
+              <Link href="/cene-aziendali-natale#menu-aziendali" className="inline-block mt-4 text-brand underline underline-offset-4">
+                Scoprite i tre menù aziendali più richiesti per Natale
+              </Link>
             </FadeIn>
 
             <FadeIn delay={0.1}>
               <ul className="flex flex-col gap-4 mb-10">
-                {VOCI_MENU.map((voce) => (
+                {vociMenuAziendale.map((voce) => (
                   <li
                     key={voce}
                     className="flex items-start gap-3 text-white/70 font-light"

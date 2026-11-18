@@ -14,14 +14,14 @@ export const revalidate = 259200
 export const metadata: Metadata = {
   title: 'Cena di Natale Aziendale in Brianza | Boogie Bistrot — Colle Brianza',
   description:
-    'Cena di Natale aziendale al Boogie Bistrot di Colle Brianza: 3 menu da 45 a 55 € a persona, bevande incluse. Sala privata, da 10 a 80 ospiti. Richiedi il preventivo.',
+    'Cena di Natale aziendale al Boogie Bistrot di Colle Brianza: menù personalizzabili. Le tre proposte più richieste vanno da 45 a 55 € a persona, bevande incluse. Sala privata, da 10 a 80 ospiti. Richiedi il preventivo.',
   alternates: {
     canonical: 'https://boogiebistrot.com/cene-aziendali-natale',
   },
   openGraph: {
     title: 'Cena di Natale Aziendale in Brianza | Boogie Bistrot',
     description:
-      'Cena di Natale aziendale al Boogie Bistrot di Colle Brianza: 3 menu da 45 a 55 € a persona, bevande incluse. Sala privata, da 10 a 80 ospiti. Richiedi il preventivo.',
+      'Cena di Natale aziendale al Boogie Bistrot di Colle Brianza: menù personalizzabili. Le tre proposte più richieste vanno da 45 a 55 € a persona, bevande incluse. Sala privata, da 10 a 80 ospiti. Richiedi il preventivo.',
     locale: 'it_IT',
     siteName: 'Boogie Bistrot',
   },
@@ -33,12 +33,12 @@ const PUNTI_FORZA = [
     testo: 'Spazi privati per il vostro gruppo, da 10 a 80 persone, per tutta la durata della serata.',
   },
   {
-    titolo: 'Tre menu a prezzo fisso',
+    titolo: 'Menù su misura',
     testo: 'Risotto alla zucca, brasato con polenta, tagliolini al ragù di cervo: da 45 a 55 € a persona, bevande incluse.',
   },
   {
     titolo: 'Esigenze alimentari',
-    testo: 'Varianti vegetariane, senza glutine e senza lattosio preparate senza costi aggiuntivi.',
+    testo: 'Prepariamo varianti vegetariane, vegane, per celiaci e per chi ha intolleranze alimentari.',
   },
 ]
 
@@ -91,7 +91,7 @@ const FAQ_NATALE: FaqItem[] = [
     attivo: true,
     domanda: 'Quanto costa la cena di Natale aziendale a persona?',
     risposta:
-      '<p>Proponiamo tre menu a <strong>45, 50 o 55 € a persona</strong>, bevande incluse: acqua, vino (una bottiglia ogni 3 persone) e caffè. Compilate il form per ricevere il preventivo dettagliato.</p>',
+      '<p>I tre menù che trovate qui costano <strong>45, 50 e 55 € a persona</strong>, con acqua, vino (una bottiglia ogni tre persone) e caffè. Se preferite altre portate o avete in mente un altro prezzo, concordiamo insieme una proposta per il vostro gruppo.</p>',
   },
   {
     id: 'faq-natale-3',
@@ -105,9 +105,9 @@ const FAQ_NATALE: FaqItem[] = [
     id: 'faq-natale-4',
     ordine: 4,
     attivo: true,
-    domanda: 'Posso avere un menu per celiaci, vegetariani o con allergie?',
+    domanda: 'Potete adattare il menù per chi ha esigenze alimentari?',
     risposta:
-      '<p>Sì. Prepariamo <strong>varianti vegetariane, senza glutine e senza lattosio</strong>. Per altre allergie o intolleranze, segnalatele al momento della prenotazione. Nessun costo aggiuntivo.</p>',
+      '<p>Sì. Prepariamo <strong>varianti vegetariane, vegane e per celiaci</strong> e adattiamo i piatti a ogni tipo di intolleranza, anche al lattosio. Segnalateci eventuali intolleranze o allergie quando ci contattate, così concordiamo insieme le alternative. Nessun costo aggiuntivo.</p>',
   },
   {
     id: 'faq-natale-6',
@@ -178,8 +178,8 @@ export default async function CeneAziendaliNatalePage() {
                 style={{ fontSize: 'var(--text-lead)' }}
               >
                 Al Boogie Bistrot di Colle Brianza organizziamo cene di Natale aziendali
-                per gruppi da 10 a 80 persone. Tre menu da 45 a 55 euro a persona, bevande incluse,
-                in una sala riservata per il vostro gruppo.
+                per gruppi da 10 a 80 persone, con una sala riservata. Scegliamo insieme a voi i piatti
+                e il numero di portate in base al prezzo che avete in mente.
               </p>
             </FadeIn>
 
@@ -243,15 +243,15 @@ export default async function CeneAziendaliNatalePage() {
                 className="text-white/60 font-light leading-relaxed"
                 style={{ fontSize: 'var(--text-body)' }}
               >
-                Oltre ai tre menu da 45 a 55 euro, possiamo adattare la formula al vostro gruppo:
-                cena completa, pranzo di fine anno o aperitivo con stuzzichini.
+                Per gli auguri con i colleghi potete scegliere una cena servita al tavolo,
+                un pranzo di fine anno o un aperitivo con stuzzichini.
               </p>
             </FadeIn>
 
             <FadeIn delay={0.1}>
               <div className="flex flex-col gap-4">
                 {[
-                  { label: 'Cena', desc: 'I tre menu da 45 a 55 €, servizio al tavolo, da 10 a 80 persone.' },
+                  { label: 'Cena', desc: 'Menù concordato insieme, con servizio al tavolo per gruppi da 10 a 80 persone.' },
                   { label: 'Pranzo', desc: 'Stessi menu della cena, per chi preferisce festeggiare di giorno.' },
                   { label: 'Aperitivo', desc: 'Formula più informale con stuzzichini, adatta a grandi gruppi.' },
                 ].map((item) => (
@@ -354,7 +354,7 @@ export default async function CeneAziendaliNatalePage() {
       </section>
 
       {/* ── Menu natalizi ── */}
-      <section className="py-20 md:py-28 px-6 md:px-14 bg-surface-dark border-t border-white/5">
+      <section id="menu-aziendali" className="scroll-mt-20 py-20 md:py-28 px-6 md:px-14 bg-surface-dark border-t border-white/5">
         <div className="max-w-6xl mx-auto">
           <FadeIn>
             <span
@@ -367,15 +367,19 @@ export default async function CeneAziendaliNatalePage() {
               className="font-semibold text-white mt-4 mb-6 leading-snug"
               style={{ fontSize: 'var(--text-section)' }}
             >
-              I tre menu di Natale
+              I menù di Natale più richiesti
             </h2>
             <div className="w-10 h-px bg-white/10 mb-6" />
             <p
               className="text-white/60 font-light leading-relaxed max-w-2xl mb-14"
               style={{ fontSize: 'var(--text-body)' }}
             >
-              Tre proposte a prezzo fisso, da 45 a 55 € a persona. Ogni menu comprende
-              acqua, vino (rosso o bianco, una bottiglia ogni 3 persone) e caffè.
+              Questi tre menù sono quelli che ci chiedete più spesso e che ci danno più
+              soddisfazione in cucina. Abbiamo anche altre proposte, comprese le formule più
+              tradizionali con antipasto, primo e secondo. Possiamo cambiare i piatti, il numero
+              e l’ordine delle portate e concordare con voi il prezzo a persona.
+              Nei tre menù qui sotto sono inclusi acqua, vino (una bottiglia ogni tre persone)
+              e caffè.
             </p>
           </FadeIn>
 
@@ -433,15 +437,16 @@ export default async function CeneAziendaliNatalePage() {
                 className="text-brand font-medium mb-3"
                 style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
               >
-                ESIGENZE ALIMENTARI
+                DA SAPERE PRIMA DI PRENOTARE
               </p>
               <p
                 className="text-white/60 font-light leading-relaxed"
                 style={{ fontSize: 'var(--text-body)' }}
               >
-                Segnalate intolleranze, allergie o preferenze alimentari al momento della
-                prenotazione. Prepariamo varianti personalizzate per ogni commensale, senza
-                costi aggiuntivi.
+                Per i bambini proponiamo un menù da <strong>25 €</strong>, da concordare prima della cena.
+                Se nel gruppo ci sono persone vegetariane, vegane, celiache o con intolleranze alimentari,
+                ditecelo alla prenotazione e sceglieremo insieme i piatti adatti.
+                Anche i cani sono i benvenuti.
               </p>
             </div>
           </FadeIn>
