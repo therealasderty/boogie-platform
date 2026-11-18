@@ -34,6 +34,7 @@ const nextConfig: NextConfig = {
       // Galleria
       { source: '/galleria-fotografica', destination: '/galleria', permanent: true },
       // Alias comuni
+      { source: '/comunioni', destination: '/comunioni-e-cresime', permanent: true },
       { source: '/capodanno', destination: '/eventi-speciali/capodanno', permanent: true },
       { source: '/menu', destination: '/menu/specialita', permanent: true },
     ]

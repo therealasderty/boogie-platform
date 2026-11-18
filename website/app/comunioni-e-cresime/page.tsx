@@ -12,16 +12,16 @@ import type { FaqItem } from '@/lib/faq'
 export const revalidate = 259200
 
 export const metadata: Metadata = {
-  title: 'Comunioni al Boogie Bistrot | Colle Brianza — Menu da 45 €',
+  title: 'Comunioni e Cresime al Boogie Bistrot | Colle Brianza — Menu da 45 €',
   description:
-    'Festeggia la prima comunione al Boogie Bistrot di Colle Brianza: menu carne a 45 € o pesce a 50 € a persona, sala riservata, giardino e torta cerimonia inclusa.',
+    'Pranzi per comunioni e cresime al Boogie Bistrot di Colle Brianza. Menù di carne a 45 € o di pesce a 50 € a persona, con torta inclusa, sala riservata e giardino.',
   alternates: {
-    canonical: 'https://boogiebistrot.com/comunioni',
+    canonical: 'https://boogiebistrot.com/comunioni-e-cresime',
   },
   openGraph: {
-    title: 'Comunioni al Boogie Bistrot | Colle Brianza',
+    title: 'Comunioni e Cresime al Boogie Bistrot | Colle Brianza',
     description:
-      'Festeggia la prima comunione al Boogie Bistrot di Colle Brianza: menu carne a 45 € o pesce a 50 € a persona, sala riservata, giardino e torta cerimonia inclusa.',
+      'Pranzi per comunioni e cresime al Boogie Bistrot di Colle Brianza. Menù di carne a 45 € o di pesce a 50 € a persona, con torta inclusa, sala riservata e giardino.',
     locale: 'it_IT',
     siteName: 'Boogie Bistrot',
     images: [{ url: 'https://pub-412a895afa8e491c84ad5df75bc1458b.r2.dev/media/1780389736209-media_1.1_TaY9KSJq6.jpg' }],
@@ -109,7 +109,7 @@ const ALTERNATIVE = {
   ],
 }
 
-const FAQ_COMUNIONI: FaqItem[] = [
+const FAQ_CERIMONIE: FaqItem[] = [
   {
     id: 'faq-com-1',
     ordine: 1,
@@ -122,7 +122,7 @@ const FAQ_COMUNIONI: FaqItem[] = [
     id: 'faq-com-2',
     ordine: 2,
     attivo: true,
-    domanda: 'Quanto costa il pranzo di comunione a persona?',
+    domanda: 'Quanto costa a persona il pranzo per una comunione o una cresima?',
     risposta:
       '<p>Proponiamo due menu: <strong>carne a 45 € e pesce a 50 € a persona</strong>, bevande incluse (acqua, vino e caffè) e torta cerimonia. I primi e i secondi si possono personalizzare con le alternative disponibili.</p>',
   },
@@ -162,15 +162,15 @@ const FAQ_COMUNIONI: FaqItem[] = [
 
 const heroImage = 'https://pub-412a895afa8e491c84ad5df75bc1458b.r2.dev/media/1780389736209-media_1.1_TaY9KSJq6.jpg'
 
-export default async function ComunioniPage() {
+export default async function ComunioniECresimePage() {
   const mediaLocation = await fetchMedia('location')
 
   return (
     <main>
       <PaginaHero
-        titolo="Comunioni"
+        titolo="Comunioni e Cresime"
         sottotitolo="Boogie Bistrot · Colle Brianza"
-        tagline="Pranzo di prima comunione con sala riservata e giardino"
+        tagline="Una sala riservata e un giardino per il vostro pranzo in famiglia"
         image={heroImage}
       />
 
@@ -188,7 +188,7 @@ export default async function ComunioniPage() {
               className="font-semibold text-neutral-900 mt-4 mb-6 leading-snug"
               style={{ fontSize: 'var(--text-section)' }}
             >
-              Il pranzo di comunione al Boogie
+              Il pranzo per la prima comunione o la cresima
             </h2>
             <div className="w-10 h-px bg-neutral-200 mb-6" />
             <p
@@ -248,7 +248,7 @@ export default async function ComunioniPage() {
         </section>
       )}
 
-      {/* ── Menu comunioni ── */}
+      {/* ── Menu cerimonie ── */}
       <section className="py-20 md:py-28 px-6 md:px-14 bg-white">
         <div className="max-w-6xl mx-auto">
           <FadeIn>
@@ -262,7 +262,7 @@ export default async function ComunioniPage() {
               className="font-semibold text-neutral-900 mt-4 mb-6 leading-snug"
               style={{ fontSize: 'var(--text-section)' }}
             >
-              I menu di comunione
+              I menù per comunioni e cresime
             </h2>
             <div className="w-10 h-px bg-neutral-200 mb-6" />
             <p
@@ -465,10 +465,10 @@ export default async function ComunioniPage() {
               className="font-semibold text-neutral-900 mt-4 mb-10 leading-snug"
               style={{ fontSize: 'var(--text-section)' }}
             >
-              Domande sul pranzo di comunione
+              Domande sul pranzo di comunione o cresima
             </h2>
           </FadeIn>
-          <SezioneFAQAccordion faq={FAQ_COMUNIONI} />
+          <SezioneFAQAccordion faq={FAQ_CERIMONIE} />
         </div>
       </section>
 
@@ -497,7 +497,7 @@ export default async function ComunioniPage() {
             <div className="w-10 h-px bg-white/10 mb-8" />
           </FadeIn>
           <FadeIn delay={0.1}>
-            <FormEventoAziendale defaultTipoEvento="Comunione" />
+            <FormEventoAziendale cerimonia />
           </FadeIn>
         </div>
       </section>

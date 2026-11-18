@@ -2,18 +2,20 @@
 
 import { useState } from 'react'
 
+const CERIMONIE = ['Comunione', 'Cresima']
+
 const TIPI_EVENTO = [
   'Cena aziendale',
   'Pranzo di lavoro',
   'Team building',
   'Cena di Natale',
-  'Comunione',
+  ...CERIMONIE,
   'Altro',
 ]
 
 import { inputClass } from '@/lib/form-classes'
 
-export default function FormEventoAziendale({ defaultTipoEvento = '' }: { defaultTipoEvento?: string }) {
+export default function FormEventoAziendale({ defaultTipoEvento = '', cerimonia = false }: { defaultTipoEvento?: string; cerimonia?: boolean }) {
   const [stato, setStato] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle')
   const [loadedAt] = useState(() => Date.now())
 
@@ -123,15 +125,15 @@ export default function FormEventoAziendale({ defaultTipoEvento = '' }: { defaul
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="flex flex-col gap-2">
           <label className="text-neutral-500 font-medium" style={{ fontSize: 'var(--text-meta)' }}>
-            Tipo di evento
+            {cerimonia ? 'Cerimonia *' : 'Tipo di evento'}
           </label>
-          <select name="tipo_evento"
+          <select name="tipo_evento" required={cerimonia}
             className={`${inputClass} cursor-pointer`}
             style={{ fontSize: 'var(--text-meta)' }}
             defaultValue={defaultTipoEvento}
           >
             <option value="" disabled>Seleziona...</option>
-            {TIPI_EVENTO.map(t => (
+            {(cerimonia ? CERIMONIE : TIPI_EVENTO).map(t => (
               <option key={t} value={t}>{t}</option>
             ))}
           </select>

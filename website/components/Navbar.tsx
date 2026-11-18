@@ -88,7 +88,7 @@ const menuVoci = [
 const eventiPrivatiVoci = [
   { label: 'Eventi Aziendali', href: '/eventi-aziendali' },
   { label: 'Cene di Natale Aziendali', href: '/cene-aziendali-natale' },
-  { label: 'Comunioni', href: '/comunioni' },
+  { label: 'Comunioni e Cresime', href: '/comunioni-e-cresime' },
 ]
 
 
