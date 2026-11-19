@@ -33,13 +33,7 @@ const FOTO_FALLBACK: Foto[] = [
 ]
 
 export default function MosaicoFoto({ immagini }: { immagini?: { src: string; alt: string }[] }) {
-  const [foto, setFoto] = useState<Foto[]>(immagini?.length ? immagini : FOTO_FALLBACK)
-
-  useEffect(() => {
-    if (!immagini?.length) return
-    setFoto([...immagini].sort(() => Math.random() - 0.5))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const foto = immagini?.length ? immagini : FOTO_FALLBACK
 
   const [aperta, setAperta] = useState<number | null>(null)
 
@@ -104,7 +98,7 @@ export default function MosaicoFoto({ immagini }: { immagini?: { src: string; al
       </section>
 
       {/* Lightbox */}
-      {aperta !== null && (
+      {aperta !== null && foto[aperta] && (
         <div
           className="fixed inset-0 z-[200] flex items-center justify-center"
           style={{ backgroundColor: 'rgba(0,0,0,0.92)' }}

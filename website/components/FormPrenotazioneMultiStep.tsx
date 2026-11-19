@@ -222,12 +222,12 @@ export default function FormPrenotazioneMultiStep({
   // ── Disponibilità ────────────────────────────────────────────────────────
 
   // Orario fisso: partiamo già in stato pronto (niente fetch)
-  const [disponibilita, setDisponibilita] = useState<'idle' | 'loading' | 'errore' | 'chiuso' | 'bloccato' | 'pronto'>(
+  const [esitoDisponibilita, setDisponibilita] = useState<'idle' | 'loading' | 'errore' | 'chiuso' | 'bloccato' | 'pronto'>(
     orarioFisso ? 'pronto' : 'idle'
   )
   const [fasce, setFasce]                         = useState<Fascia[]>([])
   const [fasceBlocco, setFasceBlocco]             = useState<string[]>([])
-  const [oraSelezionata, setOraSelezionata]       = useState(orarioFisso ? (orario ?? '') : '')
+  const [oraScelta, setOraSelezionata]       = useState(orarioFisso ? (orario ?? '') : '')
   const [fasceSelezionate, setFasceSelezionate]   = useState<string[]>([])
   const [eventoBloccante, setEventoBloccante]     = useState<{ titolo: string; slug: string } | null>(null)
 
@@ -237,6 +237,13 @@ export default function FormPrenotazioneMultiStep({
   // ── Refresh disponibilità (forzato dopo errore slot_pieno) ──────────────
 
   const [refreshKey, setRefreshKey] = useState(0)
+  const richiesta = JSON.stringify([data, orario, orarioFine, ricorrente, isEventoMode, refreshKey])
+  const [richiestaCompletata, setRichiestaCompletata] = useState('')
+  const disponibilita = orarioFisso ? 'pronto' : richiesta === richiestaCompletata ? esitoDisponibilita : data ? 'loading' : 'idle'
+  const slotsDisponibili = fasce.filter(f => !fasceBlocco.includes(f.fascia)).flatMap(f => f.slots).filter(s => s.disponibili >= persone)
+  const oraSelezionata = orarioFisso ? orario ?? '' : disponibilita !== 'pronto' ? ''
+    : slotsDisponibili.find(s => s.ora === oraScelta)?.ora ?? slotsDisponibili[0]?.ora ?? ''
+
 
   // ── Submit ───────────────────────────────────────────────────────────────
 
@@ -257,10 +264,6 @@ export default function FormPrenotazioneMultiStep({
   useEffect(() => {
     if (orarioFisso) return  // niente fetch per orario badge fisso
     if (!data) return
-    setDisponibilita('loading')
-    setOraSelezionata('')
-    setFasceSelezionate([])
-    setFasceBlocco([])
 
     const controller = new AbortController()
     fetch(`/api/disponibilita?data=${data}`, { cache: 'no-store', signal: controller.signal })
@@ -270,6 +273,9 @@ export default function FormPrenotazioneMultiStep({
       })
       .then(json => {
         if (controller.signal.aborted) return
+        setRichiestaCompletata(richiesta)
+        setFasceSelezionate([])
+        setOraSelezionata('')
         const chiuso = json.chiuso || !json.fasce?.length
 
         // Auto-advance per eventi ricorrenti
@@ -317,25 +323,15 @@ export default function FormPrenotazioneMultiStep({
         setFasce(fasceFiltrate)
         setFasceBlocco(json.fasceBlocco || [])
 
-        const visti = new Set<string>()
-        for (const fascia of fasceFiltrate) {
-          const primo = fascia.slots.find((s: Slot) => s.disponibili >= persone && !visti.has(s.ora))
-          if (primo) { setOraSelezionata(primo.ora); break }
-          fascia.slots.forEach((s: Slot) => visti.add(s.ora))
-        }
         setDisponibilita('pronto')
       })
-      .catch(() => { if (!controller.signal.aborted) setDisponibilita('errore') })
+      .catch(() => {
+        if (controller.signal.aborted) return
+        setRichiestaCompletata(richiesta)
+        setDisponibilita('errore')
+      })
     return () => controller.abort()
-  }, [data, orario, orarioFine, haRange, ricorrente, isEventoMode, orarioFisso, refreshKey])
-
-  // ── Invalida slot selezionato se persone cambiano ────────────────────────
-
-  useEffect(() => {
-    if (!oraSelezionata || orarioFisso) return
-    const slot = fasce.flatMap(f => f.slots).find(s => s.ora === oraSelezionata)
-    if (slot && slot.disponibili < persone) setOraSelezionata('')
-  }, [persone, fasce, oraSelezionata, orarioFisso])
+  }, [data, orario, orarioFine, haRange, ricorrente, isEventoMode, orarioFisso, richiesta])
 
   // ── Navigazione step ──────────────────────────────────────────────────────
 
@@ -393,9 +389,13 @@ export default function FormPrenotazioneMultiStep({
       if (res.status === 409) {
         const json = await res.json() as { error?: string }
         if (json.error === 'slot_pieno') {
-          setErroreMsg('Questo orario non è più disponibile per il numero di persone scelto. Torna indietro e scegli un altro slot.')
-          setOraSelezionata('')
-          setRefreshKey(k => k + 1)
+          if (orarioFisso) {
+            setErroreMsg('Per questo appuntamento non ci sono abbastanza posti. Per altre disponibilità, chiamaci.')
+          } else {
+            setErroreMsg('Questo orario non è più disponibile per il numero di persone scelto. Torna indietro e scegli un altro slot.')
+            setOraSelezionata('')
+            setRefreshKey(k => k + 1)
+          }
         } else {
           setErroreMsg('Si è verificato un errore. Riprova o contattaci direttamente.')
         }
@@ -414,7 +414,6 @@ export default function FormPrenotazioneMultiStep({
 
   // ── Slot helpers ──────────────────────────────────────────────────────────
 
-  const slotsDisponibili = fasce.filter(f => !fasceBlocco.includes(f.fascia)).flatMap(f => f.slots).filter(s => s.disponibili >= persone)
   const fascePerOrario   = oraSelezionata
     ? fasce.filter(f => f.slots.some(s => s.ora === oraSelezionata))
     : []
@@ -499,7 +498,7 @@ export default function FormPrenotazioneMultiStep({
                   key={n}
                   type="button"
                   aria-pressed={persone === n}
-                  onClick={() => { handleFirstInteraction(); setPersone(n) }}
+                  onClick={() => { handleFirstInteraction(); setPersone(n); setFasceSelezionate([]) }}
                   className={`rounded-btn border font-medium transition-colors ${
                     persone === n
                       ? 'border-brand bg-brand/10 text-brand'
@@ -677,7 +676,7 @@ export default function FormPrenotazioneMultiStep({
                                     type="button"
                                     disabled={nonDisponibile}
                                     aria-pressed={oraSelezionata === slot.ora}
-                                    onClick={() => setOraSelezionata(slot.ora)}
+                                    onClick={() => { setOraSelezionata(slot.ora); setFasceSelezionate([]) }}
                                     className={`px-5 rounded-btn border font-light transition-colors ${
                                       nonDisponibile
                                         ? 'opacity-30 cursor-not-allowed border-neutral-200 text-neutral-400'

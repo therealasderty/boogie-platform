@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 
 type Evento = {
@@ -57,12 +57,26 @@ function markDismissed() {
   try { localStorage.setItem(STORAGE_KEY, String(Date.now())) } catch {}
 }
 
+function ascoltaAvvisi(aggiorna: () => void) {
+  window.addEventListener('storage', aggiorna)
+  const timer = window.setInterval(aggiorna, 60_000)
+  return () => {
+    window.removeEventListener('storage', aggiorna)
+    window.clearInterval(timer)
+  }
+}
+
+function giornoVisibile() {
+  return wasDismissed() ? '' : new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Rome' }).format(new Date())
+}
+
 export default function BannerChiusure({ eventi: eventiProp }: { eventi: Evento[] }) {
-  const [visible, setVisible] = useState(false)
+  const oggi = useSyncExternalStore(ascoltaAvvisi, giornoVisibile, () => '')
+  const [nascosto, setNascosto] = useState(false)
+  const visible = !!oggi && !nascosto
   const [active, setActive] = useState(0)
-  const [eventi, setEventi] = useState<Evento[]>([])
+  const eventi = eventiProp.filter(ev => (ev.dataFine || ev.dataInizio) >= oggi)
   const [scrolled, setScrolled] = useState(false)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10)
@@ -70,32 +84,22 @@ export default function BannerChiusure({ eventi: eventiProp }: { eventi: Evento[
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Filtra lato client con data reale (evita stale server date da ISR cache)
-  useEffect(() => {
-    const oggi = new Date().toISOString().split('T')[0]
-    const filtrati = eventiProp.filter(ev => (ev.dataFine || ev.dataInizio) >= oggi)
-    setEventi(filtrati)
-    if (filtrati.length > 0 && !wasDismissed()) setVisible(true)
-  }, [eventiProp])
-
   useEffect(() => {
     if (!visible || eventi.length <= 1) return
-    intervalRef.current = setInterval(() => {
+    const timer = setInterval(() => {
       setActive(i => (i + 1) % eventi.length)
     }, 5000)
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+    return () => clearInterval(timer)
   }, [visible, eventi.length])
 
   if (!visible || eventi.length === 0) return null
 
-  const ev = eventi[active]
+  const indice = active % eventi.length
+  const ev = eventi[indice]
   const isApertura = ev.tipo === 'Apertura straordinaria'
   const testo = buildTesto(ev)
   const badge = isApertura ? 'Apertura straordinaria' : 'Chiusura straordinaria'
   const bgColor = isApertura ? 'var(--color-state-apertura)' : 'var(--color-state-chiusura)'
-
-  // Testo completo per il marquee (badge + testo + eventuale "Prenota →" hint)
-  const testoCompleto = `${badge} · ${testo}${isApertura ? ' — Prenota il tuo tavolo' : ''}`
 
   return (
     <>
@@ -130,14 +134,14 @@ export default function BannerChiusure({ eventi: eventiProp }: { eventi: Evento[
                   key={i}
                   onClick={() => setActive(i)}
                   className="w-1.5 h-1.5 rounded-full transition-opacity"
-                  style={{ backgroundColor: '#fff', opacity: i === active ? 1 : 0.35 }}
+                  style={{ backgroundColor: '#fff', opacity: i === indice ? 1 : 0.35 }}
                   aria-label={`Evento ${i + 1}`}
                 />
               ))}
             </div>
           )}
           <button
-            onClick={() => { markDismissed(); setVisible(false) }}
+            onClick={() => { markDismissed(); setNascosto(true) }}
             aria-label="Chiudi"
             className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/15 transition-colors"
           >
@@ -176,7 +180,7 @@ export default function BannerChiusure({ eventi: eventiProp }: { eventi: Evento[
 
         {/* X chiudi — sempre visibile a destra */}
         <button
-          onClick={() => { markDismissed(); setVisible(false) }}
+          onClick={() => { markDismissed(); setNascosto(true) }}
           aria-label="Chiudi"
           className="shrink-0 w-10 h-full flex items-center justify-center hover:bg-white/15 transition-colors border-l border-white/20"
         >

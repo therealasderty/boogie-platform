@@ -157,7 +157,7 @@ export default async function EventiAziendaliPage() {
                   className="text-white/60 font-light leading-relaxed"
                   style={{ fontSize: 'var(--text-body)' }}
                 >
-                  Si parte dal dolce e si chiude con l'antipasto. Un formato che sorprende
+                  Si parte dal dolce e si chiude con l&apos;antipasto. Un formato che sorprende
                   e funziona bene come icebreaker quando i colleghi non si conoscono tutti.
                 </p>
               </div>

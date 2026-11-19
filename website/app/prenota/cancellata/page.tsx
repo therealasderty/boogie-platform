@@ -26,7 +26,7 @@ export default function PrenotazioneCancellataPage() {
           </h1>
 
           <p className="text-[1rem] text-gray-600 leading-relaxed mb-2">
-            Grazie per averci avvisato — ci aiuti a offrire il posto a chi è in lista d'attesa.
+            Grazie per averci avvisato — ci aiuti a offrire il posto a chi è in lista d&apos;attesa.
           </p>
 
           <p className="text-[1rem] text-gray-600 leading-relaxed mb-10">
@@ -37,7 +37,7 @@ export default function PrenotazioneCancellataPage() {
             href="/prenota"
             className="inline-block bg-(--color-brand) hover:bg-(--color-brand-hover) text-gray-900 font-semibold px-8 py-3 rounded-[8px] text-[0.875rem] tracking-wide transition-colors"
           >
-            Prenota per un'altra data
+            Prenota per un&apos;altra data
           </Link>
 
         </div>

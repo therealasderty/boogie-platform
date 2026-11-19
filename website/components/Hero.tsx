@@ -14,6 +14,8 @@ type NewsItem = {
 }
 
 
+const NO_NEWS: NewsItem[] = []
+
 const HERO_FALLBACK = [
   { src: '/images/hero/sala-boogie-bistrot-colle-brianza.webp', alt: 'Sala del Boogie Bistrot, ristorante con giardino a Colle Brianza' },
   { src: '/images/hero/giardino-boogie-bistrot-colle-brianza.avif', alt: 'Giardino esterno del Boogie Bistrot illuminato la sera a Colle Brianza' },
@@ -21,7 +23,7 @@ const HERO_FALLBACK = [
 
 export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsItems: newsItemsProp }: { orariDisplay?: { righe: string[]; avvisoSettimana: boolean }; heroImages?: { src: string; alt: string }[]; newsItems?: NewsItem[] }) {
   const rawImages = heroImagesProp?.length ? heroImagesProp : HERO_FALLBACK
-  const newsItems = newsItemsProp ?? []
+  const newsItems = newsItemsProp ?? NO_NEWS
   // Clone first item at end for infinite loop effect
   const clonedNews = useMemo(() => newsItems.length > 1 ? [...newsItems, newsItems[0]] : newsItems, [newsItems])
   const [heroImages] = useState(rawImages)
@@ -84,14 +86,14 @@ export default function Hero({ orariDisplay, heroImages: heroImagesProp, newsIte
   function handleHeroTouchStart(e: React.TouchEvent) { heroTouchX.current = e.touches[0].clientX }
   function handleHeroTouchEnd(e: React.TouchEvent) {
     const diff = heroTouchX.current - e.changedTouches[0].clientX
-    if (Math.abs(diff) > 50) diff > 0 ? next() : prev()
+    if (diff > 50) next()
+    if (diff < -50) prev()
   }
   function handleNewsTouchStart(e: React.TouchEvent) { newsTouchX.current = e.touches[0].clientX }
   function handleNewsTouchEnd(e: React.TouchEvent) {
     const diff = newsTouchX.current - e.changedTouches[0].clientX
-    if (Math.abs(diff) > 50) diff > 0
-      ? goToNews(news + 1)
-      : goToNews(news === 0 ? newsItems.length - 1 : news - 1)
+    if (diff > 50) goToNews(news + 1)
+    if (diff < -50) goToNews(news === 0 ? newsItems.length - 1 : news - 1)
   }
 
   return (

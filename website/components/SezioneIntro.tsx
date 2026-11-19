@@ -22,14 +22,9 @@ interface SezioneIntroProps {
 }
 
 export default function SezioneIntro({ immagini = [], label, titolo, testo, inverti = false, cta, fotoContenuta = false, breadcrumb, fullWidth = false, nascondiImmagineMobile = false }: SezioneIntroProps) {
-  const [imgs, setImgs] = useState(immagini)
+  const imgs = immagini
   const [current, setCurrent] = useState(0)
   const [locked, setLocked] = useState(false)
-
-  useEffect(() => {
-    if (immagini.length > 1) setImgs([...immagini].sort(() => Math.random() - 0.5))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const goTo = useCallback(
     (index: number) => {

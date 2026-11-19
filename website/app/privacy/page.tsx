@@ -57,14 +57,14 @@ export default function PrivacyPage() {
                   <strong className="text-white">Necessari</strong> — indispensabili per il funzionamento del sito (es. preferenze cookie). Non richiedono consenso.
                 </li>
                 <li>
-                  <strong className="text-white">Analitici</strong> — raccolgono informazioni anonime sull'utilizzo del sito per migliorare l'esperienza. Attivati solo con il tuo consenso.
+                  <strong className="text-white">Analitici</strong> — raccolgono informazioni anonime sull&apos;utilizzo del sito per migliorare l&apos;esperienza. Attivati solo con il tuo consenso.
                 </li>
                 <li>
                   <strong className="text-white">Marketing</strong> — utilizzati per mostrarti annunci pertinenti. Attivati solo con il tuo consenso.
                 </li>
               </ul>
               <p className="mt-3">
-                Puoi modificare le tue preferenze in qualsiasi momento cliccando su "Gestisci cookie" nel footer del sito.
+                Puoi modificare le tue preferenze in qualsiasi momento cliccando su &quot;Gestisci cookie&quot; nel footer del sito.
               </p>
             </div>
 
@@ -98,19 +98,19 @@ export default function PrivacyPage() {
 
             <div id="wifi">
               <h2 className="font-raleway font-semibold text-white mb-3" style={{ fontSize: '1.25rem' }}>
-                Rete WiFi gratuita — Condizioni d'uso
+                Rete WiFi gratuita — Condizioni d&apos;uso
               </h2>
               <p className="mb-3">
-                Boogie Bistrot mette a disposizione dei propri ospiti una rete WiFi gratuita. L'accesso è consentito esclusivamente ai clienti presenti nei locali e per uso personale durante la permanenza.
+                Boogie Bistrot mette a disposizione dei propri ospiti una rete WiFi gratuita. L&apos;accesso è consentito esclusivamente ai clienti presenti nei locali e per uso personale durante la permanenza.
               </p>
               <p className="mb-3">
-                Per accedere alla rete è richiesta la registrazione con nome, cognome e indirizzo email. I dati raccolti sono utilizzati per gestire l'accesso, aggiornare le statistiche di utilizzo e, previo consenso, inviare comunicazioni promozionali. La sessione WiFi ha una durata massima di 8 ore.
+                Per accedere alla rete è richiesta la registrazione con nome, cognome e indirizzo email. I dati raccolti sono utilizzati per gestire l&apos;accesso, aggiornare le statistiche di utilizzo e, previo consenso, inviare comunicazioni promozionali. La sessione WiFi ha una durata massima di 8 ore.
               </p>
               <p className="mb-3">
-                È vietato utilizzare la rete per attività illecite, scaricare o distribuire contenuti protetti da copyright, effettuare attività che compromettano la sicurezza della rete o degli altri utenti. Boogie Bistrot si riserva il diritto di sospendere l'accesso in caso di utilizzo non conforme.
+                È vietato utilizzare la rete per attività illecite, scaricare o distribuire contenuti protetti da copyright, effettuare attività che compromettano la sicurezza della rete o degli altri utenti. Boogie Bistrot si riserva il diritto di sospendere l&apos;accesso in caso di utilizzo non conforme.
               </p>
               <p>
-                Il servizio WiFi è fornito senza garanzia di continuità o velocità. Boogie Bistrot non è responsabile per eventuali danni derivanti dall'utilizzo della rete o dall'interruzione del servizio.
+                Il servizio WiFi è fornito senza garanzia di continuità o velocità. Boogie Bistrot non è responsabile per eventuali danni derivanti dall&apos;utilizzo della rete o dall&apos;interruzione del servizio.
               </p>
             </div>
 

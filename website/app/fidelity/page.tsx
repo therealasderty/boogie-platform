@@ -33,9 +33,7 @@ function formatPunti(n: number) {
 
 export default async function FidelityPage() {
   const mediaLocation = await fetchMedia('location')
-  const heroImage = mediaLocation.length > 0
-    ? mediaLocation[Math.floor(Math.random() * mediaLocation.length)].url
-    : '/images/hero/giardino-boogie-bistrot-colle-brianza.avif'
+  const heroImage = mediaLocation[0]?.url || '/images/hero/giardino-boogie-bistrot-colle-brianza.avif'
 
   return (
     <main>

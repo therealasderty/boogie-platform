@@ -1666,7 +1666,6 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
   const [rinominaNome,      setRinominaNome]      = useState('')
   const [sorgente,        setSorgente]        = useState('evento')
   const [recordSelId,     setRecordSelId]     = useState('')
-  const [templateSel] = useState('cover')
   const [slideModalOpen, setSlideModalOpen]   = useState(false)
   const [programmaOpen,   setProgrammaOpen]   = useState(false)
   const [programmaTemp,   setProgrammaTemp]   = useState('')
@@ -1683,16 +1682,6 @@ function PostEditor({ postIniziale, onSalva, onAnnulla }) {
 
   function updateSelectedSlide(updated) {
     setSlides(prev => prev.map(s => s.id === updated.id ? updated : s))
-  }
-
-  function handleAggiungiSlide(tpl) {
-    const t      = tpl || templateSel
-    const record = recordSelId ? appuntamenti.find(a => a.id === recordSelId) : null
-    const nuova  = buildSlide(t, 'evento', record, orari)
-    setSlides(prev => [...prev, nuova])
-    setSelectedSlideId(nuova.id)
-    setGhostPickerOpen(false)
-    setMsg(null)
   }
 
   async function handleGeneraCaption() {

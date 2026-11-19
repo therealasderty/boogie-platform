@@ -16,13 +16,17 @@ function ConfermaPrenotazioneContent() {
   const searchParams = useSearchParams()
   const id = searchParams.get('id') ?? ''
 
-  const [stato, setStato] = useState<'loading' | 'form' | 'gia-confermata' | 'successo' | 'errore-carico' | 'errore-conferma'>('loading')
+  return <Conferma key={id} id={id} />
+}
+
+function Conferma({ id }: { id: string }) {
+  const [stato, setStato] = useState<'loading' | 'form' | 'gia-confermata' | 'successo' | 'errore-carico' | 'errore-conferma'>(() => id ? 'loading' : 'errore-carico')
   const [dati, setDati] = useState<PrenotazioneDati | null>(null)
   const [messaggio, setMessaggio] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    if (!id) { setStato('errore-carico'); return }
+    if (!id) return
 
     fetch(`/.netlify/functions/conferma?id=${encodeURIComponent(id)}&solo_dati=1`)
       .then(r => r.json())
@@ -86,7 +90,7 @@ function ConfermaPrenotazioneContent() {
           <>
             <h1 style={{ fontSize: 22, fontWeight: 400, color: '#2E7D32', marginBottom: 8 }}>Prenotazione confermata! ✅</h1>
             <p style={{ color: '#4A4030', lineHeight: 1.7, fontSize: 14 }}>
-              È stata inviata un'email di conferma a <strong>{dati?.nome}</strong>.
+              È stata inviata un&apos;email di conferma a <strong>{dati?.nome}</strong>.
             </p>
           </>
         )}

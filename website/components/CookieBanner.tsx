@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
 
@@ -48,14 +48,20 @@ function salvaConsent(p: Preferenze) {
   }
 }
 
+function ascoltaStorage(aggiorna: () => void) {
+  window.addEventListener('storage', aggiorna)
+  return () => window.removeEventListener('storage', aggiorna)
+}
+
 export default function CookieBanner() {
-  const [visibile, setVisibile] = useState(false)
+  const consensoMancante = useSyncExternalStore(ascoltaStorage, () => !leggiConsent(), () => false)
+  const [aperto, setVisibile] = useState<boolean | null>(null)
+  const visibile = aperto ?? consensoMancante
   const [personalizza, setPersonalizza] = useState(false)
   const [analitici, setAnalitici] = useState(false)
   const [marketing, setMarketing] = useState(false)
 
   useEffect(() => {
-    if (!leggiConsent()) setVisibile(true)
     const reset = () => { setPersonalizza(false); setVisibile(true) }
     window.addEventListener('boogie_reset_cookie', reset)
     return () => window.removeEventListener('boogie_reset_cookie', reset)

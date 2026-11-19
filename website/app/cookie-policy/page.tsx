@@ -30,7 +30,7 @@ export default function CookiePolicyPage() {
                 Cosa sono i cookie
               </h2>
               <p>
-                I cookie sono piccoli file di testo che i siti web salvano sul tuo dispositivo durante la navigazione. Servono a far funzionare il sito correttamente, a ricordare le tue preferenze e, dove previsto con il tuo consenso, a raccogliere dati statistici sull'utilizzo.
+                I cookie sono piccoli file di testo che i siti web salvano sul tuo dispositivo durante la navigazione. Servono a far funzionare il sito correttamente, a ricordare le tue preferenze e, dove previsto con il tuo consenso, a raccogliere dati statistici sull&apos;utilizzo.
               </p>
             </div>
 

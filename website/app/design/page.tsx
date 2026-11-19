@@ -311,7 +311,7 @@ export default function DesignPage() {
               <div>
                 <Label>Body — Raleway 300, 1rem, leading-relaxed</Label>
                 <p className="font-sans font-light text-neutral-700 leading-relaxed">
-                  Cucina del territorio rivisitata con ingredienti locali, pizza tradizionale cotta nel forno a legna e birre artigianali del territorio. Un luogo dove il gusto incontra l'atmosfera.
+                  Cucina del territorio rivisitata con ingredienti locali, pizza tradizionale cotta nel forno a legna e birre artigianali del territorio. Un luogo dove il gusto incontra l&apos;atmosfera.
                 </p>
               </div>
               <Divider />
@@ -376,7 +376,7 @@ export default function DesignPage() {
             <div className="mt-4">
               <Label>Link con freccia (article-link)</Label>
               <a className="article-link">
-                Leggi l'articolo completo
+                Leggi l&apos;articolo completo
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </a>
             </div>
@@ -712,7 +712,7 @@ export default function DesignPage() {
         {/* ── 10b. SLIM POPUP ─────────────────────────────────────────────── */}
         <Section title="10b. Slim Popup — banner bottom">
           <p className="font-sans font-light text-neutral-500 mb-5" style={{ fontSize: 'var(--text-meta)' }}>
-            Banner fisso in fondo alla pagina su sfondo brand. Appare quando c'è un evento in primo piano.
+            Banner fisso in fondo alla pagina su sfondo brand. Appare quando c&apos;è un evento in primo piano.
             Animazione: slide-up dal basso, 0.45s cubic-bezier(0.16, 1, 0.3, 1).
           </p>
           <SlimPopupPreview />
@@ -767,7 +767,7 @@ export default function DesignPage() {
                 Attualmente IvyMode viene usato <strong>solo su h1/hero</strong>. Raleway (sans) gestisce tutto il resto.
                 Si potrebbe valutare: usare IvyMode anche sugli h2 per più coerenza display, oppure eliminarlo e
                 usare solo Raleway per semplificare il sistema. IvyMode è serif con carattere distinctivo — tenerlo
-                solo per i grandi titoli hero ha senso se l'obiettivo è&nbsp;"lusso sobrio".
+                solo per i grandi titoli hero ha senso se l&apos;obiettivo è&nbsp;&quot;lusso sobrio&quot;.
               </p>
             </div>
 

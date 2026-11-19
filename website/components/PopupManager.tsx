@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { AnimatePresence } from 'framer-motion'
@@ -155,6 +155,14 @@ function IconX() {
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 
+const desktopQuery = '(min-width: 768px)'
+
+function ascoltaDesktop(aggiorna: () => void) {
+  const mq = window.matchMedia(desktopQuery)
+  mq.addEventListener('change', aggiorna)
+  return () => mq.removeEventListener('change', aggiorna)
+}
+
 export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] }) {
   const pathname = usePathname()
 
@@ -164,19 +172,13 @@ export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] 
   const [urgency,        setUrgency]        = useState<Urgency>('distante')
   const [visible,        setVisible]        = useState(false)
   const [animating,      setAnimating]      = useState(false)
-  const [isDesktop,      setIsDesktop]      = useState(false)
-
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 768px)')
-    setIsDesktop(mq.matches)
-    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
+  const isDesktop = useSyncExternalStore(ascoltaDesktop, () => window.matchMedia(desktopQuery).matches, () => false)
 
   useEffect(() => {
     if (POPUP_BLACKLIST.some(re => re.test(pathname))) return
+    let annullato = false
     let timer: ReturnType<typeof setTimeout>
+    let animazione: ReturnType<typeof setTimeout>
 
     async function init() {
       const oggi = new Date().toISOString().split('T')[0]
@@ -202,6 +204,7 @@ export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] 
         }
       } catch {}
 
+      if (annullato) return
       const hasChiusura   = chiusureAttive.length > 0
       const hasEvento     = eventoData !== null
       const hasApertura   = chiusureAttive.some(ev => ev.tipo === 'Apertura straordinaria')
@@ -218,12 +221,16 @@ export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] 
 
       timer = setTimeout(() => {
         setVisible(true)
-        setTimeout(() => setAnimating(true), 20)
+        animazione = setTimeout(() => setAnimating(true), 20)
       }, delay)
     }
 
     init()
-    return () => clearTimeout(timer)
+    return () => {
+      annullato = true
+      clearTimeout(timer)
+      clearTimeout(animazione)
+    }
   }, [pathname, chiusure])
 
   // ─── Chiudi ───────────────────────────────────────────────────────────────
@@ -250,7 +257,7 @@ export default function PopupManager({ chiusure = [] }: { chiusure?: Chiusura[] 
     chiudiAnimate()
   }
 
-  if (!visible) return null
+  if (!visible || POPUP_BLACKLIST.some(re => re.test(pathname))) return null
 
   const cardAnim = {
     opacity:   animating ? 1 : 0,

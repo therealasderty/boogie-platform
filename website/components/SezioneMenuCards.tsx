@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useSyncExternalStore } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import FadeIn from '@/components/FadeIn'
@@ -81,34 +81,20 @@ function Card({ v, priority = false }: { v: MenuCard; priority?: boolean }) {
   )
 }
 
-export default function SezioneMenuCards({ voci: vociProp }: { voci: MenuCardConfig[] }) {
-  const [voci, setVoci] = useState<MenuCard[]>(
-    vociProp.map(v => ({
-      titolo: v.titolo,
-      descrizione: v.descrizione,
-      image: v.images[0]?.url ?? v.fallback,
-      href: v.href,
-      ctaLabel: v.ctaLabel,
-      mezza: v.mezza,
-    }))
-  )
+const queryDesktop = '(min-width: 1024px)'
 
-  useEffect(() => {
-    const isDesktop = window.innerWidth >= 1024
-    setVoci(vociProp.map((v, idx) => {
-      const disponibili = v.images.filter(m => !isDesktop || !m.soloMobile)
-      const pool = disponibili.length > 0 ? disponibili : v.images
-      // Prima card (LCP su home): stessa immagine del SSR → priority/fetchPriority restano efficaci
-      const image =
-        pool.length > 0
-          ? idx === 0
-            ? pool[0].url
-            : pool[Math.floor(Math.random() * pool.length)].url
-          : v.fallback
-      return { titolo: v.titolo, descrizione: v.descrizione, image, href: v.href, ctaLabel: v.ctaLabel, mezza: v.mezza }
-    }))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+function ascoltaDesktop(aggiorna: () => void) {
+  const media = window.matchMedia(queryDesktop)
+  media.addEventListener('change', aggiorna)
+  return () => media.removeEventListener('change', aggiorna)
+}
+
+export default function SezioneMenuCards({ voci: vociProp }: { voci: MenuCardConfig[] }) {
+  const desktop = useSyncExternalStore(ascoltaDesktop, () => window.matchMedia(queryDesktop).matches, () => false)
+  const voci = vociProp.map(v => ({
+    ...v,
+    image: v.images.find(m => !desktop || !m.soloMobile)?.url ?? v.images[0]?.url ?? v.fallback,
+  }))
 
   const intere = voci.filter(v => !v.mezza)
   const mezze  = voci.filter(v => v.mezza)

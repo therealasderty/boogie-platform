@@ -52,10 +52,12 @@ export default function SezioneRecensioniCarousel({ recensioni }: Props) {
   }
   function handleTouchEnd(e: React.TouchEvent) {
     const diff = touchStartX.current - e.changedTouches[0].clientX
-    if (Math.abs(diff) > 50) diff > 0 ? next() : prev()
+    if (diff > 50) next()
+    if (diff < -50) prev()
   }
 
   useEffect(() => {
+    if (recensioni.length <= 1) return
     const t = setInterval(() => setCurrent((c) => (c + 1) % recensioni.length), 5000)
     return () => clearInterval(t)
   }, [recensioni.length])
@@ -100,7 +102,7 @@ export default function SezioneRecensioniCarousel({ recensioni }: Props) {
           style={{ fontSize: '4rem', lineHeight: 1 }}
           aria-hidden
         >
-          "
+          &quot;
         </span>
 
         <p

@@ -104,7 +104,7 @@ export default async function EventiAziendaliCityPage(
               className="font-semibold text-neutral-900 mt-4 mb-6 leading-snug"
               style={{ fontSize: 'var(--text-section)' }}
             >
-              Un'esperienza memorabile<br className="hidden md:block" /> per ogni esigenza aziendale
+              Un&apos;esperienza memorabile<br className="hidden md:block" /> per ogni esigenza aziendale
             </h2>
             <div className="w-10 h-px bg-neutral-200 mb-6" />
             <p
@@ -113,7 +113,7 @@ export default async function EventiAziendaliCityPage(
             >
               Al Boogie Bistrot trasformiamo ogni evento aziendale in un momento da ricordare —{' '}
               <strong className="font-medium text-neutral-800">{distanza}</strong>, immerso nel verde
-              della Brianza lecchese. Il piacere della buona cucina del territorio si unisce all'atmosfera
+              della Brianza lecchese. Il piacere della buona cucina del territorio si unisce all&apos;atmosfera
               rilassata dei nostri spazi: il contesto ideale per rafforzare i legami professionali in una
               location dal fascino unico.
             </p>
@@ -159,7 +159,7 @@ export default async function EventiAziendaliCityPage(
                 className="font-semibold text-white mt-4 mb-6 leading-snug"
                 style={{ fontSize: 'var(--text-section)' }}
               >
-                Un'esperienza gastronomica personalizzata
+                Un&apos;esperienza gastronomica personalizzata
               </h2>
               <div className="w-10 h-px bg-white/10 mb-6" />
               <p
@@ -200,8 +200,8 @@ export default async function EventiAziendaliCityPage(
                   className="text-white/60 font-light leading-relaxed"
                   style={{ fontSize: 'var(--text-body)' }}
                 >
-                  Per chi cerca qualcosa di davvero originale: un'esperienza culinaria insolita che inverte
-                  l'ordine tradizionale delle portate. Un modo divertente e diverso di vivere la cena aziendale,
+                  Per chi cerca qualcosa di davvero originale: un&apos;esperienza culinaria insolita che inverte
+                  l&apos;ordine tradizionale delle portate. Un modo divertente e diverso di vivere la cena aziendale,
                   perfetto per stimolare la conversazione e rompere il ghiaccio.
                 </p>
               </div>
