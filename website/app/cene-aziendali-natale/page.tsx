@@ -7,6 +7,7 @@ import GrigliaFotoLocation from '@/components/GrigliaFotoLocation'
 import SezioneVieni from '@/components/SezioneVieni'
 import SezioneFAQAccordion from '@/components/SezioneFAQAccordion'
 import { fetchMedia } from '@/lib/media'
+import { MENU_NATALE } from '@/lib/menu-natale'
 import type { FaqItem } from '@/lib/faq'
 
 export const revalidate = 259200
@@ -14,14 +15,14 @@ export const revalidate = 259200
 export const metadata: Metadata = {
   title: 'Cena di Natale Aziendale in Brianza | Boogie Bistrot — Colle Brianza',
   description:
-    'Cena di Natale aziendale al Boogie Bistrot di Colle Brianza: menù personalizzabili. Le tre proposte più richieste vanno da 45 a 55 € a persona, bevande incluse. Sala privata, da 10 a 80 ospiti. Richiedi il preventivo.',
+    'Cena di Natale aziendale al Boogie Bistrot di Colle Brianza: menù personalizzabili. Le proposte più richieste vanno da 45 a 60 € a persona. Sala privata, da 10 a 80 ospiti. Scarica i menù.',
   alternates: {
     canonical: 'https://boogiebistrot.com/cene-aziendali-natale',
   },
   openGraph: {
     title: 'Cena di Natale Aziendale in Brianza | Boogie Bistrot',
     description:
-      'Cena di Natale aziendale al Boogie Bistrot di Colle Brianza: menù personalizzabili. Le tre proposte più richieste vanno da 45 a 55 € a persona, bevande incluse. Sala privata, da 10 a 80 ospiti. Richiedi il preventivo.',
+      'Cena di Natale aziendale al Boogie Bistrot di Colle Brianza: menù personalizzabili. Le proposte più richieste vanno da 45 a 60 € a persona. Sala privata, da 10 a 80 ospiti. Scarica i menù.',
     locale: 'it_IT',
     siteName: 'Boogie Bistrot',
   },
@@ -34,47 +35,13 @@ const PUNTI_FORZA = [
   },
   {
     titolo: 'Menù su misura',
-    testo: 'Risotto alla zucca, brasato con polenta, tagliolini al ragù di cervo: da 45 a 55 € a persona, bevande incluse.',
+    testo: 'Risotto alla zucca, brasato con polenta, tagliolini al ragù di cervo, polpo arrostito: da 45 a 60 € a persona.',
   },
   {
     titolo: 'Esigenze alimentari',
     testo: 'Prepariamo varianti vegetariane, vegane, per celiaci e per chi ha intolleranze alimentari.',
   },
 ]
-
-const MENU_PROPOSTE = [
-  {
-    nome: 'Menu Tradizione',
-    prezzo: 45,
-    portate: [
-      { tipo: 'Antipasto', piatti: ['Affettato misto del territorio con gnocco fritto e verdurine croccanti'] },
-      { tipo: 'Primo', piatti: ['Risotto alla zucca, zola e amaretti'] },
-      { tipo: 'Secondo', piatti: ['Punta di vitello e patate al forno'] },
-      { tipo: 'Dolce', piatti: ['Tiramisù di panettone'] },
-    ],
-  },
-  {
-    nome: 'Menu Ricercato',
-    prezzo: 50,
-    portate: [
-      { tipo: 'Antipasti', piatti: ['Sfoglia con tuorlo fondente, crema al Parmigiano e bacon croccante', 'Parmigiana di melanzane'] },
-      { tipo: 'Primo', piatti: ['Tagliolini al ragù di cervo'] },
-      { tipo: 'Secondo', piatti: ['Filetto di maialino con la sua salsa e patate al forno'] },
-      { tipo: 'Dolce', piatti: ['Tortino di pere e amaretti con crema allo zabaione'] },
-    ],
-  },
-  {
-    nome: 'Menu Prestigio',
-    prezzo: 55,
-    portate: [
-      { tipo: 'Antipasti', piatti: ['Cestino di pasta fillo con pere, taleggio e speck croccante', 'Affettato del territorio con Casera e gnocco fritto'] },
-      { tipo: 'Bis di primi', piatti: ['Risotto ai porcini', 'Fagottino ripieno di radicchio, taleggio e crumble di noci'] },
-      { tipo: 'Secondo', piatti: ['Brasato con polenta'] },
-      { tipo: 'Dolce', piatti: ['Tortino di cioccolato dal cuore caldo con gelato al fior di latte'] },
-    ],
-  },
-]
-
 
 const FAQ_NATALE: FaqItem[] = [
   {
@@ -91,7 +58,7 @@ const FAQ_NATALE: FaqItem[] = [
     attivo: true,
     domanda: 'Quanto costa la cena di Natale aziendale a persona?',
     risposta:
-      '<p>I tre menù che trovate qui costano <strong>45, 50 e 55 € a persona</strong>, con acqua, vino (una bottiglia ogni tre persone) e caffè. Se preferite altre portate o avete in mente un altro prezzo, concordiamo insieme una proposta per il vostro gruppo.</p>',
+      '<p>I quattro menù che trovate qui costano da <strong>45 a 60 € a persona</strong>. I primi tre includono acqua, vino (una bottiglia ogni tre persone) e caffè; il menù di pesce include acqua e caffè. Se preferite altre portate o avete in mente un altro prezzo, concordiamo insieme una proposta per il vostro gruppo.</p>',
   },
   {
     id: 'faq-natale-3',
@@ -121,6 +88,8 @@ const FAQ_NATALE: FaqItem[] = [
 
 const heroImage = 'https://pub-412a895afa8e491c84ad5df75bc1458b.r2.dev/media/1791546070324-natale-boogie.avif'
 
+const STAMPA_HREF = '/cene-aziendali-natale/stampa'
+
 export default async function CeneAziendaliNatalePage() {
   const [mediaLocation, mediaNatale] = await Promise.all([
     fetchMedia('location'),
@@ -146,11 +115,13 @@ export default async function CeneAziendaliNatalePage() {
             Le date di dicembre si esauriscono in anticipo, soprattutto venerdì e sabato sera
           </p>
           <a
-            href="#richiedi-preventivo"
+            href={STAMPA_HREF}
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex-shrink-0 bg-black text-white font-semibold px-6 py-2.5 rounded-btn hover:bg-neutral-800 transition-colors"
             style={{ fontSize: 'var(--text-meta)' }}
           >
-            Richiedi preventivo
+            Scarica i menù
           </a>
         </div>
       </div>
@@ -221,8 +192,122 @@ export default async function CeneAziendaliNatalePage() {
         </div>
       </section>
 
+      {/* ── Menu natalizi ── */}
+      <section id="menu-aziendali" className="scroll-mt-20 py-20 md:py-28 px-6 md:px-14 bg-surface-dark">
+        <div className="max-w-6xl mx-auto">
+          <FadeIn>
+            <span
+              className="uppercase text-white/30 font-medium"
+              style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
+            >
+              Le proposte
+            </span>
+            <h2
+              className="font-semibold text-white mt-4 mb-6 leading-snug"
+              style={{ fontSize: 'var(--text-section)' }}
+            >
+              I menù di Natale più richiesti
+            </h2>
+            <div className="w-10 h-px bg-white/10 mb-6" />
+            <p
+              className="text-white/60 font-light leading-relaxed max-w-2xl mb-14"
+              style={{ fontSize: 'var(--text-body)' }}
+            >
+              Questi quattro menù sono quelli che ci chiedete più spesso e che ci danno più
+              soddisfazione in cucina. Abbiamo anche altre proposte, comprese le formule più
+              tradizionali con antipasto, primo e secondo. Possiamo cambiare i piatti, il numero
+              e l&apos;ordine delle portate e concordare con voi il prezzo a persona.
+              Nei primi tre menù sono inclusi acqua, vino (una bottiglia ogni tre persone)
+              e caffè. Nel menù di pesce sono inclusi acqua e caffè.
+            </p>
+          </FadeIn>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+            {MENU_NATALE.map((menu, i) => (
+              <FadeIn key={menu.nome} delay={i * 0.1}>
+                <div className="rounded-card border border-white/10 p-6 h-full flex flex-col">
+                  <div className="flex items-baseline justify-between mb-6">
+                    <h3
+                      className="font-semibold text-white"
+                      style={{ fontSize: 'var(--text-body)' }}
+                    >
+                      {menu.nome}
+                    </h3>
+                    <span className="text-brand font-semibold" style={{ fontSize: 'var(--text-lead)' }}>
+                      {menu.prezzo}&thinsp;€
+                    </span>
+                  </div>
+                  <div className="w-full h-px bg-white/10 mb-6" />
+                  <div className="flex flex-col gap-5 flex-1">
+                    {menu.portate.map((portata) => (
+                      <div key={portata.tipo}>
+                        <p
+                          className="text-brand/70 font-medium uppercase mb-1.5"
+                          style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
+                        >
+                          {portata.tipo}
+                        </p>
+                        {portata.piatti.map((piatto) => (
+                          <p
+                            key={piatto}
+                            className="text-white/60 font-light leading-relaxed"
+                            style={{ fontSize: 'var(--text-meta)' }}
+                          >
+                            {piatto}
+                          </p>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                  <p
+                    className="text-white/30 font-light mt-6 pt-5 border-t border-white/5"
+                    style={{ fontSize: 'var(--text-label)' }}
+                  >
+                    a persona · {menu.bevande ?? 'bevande incluse'}
+                  </p>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+
+          <FadeIn delay={0.35}>
+            <div className="rounded-card border border-white/10 p-6 mt-8">
+              <p
+                className="text-brand font-medium mb-3"
+                style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
+              >
+                DA SAPERE PRIMA DI PRENOTARE
+              </p>
+              <p
+                className="text-white/60 font-light leading-relaxed"
+                style={{ fontSize: 'var(--text-body)' }}
+              >
+                Per i bambini proponiamo un menù da <strong>25 €</strong>, da concordare prima della cena.
+                Se nel gruppo ci sono persone vegetariane, vegane, celiache o con intolleranze alimentari,
+                ditecelo alla prenotazione e sceglieremo insieme i piatti adatti.
+                Anche i cani sono i benvenuti.
+              </p>
+            </div>
+          </FadeIn>
+
+          <FadeIn delay={0.4}>
+            <div className="flex justify-center mt-10">
+              <a
+                href={STAMPA_HREF}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-brand text-black font-semibold px-8 py-3 rounded-btn hover:bg-brand-hover transition-colors"
+                style={{ fontSize: 'var(--text-meta)' }}
+              >
+                Scarica i menù in PDF
+              </a>
+            </div>
+          </FadeIn>
+        </div>
+      </section>
+
       {/* ── Come festeggiare ── */}
-      <section className="py-20 md:py-28 px-6 md:px-14 bg-surface-dark">
+      <section className="py-20 md:py-28 px-6 md:px-14 bg-surface-dark border-t border-white/5">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
             <FadeIn>
@@ -283,28 +368,28 @@ export default async function CeneAziendaliNatalePage() {
       </section>
 
       {/* ── Foto background fixed ── */}
-      {(
-        <div
-          className="relative min-h-[420px] md:min-h-[520px] flex items-center justify-center overflow-hidden"
-          style={{
-            backgroundImage: `url(${heroImage})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundAttachment: 'fixed',
-          }}
-        >
-          <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.55)' }} />
-          <div className="relative z-10 text-center px-6">
-            <a
-              href="#richiedi-preventivo"
-              className="inline-flex items-center gap-2 border border-white/60 text-white hover:bg-white hover:text-black font-semibold px-8 py-3 rounded-btn transition-colors"
-              style={{ fontSize: 'var(--text-meta)' }}
-            >
-              Richiedi il preventivo
-            </a>
-          </div>
+      <div
+        className="relative min-h-[420px] md:min-h-[520px] flex items-center justify-center overflow-hidden"
+        style={{
+          backgroundImage: `url(${heroImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+        }}
+      >
+        <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.55)' }} />
+        <div className="relative z-10 text-center px-6">
+          <a
+            href={STAMPA_HREF}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 border border-white/60 text-white hover:bg-white hover:text-black font-semibold px-8 py-3 rounded-btn transition-colors"
+            style={{ fontSize: 'var(--text-meta)' }}
+          >
+            Scarica i menù
+          </a>
         </div>
-      )}
+      </div>
 
       {/* ── Griglia foto location (senza giardino) ── */}
       {(() => {
@@ -353,106 +438,6 @@ export default async function CeneAziendaliNatalePage() {
         </div>
       </section>
 
-      {/* ── Menu natalizi ── */}
-      <section id="menu-aziendali" className="scroll-mt-20 py-20 md:py-28 px-6 md:px-14 bg-surface-dark border-t border-white/5">
-        <div className="max-w-6xl mx-auto">
-          <FadeIn>
-            <span
-              className="uppercase text-white/30 font-medium"
-              style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
-            >
-              Le proposte
-            </span>
-            <h2
-              className="font-semibold text-white mt-4 mb-6 leading-snug"
-              style={{ fontSize: 'var(--text-section)' }}
-            >
-              I menù di Natale più richiesti
-            </h2>
-            <div className="w-10 h-px bg-white/10 mb-6" />
-            <p
-              className="text-white/60 font-light leading-relaxed max-w-2xl mb-14"
-              style={{ fontSize: 'var(--text-body)' }}
-            >
-              Questi tre menù sono quelli che ci chiedete più spesso e che ci danno più
-              soddisfazione in cucina. Abbiamo anche altre proposte, comprese le formule più
-              tradizionali con antipasto, primo e secondo. Possiamo cambiare i piatti, il numero
-              e l’ordine delle portate e concordare con voi il prezzo a persona.
-              Nei tre menù qui sotto sono inclusi acqua, vino (una bottiglia ogni tre persone)
-              e caffè.
-            </p>
-          </FadeIn>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {MENU_PROPOSTE.map((menu, i) => (
-              <FadeIn key={menu.nome} delay={i * 0.1}>
-                <div className="rounded-card border border-white/10 p-6 h-full flex flex-col">
-                  <div className="flex items-baseline justify-between mb-6">
-                    <h3
-                      className="font-semibold text-white"
-                      style={{ fontSize: 'var(--text-body)' }}
-                    >
-                      {menu.nome}
-                    </h3>
-                    <span className="text-brand font-semibold" style={{ fontSize: 'var(--text-lead)' }}>
-                      {menu.prezzo}&thinsp;€
-                    </span>
-                  </div>
-                  <div className="w-full h-px bg-white/10 mb-6" />
-                  <div className="flex flex-col gap-5 flex-1">
-                    {menu.portate.map((portata) => (
-                      <div key={portata.tipo}>
-                        <p
-                          className="text-brand/70 font-medium uppercase mb-1.5"
-                          style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
-                        >
-                          {portata.tipo}
-                        </p>
-                        {portata.piatti.map((piatto) => (
-                          <p
-                            key={piatto}
-                            className="text-white/60 font-light leading-relaxed"
-                            style={{ fontSize: 'var(--text-meta)' }}
-                          >
-                            {piatto}
-                          </p>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                  <p
-                    className="text-white/30 font-light mt-6 pt-5 border-t border-white/5"
-                    style={{ fontSize: 'var(--text-label)' }}
-                  >
-                    a persona · bevande incluse
-                  </p>
-                </div>
-              </FadeIn>
-            ))}
-          </div>
-
-          <FadeIn delay={0.35}>
-            <div className="rounded-card border border-white/10 p-6 mt-8">
-              <p
-                className="text-brand font-medium mb-3"
-                style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
-              >
-                DA SAPERE PRIMA DI PRENOTARE
-              </p>
-              <p
-                className="text-white/60 font-light leading-relaxed"
-                style={{ fontSize: 'var(--text-body)' }}
-              >
-                Per i bambini proponiamo un menù da <strong>25 €</strong>, da concordare prima della cena.
-                Se nel gruppo ci sono persone vegetariane, vegane, celiache o con intolleranze alimentari,
-                ditecelo alla prenotazione e sceglieremo insieme i piatti adatti.
-                Anche i cani sono i benvenuti.
-              </p>
-            </div>
-          </FadeIn>
-        </div>
-      </section>
-
       {/* ── Form richiesta preventivo ── */}
       <section id="richiedi-preventivo" className="py-20 md:py-28 px-6 md:px-14 bg-white">
         <div className="max-w-3xl mx-auto">
@@ -484,7 +469,9 @@ export default async function CeneAziendaliNatalePage() {
       </section>
 
       <SezioneVieni />
-      <Footer />
+      <Footer
+        linkOverrides={{ 'Prenota un tavolo': { label: 'Scarica i menù', href: '/cene-aziendali-natale/stampa', target: '_blank' } }}
+      />
     </main>
   )
 }

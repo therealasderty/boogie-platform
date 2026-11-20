@@ -98,7 +98,11 @@ const navColumns = [
   },
 ]
 
-export default function Footer() {
+type FooterProps = {
+  linkOverrides?: Record<string, { label: string; href: string; target?: string }>
+}
+
+export default function Footer({ linkOverrides }: FooterProps = {}) {
   return (
     <footer className="bg-surface-dark text-white/70">
       <div className="max-w-7xl mx-auto px-6 md:px-14 py-16 md:py-20">
@@ -140,17 +144,24 @@ export default function Footer() {
                 {col.title}
               </p>
               <ul className="flex flex-col gap-3">
-                {col.links.map((l) => (
-                  <li key={l.href}>
-                    <Link
-                      href={l.href}
-                      className="text-white/50 hover:text-white/90 transition-colors font-light"
-                      style={{ fontSize: 'var(--text-meta)' }}
-                    >
-                      {l.label}
-                    </Link>
-                  </li>
-                ))}
+                {col.links.map((l) => {
+                  const override = linkOverrides?.[l.label]
+                  const label = override?.label ?? l.label
+                  const href = override?.href ?? l.href
+                  return (
+                    <li key={href}>
+                      <Link
+                        href={href}
+                        target={override?.target}
+                        rel={override?.target === '_blank' ? 'noopener noreferrer' : undefined}
+                        className="text-white/50 hover:text-white/90 transition-colors font-light"
+                        style={{ fontSize: 'var(--text-meta)' }}
+                      >
+                        {label}
+                      </Link>
+                    </li>
+                  )
+                })}
               </ul>
             </div>
           ))}

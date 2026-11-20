@@ -85,11 +85,7 @@ const menuVoci = [
   { label: 'Cocktails', href: '/menu/cocktails' },
 ]
 
-const eventiPrivatiVoci = [
-  { label: 'Eventi Aziendali', href: '/eventi-aziendali' },
-  { label: 'Cene di Natale Aziendali', href: '/cene-aziendali-natale' },
-  { label: 'Comunioni e Cresime', href: '/comunioni-e-cresime' },
-]
+/* eventiPrivatiVoci — computed inside component based on season (oggi prop) */
 
 
 
@@ -140,6 +136,7 @@ export default function Navbar({ oggi, orariDisplay, eventi = [] }: { oggi: stri
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null)
   const [prenotaVisible, setPrenotaVisible] = useState(false)
+  const [bottomMenuOpen, setBottomMenuOpen] = useState(false)
 
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -162,6 +159,7 @@ export default function Navbar({ oggi, orariDisplay, eventi = [] }: { oggi: stri
       setMobileOpen(false)
       setMenuScrolled(false)
       setPrenotaVisible(false)
+      setBottomMenuOpen(false)
     })
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [pathname])
@@ -187,6 +185,14 @@ export default function Navbar({ oggi, orariDisplay, eventi = [] }: { oggi: stri
     data: e.ricorrente ? formatRicorrente(e, oggi, orariDisplay?.giorniChiusi) : e.data ? formatDataShort(e.data) : '',
     fotoHero: e.fotoHero,
   }))
+
+  // Seasonal: show "Cene di Natale Aziendali" Sep–Dec, hidden Jan–Aug
+  const meseCorrente = new Date(oggi + 'T00:00:00').getMonth() // 0-indexed
+  const eventiPrivatiVoci = [
+    { label: 'Eventi Aziendali', href: '/eventi-aziendali' },
+    ...(meseCorrente >= 8 ? [{ label: 'Cene di Natale Aziendali', href: '/cene-aziendali-natale' }] : []),
+    { label: 'Comunioni e Cresime', href: '/comunioni-e-cresime' },
+  ]
 
   function openDropdown(name: string) {
     if (closeTimer.current) clearTimeout(closeTimer.current)
@@ -375,7 +381,7 @@ export default function Navbar({ oggi, orariDisplay, eventi = [] }: { oggi: stri
           pointerEvents: ((!scrolled || mobileOpen) && !(mobileOpen && menuScrolled)) ? 'auto' : 'none',
           transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease',
         }}
-        onClick={() => setMobileOpen((v) => !v)}
+        onClick={() => { setMobileOpen((v) => !v); setBottomMenuOpen(false) }}
         aria-label={mobileOpen ? 'Chiudi menu' : 'Apri menu'}
         aria-expanded={mobileOpen}
         aria-controls="mobile-menu-panel"
@@ -600,23 +606,19 @@ export default function Navbar({ oggi, orariDisplay, eventi = [] }: { oggi: stri
               <span className="text-tiny tracking-wide">Come raggiungerci</span>
             </a>
 
-            {/* Divisore + Menu (solo homepage) */}
-            {isHome && (
-              <>
-                <div className="w-px bg-white/10 my-3" />
-                <Link
-                  href="/menu/specialita"
-                  className="flex-1 flex flex-col items-center justify-center gap-1 text-white/70 active:bg-white/5"
-                >
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path d="M6 2v6c0 1.66 1.34 3 3 3v7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M9 2v4M6 6h6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                    <path d="M14 2c0 0 1 2 1 4.5S14 11 14 11v7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <span className="text-tiny tracking-wide">Menù</span>
-                </Link>
-              </>
-            )}
+            {/* Divisore + Menù dropdown */}
+            <div className="w-px bg-white/10 my-3" />
+            <button
+              onClick={() => setBottomMenuOpen(v => !v)}
+              className={`flex-1 flex flex-col items-center justify-center gap-1 active:bg-white/5 ${bottomMenuOpen ? 'text-brand' : 'text-white/70'}`}
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M6 2v6c0 1.66 1.34 3 3 3v7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M9 2v4M6 6h6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                <path d="M14 2c0 0 1 2 1 4.5S14 11 14 11v7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="text-tiny tracking-wide">Menù</span>
+            </button>
 
             {/* Divisore */}
             {showPrenotaBtn && <div className="w-px bg-white/10 my-3" />}
@@ -638,6 +640,57 @@ export default function Navbar({ oggi, orariDisplay, eventi = [] }: { oggi: stri
           </div>
         )}
       </div>
+
+      {/* ── Bottom bar menu dropdown ── */}
+      <AnimatePresence>
+        {bottomMenuOpen && (
+          <>
+            <motion.div
+              className="lg:hidden fixed inset-0 z-[45]"
+              style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              onClick={() => setBottomMenuOpen(false)}
+            />
+            <motion.div
+              className="lg:hidden fixed bottom-[72px] left-3 right-3 z-50 rounded-card border border-white/10 overflow-hidden backdrop-blur-md"
+              style={{ backgroundColor: 'var(--color-surface-dark)' }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 12 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+              <div className="py-2">
+                <p className="px-4 py-2 text-label text-white/30 uppercase tracking-widest">I nostri menù</p>
+                {menuVoci.map(v => (
+                  <Link
+                    key={v.href}
+                    href={v.href}
+                    onClick={() => setBottomMenuOpen(false)}
+                    className="block px-4 py-2.5 text-meta text-white/70 active:bg-white/10 transition-colors"
+                  >
+                    {v.label}
+                  </Link>
+                ))}
+                <div className="h-px bg-white/10 mx-4 my-2" />
+                <p className="px-4 py-2 text-label text-white/30 uppercase tracking-widest">Eventi</p>
+                {eventiPrivatiVoci.map(v => (
+                  <Link
+                    key={v.href}
+                    href={v.href}
+                    onClick={() => setBottomMenuOpen(false)}
+                    className="block px-4 py-2.5 text-meta text-white/70 active:bg-white/10 transition-colors"
+                  >
+                    {v.label}
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
     </>
   )
