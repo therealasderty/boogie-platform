@@ -21,41 +21,54 @@ export default function MenuNataleStampaPage() {
 
         .mn-page {
           width: 210mm;
-          height: 297mm;
+          min-height: 297mm;
           position: relative;
           overflow: hidden;
           page-break-after: always;
           box-sizing: border-box;
           font-family: var(--font-sans), 'Raleway', sans-serif;
+          background: #fff;
+          color: #222;
         }
         .mn-page:last-of-type { page-break-after: auto; }
 
         @media screen {
-          .mn-page { margin: 24px auto; box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
+          .mn-page { margin: 24px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12); }
           .mn-toolbar { max-width: 210mm; margin: 24px auto 0; display: flex; justify-content: center; }
         }
 
-        .mn-bg {
-          background-color: #1a1a1a;
+        /* ── Mobile: scale to viewport ── */
+        @media screen and (max-width: 800px) {
+          .mn-page {
+            width: 100vw;
+            min-height: auto;
+            margin: 0;
+            box-shadow: none;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 10vw 7vw;
+          }
+          .mn-content { position: static; }
+          .mn-frame, .mn-frame-inner { display: none; }
+          .mn-toolbar { margin: 16px auto; }
         }
 
         .mn-frame {
           position: absolute;
-          inset: 6mm;
-          border: 1.5px solid rgba(238, 206, 157, 0.3);
+          inset: 7mm;
+          border: 1.5px solid rgba(0,0,0,0.08);
           pointer-events: none;
         }
 
         .mn-frame-inner {
           position: absolute;
-          inset: 10mm;
-          border: 0.5px solid rgba(238, 206, 157, 0.12);
+          inset: 11mm;
+          border: 0.5px solid rgba(0,0,0,0.05);
           pointer-events: none;
         }
 
         .mn-content {
           position: absolute;
-          inset: 16mm;
+          inset: 18mm;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -63,83 +76,113 @@ export default function MenuNataleStampaPage() {
         }
 
         .mn-logo {
-          width: 28mm;
+          width: 32mm;
           height: auto;
-          margin-top: 8mm;
+          margin-top: 4mm;
+        }
+        @media screen and (max-width: 800px) {
+          .mn-logo { width: 80px; margin-top: 0; }
+        }
+
+        .mn-address {
+          font-size: 9pt;
+          font-weight: 400;
+          color: #999;
+          margin-top: 3mm;
+          letter-spacing: 0.03em;
+        }
+        @media screen and (max-width: 800px) {
+          .mn-address { font-size: 13px; margin-top: 8px; }
         }
 
         .mn-divider {
           width: 50mm;
           height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(238,206,157,0.4), transparent);
-          margin: 6mm 0;
+          background: linear-gradient(90deg, transparent, rgba(0,0,0,0.12), transparent);
+          margin: 7mm 0;
           flex-shrink: 0;
+        }
+        @media screen and (max-width: 800px) {
+          .mn-divider { width: 60%; margin: 20px 0; }
         }
 
         .mn-menu-name {
           font-family: var(--font-ivy, 'Georgia'), serif;
-          font-size: 26pt;
+          font-size: 30pt;
           font-weight: 300;
-          color: #eece9d;
-          letter-spacing: 0.06em;
+          color: #1a1a1a;
+          letter-spacing: 0.04em;
+        }
+        @media screen and (max-width: 800px) {
+          .mn-menu-name { font-size: 32px; }
         }
 
         .mn-menu-price {
-          font-family: var(--font-sans), 'Raleway', sans-serif;
-          font-size: 15pt;
-          font-weight: 300;
-          color: rgba(255,255,255,0.85);
-          margin-top: 2mm;
-          letter-spacing: 0.04em;
+          font-size: 18pt;
+          font-weight: 400;
+          color: #555;
+          margin-top: 3mm;
+          letter-spacing: 0.03em;
+        }
+        @media screen and (max-width: 800px) {
+          .mn-menu-price { font-size: 20px; margin-top: 6px; }
         }
 
         .mn-portate {
-          margin-top: 6mm;
+          margin-top: 8mm;
           width: 100%;
-          max-width: 140mm;
+          max-width: 150mm;
           flex: 1;
           display: flex;
           flex-direction: column;
           justify-content: center;
-          gap: 5mm;
+          gap: 7mm;
+        }
+        @media screen and (max-width: 800px) {
+          .mn-portate { max-width: 100%; gap: 24px; margin-top: 20px; }
         }
 
         .mn-portata-tipo {
-          font-size: 7.5pt;
-          font-weight: 600;
-          letter-spacing: 0.22em;
+          font-size: 9pt;
+          font-weight: 700;
+          letter-spacing: 0.2em;
           text-transform: uppercase;
-          color: rgba(238,206,157,0.6);
-          margin-bottom: 1.5mm;
+          color: #b08d57;
+          margin-bottom: 2mm;
+        }
+        @media screen and (max-width: 800px) {
+          .mn-portata-tipo { font-size: 13px; margin-bottom: 6px; }
         }
 
         .mn-portata-piatto {
-          font-size: 11pt;
+          font-size: 13pt;
           font-weight: 300;
-          color: rgba(255,255,255,0.7);
-          line-height: 1.55;
+          color: #333;
+          line-height: 1.6;
+        }
+        @media screen and (max-width: 800px) {
+          .mn-portata-piatto { font-size: 17px; line-height: 1.5; }
         }
 
         .mn-bevande {
-          font-size: 7.5pt;
-          font-weight: 400;
-          letter-spacing: 0.12em;
+          font-size: 9pt;
+          font-weight: 500;
+          letter-spacing: 0.1em;
           text-transform: uppercase;
-          color: rgba(255,255,255,0.3);
+          color: #999;
+        }
+        @media screen and (max-width: 800px) {
+          .mn-bevande { font-size: 13px; }
         }
 
         .mn-footer-info {
-          font-size: 7pt;
-          color: rgba(255,255,255,0.2);
-          margin-top: 3mm;
-          letter-spacing: 0.04em;
+          font-size: 8pt;
+          color: #bbb;
+          margin-top: 4mm;
+          letter-spacing: 0.03em;
         }
-
-        .mn-ornament {
-          color: rgba(238,206,157,0.35);
-          font-size: 10pt;
-          letter-spacing: 6px;
-          margin: 2mm 0;
+        @media screen and (max-width: 800px) {
+          .mn-footer-info { font-size: 12px; margin-top: 12px; }
         }
       `}</style>
 
@@ -148,14 +191,14 @@ export default function MenuNataleStampaPage() {
       </div>
 
       {MENU_NATALE.map((menu) => (
-        <div key={menu.nome} className="mn-page mn-bg">
+        <div key={menu.nome} className="mn-page">
           <div className="mn-frame" />
           <div className="mn-frame-inner" />
           <div className="mn-content">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/Logo-Gold.svg" alt="Boogie Bistrot" className="mn-logo" />
 
-            <div className="mn-ornament">&#10022; &#10022; &#10022;</div>
+            <div className="mn-address">Via Europa 2, Colle Brianza (LC)</div>
 
             <div className="mn-divider" />
 
@@ -182,7 +225,7 @@ export default function MenuNataleStampaPage() {
             </div>
 
             <div className="mn-footer-info">
-              Boogie Bistrot &middot; Via Europa 2, Colle Brianza (LC) &middot; boogiebistrot.com
+              boogiebistrot.com
             </div>
           </div>
         </div>
