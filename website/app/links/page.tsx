@@ -260,6 +260,26 @@ export default async function LinksPage() {
           </>
         )}
 
+        {/* Eventi privati — stagionale */}
+        {(() => {
+          const mese = new Date(oggi + 'T00:00:00').getMonth()
+          const isNatale = mese >= 8
+          return (
+            <>
+              <Sezione label="Eventi" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <Card
+                  href={isNatale ? '/cene-aziendali-natale' : '/eventi-aziendali'}
+                  titolo={isNatale ? 'Cene di Natale Aziendali' : 'Eventi Aziendali'}
+                  meta={isNatale ? 'Menù da 45 a 60 € · sala privata fino a 80 persone' : 'Cene aziendali, feste di gruppo, eventi privati'}
+                  highlight
+                />
+                <Card href="/comunioni-e-cresime" titolo="Comunioni e Cresime" meta="Pranzi e cene per le vostre celebrazioni" />
+              </div>
+            </>
+          )
+        })()}
+
       </div>
 
       <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column', padding: '0 20px' }}>
