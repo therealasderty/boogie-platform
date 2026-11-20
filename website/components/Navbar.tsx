@@ -186,11 +186,13 @@ export default function Navbar({ oggi, orariDisplay, eventi = [] }: { oggi: stri
     fotoHero: e.fotoHero,
   }))
 
-  // Seasonal: show "Cene di Natale Aziendali" Sep–Dec, hidden Jan–Aug
+  // Seasonal: Sep–Dec → Cene di Natale Aziendali, Jan–Aug → Eventi Aziendali
   const meseCorrente = new Date(oggi + 'T00:00:00').getMonth() // 0-indexed
+  const isNatale = meseCorrente >= 8 // Sep(8)–Dec(11)
   const eventiPrivatiVoci = [
-    { label: 'Eventi Aziendali', href: '/eventi-aziendali' },
-    ...(meseCorrente >= 8 ? [{ label: 'Cene di Natale Aziendali', href: '/cene-aziendali-natale' }] : []),
+    isNatale
+      ? { label: 'Cene di Natale Aziendali', href: '/cene-aziendali-natale' }
+      : { label: 'Eventi Aziendali', href: '/eventi-aziendali' },
     { label: 'Comunioni e Cresime', href: '/comunioni-e-cresime' },
   ]
 
