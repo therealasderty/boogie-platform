@@ -11,194 +11,150 @@ export default function MenuNataleStampaPage() {
   return (
     <>
       <style>{`
+        /* ── Print ── */
         @page { size: A4 portrait; margin: 0; }
-
         @media print {
-          html, body { margin: 0 !important; padding: 0 !important; background: white !important; }
+          html, body { margin: 0 !important; padding: 0 !important; }
           .no-print { display: none !important; }
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        }
-
-        .mn-page {
-          width: 210mm;
-          min-height: 297mm;
-          position: relative;
-          overflow: hidden;
-          page-break-after: always;
-          box-sizing: border-box;
-          font-family: var(--font-sans), 'Raleway', sans-serif;
-          background: #fff;
-          color: #222;
-        }
-        .mn-page:last-of-type { page-break-after: auto; }
-
-        @media screen {
-          .mn-page { margin: 24px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12); }
-          .mn-toolbar { max-width: 210mm; margin: 24px auto 0; display: flex; justify-content: center; }
-        }
-
-        /* ── Mobile: scale to viewport ── */
-        @media screen and (max-width: 800px) {
-          .mn-page {
-            width: 100%;
-            min-height: auto;
-            margin: 0;
-            box-shadow: none;
-            border-bottom: 1px solid #e5e5e5;
-            padding: 12vw 7vw;
-            overflow: visible;
+          .mn-card {
+            width: 210mm;
+            height: 297mm;
+            padding: 20mm 25mm;
+            page-break-after: always;
+            border: none !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
           }
-          .mn-content { position: static; inset: auto; }
-          .mn-frame, .mn-frame-inner { display: none; }
-          .mn-toolbar { margin: 16px auto; padding: 0 20px; }
+          .mn-card:last-child { page-break-after: auto; }
+          .mn-frame-print {
+            position: absolute;
+            inset: 7mm;
+            border: 1.5px solid rgba(0,0,0,0.08);
+            pointer-events: none;
+          }
         }
 
-        .mn-frame {
-          position: absolute;
-          inset: 7mm;
-          border: 1.5px solid rgba(0,0,0,0.08);
-          pointer-events: none;
+        /* ── Base / Mobile ── */
+        .mn-wrapper {
+          min-height: 100vh;
+          background: #f5f5f5;
+          padding: 20px 16px 60px;
         }
-
-        .mn-frame-inner {
-          position: absolute;
-          inset: 11mm;
-          border: 0.5px solid rgba(0,0,0,0.05);
-          pointer-events: none;
-        }
-
-        .mn-content {
-          position: absolute;
-          inset: 18mm;
+        .mn-toolbar {
+          max-width: 600px;
+          margin: 0 auto 20px;
           display: flex;
-          flex-direction: column;
-          align-items: center;
+          justify-content: center;
+        }
+        .mn-card {
+          position: relative;
+          background: #fff;
+          border-radius: 16px;
+          padding: 48px 28px;
+          margin: 0 auto 20px;
+          max-width: 600px;
           text-align: center;
+          font-family: var(--font-sans), 'Raleway', sans-serif;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.06);
         }
-
+        .mn-frame-print { display: none; }
         .mn-logo {
-          width: 32mm;
+          width: 90px;
           height: auto;
-          margin-top: 4mm;
+          margin: 0 auto 6px;
+          display: block;
         }
-        @media screen and (max-width: 800px) {
-          .mn-logo { width: 80px; margin-top: 0; }
-        }
-
         .mn-address {
-          font-size: 9pt;
-          font-weight: 400;
+          font-size: 14px;
           color: #999;
-          margin-top: 3mm;
-          letter-spacing: 0.03em;
+          margin-bottom: 24px;
         }
-        @media screen and (max-width: 800px) {
-          .mn-address { font-size: 13px; margin-top: 8px; }
-        }
-
         .mn-divider {
-          width: 50mm;
+          width: 80px;
           height: 1px;
           background: linear-gradient(90deg, transparent, rgba(0,0,0,0.12), transparent);
-          margin: 7mm 0;
-          flex-shrink: 0;
+          margin: 24px auto;
         }
-        @media screen and (max-width: 800px) {
-          .mn-divider { width: 60%; margin: 20px 0; }
-        }
-
         .mn-menu-name {
           font-family: var(--font-ivy, 'Georgia'), serif;
-          font-size: 30pt;
+          font-size: 36px;
           font-weight: 300;
           color: #1a1a1a;
-          letter-spacing: 0.04em;
+          letter-spacing: 0.03em;
+          line-height: 1.2;
         }
-        @media screen and (max-width: 800px) {
-          .mn-menu-name { font-size: 32px; }
-        }
-
         .mn-menu-price {
-          font-size: 18pt;
+          font-size: 22px;
           font-weight: 400;
           color: #555;
-          margin-top: 3mm;
-          letter-spacing: 0.03em;
+          margin-top: 8px;
         }
-        @media screen and (max-width: 800px) {
-          .mn-menu-price { font-size: 20px; margin-top: 6px; }
-        }
-
         .mn-portate {
-          margin-top: 8mm;
-          width: 100%;
-          max-width: 150mm;
-          flex: 1;
+          margin-top: 28px;
           display: flex;
           flex-direction: column;
-          justify-content: center;
-          gap: 7mm;
+          gap: 24px;
+          text-align: center;
         }
-        @media screen and (max-width: 800px) {
-          .mn-portate { max-width: 100%; gap: 24px; margin-top: 20px; }
-        }
-
         .mn-portata-tipo {
-          font-size: 9pt;
+          font-size: 13px;
           font-weight: 700;
-          letter-spacing: 0.2em;
+          letter-spacing: 0.18em;
           text-transform: uppercase;
           color: #b08d57;
-          margin-bottom: 2mm;
+          margin-bottom: 6px;
         }
-        @media screen and (max-width: 800px) {
-          .mn-portata-tipo { font-size: 13px; margin-bottom: 6px; }
-        }
-
         .mn-portata-piatto {
-          font-size: 13pt;
+          font-size: 18px;
           font-weight: 300;
           color: #333;
-          line-height: 1.6;
+          line-height: 1.5;
         }
-        @media screen and (max-width: 800px) {
-          .mn-portata-piatto { font-size: 17px; line-height: 1.5; }
-        }
-
         .mn-bevande {
-          font-size: 9pt;
+          font-size: 14px;
           font-weight: 500;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           color: #999;
         }
-        @media screen and (max-width: 800px) {
-          .mn-bevande { font-size: 13px; }
+        .mn-footer-info {
+          font-size: 13px;
+          color: #bbb;
+          margin-top: 8px;
         }
 
-        .mn-footer-info {
-          font-size: 8pt;
-          color: #bbb;
-          margin-top: 4mm;
-          letter-spacing: 0.03em;
-        }
-        @media screen and (max-width: 800px) {
-          .mn-footer-info { font-size: 12px; margin-top: 12px; }
+        /* ── Desktop preview ── */
+        @media screen and (min-width: 801px) {
+          .mn-card {
+            max-width: 210mm;
+            min-height: 297mm;
+            padding: 60px 50px;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+          }
+          .mn-logo { width: 110px; }
+          .mn-menu-name { font-size: 32pt; }
+          .mn-menu-price { font-size: 18pt; }
+          .mn-portata-tipo { font-size: 10pt; }
+          .mn-portata-piatto { font-size: 14pt; }
+          .mn-portate { gap: 28px; }
         }
       `}</style>
 
-      <div className="mn-toolbar no-print">
-        <PrintButton />
-      </div>
+      <div className="mn-wrapper">
+        <div className="mn-toolbar no-print">
+          <PrintButton />
+        </div>
 
-      {MENU_NATALE.map((menu) => (
-        <div key={menu.nome} className="mn-page">
-          <div className="mn-frame" />
-          <div className="mn-frame-inner" />
-          <div className="mn-content">
+        {MENU_NATALE.map((menu) => (
+          <div key={menu.nome} className="mn-card">
+            <div className="mn-frame-print" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/Logo-Gold.svg" alt="Boogie Bistrot" className="mn-logo" />
-
             <div className="mn-address">Via Europa 2, Colle Brianza (LC)</div>
 
             <div className="mn-divider" />
@@ -224,13 +180,10 @@ export default function MenuNataleStampaPage() {
             <div className="mn-bevande">
               {menu.bevande ?? 'Acqua, vino e caffè inclusi'}
             </div>
-
-            <div className="mn-footer-info">
-              boogiebistrot.com
-            </div>
+            <div className="mn-footer-info">boogiebistrot.com</div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </>
   )
 }
