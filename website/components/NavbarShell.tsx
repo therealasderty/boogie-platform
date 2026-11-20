@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 
-const STANDALONE_PATHS = ['/feedback']
+const STANDALONE_PATHS = ['/feedback', '/menu/stampa', '/cene-aziendali-natale/stampa']
 
 export default function NavbarShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()

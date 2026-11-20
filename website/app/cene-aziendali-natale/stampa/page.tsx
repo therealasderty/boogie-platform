@@ -40,16 +40,17 @@ export default function MenuNataleStampaPage() {
         /* ── Mobile: scale to viewport ── */
         @media screen and (max-width: 800px) {
           .mn-page {
-            width: 100vw;
+            width: 100%;
             min-height: auto;
             margin: 0;
             box-shadow: none;
             border-bottom: 1px solid #e5e5e5;
-            padding: 10vw 7vw;
+            padding: 12vw 7vw;
+            overflow: visible;
           }
-          .mn-content { position: static; }
+          .mn-content { position: static; inset: auto; }
           .mn-frame, .mn-frame-inner { display: none; }
-          .mn-toolbar { margin: 16px auto; }
+          .mn-toolbar { margin: 16px auto; padding: 0 20px; }
         }
 
         .mn-frame {
