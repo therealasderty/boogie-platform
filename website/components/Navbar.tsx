@@ -267,7 +267,7 @@ export default function Navbar({ oggi, orariDisplay, eventi = [] }: { oggi: stri
 
       <li className="relative" onMouseEnter={() => openDropdown('privati')} onMouseLeave={scheduleClose}>
         <Link href="/eventi-aziendali" className="flex items-center gap-1 text-white/90 hover:text-white hover:bg-white/10 transition-colors text-body tracking-wide font-light cursor-pointer px-3 py-1.5 rounded-btn">
-          Eventi <ChevronDown />
+          Aziende e Eventi <ChevronDown />
         </Link>
         <AnimatePresence>
           {activeDropdown === 'privati' && (
@@ -498,13 +498,13 @@ export default function Navbar({ oggi, orariDisplay, eventi = [] }: { oggi: stri
               )}
             </li>
 
-            {/* Eventi */}
+            {/* Aziende e Eventi */}
             <li className="border-b border-white/10">
               <button
                 className="w-full flex items-center justify-between py-4 text-white text-body cursor-pointer"
                 onClick={() => setMobileExpanded(mobileExpanded === 'privati' ? null : 'privati')}
               >
-                Eventi
+                Aziende e Eventi
                 <span className={`transition-transform duration-200 ${mobileExpanded === 'privati' ? 'rotate-180' : ''}`}>
                   <ChevronDown />
                 </span>
@@ -677,7 +677,7 @@ export default function Navbar({ oggi, orariDisplay, eventi = [] }: { oggi: stri
                   </Link>
                 ))}
                 <div className="h-px bg-white/10 mx-4 my-2" />
-                <p className="px-4 py-2 text-label text-white/30 uppercase tracking-widest">Eventi</p>
+                <p className="px-4 py-2 text-label text-white/30 uppercase tracking-widest">Aziende e Eventi</p>
                 {eventiPrivatiVoci.map(v => (
                   <Link
                     key={v.href}

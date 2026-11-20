@@ -266,7 +266,7 @@ export default async function LinksPage() {
           const isNatale = mese >= 8
           return (
             <>
-              <Sezione label="Eventi" />
+              <Sezione label="Aziende e Eventi" />
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <Card
                   href={isNatale ? '/cene-aziendali-natale' : '/eventi-aziendali'}
