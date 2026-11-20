@@ -1,0 +1,241 @@
+.wrapper {
+  max-width: 1100px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.subtitle {
+  font-size: 0.82rem;
+  color: var(--text3);
+  margin-top: 2px;
+}
+
+/* ── Griglia sezioni ── */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+/* ── Card generica ── */
+.card {
+  background: var(--bg2);
+  border: var(--border-style);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.cardWide {
+  grid-column: 1 / -1;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.cardTitle {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge {
+  background: var(--accent);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.badgeGreen {
+  background: var(--success);
+}
+
+.badgeMuted {
+  background: var(--text3);
+}
+
+/* ── Lista items ── */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.listItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  color: var(--text2);
+  transition: background 0.15s;
+}
+
+.listItem:hover {
+  background: var(--bg3);
+}
+
+.listItemLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.listItemMeta {
+  font-size: 0.78rem;
+  color: var(--text3);
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+/* ── Menu conteggio ── */
+.menuGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.menuCat {
+  background: var(--bg3);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.menuCatLabel {
+  font-size: 0.85rem;
+  color: var(--text2);
+}
+
+.menuCatCount {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* ── Stato tag ── */
+.stato {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.statoAttivo {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.statoBozza {
+  background: var(--bg3);
+  color: var(--text3);
+}
+
+.statoProgrammato {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.statoInCorso {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.statoPausa {
+  background: #fce4ec;
+  color: #c62828;
+}
+
+.statoCompletata {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+/* ── Dot evidenza ── */
+.dotEvidenza {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-right: 6px;
+}
+
+/* ── Pagine statiche ── */
+.pageLink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  color: var(--text2);
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.pageLink:hover {
+  background: var(--bg3);
+}
+
+.pageLinkUrl {
+  font-size: 0.75rem;
+  color: var(--text3);
+  margin-left: auto;
+}
+
+/* ── Empty state ── */
+.empty {
+  font-size: 0.85rem;
+  color: var(--text3);
+  font-style: italic;
+  padding: 8px 0;
+}
+
+/* ── Loading ── */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  color: var(--text3);
+  font-size: 0.9rem;
+}

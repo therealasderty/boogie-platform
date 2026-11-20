@@ -20,6 +20,7 @@ import RecensioniSitoPanel from './components/panels/RecensioniSitoPanel'
 import SocialStudioPanel from './components/panels/SocialStudioPanel'
 import DesignPanel from './components/panels/DesignPanel'
 import EmailMarketingPanel from './components/panels/EmailMarketingPanel'
+import PanoramicaSitoPanel from './components/panels/PanoramicaSitoPanel'
 import FloatingButton from './components/FloatingButton'
 import ModalPrenotazione from './components/ModalPrenotazione'
 import styles from './App.module.css'
@@ -62,6 +63,7 @@ export default function App() {
       case 'clienti':    return <ClientiPanel />
       case 'analytics':  return <AnalyticsPanel />
       case 'agenda':     return <AgendaPanel />
+      case 'panoramica': return <PanoramicaSitoPanel />
       case 'menu':       return <MenuPanel />
       case 'media':      return <MediaPanel />
       case 'faq':        return <FaqPanel />

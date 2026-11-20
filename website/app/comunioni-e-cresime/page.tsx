@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import PaginaHero from '@/components/PaginaHero'
 import Footer from '@/components/Footer'
 import FadeIn from '@/components/FadeIn'
@@ -7,9 +8,12 @@ import GrigliaFotoLocation from '@/components/GrigliaFotoLocation'
 import SezioneVieni from '@/components/SezioneVieni'
 import SezioneFAQAccordion from '@/components/SezioneFAQAccordion'
 import { fetchMedia } from '@/lib/media'
+import { MENU_CERIMONIE, ALTERNATIVE_CERIMONIE } from '@/lib/menu-cerimonie'
 import type { FaqItem } from '@/lib/faq'
 
 export const revalidate = 259200
+
+const STAMPA_HREF = '/comunioni-e-cresime/stampa'
 
 export const metadata: Metadata = {
   title: 'Comunioni e Cresime al Boogie Bistrot | Colle Brianza — Menu da 45 €',
@@ -43,71 +47,6 @@ const PUNTI_FORZA = [
   },
 ]
 
-const MENU_PROPOSTE = [
-  {
-    nome: 'Menu Carne',
-    prezzo: 45,
-    antipasti: [
-      'Sformatino di zucchine con fonduta al parmigiano',
-      'Torretta di parmigiana di melanzane',
-      'Cestino di piadina con ricotta, cipolla caramellata e speck croccante',
-    ],
-    centroTavola: [
-      'Affettati del territorio con gnocco fritto o focacce',
-      'Sciatt',
-      'Sarde fritte con maionese al lime',
-    ],
-    primi: [
-      'Risotto con crema di asparagi e le sue punte, ciuffi di caprino e crumble di crudo',
-      'Pappardelle al ragù bianco',
-    ],
-    dolce: 'Torta cerimonia',
-  },
-  {
-    nome: 'Menu Pesce',
-    prezzo: 50,
-    antipasti: [
-      'Sformatino di zucchine con fonduta al parmigiano',
-      'Torretta di parmigiana di melanzane',
-      'Polpo scottato su crema di cavolo nero',
-    ],
-    centroTavola: [
-      'Affettati del territorio con gnocco fritto o focacce',
-      'Sciatt',
-      'Sarde fritte con maionese al lime',
-    ],
-    primi: [
-      'Risotto con cavolo viola e tartare di tonno',
-      'Trofie con pomodorini gialli, ricciola e bottarga',
-    ],
-    dolce: 'Torta cerimonia',
-  },
-]
-
-const ALTERNATIVE = {
-  primiTerra: [
-    'Risotto barbabietola e salsa al taleggio',
-    'Risotto crema di asparagi, ciuffi di caprino e crumble di crudo',
-    'Risotto carciofi, raspadura di Parmigiano e carciofi fritti',
-    'Fusilli alla nerano',
-    'Pappardelle al ragù bianco',
-  ],
-  primiMare: [
-    'Risotto crema di spinaci e tartare di gamberi',
-    'Risotto cavolo viola e tartare di tonno',
-    'Risotto alla parmigiana con filetti di pesce persico',
-    'Scialatiello allo scoglio con salicornia',
-    'Trofie con pomodorini gialli, ricciola e bottarga',
-  ],
-  secondiTerra: [
-    'Punta di vitello e la sua salsa con scarola ripassata',
-    'Filetto di maialino e patate al forno',
-  ],
-  secondiMare: [
-    'Filetti di branzino gratinato e sformatino di asparagi',
-    'Cubotti di salmone, salsa allo zafferano e crumble di pistacchi',
-  ],
-}
 
 const FAQ_CERIMONIE: FaqItem[] = [
   {
@@ -275,7 +214,7 @@ export default async function ComunioniECresimePage() {
           </FadeIn>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {MENU_PROPOSTE.map((menu, i) => (
+            {MENU_CERIMONIE.map((menu, i) => (
               <FadeIn key={menu.nome} delay={i * 0.1}>
                 <div className="rounded-card border border-neutral-100 p-6 h-full flex flex-col">
                   <div className="flex items-baseline justify-between mb-6">
@@ -292,59 +231,21 @@ export default async function ComunioniECresimePage() {
                   <div className="w-full h-px bg-neutral-100 mb-6" />
 
                   <div className="flex flex-col gap-5 flex-1">
-                    <div>
-                      <p
-                        className="text-black/40 font-medium uppercase mb-1.5"
-                        style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
-                      >
-                        Tris di antipasti impiattati
-                      </p>
-                      {menu.antipasti.map((a) => (
-                        <p key={a} className="text-neutral-600 font-light leading-relaxed" style={{ fontSize: 'var(--text-meta)' }}>
-                          {a}
+                    {menu.portate.map((portata) => (
+                      <div key={portata.tipo}>
+                        <p
+                          className="text-black/40 font-medium uppercase mb-1.5"
+                          style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
+                        >
+                          {portata.tipo}
                         </p>
-                      ))}
-                    </div>
-
-                    <div>
-                      <p
-                        className="text-black/40 font-medium uppercase mb-1.5"
-                        style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
-                      >
-                        Centro tavola (uno a scelta)
-                      </p>
-                      {menu.centroTavola.map((c) => (
-                        <p key={c} className="text-neutral-600 font-light leading-relaxed" style={{ fontSize: 'var(--text-meta)' }}>
-                          {c}
-                        </p>
-                      ))}
-                    </div>
-
-                    <div>
-                      <p
-                        className="text-black/40 font-medium uppercase mb-1.5"
-                        style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
-                      >
-                        Primo o bis di primi
-                      </p>
-                      {menu.primi.map((p) => (
-                        <p key={p} className="text-neutral-600 font-light leading-relaxed" style={{ fontSize: 'var(--text-meta)' }}>
-                          {p}
-                        </p>
-                      ))}
-                    </div>
-
-                    <div>
-                      <p
-                        className="text-black/40 font-medium uppercase mb-1.5"
-                        style={{ fontSize: 'var(--text-label)', letterSpacing: 'var(--tracking-label)' }}
-                      >
-                        Dolce
-                      </p>
-                      <p className="text-neutral-600 font-light leading-relaxed" style={{ fontSize: 'var(--text-meta)' }}>
-                        {menu.dolce}
-                      </p>
-                    </div>
+                        {portata.piatti.map((piatto) => (
+                          <p key={piatto} className="text-neutral-600 font-light leading-relaxed" style={{ fontSize: 'var(--text-meta)' }}>
+                            {piatto}
+                          </p>
+                        ))}
+                      </div>
+                    ))}
                   </div>
 
                   <p
@@ -357,6 +258,19 @@ export default async function ComunioniECresimePage() {
               </FadeIn>
             ))}
           </div>
+
+          <FadeIn delay={0.2}>
+            <div className="flex justify-center mt-10">
+              <Link
+                href={STAMPA_HREF}
+                target="_blank"
+                className="inline-flex items-center gap-2 rounded-btn bg-brand px-7 py-3.5 font-medium text-surface-dark transition-colors hover:bg-brand-hover"
+                style={{ fontSize: 'var(--text-body)' }}
+              >
+                Scarica i menù in PDF
+              </Link>
+            </div>
+          </FadeIn>
         </div>
       </section>
 
@@ -393,7 +307,7 @@ export default async function ComunioniECresimePage() {
                   Primi terra
                 </h3>
                 <ul className="flex flex-col gap-2.5">
-                  {ALTERNATIVE.primiTerra.map((p) => (
+                  {ALTERNATIVE_CERIMONIE.primiTerra.map((p) => (
                     <li key={p} className="flex items-start gap-3 text-white/60 font-light" style={{ fontSize: 'var(--text-meta)' }}>
                       <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-brand flex-shrink-0" />
                       {p}
@@ -408,7 +322,7 @@ export default async function ComunioniECresimePage() {
                   Primi mare
                 </h3>
                 <ul className="flex flex-col gap-2.5">
-                  {ALTERNATIVE.primiMare.map((p) => (
+                  {ALTERNATIVE_CERIMONIE.primiMare.map((p) => (
                     <li key={p} className="flex items-start gap-3 text-white/60 font-light" style={{ fontSize: 'var(--text-meta)' }}>
                       <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-brand flex-shrink-0" />
                       {p}
@@ -423,7 +337,7 @@ export default async function ComunioniECresimePage() {
                   Secondi terra
                 </h3>
                 <ul className="flex flex-col gap-2.5">
-                  {ALTERNATIVE.secondiTerra.map((p) => (
+                  {ALTERNATIVE_CERIMONIE.secondiTerra.map((p) => (
                     <li key={p} className="flex items-start gap-3 text-white/60 font-light" style={{ fontSize: 'var(--text-meta)' }}>
                       <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-brand flex-shrink-0" />
                       {p}
@@ -438,7 +352,7 @@ export default async function ComunioniECresimePage() {
                   Secondi mare
                 </h3>
                 <ul className="flex flex-col gap-2.5">
-                  {ALTERNATIVE.secondiMare.map((p) => (
+                  {ALTERNATIVE_CERIMONIE.secondiMare.map((p) => (
                     <li key={p} className="flex items-start gap-3 text-white/60 font-light" style={{ fontSize: 'var(--text-meta)' }}>
                       <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-brand flex-shrink-0" />
                       {p}
@@ -503,7 +417,7 @@ export default async function ComunioniECresimePage() {
       </section>
 
       <SezioneVieni />
-      <Footer />
+      <Footer linkOverrides={{ 'Prenota un tavolo': { label: 'Scarica i menù', href: STAMPA_HREF, target: '_blank' } }} />
     </main>
   )
 }

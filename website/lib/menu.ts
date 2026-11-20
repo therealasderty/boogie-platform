@@ -11,6 +11,7 @@ export interface VoceMenu {
   badge?: string
   produttore?: string
   regione?: string
+  allergeni?: string
   senzaGlutine?: boolean
   senzaLattosio?: boolean
 }
@@ -68,6 +69,7 @@ function toVoce(r: AirtableRecord): VoceMenu {
     badge:       f['Etichetta'] ? String(f['Etichetta']) : undefined,
     produttore:  f['Produttore'] ? String(f['Produttore']) : undefined,
     regione:     f['Regione'] ? String(f['Regione']) : undefined,
+    allergeni:   f['Allergeni'] ? String(f['Allergeni']) : undefined,
     senzaGlutine:  (() => {
       const s = f['Allergeni'] ? String(f['Allergeni']) : ''
       if (!s) return f['Senza Glutine'] === true
@@ -115,4 +117,15 @@ export async function fetchMenuVini(): Promise<SezioneMenu[]> {
 export async function fetchMenuCocktails(): Promise<SezioneMenu[]> {
   const records = filtraCategoria(await fetchTuttoMenu(), 'Cocktails')
   return raggruppaPerSottocategoria(records)
+}
+
+export async function fetchMenuCompleto() {
+  const records = await fetchTuttoMenu()
+  return {
+    specialita: raggruppaPerSottocategoria(filtraCategoria(records, 'Specialità alla Carta')),
+    pizza: filtraCategoria(records, 'Pizza').map(toVoce),
+    birre: raggruppaPerSottocategoria(filtraCategoria(records, 'Birre')),
+    vini: raggruppaPerSottocategoria(filtraCategoria(records, 'Vini')),
+    cocktails: raggruppaPerSottocategoria(filtraCategoria(records, 'Cocktails')),
+  }
 }

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import styles from './Sidebar.module.css'
 import {
   IconHome, IconCalendar, IconFidelity,
-  IconClienti, IconLogout, IconMenu, IconClose, IconAnalytics, IconAgenda, IconClock, IconForkKnife, IconImages, IconFaq, IconBlog, IconLocalSeo, IconStar, IconSocialStudio, IconDesign, IconExternalLink, IconMarketing,
+  IconClienti, IconLogout, IconMenu, IconClose, IconAnalytics, IconAgenda, IconClock, IconForkKnife, IconImages, IconFaq, IconBlog, IconLocalSeo, IconStar, IconSocialStudio, IconDesign, IconExternalLink, IconMarketing, IconPanoramica,
 } from '../icons/index.jsx'
 
 const NAV_ITEMS = [
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { id: 'fidelity',   Icon: IconFidelity,  label: 'Programma Fidelity' },
   { id: 'clienti',    Icon: IconClienti,   label: 'Database Clienti' },
   { id: 'separator3', section: 'Gestione sito' },
+  { id: 'panoramica', Icon: IconPanoramica, label: 'Panoramica Sito' },
   { id: 'menu',       Icon: IconForkKnife, label: 'Menu' },
   { id: 'agenda',     Icon: IconAgenda,    label: 'Appuntamenti' },
   { id: 'media',      Icon: IconImages,    label: 'Libreria Media' },
